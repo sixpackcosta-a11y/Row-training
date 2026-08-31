@@ -96,3 +96,9 @@ Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
 - MAR: sesiones base recalculadas para un máximo aproximado de 60 min incluyendo calentamiento, recuperaciones y vuelta a la calma.
 - GYM: duración objetivo aproximada de 60 min; el volumen baja al acercarse a competición.
 - En bloques MAR por metros se usa un tope total de 60 min y la vuelta a la calma completa el tiempo restante.
+
+
+## V57
+Semana 1 (31/08–06/09/2026) cerrada para Veteranas femenino y Senior masculino. GYM ~55–60 min, ERGO UT2 y sesiones MAR completas de 60 min. `setup_v57.sql` actualiza/crea la semana de forma idempotente.
+
+V58: editor GYM por ejercicios, ERGO asignado visible y semana 1 MAR con bloques concretos.

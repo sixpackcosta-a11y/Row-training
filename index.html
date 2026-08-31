@@ -563,7 +563,7 @@ function showSessionIn(targetId,x){
   if(x[2]==="GYM"){
     el.innerHTML=`<div class="session">
       <h3>${title(x)}</h3>
-      <p class="muted">⏱️ 75-90 min</p>
+      <p class="muted">⏱️ aprox. 55-60 min</p>
       <button id="todayOpenGym" class="primary">Abrir entrenamiento</button>
     </div>`;
     todayOpenGym.onclick=()=>gym(x[3]);
@@ -1210,39 +1210,69 @@ function gymAdviceForDate(dateStr){
   return `<b>${p}:</b> ${map[p]}`;
 }
 const MAR_LIBRARY=[
-  ['Técnica baja frecuencia',"10–20' · 15–20 ppm · foco en entrada, salida de brazos y core"],
-  ['Salidas',"6–10 repeticiones · salida propia del equipo · recuperación completa"],
-  ['Virada-Ciaboga',"6–10 repeticiones · técnica primero · ppm a elección del entrenador"],
-  ['Cambios de ritmo',"3×(3' medio + 1' alto) · recuperación 2'"],
-  ['Pirámide de ppm',"20-22-24-26-28 ppm · tiempo o metros por escalón"],
-  ['Series por metros',"4×500 m · ppm y recuperación editables"],
-  ['Series por tiempo',"4×4' · ppm y recuperación editables"]
+  ['Técnica 3×4 min',"TÉCNICA · 3×4 min a 15–18 ppm · rec 1 min · entrada, salida de brazos, core y secuencia"],
+  ['Salidas 6×15 paladas',"SALIDAS · 6×15 paladas · recuperación 45–60 s · salida propia del equipo"],
+  ['Virada-Ciaboga 6 rep',"VIRADA-CIABOGA · 6 repeticiones · recuperación 60 s · máxima calidad técnica"],
+  ['Base 2×7 min',"BASE · 2×7 min a 18–20 ppm · rec 2 min · presión uniforme y palada larga"],
+  ['Base 3×10 min',"BASE · 3×10 min a 18–20 ppm · rec 2 min · ritmo estable"],
+  ['Pirámide 20-22-24-26-28',"PIRÁMIDE · 3 min @20 + 3 min @22 + 3 min @24 + 3 min @26 + 3 min @28 ppm · continua, sin recuperación entre escalones"],
+  ['4×500 m',"SERIES · 4×500 m · ppm a decisión del entrenador · rec 2 min"],
+  ['6×700 m',"SERIES · 6×700 m · ppm a decisión del entrenador · rec 2 min"],
+  ['4×4 min',"SERIES · 4×4 min · ppm a decisión del entrenador · rec 2 min"]
 ];
 async function getTrainingLibrary(kind){
   try{const q=await sb.from('training_library').select('*').eq('kind',kind).eq('is_active',true).order('name'); return q.error?[]:(q.data||[]);}catch(e){return []}
 }
-async function renderEditorLibrary(kind){
+function allGymExercises(){
+  const out=[]; const seen=new Set();
+  Object.entries(gyms).forEach(([tpl,g])=>g.items.forEach(i=>{
+    if(seen.has(i.name))return; seen.add(i.name); out.push({...i,template:tpl});
+  }));
+  return out;
+}
+function gymSelectedNamesFromSession(currentSession){
+  const txt=String(currentSession?.content||'').toLowerCase();
+  const title=String(currentSession?.title||'');
+  const tpl=(title.match(/GYM-([ABC])/i)||[])[1];
+  const set=new Set();
+  if(tpl&&gyms[tpl]) gyms[tpl].items.forEach(i=>set.add(i.name));
+  allGymExercises().forEach(i=>{if(txt.includes(i.name.toLowerCase()))set.add(i.name)});
+  return set;
+}
+function renderGymExerciseEditor(currentSession){
+  const rows=allGymExercises(); const selected=gymSelectedNamesFromSession(currentSession);
+  return `<div class="gymEditHead"><b>Ejercicios de la sesión</b><span class="muted">Marca/desmarca y cambia dosis o descanso. La sesión se guarda con estos ejercicios.</span></div>
+  <div class="coachTools"><label>Plantilla<select id="gymTpl"><option value="">— Elegir —</option>${Object.entries(gyms).map(([k,v])=>`<option value="${k}">GYM-${k} · ${v.name}</option>`).join('')}</select></label><button id="applyGymTpl">Cargar plantilla</button></div>
+  <div class="tableWrap"><table><thead><tr><th>Usar</th><th>Ejercicio</th><th>Dosis</th><th>Descanso</th></tr></thead><tbody>${rows.map((i,n)=>`<tr><td><input class="gymUse" type="checkbox" data-i="${n}" ${selected.has(i.name)?'checked':''}></td><td><b>${i.name}</b></td><td><input class="gymDose" data-i="${n}" value="${i.dose}"></td><td><input class="gymRest" data-i="${n}" value="${i.rest}"></td></tr>`).join('')}</tbody></table></div>`;
+}
+async function renderEditorLibrary(kind,currentSession=null){
   const box=document.getElementById('editorLibrary'); if(!box)return;
   if(kind==='ERG'){
     const q=await sb.from('ergo_library').select('*').eq('is_active',true).order('zone').order('name'); const rows=q.error?[]:(q.data||[]);
-    box.innerHTML=`<label>Biblioteca ERGO<select id="libPick"><option value="">— Elegir sesión —</option>${rows.map(x=>`<option value="${x.code}">${x.zone||'ERGO'} · ${x.name}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Cargar en el entrenamiento</button><button id="openErgLib">Abrir Biblioteca ERGO</button></div>`;
+    const curText=`${currentSession?.title||''} ${currentSession?.content||''}`.toLowerCase();
+    const current=rows.find(x=>curText.includes(String(x.name||'').toLowerCase()))||null;
+    box.innerHTML=`${current?`<div class="info"><b>ERGO asignado ahora:</b> ${current.zone||'ERGO'} · ${current.name}${current.url?`<br><small>ErgData: ${current.url}</small>`:''}</div>`:'<div class="info"><b>ERGO asignado ahora:</b> no identificado. Elige una sesión de la biblioteca.</div>'}<label>Biblioteca ERGO<select id="libPick"><option value="">— Elegir sesión —</option>${rows.map(x=>`<option value="${x.code}" ${current?.code===x.code?'selected':''}>${x.zone||'ERGO'} · ${x.name}</option>`).join('')}</select></label><div id="ergoPreview" class="muted"></div><div class="coachTools"><button id="loadLib">Usar esta sesión</button><button id="openErgLib">Abrir Biblioteca ERGO</button></div>`;
+    const preview=()=>{const x=rows.find(z=>z.code===libPick.value);ergoPreview.innerHTML=x?`<b>${x.name}</b>${x.url?` · ErgData disponible`:''}`:''};
+    libPick.onchange=preview; preview();
     openErgLib.onclick=()=>{tab='biblioteca';draw();render()};
-    loadLib.onclick=()=>{const x=rows.find(z=>z.code===libPick.value);if(!x)return;sessTitle.value=`ERGO · ${x.name}`;sessContent.value=`${x.zone||'ERGO'} · ${x.name}${x.url?`\nErgData: ${x.url}`:''}`;};
+    loadLib.onclick=()=>{const x=rows.find(z=>z.code===libPick.value);if(!x)return;sessTitle.value=`ERGO · ${x.name}`;sessContent.value=`CALENTAMIENTO · 10 min\nTRABAJO · ${x.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${x.url?`\nErgData: ${x.url}`:''}`;};
     return;
   }
   if(kind==='GYM'){
-    const custom=await getTrainingLibrary('GYM');
-    const built=Object.entries(gyms).map(([k,v])=>({id:`builtin-${k}`,name:`GYM-${k} · ${v.name}`,content:v.items.map(i=>`${i.name} · ${i.dose} · descanso ${i.rest}`).join('\n')}));
-    const rows=[...built,...custom.map(x=>({id:x.id,name:x.name,content:x.content||''}))];
-    box.innerHTML=`<label>Biblioteca GYM<select id="libPick"><option value="">— Elegir sesión/plantilla —</option>${rows.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Cargar</button><button id="newLibItem">+ Crear plantilla GYM</button></div>`;
-    loadLib.onclick=()=>{const x=rows.find(z=>String(z.id)===libPick.value);if(!x)return;sessTitle.value=x.name;sessContent.value=x.content;};
-    newLibItem.onclick=()=>createLibraryItem('GYM'); return;
+    box.innerHTML=renderGymExerciseEditor(currentSession);
+    applyGymTpl.onclick=()=>{
+      const k=gymTpl.value;if(!k||!gyms[k])return;
+      const names=new Set(gyms[k].items.map(i=>i.name));
+      document.querySelectorAll('.gymUse').forEach(cb=>cb.checked=names.has(allGymExercises()[Number(cb.dataset.i)].name));
+      sessTitle.value=`GYM-${k} · ${gyms[k].name}`;
+    };
+    return;
   }
   if(kind==='MAR'){
     const custom=await getTrainingLibrary('MAR');
     const rows=[...MAR_LIBRARY.map((x,i)=>({id:`m${i}`,name:x[0],content:x[1]})),...custom.map(x=>({id:x.id,name:x.name,content:x.content||''}))];
-    box.innerHTML=`<label>Biblioteca MAR<select id="libPick"><option value="">— Añadir bloque o plantilla —</option>${rows.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Añadir al contenido</button><button id="newLibItem">+ Crear ejercicio MAR</button></div>`;
-    loadLib.onclick=()=>{const x=rows.find(z=>String(z.id)===libPick.value);if(!x)return;sessContent.value+=(sessContent.value?'\n':'')+`${x.name}: ${x.content}`;};
+    box.innerHTML=`<div class="info"><b>Bloques MAR:</b> añade bloques concretos. Puedes combinar tiempo, metros, salidas y Virada-Ciaboga. Mantén el total alrededor de 60 min.</div><label>Biblioteca MAR<select id="libPick"><option value="">— Añadir bloque concreto —</option>${rows.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Añadir bloque</button><button id="newLibItem">+ Crear ejercicio MAR</button></div>`;
+    loadLib.onclick=()=>{const x=rows.find(z=>String(z.id)===libPick.value);if(!x)return;sessContent.value+=(sessContent.value?'\n':'')+x.content;};
     newLibItem.onclick=()=>createLibraryItem('MAR'); return;
   }
   box.innerHTML='<div class="muted">Día de descanso: no necesita biblioteca de ejercicios.</div>';
@@ -1397,12 +1427,22 @@ function sessionEditor(x=null){
  const team=planTeam.value,date=planDate.value;
  planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Pirámide de ritmos"></label></div>
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
- <label>Contenido / bloques</label><textarea id="sessContent" rows="8" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${x?.content||''}</textarea>
+ <label>Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${x?.content||''}</textarea>
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
- const refresh=()=>{renderEditorLibrary(sessType.value); typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> tiempo y metros pueden mezclarse. PPM es opcional y siempre la decide el entrenador. Usa Bajo/Medio/Alto solo como referencia visual.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga ni “no llegar al fallo”.</div>':'';};
- sessType.onchange=refresh; refresh(); cancelSess.onclick=renderPlanDay; saveSess.onclick=async()=>{const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:sessContent.value.trim(),updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error) alert(q.error.message); else renderPlanDay();};
+ const refresh=()=>{renderEditorLibrary(sessType.value,x); typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> usa bloques concretos (series por tiempo o metros, pirámides, salidas y Virada-Ciaboga). PPM es opcional y la decide el entrenador.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ sessType.onchange=()=>{x=null;refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
+ saveSess.onclick=async()=>{
+   let contentValue=sessContent.value.trim();
+   if(sessType.value==='GYM'){
+     const ex=allGymExercises(); const selected=[];
+     document.querySelectorAll('.gymUse').forEach(cb=>{if(cb.checked){const i=Number(cb.dataset.i),item=ex[i],dose=document.querySelector(`.gymDose[data-i="${i}"]`)?.value||item.dose,rest=document.querySelector(`.gymRest[data-i="${i}"]`)?.value||item.rest;selected.push(`${item.name} · ${dose} · rec ${rest}`)}});
+     if(!selected.length){alert('Selecciona al menos un ejercicio GYM.');return;}
+     contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
+   }
+   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error) alert(q.error.message); else renderPlanDay();
+ };
 }
 function raceEditor(){
  const team=planTeam.value,date=planDate.value;
