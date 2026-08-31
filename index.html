@@ -300,6 +300,9 @@ async function ergoLibrary(){
  if(coach) document.querySelectorAll(".saveLib").forEach(b=>b.onclick=async()=>{const code=b.dataset.code,x=rows.find(z=>z.code===code); const url=document.querySelector(`.libUrl[data-code="${code}"]`).value.trim(); const teams=document.querySelector(`.libTeam[data-code="${code}"]`).value; const phases=document.querySelector(`.libPhases[data-code="${code}"]`).value.trim(); const payload={code,name:x.name,zone:x.zone,url:url||null,teams,phases,is_active:true,updated_at:new Date().toISOString()}; const q=await sb.from("ergo_library").upsert(payload,{onConflict:"code"}); if(q.error) alert("No se pudo guardar: "+q.error.message); else {b.textContent="Guardado ✓";setTimeout(()=>b.textContent="Guardar",1200)}});
  if(!coach) document.querySelectorAll(".extraErgo").forEach(a=>a.onclick=async()=>{const x=rows.find(z=>z.code===a.dataset.code); try{await sb.from("ergo_intents").upsert({user_id:currentUser.id,scheduled_date:new Date().toISOString().slice(0,10),session_code:"EXTRA-"+x.code,session_name:x.name,ergdata_url:x.url,status:"additional"},{onConflict:"user_id,scheduled_date,session_code"});}catch(e){}});
 }
+// Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
+let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[];
+
 const schedules={
   veterans:[
     ["Lun",31,"DESC",null,"Descanso"],
@@ -365,8 +368,6 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[];
-
 async function startApp(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user) return;
