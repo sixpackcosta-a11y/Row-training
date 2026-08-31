@@ -11,7 +11,9 @@ main{max-width:720px;margin:0 auto}
 .ok{background:#e9f8ee} .err{background:#fff0f0} .muted{color:#637083}
 button,a.btn{display:inline-block;border:0;border-radius:10px;padding:12px 16px;background:#1267d6;color:white;text-decoration:none;font-weight:700}
 .result{border-top:1px solid #e6ebf2;padding:10px 0}
+button,a.btn{cursor:pointer}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <main>
@@ -19,49 +21,48 @@ button,a.btn{display:inline-block;border:0;border-radius:10px;padding:12px 16px;
 <div id="output"></div>
 </main>
 <script>
+const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
+const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 const expected=sessionStorage.getItem("concept2_oauth_state");
 const q=new URLSearchParams(location.search);
-const code=q.get("code");
-const returnedState=q.get("state");
-const error=q.get("error");
-const status=document.getElementById("status");
-const output=document.getElementById("output");
-
-function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const code=q.get("code"), returnedState=q.get("state"), oauthError=q.get("error");
+const status=document.getElementById("status"), output=document.getElementById("output");
 
 async function run(){
-  if(error) throw new Error("Concept2 no autorizó la conexión: "+error);
-  if(!code) throw new Error("No se ha recibido el código de autorización.");
-  if(expected && returnedState && expected!==returnedState) throw new Error("La comprobación de seguridad (state) no coincide.");
+  if(oauthError)throw new Error("Concept2 no autorizó la conexión: "+oauthError);
+  if(!code)throw new Error("No se ha recibido el código de autorización.");
+  if(expected&&returnedState&&expected!==returnedState)throw new Error("La comprobación de seguridad no coincide.");
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)throw new Error("Tu sesión de Row Training ha caducado. Vuelve a entrar y conecta Concept2 otra vez.");
 
-  const r=await fetch("/api/concept2-pilot",{
+  const r=await fetch("/api/concept2-connect",{
     method:"POST",
-    headers:{"Content-Type":"application/json"},
+    headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},
     body:JSON.stringify({code,redirect_uri:"https://rowtraining.vercel.app/concept2-callback.html"})
   });
-  const data=await r.json();
-  if(!r.ok) throw new Error(data?.error || "No se pudo conectar con Concept2.");
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||"No se pudo guardar la conexión Concept2.");
 
   sessionStorage.removeItem("concept2_oauth_state");
-  status.textContent="Conexión correcta. Concept2 ha devuelto datos reales.";
+  status.textContent="Concept2 conectado de forma permanente.";
   status.parentElement.classList.add("ok");
 
-  const user=data.user||{};
-  const rows=(data.results||[]).slice(0,10);
+  const sr=await fetch("/api/concept2-sync",{
+    method:"POST",
+    headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},
+    body:JSON.stringify({limit:50})
+  });
+  const sync=await sr.json().catch(()=>({}));
   output.innerHTML=`<div class="card">
     <h2>Cuenta conectada</h2>
-    <p><b>${esc(user.name || user.username || "Usuario Concept2")}</b></p>
-    <p class="muted">Piloto: no se ha guardado ningún token. Al cerrar esta prueba, la conexión no queda persistida.</p>
-  </div>
-  <div class="card"><h2>Últimos entrenamientos encontrados</h2>
-    ${rows.length?rows.map(x=>`<div class="result"><b>${esc(x.date||"")}</b> · ${esc(x.distance??"-")} m · ${esc(x.time_formatted||x.time||"-")}<br><span class="muted">${esc(x.workout_type||x.type||"")} · origen: ${esc(x.source||"-")}</span></div>`).join(""):"<p>No se han encontrado resultados recientes.</p>"}
-  </div>
-  <div class="card"><a class="btn" href="/">Volver a Row Training</a></div>`;
+    <p><b>${data.user?.username||"Usuario Concept2"}</b></p>
+    <p>${sr.ok?`Sincronización inicial: <b>${sync.imported||0}</b> nuevos · <b>${sync.updated||0}</b> actualizados.`:"La cuenta quedó conectada. La sincronización se podrá repetir desde Perfil."}</p>
+    <p class="muted">A partir de ahora Row Training puede renovar la autorización sin pedirte la contraseña de Concept2.</p>
+  </div><div class="card"><a class="btn" href="/">Volver a Row Training</a></div>`;
 }
-
 run().catch(e=>{
-  status.textContent=e.message;
-  status.parentElement.classList.add("err");
+  status.textContent=e.message; status.parentElement.classList.add("err");
   output.innerHTML='<div class="card"><a class="btn" href="/">Volver a Row Training</a></div>';
 });
 </script>

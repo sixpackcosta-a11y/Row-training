@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Remo V29</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V36</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
 .realPhoto{object-fit:contain;background:#fff;display:block}.thumb.realPhoto{width:min(220px,42vw);height:auto;max-width:42%;max-height:none}.fullimg.realPhoto{width:100%;height:auto;max-width:100%;object-fit:contain}
@@ -70,7 +70,12 @@
 .altChoose.selected{background:#dff4e6;border-color:#70c28a}
 .variantStatus{margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:#eef7ff;font-weight:750}
 .mainChoose{margin:8px 0 0;width:100%}
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><b>🚣 Remo</b><span id="role"></span></header><main>
+
+/* V36: every real interactive control shows the expected desktop pointer */
+button:not(:disabled), a[href], label.btn, summary, .daybtn, .altChoose, .mainChoose, [role="button"]{cursor:pointer}
+button:disabled{cursor:not-allowed}
+
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><b>🚣 Row Training</b><span id="role"></span></header><main>
 <div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><p class="muted">No se guarda la contraseña.</p></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
 <script>
@@ -643,15 +648,26 @@ function gym(k){
 
 async function history(){
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando…</p></div>';
-  const {data:workouts,error:e1}=await sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50);
-  const {data:items,error:e2}=await sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300);
-  const err=e1||e2;
+  const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
+    sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
+    sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300),
+    sb.from("concept2_results").select("*").eq("user_id",currentUser.id).order("workout_date",{ascending:false}).limit(100)
+  ]);
+  const err=e1||e2||e3;
   if(err){content.innerHTML=`<div class="card"><h2>Historial</h2><p>${err.message}</p></div>`;return}
+
+  const c2html=(c2||[]).length?`<div class="card"><h3>Concept2 / ErgData</h3>${c2.map(r=>{
+    const pace=r.pace_500_seconds?secondsToTime(r.pace_500_seconds):"-";
+    const match=r.match_status==="matched"?`<span class="tag">Asociado · ${r.matched_session_code||""}</span>`:
+      r.match_status==="review"?'<span class="tag">Revisar asociación</span>':'<span class="tag">No programado</span>';
+    return `<div class="last"><b>${new Date(r.workout_date).toLocaleString("es-ES")}</b> ${match}<br>${r.distance_m??"-"} m · ${r.time_formatted||"-"} · /500 ${pace} · ${r.spm??"-"} spm<br><small>${r.source||"Concept2"} · confianza ${r.match_confidence??0}%</small></div>`;
+  }).join("")}</div>`:"";
+
   content.innerHTML='<div class="card"><h2>Historial</h2>'+
+    c2html+
     (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
   '</div>';
 }
-
 
 function estimateMaxHR(age, sex, trained){
   age=Number(age);
@@ -707,7 +723,8 @@ const CONCEPT2_CLIENT_ID="bx8m9j1Qj8GZnN3ni8Wz5QEb15SHB9amysaSgelu";
 const CONCEPT2_REDIRECT_URI="https://rowtraining.vercel.app/concept2-callback.html";
 const CONCEPT2_SCOPE="user:read,results:read";
 
-function connectConcept2(){
+async function connectConcept2(){
+  if(!currentUser)return alert("Inicia sesión primero.");
   const state=(crypto?.randomUUID?.() || (Date.now()+"-"+Math.random())).replace(/[^a-zA-Z0-9_-]/g,"");
   sessionStorage.setItem("concept2_oauth_state",state);
   const u=new URL("https://log.concept2.com/oauth/authorize");
@@ -717,6 +734,28 @@ function connectConcept2(){
   u.searchParams.set("redirect_uri",CONCEPT2_REDIRECT_URI);
   u.searchParams.set("state",state);
   location.href=u.toString();
+}
+
+async function concept2Status(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return {connected:false};
+  const r=await fetch("/api/concept2-sync",{headers:{Authorization:`Bearer ${session.access_token}`}});
+  if(!r.ok)return {connected:false};
+  return r.json();
+}
+
+async function syncConcept2(showAlert=true){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return showAlert&&alert("Inicia sesión primero.");
+  const r=await fetch("/api/concept2-sync",{
+    method:"POST",
+    headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},
+    body:JSON.stringify({limit:50})
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok){ if(showAlert) alert(data.error||"No se pudo sincronizar Concept2."); return data; }
+  if(showAlert) alert(`Concept2 sincronizado: ${data.imported||0} nuevos · ${data.updated||0} actualizados.`);
+  return data;
 }
 async function profile(){
   const {data:pdata}=await sb.from("profiles").select("*").eq("user_id",currentUser.id).single();
@@ -787,10 +826,13 @@ async function profile(){
   </div>
   <div class="card">
     <h2>Concept2 / ErgData</h2>
-    <p>Conecta tu propia cuenta de Concept2 para comprobar que Row Training puede leer tus entrenamientos sincronizados desde ErgData.</p>
-    <div class="info"><b>Piloto seguro:</b> esta prueba solo lee tus datos. No escribe resultados en Concept2 y todavía no guarda el token de conexión.</div>
-    <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
-    <p class="muted"><small>Permisos solicitados: perfil y resultados en modo lectura.</small></p>
+    <p>Conecta tu propia cuenta una sola vez. Row Training podrá importar tus resultados sincronizados por ErgData.</p>
+    <div id="concept2State" class="info">Comprobando conexión…</div>
+    <div class="actions">
+      <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
+      <button id="syncConcept2Btn" type="button">Sincronizar ahora</button>
+    </div>
+    <p class="muted"><small>Solo lectura: perfil y resultados. La contraseña de Concept2 nunca pasa por Row Training.</small></p>
   </div>`;
 
   function fillZones(){
@@ -833,6 +875,20 @@ async function profile(){
   estimateHr.onclick=estimateHrMax;
   calcZones.onclick=fillZones;
   document.getElementById("connectConcept2").onclick=connectConcept2;
+  document.getElementById("syncConcept2Btn").onclick=async()=>{await syncConcept2(true); const st=await concept2Status(); paintConcept2State(st);};
+  function paintConcept2State(st){
+    const box=document.getElementById("concept2State");
+    if(!box)return;
+    if(st?.connected){
+      box.innerHTML=`✅ <b>Concept2 conectado</b>${st.username?` · ${st.username}`:""}<br><small>Última sincronización: ${st.last_sync_at?new Date(st.last_sync_at).toLocaleString("es-ES"):"pendiente"}</small>`;
+      document.getElementById("connectConcept2").textContent="Reconectar Concept2";
+      document.getElementById("syncConcept2Btn").disabled=false;
+    }else{
+      box.innerHTML="Concept2 todavía no está conectado.";
+      document.getElementById("syncConcept2Btn").disabled=true;
+    }
+  }
+  concept2Status().then(paintConcept2State).catch(()=>paintConcept2State({connected:false}));
 
   // Auto-recalculate zones when HR values change.
   pf_max.addEventListener("change",()=>{ if(pf_rest.value) fillZones(); });
@@ -921,8 +977,9 @@ async function results(){
     .order("created_at",{ascending:false});
 
   const {data:ergo,error:e4}=await sb.from("ergo_results").select("*").order("created_at",{ascending:false});
+  const {data:c2results,error:e5}=await sb.from("concept2_results").select("*").order("workout_date",{ascending:false});
 
-  const err=e1||eRole||eM||e2||e3||e4;
+  const err=e1||eRole||eM||e2||e3||e4||e5;
   if(err){
     content.innerHTML=`<div class="card"><h2>Panel del entrenador</h2><p>${err.message}</p></div>`;
     return;
@@ -941,6 +998,8 @@ async function results(){
     ${athletes.map((p,idx)=>{
       const ws=(workouts||[]).filter(w=>w.user_id===p.user_id);
       const latest=ws[0];
+      const c2s=(c2results||[]).filter(r=>r.user_id===p.user_id);
+      const c2last=c2s[0];
       return `<div class="card athleteCard">
         <div class="athleteHead">
           <div>
