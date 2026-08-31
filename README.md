@@ -28,3 +28,5 @@ Actívalo para Production (y Preview si quieres probar previews) y vuelve a desp
 - Supabase.
 - FC y zonas.
 - OCR multifoto.
+
+- V35 - Integración Concept2
