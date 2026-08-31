@@ -832,7 +832,7 @@ async function profile(){
 
   estimateHr.onclick=estimateHrMax;
   calcZones.onclick=fillZones;
-  connectConcept2.onclick=connectConcept2;
+  document.getElementById("connectConcept2").onclick=connectConcept2;
 
   // Auto-recalculate zones when HR values change.
   pf_max.addEventListener("change",()=>{ if(pf_rest.value) fillZones(); });
