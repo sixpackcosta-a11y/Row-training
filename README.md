@@ -60,3 +60,10 @@ V41 copia la planificación base por categoría de forma independiente:
 - Veteranas femenino → Veteranos masculino.
 - Senior masculino → Senior femenino.
 Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
+
+## V42
+- La cabecera muestra el nombre real del usuario.
+- Cada remero tiene `profiles.team_code` y el entrenador puede asignarlo desde Panel del entrenador.
+- La Biblioteca ERGO reconoce agosto como fase BASE, evitando que aparezca vacía el 31/08.
+- La categoría se obtiene del equipo asignado, no del nombre del remero.
+- Los entrenadores con filas en `coach_team_access` solo ven esos equipos en Planificar; sin filas conservan acceso global de administrador.
