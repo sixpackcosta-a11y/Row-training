@@ -34,3 +34,12 @@ Los access/refresh tokens se guardan en `concept2_connections`, una tabla sin ac
 3. `Sincronizar ahora` o abrir `Historial` importa Concept2 y compara fecha + duración/distancia + SPM + tipo.
 4. ≥80%: asociado automáticamente. 60–79%: coincidencia dudosa. <60%: no programado.
 5. El botón `Abrir entrenamiento en ErgData` usa `ergdata_url` de la intención. Hasta que el entrenador cargue el enlace compartido, avisa sin inventar una URL.
+
+## V38
+- Biblioteca ERGO integrada y editable por entrenador.
+- Enlaces ErgData depurados precargados.
+- Biblioteca adicional del remero filtrada por equipo/fase.
+- Sesiones adicionales se registran como intención `additional` y no sustituyen la programada.
+- El ERGO programado 3×10' abre directamente su enlace ErgData.
+- Cursor pointer global en controles interactivos.
+- Ejecutar `setup_v38.sql` una vez en Supabase.
