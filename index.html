@@ -244,8 +244,62 @@ const alternativeExerciseLibrary = {
     how:"Apoya los antebrazos en un banco y mantén el cuerpo alineado desde la cabeza hasta los pies.",
     keys:"Abdomen firme · glúteos activos · hombros relajados.",
     error:"Dejar caer o elevar demasiado la cadera."}
+  ,"Remo en tabla / remo tumbado": {asset:"assets/visuals/table_row.png", dose:"3×8-12", rest:"75-90 s", how:"Túmbate boca abajo con el pecho apoyado y lleva los codos hacia atrás sin despegar el tronco.", keys:"Pecho apoyado · hombros bajos · pausa arriba.", error:"Levantar el pecho o tirar con impulso."}
+  ,"Carrera": {asset:"assets/visuals/running.png", dose:"10-20 min", rest:"—", how:"Carrera continua cómoda, técnica relajada y ritmo conversacional cuando sea trabajo aeróbico.", keys:"Postura alta · zancada natural · sin buscar fatiga de piernas.", error:"Convertir una sesión suave en una carrera máxima."}
+  ,"Escaleras": {asset:"assets/visuals/stairs.png", dose:"6×30-45 s", rest:"60-75 s", how:"Sube con pasos rápidos y controlados; baja andando para recuperar.", keys:"Apoyo estable · tronco alto · calidad antes que velocidad.", error:"Seguir cuando la técnica se deteriora."}
+  ,"Burpees": {asset:"assets/visuals/burpees.png", dose:"3×8-10", rest:"60-75 s", how:"Desde de pie, manos al suelo, lleva los pies atrás, vuelve y termina erguido con salto suave si corresponde.", keys:"Core firme · recepción estable · ritmo controlado.", error:"Perder postura lumbar por fatiga."}
+  ,"Salto al cajón": {asset:"assets/visuals/box_jump.png", dose:"3×5", rest:"90-120 s", how:"Carga cadera y brazos, salta al cajón y aterriza estable; baja andando entre repeticiones.", keys:"Pocas repeticiones · máxima calidad · aterrizaje silencioso.", error:"Saltar fatigado o usar un cajón demasiado alto."}
 };
 
+const alternativeVisualMap={
+  "Sentadilla goblet a cajón":"assets/visuals/squat.png",
+  "Zancada asistida":"assets/visuals/walking_lunge.png",
+  "Sentadilla con mancuerna":"assets/visuals/squat.png",
+  "Peso muerto rumano con mancuernas":"assets/visuals/rdl.png",
+  "Buenos días con banda":"assets/visuals/good_morning_band.png",
+  "Puente de glúteo / hip thrust":"assets/visuals/hip_thrust.png",
+  "Jalón con banda elástica desde arriba":"assets/visuals/lat_pulldown.png",
+  "Dominada asistida":"assets/visuals/pullup.png",
+  "Remo con banda si no hay anclaje alto":"assets/visuals/band_row.png",
+  "Remo con mancuerna":"assets/visuals/onearm_db_row.png",
+  "Remo con banda elástica":"assets/visuals/band_row.png",
+  "Remo pecho apoyado con mancuernas":"assets/visuals/chest_supported_row.png",
+  "Pallof press con banda":"assets/visuals/pallof.png",
+  "Isométrico antirotación con banda":"assets/visuals/pallof.png",
+  "Dead bug si no hay anclaje":"assets/visuals/dead_bug.png",
+  "Paseo con kettlebells":"assets/visuals/farmer.png",
+  "Paseo con discos":"assets/visuals/farmer.png",
+  "Marcha en el sitio con mancuernas":"assets/visuals/farmer.png",
+  "Sentadilla a banco sin carga":"assets/visuals/squat.png",
+  "Sentadilla goblet sin cajón":"assets/visuals/squat.png",
+  "Prensa si está disponible":"assets/visuals/leg_press.png",
+  "Puente de glúteo en suelo":"assets/visuals/hip_thrust.png",
+  "Hip thrust con mancuerna":"assets/visuals/hip_thrust.png",
+  "Puente de glúteo con banda":"assets/visuals/hip_thrust.png",
+  "Remo con banda a una mano":"assets/visuals/band_row.png",
+  "Remo pecho apoyado":"assets/visuals/chest_supported_row.png",
+  "Remo en polea sentado":"assets/visuals/cable_row.png",
+  "Press con mancuernas":"assets/visuals/dumbbell_bench_press.png",
+  "Press en máquina":"assets/visuals/machine_press.png",
+  "Flexiones inclinadas":"assets/visuals/pushup.png",
+  "Plancha con rodillas apoyadas":"assets/visuals/front_plank.png",
+  "Dead bug":"assets/visuals/dead_bug.png",
+  "Plancha elevada en banco":"assets/visuals/front_plank.png",
+  "Sentadilla goblet con mancuerna":"assets/visuals/squat.png",
+  "Zancada asistida con mancuernas":"assets/visuals/walking_lunge.png",
+  "Sentadilla con banda elástica":"assets/visuals/squat.png",
+  "Sentadilla a silla en casa":"assets/visuals/squat.png",
+  "Remo con mochila en casa":"assets/visuals/barbell_row.png",
+  "Paseo con mancuernas":"assets/visuals/farmer.png",
+  "Marcha con banda + carga":"assets/visuals/farmer.png",
+  "Marcha en casa con garrafas o mochilas":"assets/visuals/farmer.png",
+  "Plancha elevada en mesa o banco":"assets/visuals/front_plank.png"
+  ,"Remo en tabla / remo tumbado":"assets/visuals/table_row.png"
+  ,"Carrera":"assets/visuals/running.png"
+  ,"Escaleras":"assets/visuals/stairs.png"
+  ,"Burpees":"assets/visuals/burpees.png"
+  ,"Salto al cajón":"assets/visuals/box_jump.png"
+};
 function normalizeAltName(txt){
   return String(txt||"").replace(/\s*·.*$/,"").trim();
 }
@@ -259,12 +313,15 @@ function altExerciseCard(altTxt,exerciseIndex){
     error:"Forzar el movimiento o utilizar una carga que altere la técnica."
   };
   let visual="";
-  if(a.asset){
+  const exactAsset=alternativeVisualMap[name];
+  if(exactAsset){
+    visual=`<div class="altVisual">${renderSingleImage(exactAsset,name,"realPhoto")}</div>`;
+  }else if(a.asset){
     visual=`<div class="altVisual">${renderSingleImage(a.asset,name,"realPhoto")}</div>`;
   }else if(a.img && visuals[a.img]){
     visual=`<div class="altVisual">${renderSingleImage(visuals[a.img].src,name,"realPhoto")}</div>`;
   }else{
-    visual=`<div class="altVisual"><div class="altNoVisual">Guía visual<br>del movimiento</div></div>`;
+    visual=`<div class="altVisual"><div class="altNoVisual">Sin imagen disponible</div></div>`;
   }
   return `<div class="altCard" data-altcard="${exerciseIndex}" data-altname="${encodeURIComponent(name)}">
     <div class="altHead">
@@ -284,7 +341,7 @@ function altExerciseCard(altTxt,exerciseIndex){
     <button type="button" class="altChoose" data-ex="${exerciseIndex}" data-alt="${encodeURIComponent(name)}">✓ Elegir esta alternativa</button>
   </div>`;
 }
-const gyms={"A": {"name": "Fuerza piernas + espalda", "items": [{"name": "Prensa", "dose": "3×8-10", "rest": "2 min", "img": "prensa", "alternatives":["Sentadilla goblet a cajón","Zancada asistida","Sentadilla con mancuerna"], "how": "Empuja con todo el pie y controla la bajada.", "keys": "Rodillas alineadas · pelvis apoyada · bajada controlada.", "error": "No despegar la pelvis ni bloquear las rodillas."}, {"name": "Peso muerto rumano", "dose": "3×8-10", "rest": "2 min", "img": "rumano", "alternatives":["Peso muerto rumano con mancuernas","Buenos días con banda","Puente de glúteo / hip thrust"], "how": "Lleva la cadera atrás manteniendo la espalda neutra.", "keys": "Cadera atrás · carga cerca · abdomen firme.", "error": "Redondear la espalda o convertirlo en sentadilla."}, {"name": "Jalón al pecho", "dose": "3×8-12", "rest": "90 s", "img": "jalon", "alternatives":["Jalón con banda elástica desde arriba","Dominada asistida","Remo con banda si no hay anclaje alto"], "how": "Lleva la barra hacia la parte alta del pecho sin balancearte.", "keys": "Pecho alto · hombros abajo · controla la vuelta.", "error": "Tirar con impulso o llevar la barra tras la nuca."}, {"name": "Remo", "dose": "3×8-12", "rest": "90 s", "img": "remo", "alternatives":["Remo con mancuerna","Remo con banda elástica","Remo pecho apoyado con mancuernas"], "how": "Lleva los codos atrás manteniendo estable el tronco.", "keys": "Pecho estable · hombros bajos · pausa al final.", "error": "Balancear el cuerpo para mover más peso."}, {"name": "Pallof press", "dose": "3×10/lado", "rest": "60 s", "img": "pallof", "alternatives":["Pallof press con banda","Isométrico antirotación con banda","Dead bug si no hay anclaje"], "how": "Aleja las manos del pecho resistiendo el giro del tronco.", "keys": "Costillas abajo · glúteos activos · no gires.", "error": "Dejar que el tronco rote."}, {"name": "Farmer carry", "dose": "3×30-40 m", "rest": "60-90 s", "img": "farmer", "alternatives":["Paseo con kettlebells","Paseo con discos","Marcha en el sitio con mancuernas"], "how": "Camina erguido sujetando carga a ambos lados.", "keys": "Postura alta · abdomen firme · pasos controlados.", "error": "Inclinarte o encoger los hombros."}]}, "B": {"name": "Cadena posterior + core", "items": [{"name": "Goblet squat a cajón", "dose": "3×8-10", "rest": "90 s", "img": "goblet", "alternatives":["Sentadilla a banco sin carga","Sentadilla goblet sin cajón","Prensa si está disponible"], "how": "Baja con control hasta tocar el cajón y vuelve a subir.", "keys": "Pie completo · rodillas alineadas · pecho estable.", "error": "Dejarte caer sobre el cajón."}, {"name": "Hip thrust", "dose": "3×8-12", "rest": "90 s", "img": "hip", "alternatives":["Puente de glúteo en suelo","Hip thrust con mancuerna","Puente de glúteo con banda"], "how": "Extiende la cadera y aprieta glúteos arriba.", "keys": "Barbilla recogida · costillas abajo · pausa arriba.", "error": "Hiperextender la zona lumbar."}, {"name": "Remo unilateral", "dose": "3×8-12/lado", "rest": "90 s", "img": "remo_unilateral", "alternatives":["Remo con banda a una mano","Remo pecho apoyado","Remo en polea sentado"], "how": "Lleva el codo hacia la cadera sin girar el torso.", "keys": "Espalda neutra · hombro bajo · control.", "error": "Rotar el torso."}, {"name": "Press", "dose": "3×8-12", "rest": "90 s", "img": "press", "alternatives":["Press con mancuernas","Press en máquina","Flexiones inclinadas"], "how": "Empuja manteniendo el tronco estable.", "keys": "Abdomen firme · muñeca neutra · movimiento controlado.", "error": "Arquear demasiado la espalda."}, {"name": "Plancha", "dose": "3×20-40 s", "rest": "60 s", "img": "plancha", "alternatives":["Plancha con rodillas apoyadas","Dead bug","Plancha elevada en banco"], "how": "Mantén una línea estable entre hombros, cadera y pies.", "keys": "Glúteos activos · abdomen firme · respira.", "error": "Dejar caer o subir demasiado la cadera."}]}, "C": {"name":"Fuerza general + estabilidad","items":[{"name":"Prensa","dose":"3×8-10","rest":"2 min","img":"prensa","alternatives":["Sentadilla goblet con mancuerna · 3×10","Zancada asistida con mancuernas · 3×8/lado","Sentadilla con banda elástica · 3×12","Sentadilla a silla en casa · 3×12"],"how":"Empuja con todo el pie y controla la bajada.","keys":"Rodillas alineadas · pelvis apoyada · bajada controlada.","error":"No despegar la pelvis ni bloquear las rodillas."},{"name":"Remo","dose":"3×10","rest":"90 s","img":"remo","alternatives":["Remo con mancuerna · 3×10/lado","Remo con banda elástica · 3×12","Remo con mochila en casa · 3×12"],"how":"Lleva los codos atrás manteniendo estable el tronco.","keys":"Pecho estable · hombros bajos · pausa al final.","error":"Balancear el cuerpo para mover más peso."},{"name":"Farmer carry","dose":"3×30-40 m","rest":"60-90 s","img":"farmer","alternatives":["Paseo con mancuernas · 3×30-40 m","Marcha con banda + carga · 3×45 s","Marcha en casa con garrafas o mochilas · 3×45 s"],"how":"Camina erguido sujetando carga a ambos lados.","keys":"Postura alta · abdomen firme · pasos controlados.","error":"Inclinarte o encoger los hombros."},{"name":"Plancha","dose":"3×30-40 s","rest":"60 s","img":"plancha","alternatives":["Plancha con rodillas apoyadas · 3×30 s","Dead bug · 3×8/lado","Plancha elevada en mesa o banco · 3×30-40 s"],"how":"Mantén una línea estable entre hombros, cadera y pies.","keys":"Glúteos activos · abdomen firme · respira.","error":"Dejar caer o subir demasiado la cadera."}]}};
+const gyms={"A": {"name": "Fuerza piernas + espalda", "items": [{"name": "Prensa", "dose": "3×8-10", "rest": "2 min", "img": "prensa", "alternatives":["Sentadilla goblet a cajón","Zancada asistida","Sentadilla con mancuerna"], "how": "Empuja con todo el pie y controla la bajada.", "keys": "Rodillas alineadas · pelvis apoyada · bajada controlada.", "error": "No despegar la pelvis ni bloquear las rodillas."}, {"name": "Peso muerto rumano", "dose": "3×8-10", "rest": "2 min", "img": "rumano", "alternatives":["Peso muerto rumano con mancuernas","Buenos días con banda","Puente de glúteo / hip thrust"], "how": "Lleva la cadera atrás manteniendo la espalda neutra.", "keys": "Cadera atrás · carga cerca · abdomen firme.", "error": "Redondear la espalda o convertirlo en sentadilla."}, {"name": "Jalón al pecho", "dose": "3×8-12", "rest": "90 s", "img": "jalon", "alternatives":["Jalón con banda elástica desde arriba","Dominada asistida","Remo con banda si no hay anclaje alto"], "how": "Lleva la barra hacia la parte alta del pecho sin balancearte.", "keys": "Pecho alto · hombros abajo · controla la vuelta.", "error": "Tirar con impulso o llevar la barra tras la nuca."}, {"name": "Remo", "dose": "3×8-12", "rest": "90 s", "img": "remo", "alternatives":["Remo con mancuerna","Remo con banda elástica","Remo pecho apoyado con mancuernas"], "how": "Lleva los codos atrás manteniendo estable el tronco.", "keys": "Pecho estable · hombros bajos · pausa al final.", "error": "Balancear el cuerpo para mover más peso."}, {"name": "Pallof press", "dose": "3×10/lado", "rest": "60 s", "img": "pallof", "alternatives":["Pallof press con banda","Isométrico antirotación con banda","Dead bug si no hay anclaje"], "how": "Aleja las manos del pecho resistiendo el giro del tronco.", "keys": "Costillas abajo · glúteos activos · no gires.", "error": "Dejar que el tronco rote."}, {"name": "Farmer carry", "dose": "3×30-40 m", "rest": "60-90 s", "img": "farmer", "alternatives":["Paseo con kettlebells","Paseo con discos","Marcha en el sitio con mancuernas"], "how": "Camina erguido sujetando carga a ambos lados.", "keys": "Postura alta · abdomen firme · pasos controlados.", "error": "Inclinarte o encoger los hombros."}]}, "B": {"name": "Cadena posterior + core", "items": [{"name": "Goblet squat a cajón", "dose": "3×8-10", "rest": "90 s", "img": "goblet", "alternatives":["Sentadilla a banco sin carga","Sentadilla goblet sin cajón","Prensa si está disponible"], "how": "Baja con control hasta tocar el cajón y vuelve a subir.", "keys": "Pie completo · rodillas alineadas · pecho estable.", "error": "Dejarte caer sobre el cajón."}, {"name": "Hip thrust", "dose": "3×8-12", "rest": "90 s", "img": "hip", "alternatives":["Puente de glúteo en suelo","Hip thrust con mancuerna","Puente de glúteo con banda"], "how": "Extiende la cadera y aprieta glúteos arriba.", "keys": "Barbilla recogida · costillas abajo · pausa arriba.", "error": "Hiperextender la zona lumbar."}, {"name": "Remo unilateral", "dose": "3×8-12/lado", "rest": "90 s", "img": "remo_unilateral", "alternatives":["Remo con banda a una mano","Remo pecho apoyado","Remo en polea sentado"], "how": "Lleva el codo hacia la cadera sin girar el torso.", "keys": "Espalda neutra · hombro bajo · control.", "error": "Rotar el torso."}, {"name": "Press", "dose": "3×8-12", "rest": "90 s", "img": "press", "alternatives":["Press con mancuernas","Press en máquina","Flexiones inclinadas"], "how": "Empuja manteniendo el tronco estable.", "keys": "Abdomen firme · muñeca neutra · movimiento controlado.", "error": "Arquear demasiado la espalda."}, {"name": "Plancha", "dose": "3×20-40 s", "rest": "60 s", "img": "plancha", "alternatives":["Plancha con rodillas apoyadas","Dead bug","Plancha elevada en banco"], "how": "Mantén una línea estable entre hombros, cadera y pies.", "keys": "Glúteos activos · abdomen firme · respira.", "error": "Dejar caer o subir demasiado la cadera."}]}, "C": {"name":"Potencia + acondicionamiento","items":[{"name":"Salto al cajón","dose":"3×5","rest":"90-120 s","asset":"assets/visuals/box_jump.png","img":"box_jump","alternatives":["Sentadilla goblet a cajón","Zancada asistida"],"how":"Salta con intención y aterriza estable; baja andando.","keys":"Pocas repeticiones · máxima calidad · descanso completo.","error":"Hacerlo fatigado o encadenar saltos rápidos."},{"name":"Remo en tabla / remo tumbado","dose":"3×8-12","rest":"75-90 s","asset":"assets/visuals/table_row.png","img":"table_row","alternatives":["Remo pecho apoyado con mancuernas","Remo con mancuerna","Remo con banda elástica"],"how":"Con el pecho apoyado, lleva los codos atrás sin balanceo.","keys":"Pecho fijo · hombros bajos · pausa arriba.","error":"Despegar el pecho o usar impulso."},{"name":"Escaleras","dose":"6×30-45 s","rest":"60-75 s","asset":"assets/visuals/stairs.png","img":"stairs","alternatives":["Carrera"],"how":"Sube con pasos rápidos y controlados y recupera bajando andando.","keys":"Calidad · apoyo estable · tronco alto.","error":"Mantener intensidad cuando cae la técnica."},{"name":"Burpees","dose":"3×8-10","rest":"60-75 s","asset":"assets/visuals/burpees.png","img":"burpees","alternatives":["Carrera"],"how":"Encadena el movimiento con control y termina erguido; salto suave solo si se mantiene la técnica.","keys":"Core firme · recepción estable · ritmo sostenible.","error":"Buscar velocidad a costa de la postura."},{"name":"Carrera","dose":"10-15 min","rest":"—","asset":"assets/visuals/running.png","img":"running","alternatives":["Escaleras"],"how":"Carrera continua cómoda como acondicionamiento aeróbico.","keys":"Ritmo conversacional · técnica relajada · sin fatiga residual.","error":"Convertirla en una sesión máxima."},{"name":"Pallof press","dose":"2×10/lado","rest":"45-60 s","img":"pallof","alternatives":["Dead bug","Plancha"],"how":"Aleja las manos del pecho resistiendo el giro del tronco.","keys":"Costillas abajo · glúteos activos · no gires.","error":"Dejar que el tronco rote."}]}};
 const ERGO_LIBRARY_DEFAULTS=[
  {code:"UT2-2X10-20",zone:"UT2",name:"UT2 · 2×10' @20 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/vdc44zna"},
  {code:"UT2-3X10-20",zone:"UT2",name:"UT2 · 3×10' @20 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/dp1o0oix"},
@@ -356,17 +413,22 @@ let schedule=schedules[teamKey()];
 function refreshTeamSchedule(){schedule=schedules[teamKey()];}
 
 const visuals={
-  prensa:{type:"composite",src:"assets/prensa.png"},
-  rumano:{type:"composite",src:"assets/rumano.png"},
-  jalon:{type:"composite",src:"assets/jalon.png"},
-  remo:{type:"composite",src:"assets/remo.png"},
-  pallof:{type:"composite",src:"assets/pallof.png"},
-  farmer:{type:"composite",src:"assets/farmer.png"},
-  goblet:{type:"composite",src:"assets/goblet.png"},
-  hip:{type:"composite",src:"assets/hip.png"},
-  remo_unilateral:{type:"composite",src:"assets/remo_unilateral.png"},
-  press:{type:"composite",src:"assets/press.png"},
-  plancha:{type:"composite",src:"assets/plancha.png"}
+  prensa:{type:"composite",src:"assets/visuals/leg_press.png"},
+  rumano:{type:"composite",src:"assets/visuals/rdl.png"},
+  jalon:{type:"composite",src:"assets/visuals/lat_pulldown.png"},
+  remo:{type:"composite",src:"assets/visuals/barbell_row.png"},
+  pallof:{type:"composite",src:"assets/visuals/pallof.png"},
+  farmer:{type:"composite",src:"assets/visuals/farmer.png"},
+  goblet:{type:"composite",src:"assets/visuals/squat.png"},
+  hip:{type:"composite",src:"assets/visuals/hip_thrust.png"},
+  remo_unilateral:{type:"composite",src:"assets/visuals/onearm_db_row.png"},
+  press:{type:"composite",src:"assets/visuals/bench_press.png"},
+  plancha:{type:"composite",src:"assets/visuals/front_plank.png"},
+  box_jump:{type:"composite",src:"assets/visuals/box_jump.png"},
+  table_row:{type:"composite",src:"assets/visuals/table_row.png"},
+  stairs:{type:"composite",src:"assets/visuals/stairs.png"},
+  burpees:{type:"composite",src:"assets/visuals/burpees.png"},
+  running:{type:"composite",src:"assets/visuals/running.png"}
 };
 function renderSingleImage(src,alt,klass){
   return `<img class="${klass} realPhoto" src="${src}" alt="${alt}" referrerpolicy="no-referrer" loading="lazy">`;
@@ -713,7 +775,7 @@ function showSelected(){
   const x=schedule[selected];
   const el=document.getElementById("selectedSession");
   if(x[2]==="GYM"){
-    el.innerHTML=`<div class="card session"><span class="tag">${x[0]} ${x[1]} · GYM</span><h2>${title(x)}</h2><p class="muted">Sin llegar al fallo. Valora cada ejercicio de forma sencilla. · ⏱️ 75-90 min</p><button id="openGym" class="primary">Abrir entrenamiento</button></div>`;
+    el.innerHTML=`<div class="card session"><span class="tag">${x[0]} ${x[1]} · GYM</span><h2>${title(x)}</h2><p class="muted">Sin llegar al fallo. Valora cada ejercicio de forma sencilla. · ⏱️ aprox. 55-60 min</p><button id="openGym" class="primary">Abrir entrenamiento</button></div>`;
     openGym.onclick=()=>gym(x[3]);
   } else if(x[2]==="ERG"){
     el.innerHTML='<div class="card"></div>';
