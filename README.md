@@ -1,3 +1,7 @@
+## Row Training V56
+
+Navegación simplificada para entrenador: Hoy · Planificación · Análisis · Biblioteca ERGO. Calendario/Mes/Temporada quedan integrados en Planificación; Resultados pasa a Análisis con MAR y ERGO/Remeros.
+
 # Row Training V36
 
 ## Qué cambia

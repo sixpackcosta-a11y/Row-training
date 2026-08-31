@@ -254,46 +254,46 @@ const alternativeExerciseLibrary = {
 const alternativeVisualMap={
   "Sentadilla goblet a cajón":"assets/visuals/squat.png",
   "Zancada asistida":"assets/visuals/walking_lunge.png",
-  "Sentadilla con mancuerna":"assets/visuals/squat.png",
-  "Peso muerto rumano con mancuernas":"assets/visuals/rdl.png",
+  "Sentadilla con mancuerna":"assets/visuals/barbell_squat.png",
+  "Peso muerto rumano con mancuernas":"assets/visuals/rdl2.png",
   "Buenos días con banda":"assets/visuals/good_morning_band.png",
-  "Puente de glúteo / hip thrust":"assets/visuals/hip_thrust.png",
-  "Jalón con banda elástica desde arriba":"assets/visuals/lat_pulldown.png",
-  "Dominada asistida":"assets/visuals/pullup.png",
-  "Remo con banda si no hay anclaje alto":"assets/visuals/band_row.png",
+  "Puente de glúteo / hip thrust":"assets/visuals/hip_thrust3.png",
+  "Jalón con banda elástica desde arriba":"assets/visuals/lat_pulldown2.png",
+  "Dominada asistida":"assets/visuals/pullup2.png",
+  "Remo con banda si no hay anclaje alto":"assets/visuals/band_row2.png",
   "Remo con mancuerna":"assets/visuals/onearm_db_row.png",
-  "Remo con banda elástica":"assets/visuals/band_row.png",
-  "Remo pecho apoyado con mancuernas":"assets/visuals/chest_supported_row.png",
+  "Remo con banda elástica":"assets/visuals/cable_row.png",
+  "Remo pecho apoyado con mancuernas":"assets/visuals/chest_supported_row2.png",
   "Pallof press con banda":"assets/visuals/pallof.png",
-  "Isométrico antirotación con banda":"assets/visuals/pallof.png",
-  "Dead bug si no hay anclaje":"assets/visuals/dead_bug.png",
+  "Isométrico antirotación con banda":"assets/visuals/pallof2.png",
+  "Dead bug si no hay anclaje":"assets/visuals/dead_bug2.png",
   "Paseo con kettlebells":"assets/visuals/farmer.png",
-  "Paseo con discos":"assets/visuals/farmer.png",
-  "Marcha en el sitio con mancuernas":"assets/visuals/farmer.png",
-  "Sentadilla a banco sin carga":"assets/visuals/squat.png",
+  "Paseo con discos":"assets/visuals/farmer_pair.png",
+  "Marcha en el sitio con mancuernas":"assets/visuals/walking_lunge2.png",
+  "Sentadilla a banco sin carga":"assets/visuals/barbell_squat.png",
   "Sentadilla goblet sin cajón":"assets/visuals/squat.png",
-  "Prensa si está disponible":"assets/visuals/leg_press.png",
-  "Puente de glúteo en suelo":"assets/visuals/hip_thrust.png",
+  "Prensa si está disponible":"assets/visuals/leg_press2.png",
+  "Puente de glúteo en suelo":"assets/visuals/hip_thrust2.png",
   "Hip thrust con mancuerna":"assets/visuals/hip_thrust.png",
   "Puente de glúteo con banda":"assets/visuals/hip_thrust.png",
-  "Remo con banda a una mano":"assets/visuals/band_row.png",
+  "Remo con banda a una mano":"assets/visuals/band_row2.png",
   "Remo pecho apoyado":"assets/visuals/chest_supported_row.png",
-  "Remo en polea sentado":"assets/visuals/cable_row.png",
+  "Remo en polea sentado":"assets/visuals/cable_row2.png",
   "Press con mancuernas":"assets/visuals/dumbbell_bench_press.png",
   "Press en máquina":"assets/visuals/machine_press.png",
   "Flexiones inclinadas":"assets/visuals/pushup.png",
-  "Plancha con rodillas apoyadas":"assets/visuals/front_plank.png",
-  "Dead bug":"assets/visuals/dead_bug.png",
-  "Plancha elevada en banco":"assets/visuals/front_plank.png",
+  "Plancha con rodillas apoyadas":"assets/visuals/front_plank2.png",
+  "Dead bug":"assets/visuals/dead_bug3.png",
+  "Plancha elevada en banco":"assets/visuals/front_plank3.png",
   "Sentadilla goblet con mancuerna":"assets/visuals/squat.png",
-  "Zancada asistida con mancuernas":"assets/visuals/walking_lunge.png",
+  "Zancada asistida con mancuernas":"assets/visuals/walking_lunge2.png",
   "Sentadilla con banda elástica":"assets/visuals/squat.png",
   "Sentadilla a silla en casa":"assets/visuals/squat.png",
   "Remo con mochila en casa":"assets/visuals/barbell_row.png",
   "Paseo con mancuernas":"assets/visuals/farmer.png",
   "Marcha con banda + carga":"assets/visuals/farmer.png",
   "Marcha en casa con garrafas o mochilas":"assets/visuals/farmer.png",
-  "Plancha elevada en mesa o banco":"assets/visuals/front_plank.png"
+  "Plancha elevada en mesa o banco":"assets/visuals/front_plank3.png"
   ,"Remo en tabla / remo tumbado":"assets/visuals/table_row.png"
   ,"Carrera":"assets/visuals/running.png"
   ,"Escaleras":"assets/visuals/stairs.png"
@@ -341,7 +341,7 @@ function altExerciseCard(altTxt,exerciseIndex){
     <button type="button" class="altChoose" data-ex="${exerciseIndex}" data-alt="${encodeURIComponent(name)}">✓ Elegir esta alternativa</button>
   </div>`;
 }
-const gyms={"A": {"name": "Fuerza piernas + espalda", "items": [{"name": "Prensa", "dose": "3×10", "rest": "2 min", "img": "prensa", "alternatives":["Sentadilla goblet a cajón","Zancada asistida","Sentadilla con mancuerna"], "how": "Empuja con todo el pie y controla la bajada.", "keys": "Rodillas alineadas · pelvis apoyada · bajada controlada.", "error": "No despegar la pelvis ni bloquear las rodillas."}, {"name": "Peso muerto rumano", "dose": "3×10", "rest": "2 min", "img": "rumano", "alternatives":["Peso muerto rumano con mancuernas","Buenos días con banda","Puente de glúteo / hip thrust"], "how": "Lleva la cadera atrás manteniendo la espalda neutra.", "keys": "Cadera atrás · carga cerca · abdomen firme.", "error": "Redondear la espalda o convertirlo en sentadilla."}, {"name": "Jalón al pecho", "dose": "3×10", "rest": "90 s", "img": "jalon", "alternatives":["Jalón con banda elástica desde arriba","Dominada asistida","Remo con banda si no hay anclaje alto"], "how": "Lleva la barra hacia la parte alta del pecho sin balancearte.", "keys": "Pecho alto · hombros abajo · controla la vuelta.", "error": "Tirar con impulso o llevar la barra tras la nuca."}, {"name": "Remo", "dose": "3×10", "rest": "90 s", "img": "remo", "alternatives":["Remo con mancuerna","Remo con banda elástica","Remo pecho apoyado con mancuernas"], "how": "Lleva los codos atrás manteniendo estable el tronco.", "keys": "Pecho estable · hombros bajos · pausa al final.", "error": "Balancear el cuerpo para mover más peso."}, {"name": "Pallof press", "dose": "3×10/lado", "rest": "60 s", "img": "pallof", "alternatives":["Pallof press con banda","Isométrico antirotación con banda","Dead bug si no hay anclaje"], "how": "Aleja las manos del pecho resistiendo el giro del tronco.", "keys": "Costillas abajo · glúteos activos · no gires.", "error": "Dejar que el tronco rote."}, {"name": "Farmer carry", "dose": "3×40 m", "rest": "60-90 s", "img": "farmer", "alternatives":["Paseo con kettlebells","Paseo con discos","Marcha en el sitio con mancuernas"], "how": "Camina erguido sujetando carga a ambos lados.", "keys": "Postura alta · abdomen firme · pasos controlados.", "error": "Inclinarte o encoger los hombros."}]}, "B": {"name": "Cadena posterior + core", "items": [{"name": "Goblet squat a cajón", "dose": "3×10", "rest": "90 s", "img": "goblet", "alternatives":["Sentadilla a banco sin carga","Sentadilla goblet sin cajón","Prensa si está disponible"], "how": "Baja con control hasta tocar el cajón y vuelve a subir.", "keys": "Pie completo · rodillas alineadas · pecho estable.", "error": "Dejarte caer sobre el cajón."}, {"name": "Hip thrust", "dose": "3×10", "rest": "90 s", "img": "hip", "alternatives":["Puente de glúteo en suelo","Hip thrust con mancuerna","Puente de glúteo con banda"], "how": "Extiende la cadera y aprieta glúteos arriba.", "keys": "Barbilla recogida · costillas abajo · pausa arriba.", "error": "Hiperextender la zona lumbar."}, {"name": "Remo unilateral", "dose": "3×10/lado", "rest": "90 s", "img": "remo_unilateral", "alternatives":["Remo con banda a una mano","Remo pecho apoyado","Remo en polea sentado"], "how": "Lleva el codo hacia la cadera sin girar el torso.", "keys": "Espalda neutra · hombro bajo · control.", "error": "Rotar el torso."}, {"name": "Press", "dose": "3×10", "rest": "90 s", "img": "press", "alternatives":["Press con mancuernas","Press en máquina","Flexiones inclinadas"], "how": "Empuja manteniendo el tronco estable.", "keys": "Abdomen firme · muñeca neutra · movimiento controlado.", "error": "Arquear demasiado la espalda."}, {"name": "Plancha", "dose": "3×30 s", "rest": "60 s", "img": "plancha", "alternatives":["Plancha con rodillas apoyadas","Dead bug","Plancha elevada en banco"], "how": "Mantén una línea estable entre hombros, cadera y pies.", "keys": "Glúteos activos · abdomen firme · respira.", "error": "Dejar caer o subir demasiado la cadera."}]}, "C": {"name":"Potencia + acondicionamiento","items":[{"name":"Salto al cajón","dose":"3×5","rest":"90-120 s","asset":"assets/visuals/box_jump.png","img":"box_jump","alternatives":["Sentadilla goblet a cajón","Zancada asistida"],"how":"Salta con intención y aterriza estable; baja andando.","keys":"Pocas repeticiones · máxima calidad · descanso completo.","error":"Hacerlo fatigado o encadenar saltos rápidos."},{"name":"Remo en tabla / remo tumbado","dose":"3×10","rest":"75-90 s","asset":"assets/visuals/table_row.png","img":"table_row","alternatives":["Remo pecho apoyado con mancuernas","Remo con mancuerna","Remo con banda elástica"],"how":"Con el pecho apoyado, lleva los codos atrás sin balanceo.","keys":"Pecho fijo · hombros bajos · pausa arriba.","error":"Despegar el pecho o usar impulso."},{"name":"Escaleras","dose":"6×40 s","rest":"60-75 s","asset":"assets/visuals/stairs.png","img":"stairs","alternatives":["Carrera"],"how":"Sube con pasos rápidos y controlados y recupera bajando andando.","keys":"Calidad · apoyo estable · tronco alto.","error":"Mantener intensidad cuando cae la técnica."},{"name":"Burpees","dose":"3×10","rest":"60-75 s","asset":"assets/visuals/burpees.png","img":"burpees","alternatives":["Carrera"],"how":"Encadena el movimiento con control y termina erguido; salto suave solo si se mantiene la técnica.","keys":"Core firme · recepción estable · ritmo sostenible.","error":"Buscar velocidad a costa de la postura."},{"name":"Carrera","dose":"12 min","rest":"—","asset":"assets/visuals/running.png","img":"running","alternatives":["Escaleras"],"how":"Carrera continua cómoda como acondicionamiento aeróbico.","keys":"Ritmo conversacional · técnica relajada · sin fatiga residual.","error":"Convertirla en una sesión máxima."},{"name":"Pallof press","dose":"2×10/lado","rest":"45-60 s","img":"pallof","alternatives":["Dead bug","Plancha"],"how":"Aleja las manos del pecho resistiendo el giro del tronco.","keys":"Costillas abajo · glúteos activos · no gires.","error":"Dejar que el tronco rote."}]}};
+const gyms={"A": {"name": "Fuerza piernas + espalda", "items": [{"name": "Prensa", "dose": "3×10", "rest": "2 min", "img": "prensa", "alternatives":["Sentadilla goblet a cajón","Zancada asistida","Sentadilla con mancuerna"], "how": "Empuja con todo el pie y controla la bajada.", "keys": "Rodillas alineadas · pelvis apoyada · bajada controlada.", "error": "No despegar la pelvis ni bloquear las rodillas."}, {"name": "Peso muerto rumano", "dose": "3×10", "rest": "2 min", "img": "rumano", "alternatives":["Peso muerto rumano con mancuernas","Buenos días con banda","Puente de glúteo / hip thrust"], "how": "Lleva la cadera atrás manteniendo la espalda neutra.", "keys": "Cadera atrás · carga cerca · abdomen firme.", "error": "Redondear la espalda o convertirlo en sentadilla."}, {"name": "Jalón al pecho", "dose": "3×10", "rest": "90 s", "img": "jalon", "alternatives":["Jalón con banda elástica desde arriba","Dominada asistida","Remo con banda si no hay anclaje alto"], "how": "Lleva la barra hacia la parte alta del pecho sin balancearte.", "keys": "Pecho alto · hombros abajo · controla la vuelta.", "error": "Tirar con impulso o llevar la barra tras la nuca."}, {"name": "Remo", "dose": "3×10", "rest": "90 s", "img": "remo", "alternatives":["Remo con mancuerna","Remo con banda elástica","Remo pecho apoyado con mancuernas"], "how": "Lleva los codos atrás manteniendo estable el tronco.", "keys": "Pecho estable · hombros bajos · pausa al final.", "error": "Balancear el cuerpo para mover más peso."}, {"name": "Pallof press", "dose": "3×10/lado", "rest": "60 s", "img": "pallof", "alternatives":["Pallof press con banda","Isométrico antirotación con banda","Dead bug si no hay anclaje"], "how": "Aleja las manos del pecho resistiendo el giro del tronco.", "keys": "Costillas abajo · glúteos activos · no gires.", "error": "Dejar que el tronco rote."}, {"name": "Farmer carry", "dose": "3×40 m", "rest": "60-90 s", "img": "farmer", "alternatives":["Paseo con kettlebells","Paseo con discos","Marcha en el sitio con mancuernas"], "how": "Camina erguido sujetando carga a ambos lados.", "keys": "Postura alta · abdomen firme · pasos controlados.", "error": "Inclinarte o encoger los hombros."}]}, "B": {"name": "Cadena posterior + core", "items": [{"name": "Goblet squat a cajón", "dose": "3×10", "rest": "90 s", "img": "goblet", "alternatives":["Sentadilla a banco sin carga","Sentadilla goblet sin cajón","Prensa si está disponible"], "how": "Baja con control hasta tocar el cajón y vuelve a subir.", "keys": "Pie completo · rodillas alineadas · pecho estable.", "error": "Dejarte caer sobre el cajón."}, {"name": "Hip thrust", "dose": "3×10", "rest": "90 s", "img": "hip", "alternatives":["Puente de glúteo en suelo","Peso muerto rumano con mancuernas","Buenos días con banda"], "how": "Extiende la cadera y aprieta glúteos arriba.", "keys": "Barbilla recogida · costillas abajo · pausa arriba.", "error": "Hiperextender la zona lumbar."}, {"name": "Remo unilateral", "dose": "3×10/lado", "rest": "90 s", "img": "remo_unilateral", "alternatives":["Remo con banda a una mano","Remo pecho apoyado","Remo en polea sentado"], "how": "Lleva el codo hacia la cadera sin girar el torso.", "keys": "Espalda neutra · hombro bajo · control.", "error": "Rotar el torso."}, {"name": "Press", "dose": "3×10", "rest": "90 s", "img": "press", "alternatives":["Press con mancuernas","Press en máquina","Flexiones inclinadas"], "how": "Empuja manteniendo el tronco estable.", "keys": "Abdomen firme · muñeca neutra · movimiento controlado.", "error": "Arquear demasiado la espalda."}, {"name": "Plancha", "dose": "3×30 s", "rest": "60 s", "img": "plancha", "alternatives":["Plancha con rodillas apoyadas","Dead bug","Plancha elevada en banco"], "how": "Mantén una línea estable entre hombros, cadera y pies.", "keys": "Glúteos activos · abdomen firme · respira.", "error": "Dejar caer o subir demasiado la cadera."}]}, "C": {"name":"Potencia + acondicionamiento","items":[{"name":"Salto al cajón","dose":"3×5","rest":"90-120 s","asset":"assets/visuals/box_jump.png","img":"box_jump","alternatives":["Sentadilla goblet a cajón","Zancada asistida"],"how":"Salta con intención y aterriza estable; baja andando.","keys":"Pocas repeticiones · máxima calidad · descanso completo.","error":"Hacerlo fatigado o encadenar saltos rápidos."},{"name":"Remo en tabla / remo tumbado","dose":"3×10","rest":"75-90 s","asset":"assets/visuals/table_row.png","img":"table_row","alternatives":["Remo pecho apoyado con mancuernas","Remo con mancuerna","Remo con banda elástica"],"how":"Con el pecho apoyado, lleva los codos atrás sin balanceo.","keys":"Pecho fijo · hombros bajos · pausa arriba.","error":"Despegar el pecho o usar impulso."},{"name":"Escaleras","dose":"6×40 s","rest":"60-75 s","asset":"assets/visuals/stairs.png","img":"stairs","alternatives":["Carrera"],"how":"Sube con pasos rápidos y controlados y recupera bajando andando.","keys":"Calidad · apoyo estable · tronco alto.","error":"Mantener intensidad cuando cae la técnica."},{"name":"Burpees","dose":"3×10","rest":"60-75 s","asset":"assets/visuals/burpees.png","img":"burpees","alternatives":["Carrera"],"how":"Encadena el movimiento con control y termina erguido; salto suave solo si se mantiene la técnica.","keys":"Core firme · recepción estable · ritmo sostenible.","error":"Buscar velocidad a costa de la postura."},{"name":"Carrera","dose":"12 min","rest":"—","asset":"assets/visuals/running.png","img":"running","alternatives":["Escaleras"],"how":"Carrera continua cómoda como acondicionamiento aeróbico.","keys":"Ritmo conversacional · técnica relajada · sin fatiga residual.","error":"Convertirla en una sesión máxima."},{"name":"Pallof press","dose":"2×10/lado","rest":"45-60 s","img":"pallof","alternatives":["Dead bug","Plancha"],"how":"Aleja las manos del pecho resistiendo el giro del tronco.","keys":"Costillas abajo · glúteos activos · no gires.","error":"Dejar que el tronco rote."}]}};
 const ERGO_LIBRARY_DEFAULTS=[
  {code:"UT2-2X10-20",zone:"UT2",name:"UT2 · 2×10' @20 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/vdc44zna"},
  {code:"UT2-3X10-20",zone:"UT2",name:"UT2 · 3×10' @20 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/dp1o0oix"},
@@ -492,7 +492,7 @@ enter.onclick=async()=>{
 };
 sb.auth.getSession().then(({data})=>{if(data.session) startApp()});
 
-function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Calendario"],["mes","Mes"],["temporada","Temporada"],["planificar","Planificar"],["biblioteca","Biblioteca ERGO"],["result","Resultados"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
+function draw(){let a=r==="coach"?[["hoy","Hoy"],["planificar","Planificación"],["result","Análisis"],["biblioteca","Biblioteca ERGO"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
 function title(x){if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
   refreshTeamSchedule();
@@ -1308,7 +1308,8 @@ function autoRepeatedHtml(rows){
 async function coachSeaResultsView(){
  if(r!=="coach")return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
  let ym='2026-09', selected=[], view='season';
- content.innerHTML=`<div class="card"><h2>Resultados MAR · Equipo</h2><p class="muted">Vista calendario de la tripulación. Puedes seleccionar sesiones de cualquier mes y Row Training calcula la comparativa automáticamente.</p><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Ir a mes<select id="seaMonthPick" class="monthSelect">${monthOptions(ym)}</select></label></div><div class="viewToggle"><button id="seaViewSeason" class="active">Temporada Sep–May</button><button id="seaViewMonth">Un mes</button></div><div id="seaNav" class="coachMonthBar" style="display:none"><button id="seaPrev">← Mes anterior</button><div id="seaMonthTitle" class="monthTitle"></div><button id="seaNext">Mes siguiente →</button></div><p class="muted calendarHint">Los días MAR aparecen en el calendario. Los que tienen resultado quedan marcados; pulsa todos los que quieras comparar.</p><div id="seaCal"></div><div id="seaCompare"></div><h3>Comparativa automática de sesiones repetidas</h3><div id="seaAuto"></div></div>`;
+ content.innerHTML=`<div class="card"><div class="viewToggle"><button class="active">MAR · Equipo</button><button id="analysisAthletes">ERGO / Remeros</button></div><h2>Análisis MAR · Equipo</h2><p class="muted">Selecciona sesiones de cualquier mes. Row Training compara automáticamente las fechas elegidas y detecta ejercicios repetidos.</p><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Ir a mes<select id="seaMonthPick" class="monthSelect">${monthOptions(ym)}</select></label></div><div class="viewToggle"><button id="seaViewSeason" class="active">Temporada Sep–May</button><button id="seaViewMonth">Un mes</button></div><div id="seaNav" class="coachMonthBar" style="display:none"><button id="seaPrev">← Mes anterior</button><div id="seaMonthTitle" class="monthTitle"></div><button id="seaNext">Mes siguiente →</button></div><p class="muted calendarHint">Los días MAR aparecen en el calendario. Los que tienen resultado quedan marcados; pulsa todos los que quieras comparar.</p><div id="seaCal"></div><div id="seaCompare"></div><h3>Comparativa automática de sesiones repetidas</h3><div id="seaAuto"></div></div>`;
+ analysisAthletes.onclick=()=>results();
  async function load(){
   const team=seaResTeam.value; const all=await getSeaResultsForTeam(team,'2026-09-01','2027-05-31');
   seaViewSeason.classList.toggle('active',view==='season'); seaViewMonth.classList.toggle('active',view==='month'); seaNav.style.display=view==='month'?'flex':'none';
@@ -1364,7 +1365,7 @@ async function loadCoachCalendar(team,date){
 async function coachPlanner(){
  if(r!=="coach") return;
  const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='month';
- content.innerHTML=`<div class="card"><h2>Planificar equipo</h2><p class="muted">Edita primero el día seleccionado. El calendario inferior sirve para saltar rápidamente a otra fecha.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
+ content.innerHTML=`<div class="card"><h2>Planificación</h2><p class="muted">Un único calendario para crear, consultar y editar GYM, ERGO, MAR, descanso y competiciones. Pulsa un día y edítalo directamente.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
@@ -1415,7 +1416,7 @@ function seaResultEditor(sessionId){
 }
 
 async function results(){
-  content.innerHTML='<div class="card"><h2>Panel del entrenador</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">Cargando…</p></div>';
+  content.innerHTML='<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">Cargando…</p></div>';
 
   const {data:profiles,error:e1}=await sb.from("profiles").select("user_id,full_name,height_cm,team_code");
   const {data:roles,error:eRole}=await sb.from("user_roles").select("user_id,role");
@@ -1443,7 +1444,8 @@ async function results(){
   const prettyStatus=v=>v==="completed"?"Completado":v==="partial"?"Parcial":"No realizado";
 
   content.innerHTML=`<div class="card">
-    <h2>Panel del entrenador</h2>
+    <div class="viewToggle"><button id="analysisSea">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div>
+    <h2>Análisis de remeros</h2>
     <p class="muted">${athletes.length} remeros</p>
 
     ${athletes.map((p,idx)=>{
@@ -1502,6 +1504,7 @@ async function results(){
     }).join("")}
   </div>`;
 
+  if(document.getElementById("analysisSea")) analysisSea.onclick=()=>coachSeaResultsView();
   document.querySelectorAll(".toggleAthlete").forEach(b=>{
     b.onclick=()=>{
       const el=document.getElementById(b.dataset.id);
