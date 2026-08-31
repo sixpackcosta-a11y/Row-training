@@ -112,10 +112,14 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .registerCard{max-width:720px;margin:12px auto}.inviteTeam{background:#fff8db;border:1px solid #efd36d;border-radius:12px;padding:11px;margin:10px 0}
 .modalBack{position:fixed;inset:0;background:#07162fcc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.modalCard{width:min(680px,100%);max-height:90vh;overflow:auto;background:white;border-radius:20px;padding:20px;box-shadow:0 20px 60px #0005}.guideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.guideStep{border:1px solid #dbe5ef;border-radius:14px;padding:12px;background:#f8fafc}.guideStep b{display:block;margin-bottom:5px}.regBadge{display:inline-flex;min-width:22px;height:22px;border-radius:99px;background:#b42318;color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 6px}.requestCard{border:1px solid #dbe5ef;border-radius:15px;padding:14px;margin:10px 0}.requestHead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.requestActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.inviteLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inviteLink{border:1px solid #dbe5ef;border-radius:12px;padding:10px;background:#f8fafc}.pendingHero{text-align:center;padding:24px 10px}.pendingHero .bigIcon{font-size:48px}.statusPill{display:inline-block;border-radius:999px;padding:6px 10px;background:#fff8db;border:1px solid #efd36d;font-weight:800}.copyOk{background:#eaf8ef!important}.publicGuide{max-width:860px;margin:12px auto}
 @media(max-width:650px){.guideSteps,.inviteLinks{grid-template-columns:1fr}.requestHead{flex-direction:column}}
+/* V63 · recuperación de contraseña */
+.authSubcard{max-width:620px;margin:12px auto}.authHint{background:#eef6ff;border:1px solid #c9def6;border-radius:12px;padding:11px;margin:10px 0}.linkButton{background:transparent;border:0;color:#0b5ed7;text-decoration:underline;padding:8px 0;font-weight:700;cursor:pointer}.passwordRules{font-size:.9rem;color:#52657a;margin:6px 0 12px}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}</style>
 </head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
-<div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
+<div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
+<div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
+<div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
 <div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
 <div id="publicGuide" class="card publicGuide hidden"></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
@@ -504,7 +508,8 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 async function loadRegistrationState(){
   currentRegistration=null;
   if(!currentUser) return;
@@ -545,7 +550,7 @@ async function startApp(){
   }else{
     await loadRegistrationState();
   }
-  login.classList.add("hidden"); register.classList.add("hidden"); publicGuide.classList.add("hidden"); app.classList.remove("hidden");
+  login.classList.add("hidden"); register.classList.add("hidden"); publicGuide.classList.add("hidden"); forgotPassword.classList.add("hidden"); resetPassword.classList.add("hidden"); app.classList.remove("hidden");
   userName.textContent=currentUserProfile.full_name||user.user_metadata?.full_name||user.email||"Usuario";
   if(r==="coach") role.textContent="ENTRENADOR";
   else role.textContent="REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
@@ -559,15 +564,62 @@ if(savedKeep!==null) keepSession.checked=savedKeep==="1";
 const REG_TEAM_PARAM=new URLSearchParams(location.search).get("team");
 const REG_VALID_TEAMS=["veteranas","senior_m","senior_f","veteranos_m"];
 const REG_TEAM_VALID=REG_VALID_TEAMS.includes(REG_TEAM_PARAM)?REG_TEAM_PARAM:null;
+function hideAuthPanels(){
+  login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");
+}
+function openForgotPassword(){
+  hideAuthPanels();forgotPassword.classList.remove("hidden");forgotEmail.value=(u.value||"").trim();resetRequestStatus.className="saveStatus hidden";
+}
+function openResetPassword(){
+  hideAuthPanels();resetPassword.classList.remove("hidden");newPassword.value="";newPassword2.value="";newPasswordStatus.className="saveStatus hidden";
+}
 function openRegister(){
   login.classList.add("hidden"); publicGuide.classList.add("hidden"); register.classList.remove("hidden");
   if(REG_TEAM_VALID){inviteTeamBox.classList.remove("hidden");inviteTeamBox.innerHTML=`<b>Invitación para:</b> ${teamLabel(REG_TEAM_VALID)}<br><small>El entrenador confirmará la asignación antes de activar el acceso al equipo.</small>`}
   else inviteTeamBox.classList.add("hidden");
 }
-function openLogin(){register.classList.add("hidden");publicGuide.classList.add("hidden");login.classList.remove("hidden")}
-function publicGuideHtml(){return `<h2>Guía rápida de Row Training</h2><p class="muted">Lo esencial para empezar a entrenar con la app.</p><div class="guideSteps"><div class="guideStep"><b>1 · Hoy</b>Abre la app y comprueba la sesión programada.</div><div class="guideStep"><b>2 · GYM</b>Los martes el grupo se divide entre GYM y ERGO y después intercambia. En GYM completa las series indicadas y registra peso + Fácil / Bien / Duro. Si no completas lo prescrito con buena técnica, baja el peso.</div><div class="guideStep"><b>3 · ERGO</b>Usa el entrenamiento asignado y ErgData cuando esté disponible. Los resultados pueden sincronizarse con Concept2.</div><div class="guideStep"><b>4 · MAR</b>El remero ve “Sesión de mar”. El contenido completo lo gestiona el entrenador.</div><div class="guideStep"><b>5 · Al terminar</b>Marca el estado de la sesión, esfuerzo y añade una nota si hace falta.</div><div class="guideStep"><b>6 · Equipo</b>Tras registrarte, un entrenador debe aprobarte y asignarte a tu equipo.</div></div>`}
+function openLogin(){register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");login.classList.remove("hidden")}
+function publicGuideHtml(){return `<h2>Guía de Row Training</h2><p class="muted">Primer acceso, zonas de FC, GYM, ErgData/Concept2 y uso diario.</p><div class="guideSteps">
+<div class="guideStep"><b>1 · Instalar la app</b><b>iPhone/iPad:</b> abre Row Training en Safari → Compartir → Añadir a pantalla de inicio. <b>Android:</b> abre en Chrome → ⋮ → Instalar aplicación o Añadir a pantalla de inicio.</div>
+<div class="guideStep"><b>2 · Contraseña</b>Si la olvidas, en la pantalla de acceso pulsa <b>He olvidado mi contraseña</b>. Recibirás un enlace por email para crear una nueva sin intervención del entrenador.</div>
+<div class="guideStep"><b>3 · Perfil y zonas de FC</b>En Perfil introduce peso, altura, FC de reposo y FC máxima. Row Training calcula tus rangos UT2, UT1, AT, TR y AN. Si conoces una FC máxima medida en test o competición, úsala antes que una estimación por edad.</div>
+<div class="guideStep"><b>4 · Hoy y Semana</b>Comprueba qué sesión toca. Los martes el grupo puede dividirse entre GYM y ERGO y después intercambiar.</div>
+<div class="guideStep"><b>5 · GYM</b>Las series y repeticiones ya están prescritas. Registra principalmente el peso y marca Fácil / Bien / Duro. Si no completas lo indicado con técnica correcta, baja la carga. Puedes usar una alternativa cuando corresponda.</div>
+<div class="guideStep"><b>6 · Conectar Concept2</b>En Perfil → Concept2 / ErgData pulsa Conectar Concept2 y autoriza Row Training. Solo hace falta una vez. Row Training usa acceso de lectura a perfil y resultados; tu contraseña de Concept2 no pasa por la app.</div>
+<div class="guideStep"><b>7 · ERGO con ErgData</b>En el día ERGO pulsa Abrir entrenamiento en ErgData. En ErgData conecta el PM5 y realiza la sesión. Al terminar, deja que ErgData sincronice con tu Concept2 Online Logbook y después pulsa Sincronizar ahora en Row Training si fuera necesario.</div>
+<div class="guideStep"><b>8 · Resultados ERGO</b>Row Training intenta asociar automáticamente el resultado de Concept2 con la sesión programada. <b>Historial abre los datos ya guardados y no fuerza una sincronización</b>, para que la app siga fluida. Cuando quieras traer resultados nuevos usa Perfil → Sincronizar ahora. Si aparece como no programado, queda en el historial para revisión.</div>
+<div class="guideStep"><b>9 · MAR</b>El remero ve “Sesión de mar”. El contenido completo, las series y los resultados colectivos los gestiona el entrenador.</div>
+<div class="guideStep"><b>10 · Al terminar</b>Marca completada / parcial / no realizada, esfuerzo y añade una nota cuando sea útil. En Historial puedes revisar tu evolución.</div>
+<div class="guideStep"><b>11 · Alta de equipo</b>Tras registrarte y confirmar el correo, un entrenador aprueba tu solicitud y te asigna al equipo. Después recibirás un correo de bienvenida con el acceso y estas instrucciones.</div>
+</div>`}
 function openPublicGuide(){login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.remove("hidden");publicGuide.innerHTML=publicGuideHtml()+`<div class="actions" style="margin-top:14px"><button id="guideBack" class="primary">Volver al acceso</button></div>`;guideBack.onclick=openLogin}
 showRegister.onclick=openRegister; backLogin.onclick=openLogin; showPublicGuide.onclick=openPublicGuide;
+forgotPasswordBtn.onclick=openForgotPassword; cancelReset.onclick=openLogin;
+sendReset.onclick=async()=>{
+  const email=forgotEmail.value.trim();
+  resetRequestStatus.className="saveStatus hidden";
+  if(!email||!email.includes("@")) return alert("Escribe el email con el que te registraste.");
+  sendReset.disabled=true;sendReset.textContent="Enviando…";
+  const {error}=await sb.auth.resetPasswordForEmail(email);
+  sendReset.disabled=false;sendReset.textContent="Enviar enlace";
+  if(error){resetRequestStatus.className="saveStatus err";resetRequestStatus.textContent="No se pudo enviar el enlace. Inténtalo de nuevo en unos minutos.";return}
+  resetRequestStatus.className="saveStatus ok";
+  resetRequestStatus.innerHTML="<b>Revisa tu correo.</b><br>Si existe una cuenta con ese email, recibirás un enlace para crear una contraseña nueva. También revisa Spam/Correo no deseado.";
+};
+saveNewPassword.onclick=async()=>{
+  const a=newPassword.value,b=newPassword2.value;
+  newPasswordStatus.className="saveStatus hidden";
+  if(a.length<8) return alert("La contraseña debe tener al menos 8 caracteres.");
+  if(a!==b) return alert("Las contraseñas no coinciden.");
+  saveNewPassword.disabled=true;saveNewPassword.textContent="Guardando…";
+  const {error}=await sb.auth.updateUser({password:a});
+  saveNewPassword.disabled=false;saveNewPassword.textContent="Guardar nueva contraseña";
+  if(error){newPasswordStatus.className="saveStatus err";newPasswordStatus.textContent="No se pudo cambiar la contraseña: "+error.message;return}
+  newPasswordStatus.className="saveStatus ok";newPasswordStatus.innerHTML="<b>Contraseña actualizada.</b><br>Ya puedes iniciar sesión con la nueva contraseña.";
+  await sb.auth.signOut();
+  setTimeout(()=>{location.href=location.origin;},900);
+};
+sb.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY") setTimeout(openResetPassword,0);});
 doRegister.onclick=async()=>{
   const name=regName.value.trim(),email=regEmail.value.trim(),pass=regPass.value,pass2=regPass2.value;
   regStatus.className="saveStatus hidden";
@@ -580,7 +632,7 @@ doRegister.onclick=async()=>{
   doRegister.disabled=false;doRegister.textContent="Enviar inscripción";
   if(error){regStatus.className="saveStatus err";regStatus.textContent="No se pudo crear la cuenta: "+error.message;return}
   regStatus.className="saveStatus ok";
-  regStatus.innerHTML=data.session?`<b>Inscripción enviada.</b><br>Tu cuenta está pendiente de aprobación por un entrenador.`:`<b>Cuenta creada.</b><br>Revisa tu correo para confirmar el email. Después quedarás pendiente de aprobación por un entrenador.`;
+  regStatus.innerHTML=data.session?`<b>Inscripción enviada.</b><br>Tu cuenta está pendiente de aprobación por un entrenador. Cuando te apruebe recibirás un correo de bienvenida con el enlace de la app y la guía de instalación.`:`<b>Cuenta creada.</b><br>Revisa tu correo y pulsa <b>Confirmar</b>. El enlace debe devolverte a Row Training. Después quedarás pendiente de aprobación; cuando te asignen a un equipo recibirás un correo de bienvenida con el acceso y la guía.`;
   regPass.value=regPass2.value="";
   try{if(data.session) fetch('/api/registration-notify',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify({full_name:name,requested_team:REG_TEAM_VALID})})}catch(e){}
 };
@@ -599,7 +651,7 @@ enter.onclick=async()=>{
   if(error) return alert("No se pudo iniciar sesión: "+error.message);
   startApp();
 };
-sb.auth.getSession().then(({data})=>{if(data.session) startApp()});
+sb.auth.getSession().then(({data})=>{if(data.session){if(PASSWORD_RECOVERY_HINT) openResetPassword(); else startApp()}});
 
 function draw(){
  let a;
@@ -992,13 +1044,15 @@ function gym(k){
 }
 
 async function history(){
-  await syncConcept2(false).catch(()=>null);
-  content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando…</p></div>';
+  // Historial debe abrir al instante con los datos ya guardados.
+  // La sincronización Concept2 se hace manualmente desde Perfil para no bloquear la navegación.
+  content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
     sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300),
     sb.from("concept2_results").select("*").eq("user_id",currentUser.id).order("workout_date",{ascending:false}).limit(100)
   ]);
+  if(tab!=="hist") return; // evita que una carga antigua pise Perfil u otra pantalla
   const err=e1||e2||e3;
   if(err){content.innerHTML=`<div class="card"><h2>Historial</h2><p>${err.message}</p></div>`;return}
 
@@ -1090,22 +1144,38 @@ async function concept2Status(){
   return r.json();
 }
 
+let concept2SyncInFlight=null;
 async function syncConcept2(showAlert=true){
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session)return showAlert&&alert("Inicia sesión primero.");
-  const r=await fetch("/api/concept2-sync",{
-    method:"POST",
-    headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},
-    body:JSON.stringify({limit:50})
-  });
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok){ if(showAlert) alert(data.error||"No se pudo sincronizar Concept2."); return data; }
-  if(showAlert) alert(`Concept2 sincronizado: ${data.imported||0} nuevos · ${data.updated||0} actualizados.`);
-  return data;
+  if(concept2SyncInFlight){
+    if(showAlert) alert("Ya hay una sincronización de Concept2 en curso.");
+    return concept2SyncInFlight;
+  }
+  concept2SyncInFlight=(async()=>{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){if(showAlert)alert("Inicia sesión primero.");return null;}
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),25000);
+    try{
+      const r=await fetch("/api/concept2-sync",{
+        method:"POST",signal:controller.signal,
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},
+        body:JSON.stringify({limit:50})
+      });
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok){if(showAlert)alert(data.error||"No se pudo sincronizar Concept2.");return data;}
+      if(showAlert)alert(`Concept2 sincronizado: ${data.imported||0} nuevos · ${data.updated||0} actualizados.`);
+      return data;
+    }catch(e){
+      if(showAlert)alert(e?.name==="AbortError"?"La sincronización ha tardado demasiado. Puedes seguir usando la app e intentarlo más tarde.":"No se pudo sincronizar Concept2.");
+      return null;
+    }finally{clearTimeout(timer);}
+  })();
+  try{return await concept2SyncInFlight;}finally{concept2SyncInFlight=null;}
 }
 async function profileView(){
   const {data:pdata}=await sb.from("profiles").select("*").eq("user_id",currentUser.id).single();
   const {data:mdata}=await sb.from("athlete_metrics").select("*").eq("user_id",currentUser.id).order("recorded_at",{ascending:false}).limit(1);
+  if(tab!=="perfil") return; // evita carreras de render al cambiar rápido de pestaña
   const m=mdata?.[0]||{};
 
   const savedAge=localStorage.getItem("remo_age")||"";
@@ -1221,7 +1291,12 @@ async function profileView(){
   estimateHr.onclick=estimateHrMax;
   calcZones.onclick=fillZones;
   document.getElementById("connectConcept2").onclick=connectConcept2;
-  document.getElementById("syncConcept2Btn").onclick=async()=>{await syncConcept2(true); const st=await concept2Status(); paintConcept2State(st);};
+  document.getElementById("syncConcept2Btn").onclick=async()=>{
+    const btn=document.getElementById("syncConcept2Btn");
+    btn.disabled=true; const old=btn.textContent; btn.textContent="Sincronizando…";
+    try{await syncConcept2(true); if(tab==="perfil"){const st=await concept2Status();paintConcept2State(st);}}
+    finally{if(document.getElementById("syncConcept2Btn")){btn.disabled=false;btn.textContent=old;}}
+  };
   function paintConcept2State(st){
     const box=document.getElementById("concept2State");
     if(!box)return;
@@ -1610,7 +1685,25 @@ async function registrationsView(){
   const generic=invitationUrl(null);
   content.innerHTML=`<div class="card"><h2>Altas de remeros ${pending.length?`<span class="regBadge">${pending.length}</span>`:""}</h2><p class="muted">Envía un enlace de inscripción. El remero no entra en ningún equipo hasta que un entrenador lo aprueba.</p><h3>Enlaces de inscripción</h3><div class="inviteLinks"><div class="inviteLink"><b>Enlace general</b><p class="muted">Sin equipo preseleccionado.</p><button class="copyInvite" data-url="${esc(generic)}">Copiar enlace</button></div>${allowed.map(t=>{const u=invitationUrl(t[0]);return `<div class="inviteLink"><b>${esc(t[1])}</b><p class="muted">La solicitud llega etiquetada para este equipo.</p><button class="copyInvite" data-url="${esc(u)}">Copiar enlace</button></div>`}).join("")}</div><hr><h3>Pendientes</h3>${pending.length?pending.map(x=>`<div class="requestCard" data-id="${x.id}"><div class="requestHead"><div><div class="big">${esc(x.full_name||"Sin nombre")}</div><div class="muted">${esc(x.email||"")} · ${new Date(x.created_at).toLocaleString("es-ES")}</div>${x.requested_team?`<div style="margin-top:6px"><span class="tag">Invitación: ${esc(teamLabel(x.requested_team))}</span></div>`:""}</div><label style="min-width:230px">Asignar a<select class="approveTeam" data-id="${x.id}">${allowed.map(t=>`<option value="${t[0]}" ${x.requested_team===t[0]?"selected":""}>${esc(t[1])}</option>`).join("")}</select></label></div><div class="requestActions"><button class="approveReq primary" data-id="${x.id}">Aprobar y asignar</button><button class="rejectReq" data-id="${x.id}">Rechazar</button></div></div>`).join(""):`<div class="info"><b>No hay solicitudes pendientes.</b></div>`}${recent.length?`<h3>Revisadas recientemente</h3>${recent.map(x=>`<div class="last"><b>${esc(x.full_name)}</b> · ${x.status==="approved"?"Aprobada":"Rechazada"}${x.assigned_team?` · ${esc(teamLabel(x.assigned_team))}`:""}</div>`).join("")}`:""}</div>`;
   document.querySelectorAll(".copyInvite").forEach(b=>b.onclick=()=>copyInvite(b,b.dataset.url));
-  document.querySelectorAll(".approveReq").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.id),team=document.querySelector(`.approveTeam[data-id="${id}"]`).value;if(!confirm(`¿Aprobar y asignar a ${teamLabel(team)}?`))return;b.disabled=true;b.textContent="Aprobando…";const res=await sb.rpc("approve_registration",{p_request_id:id,p_team_code:team});if(res.error){alert(res.error.message);b.disabled=false;b.textContent="Aprobar y asignar";return}await loadPendingRegistrationCount();draw();registrationsView()});
+  document.querySelectorAll(".approveReq").forEach(b=>b.onclick=async()=>{
+    const id=Number(b.dataset.id),team=document.querySelector(`.approveTeam[data-id="${id}"]`).value;
+    if(!confirm(`¿Aprobar y asignar a ${teamLabel(team)}?`))return;
+    b.disabled=true;b.textContent="Aprobando…";
+    const res=await sb.rpc("approve_registration",{p_request_id:id,p_team_code:team});
+    if(res.error){alert(res.error.message);b.disabled=false;b.textContent="Aprobar y asignar";return}
+    let mailOk=false,mailMsg="";
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      if(session){
+        const wr=await fetch("/api/registration-welcome",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({request_id:id})});
+        const wd=await wr.json().catch(()=>({}));
+        mailOk=wr.ok;
+        if(!wr.ok) mailMsg=wd.message||wd.error||"No se pudo enviar el correo de bienvenida.";
+      }else mailMsg="No hay sesión activa para enviar el correo de bienvenida.";
+    }catch(e){mailMsg="La alta se aprobó, pero no se pudo enviar el correo de bienvenida."}
+    await loadPendingRegistrationCount();draw();await registrationsView();
+    alert(mailOk?`Alta aprobada. Se ha enviado el correo de bienvenida a la remera/remero.`:`Alta aprobada correctamente. El correo de bienvenida no se ha enviado: ${mailMsg}`);
+  });
   document.querySelectorAll(".rejectReq").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.id);if(!confirm("¿Rechazar esta solicitud?"))return;b.disabled=true;const res=await sb.rpc("reject_registration",{p_request_id:id});if(res.error){alert(res.error.message);b.disabled=false;return}await loadPendingRegistrationCount();draw();registrationsView()});
 }
 

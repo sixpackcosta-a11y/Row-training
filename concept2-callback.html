@@ -57,7 +57,7 @@ async function run(){
   output.innerHTML=`<div class="card">
     <h2>Cuenta conectada</h2>
     <p><b>${data.user?.username||"Usuario Concept2"}</b></p>
-    <p>${sr.ok?`Sincronización inicial: <b>${sync.imported||0}</b> nuevos · <b>${sync.updated||0}</b> actualizados.`:"La cuenta quedó conectada. La sincronización se podrá repetir desde Perfil."}</p>
+    <p>${sr.ok?`Sincronización inicial optimizada: <b>${sync.imported||0}</b> nuevos · <b>${sync.updated||0}</b> actualizados.`:"La cuenta quedó conectada. La sincronización se podrá repetir desde Perfil."}</p>
     <p class="muted">A partir de ahora Row Training puede renovar la autorización sin pedirte la contraseña de Concept2.</p>
   </div><div class="card"><a class="btn" href="/">Volver a Row Training</a></div>`;
 }
