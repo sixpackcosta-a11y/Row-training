@@ -1,5 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V36</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
+button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
 .realPhoto{object-fit:contain;background:#fff;display:block}.thumb.realPhoto{width:min(220px,42vw);height:auto;max-width:42%;max-height:none}.fullimg.realPhoto{width:100%;height:auto;max-width:100%;object-fit:contain}
 .athleteHead{display:flex;justify-content:space-between;gap:12px;align-items:center}
@@ -394,13 +395,47 @@ function showSessionIn(targetId,x){
   }
 }
 
+function scheduledDateFor(x){
+  // Calendario prototipo actual: 1–7 septiembre 2026.
+  return `2026-09-${String(x[1]).padStart(2,"0")}`;
+}
+function ergoPrescription(x){
+  const code=`ERG-${x[3]||"1"}`;
+  const name=title(x);
+  // La primera familia cargada actualmente es UT2 3×10' @20.
+  // Estos datos alimentan el emparejamiento Concept2; no dependen de una distancia fija.
+  if(code==="ERG-1") return {code,name,duration:1800,spm:20,workoutType:"VariableInterval"};
+  return {code,name,duration:null,spm:null,workoutType:null};
+}
+async function ensureErgoIntent(x){
+  if(!currentUser || x[2]!=="ERG") return null;
+  const pr=ergoPrescription(x), scheduled=scheduledDateFor(x);
+  const {data:existing,error:readErr}=await sb.from("ergo_intents")
+    .select("*").eq("user_id",currentUser.id).eq("scheduled_date",scheduled).eq("session_code",pr.code).limit(1);
+  if(readErr){console.warn("No se pudo leer la intención ERGO",readErr);return null;}
+  if(existing?.length) return existing[0];
+  const {data,error}=await sb.from("ergo_intents").insert({
+    user_id:currentUser.id,scheduled_date:scheduled,session_code:pr.code,session_name:pr.name,
+    expected_duration_seconds:pr.duration,expected_spm:pr.spm,expected_workout_type:pr.workoutType
+  }).select("*").single();
+  if(error){console.warn("No se pudo crear la intención ERGO",error);return null;}
+  return data;
+}
+async function openErgDataFor(x){
+  const intent=await ensureErgoIntent(x);
+  if(!intent) return alert("No se pudo preparar el entrenamiento programado. Revisa la conexión con Supabase.");
+  if(intent.ergdata_url){ window.location.href=intent.ergdata_url; return; }
+  alert("Entrenamiento programado guardado. Falta que el entrenador añada el enlace compartido de ErgData para esta sesión.");
+}
+
 function renderErgoCard(el,x){
   el.innerHTML=`<div class="session">
     <span class="tag">${x[0]} ${x[1]} · ERG</span>
     <h2>${title(x)}</h2>
     <p><b>3×10 min @20 ppm</b><br>Recuperación: <b>3 min suaves entre series</b><br>Calentamiento: 10 min · Vuelta a la calma: 8-10 min</p>
     <div class="ergoActions">
-      <button id="ergoManual" class="primary">Registrar resultado</button>
+      <button id="openErgData" class="primary">Abrir entrenamiento en ErgData</button>
+      <button id="ergoManual">Registrar manualmente</button>
       <label class="btn">📷 Foto / Galería
         <input id="ergoPhotos" type="file" accept="image/*" multiple hidden>
       </label>
@@ -408,6 +443,8 @@ function renderErgoCard(el,x){
     <div id="ergoFormWrap" class="hidden"></div>
   </div>`;
 
+  ensureErgoIntent(x);
+  openErgData.onclick=()=>openErgDataFor(x);
   ergoManual.onclick=()=>showErgoForm();
 
   ergoPhotos.onchange=(e)=>{
@@ -647,6 +684,7 @@ function gym(k){
 }
 
 async function history(){
+  await syncConcept2(false).catch(()=>null);
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando…</p></div>';
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
@@ -659,7 +697,7 @@ async function history(){
   const c2html=(c2||[]).length?`<div class="card"><h3>Concept2 / ErgData</h3>${c2.map(r=>{
     const pace=r.pace_500_seconds?secondsToTime(r.pace_500_seconds):"-";
     const match=r.match_status==="matched"?`<span class="tag">Asociado · ${r.matched_session_code||""}</span>`:
-      r.match_status==="review"?'<span class="tag">Revisar asociación</span>':'<span class="tag">No programado</span>';
+      r.match_status==="review"?'<span class="tag">Coincidencia dudosa</span>':'<span class="tag">No programado</span>';
     return `<div class="last"><b>${new Date(r.workout_date).toLocaleString("es-ES")}</b> ${match}<br>${r.distance_m??"-"} m · ${r.time_formatted||"-"} · /500 ${pace} · ${r.spm??"-"} spm<br><small>${r.source||"Concept2"} · confianza ${r.match_confidence??0}%</small></div>`;
   }).join("")}</div>`:"";
 

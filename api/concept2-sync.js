@@ -52,22 +52,41 @@ async function validToken(c){
   return j.access_token;
 }
 function dateOnly(v){return String(v||"").slice(0,10)}
+function resultSeconds(result){
+  if(result.time==null)return null;
+  return Number(result.time)/10;
+}
 function scoreResult(result,intents){
   let best=null;
   for(const i of intents){
     let score=0;
-    if(dateOnly(result.date)===i.scheduled_date)score+=55;
+    // La fecha es la señal principal, pero nunca basta por sí sola.
+    if(dateOnly(result.date||result.date_utc)===i.scheduled_date)score+=45;
+
     const d=Number(result.distance||0);
     if(i.expected_distance_m&&d){
       const diff=Math.abs(d-i.expected_distance_m)/i.expected_distance_m;
       if(diff<=.03)score+=25; else if(diff<=.10)score+=15;
     }
-    if(i.expected_workout_type&&String(result.workout_type||"").toLowerCase().includes(String(i.expected_workout_type).toLowerCase()))score+=20;
+
+    const secs=resultSeconds(result);
+    if(i.expected_duration_seconds&&secs){
+      const diff=Math.abs(secs-i.expected_duration_seconds)/i.expected_duration_seconds;
+      if(diff<=.02)score+=25; else if(diff<=.08)score+=15; else if(diff<=.15)score+=8;
+    }
+
+    const spm=Number(result.stroke_rate||0);
+    if(i.expected_spm&&spm){
+      const diff=Math.abs(spm-i.expected_spm);
+      if(diff<=1)score+=15; else if(diff<=3)score+=8;
+    }
+
+    if(i.expected_workout_type&&String(result.workout_type||"").toLowerCase().includes(String(i.expected_workout_type).toLowerCase()))score+=15;
     if(!best||score>best.score)best={intent:i,score};
   }
-  if(!best||best.score<55)return {status:"unplanned",confidence:best?.score||0,code:null,intentId:null};
-  if(best.score>=75)return {status:"matched",confidence:best.score,code:best.intent.session_code,intentId:best.intent.id};
-  return {status:"review",confidence:best.score,code:best.intent.session_code,intentId:best.intent.id};
+  if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null};
+  if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
+  return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
 }
 module.exports=async function handler(req,res){
   try{

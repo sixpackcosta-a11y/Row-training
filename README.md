@@ -27,3 +27,10 @@ Para que una sesión pueda emparejarse con alta confianza, la planificación deb
 
 ## Seguridad
 Los access/refresh tokens se guardan en `concept2_connections`, una tabla sin acceso para `authenticated`/`anon`. Solo las funciones de servidor con `SUPABASE_SERVICE_ROLE_KEY` pueden leerlos.
+
+## V37 · emparejamiento ERGO automático
+1. Ejecutar `setup_v37.sql` una vez en Supabase.
+2. Al mostrar una sesión ERGO, Row Training crea su intención programada (fecha, código, duración, SPM y tipo).
+3. `Sincronizar ahora` o abrir `Historial` importa Concept2 y compara fecha + duración/distancia + SPM + tipo.
+4. ≥80%: asociado automáticamente. 60–79%: coincidencia dudosa. <60%: no programado.
+5. El botón `Abrir entrenamiento en ErgData` usa `ergdata_url` de la intención. Hasta que el entrenador cargue el enlace compartido, avisa sin inventar una URL.
