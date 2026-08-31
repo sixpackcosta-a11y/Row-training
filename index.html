@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V36</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V39</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -76,7 +76,16 @@ button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cu
 button:not(:disabled), a[href], label.btn, summary, .daybtn, .altChoose, .mainChoose, [role="button"]{cursor:pointer}
 button:disabled{cursor:not-allowed}
 
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><b>🚣 Row Training</b><span id="role"></span></header><main>
+
+/* V39 · Pedregalejo + entrenador */
+:root{--club:#07162f;--sea:#087f8c;--sand:#f5f0e6;--race:#b42318}
+header{background:linear-gradient(90deg,var(--club),#0b3557)}
+.brand{display:flex;gap:10px;align-items:center}.brand .shark{font-size:28px}.brand small{display:block;font-size:11px;opacity:.78;margin-top:2px}
+.primary,.active{background:var(--club)}.session{border-left-color:var(--sea)}
+.coachTools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.raceCard{border-left:5px solid var(--race);background:#fff7f6}.seaCard{border-left:5px solid var(--sea)}
+.level-low{background:#e8f6ef}.level-mid{background:#fff6dd}.level-high{background:#ffe9e7}.plannerGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.plannerGrid select{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}
+@media(max-width:640px){.plannerGrid{grid-template-columns:1fr}}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><span id="role"></span></header><main>
 <div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><p class="muted">No se guarda la contraseña.</p></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
 <script>
@@ -286,22 +295,22 @@ async function ergoLibrary(){
 }
 const schedules={
   veterans:[
+    ["Lun",31,"DESC",null,"Descanso"],
     ["Mar",1,"GYM","A","Fuerza general"],
     ["Mié",2,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
     ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
     ["Vie",4,"GYM","B","Cadena posterior + core"],
     ["Sáb",5,"DESC",null,"Descanso / movilidad"],
-    ["Dom",6,"MAR",null,"🚣 Sesión de mar"],
-    ["Lun",7,"DESC",null,"Descanso"]
+    ["Dom",6,"MAR",null,"🚣 Sesión de mar"]
   ],
   senior:[
+    ["Lun",31,"DESC",null,"Descanso"],
     ["Mar",1,"GYM","A","Fuerza general"],
     ["Mié",2,"GYM","B","Cadena posterior + core"],
     ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
     ["Vie",4,"GYM","C","Fuerza + estabilidad"],
     ["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
-    ["Dom",6,"MAR",null,"🚣 Sesión de mar"],
-    ["Lun",7,"DESC",null,"Descanso"]
+    ["Dom",6,"MAR",null,"🚣 Sesión de mar"]
   ]
 };
 function teamKey(){
@@ -377,10 +386,10 @@ enter.onclick=async()=>{
 };
 sb.auth.getSession().then(({data})=>{if(data.session) startApp()});
 
-function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["result","Resultados"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
+function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Calendario"],["planificar","Planificar"],["biblioteca","Biblioteca ERGO"],["result","Resultados"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
 function title(x){if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
-  refreshTeamSchedule();if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="perfil")profile();else results()}
+  refreshTeamSchedule();if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="planificar")coachPlanner();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="perfil")profile();else results()}
 
 function getTodayIndex(){
   // Until the real season calendar is loaded from Supabase,
@@ -618,7 +627,7 @@ async function saveErgoResult(){
   tab="hist";draw();render();
 }
 
-function weekly(){let x=schedule[selected];content.innerHTML=`<div class="card"><div class="weekhead"><button disabled title="La temporada empieza el 1 de septiembre">←</button><h3>1–7 septiembre 2026</h3><button disabled title="Se activará al cargar las siguientes semanas">→</button></div><div class="calendar">${schedule.map((d,i)=>`<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}</small><div class="num">${d[1]}</div><div class="dot">${i<2?"✅":i===selected?"●":"○"}</div></div>`).join("")}</div><div class="info"><b>ℹ️ No llegues al fallo en ningún ejercicio.</b><br>Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div></div><div id="selectedSession"></div>`;content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});showSelected()}
+function weekly(){let x=schedule[selected];content.innerHTML=`<div class="card"><div class="weekhead"><button disabled title="La temporada empieza el 1 de septiembre">←</button><h3>31 agosto – 6 septiembre 2026</h3><button disabled title="Se activará al cargar las siguientes semanas">→</button></div><div class="calendar">${schedule.map((d,i)=>`<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}</small><div class="num">${d[1]}</div><div class="dot">${i===1||i===2?"✅":i===selected?"●":"○"}</div></div>`).join("")}</div><div class="info"><b>ℹ️ No llegues al fallo en ningún ejercicio.</b><br>Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div></div><div id="selectedSession"></div>`;content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});showSelected()}
 function showSelected(){
   const x=schedule[selected];
   const el=document.getElementById("selectedSession");
@@ -1032,8 +1041,54 @@ async function profile(){
   };
 }
 
+
+const TEAM_OPTIONS=[
+  ["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]
+];
+function isoForSelected(){const d=schedule[selected][1]; return d===31?"2026-08-31":`2026-09-${String(d).padStart(2,"0")}`}
+async function loadCoachCalendar(team,date){
+  const [ss,cc]=await Promise.all([
+    sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),
+    sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])
+  ]);
+  return {sessions:ss.error?[]:(ss.data||[]),competitions:cc.error?[]:(cc.data||[])};
+}
+async function coachPlanner(){
+ if(r!=="coach") return;
+ const date=isoForSelected();
+ content.innerHTML=`<div class="card"><h2>Planificar equipo</h2><p class="muted">Crea y modifica GYM, ERGO y MAR. Las sesiones de MAR completas solo son visibles para entrenadores.</p>
+ <div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Fecha<input id="planDate" type="date" value="${date}"></label></div>
+ <div class="coachTools"><button id="loadPlan" class="primary">Ver día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div></div>`;
+ loadPlan.onclick=renderPlanDay; newSession.onclick=()=>sessionEditor(); newRace.onclick=()=>raceEditor(); await renderPlanDay();
+}
+async function renderPlanDay(){
+ const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
+ planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?`<p style="white-space:pre-line">${x.content}</p>`:""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
+ document.querySelectorAll('.editSess').forEach(b=>b.onclick=()=>sessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
+ document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar esta sesión futura?')){await sb.from('training_sessions').delete().eq('id',b.dataset.id);renderPlanDay()}});
+ document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
+ document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
+}
+function sessionEditor(x=null){
+ const team=planTeam.value,date=planDate.value;
+ planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Pirámide de ritmos"></label></div>
+ <label>Contenido / bloques</label><textarea id="sessContent" rows="8" placeholder="Ejemplo MAR:\n10' calentamiento @18-20 ppm · BAJO\n4×500 m @24 ppm · MEDIO · rec 3'\n6×250 m @30 ppm · ALTO · rec 2'\n10' vuelta a la calma">${x?.content||''}</textarea>
+ <div class="info"><b>MAR:</b> puedes mezclar tiempo y metros. Indica ppm cuando interese y usa BAJO / MEDIO / ALTO como referencia visual. Las ppm exactas siempre mandan.</div>
+ <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
+ sessType.value=x?.session_type||'MAR'; cancelSess.onclick=renderPlanDay; saveSess.onclick=async()=>{const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:sessContent.value.trim(),updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error) alert(q.error.message); else renderPlanDay();};
+}
+function raceEditor(){
+ const team=planTeam.value,date=planDate.value;
+ planArea.innerHTML=`<div class="card raceCard"><h3>Nueva competición</h3><label>Nombre<input id="raceName" placeholder="Ej. Regata de Málaga"></label><div class="plannerGrid"><label>Prioridad<select id="racePriority"><option>Control</option><option selected>Importante</option><option>Objetivo principal</option></select></label><label>Equipo<input value="${TEAM_OPTIONS.find(x=>x[0]===team)?.[1]||team}" disabled></label></div><label>Notas<textarea id="raceNotes" rows="3"></textarea></label><button id="saveRace" class="primary">Guardar competición</button> <button id="cancelRace">Cancelar</button></div>`;
+ cancelRace.onclick=renderPlanDay; saveRace.onclick=async()=>{const q=await sb.from('competitions').insert({name:raceName.value.trim()||'Competición',competition_date:date,team_codes:[team],priority:racePriority.value,notes:raceNotes.value.trim()});if(q.error)alert(q.error.message);else renderPlanDay();};
+}
+function seaResultEditor(sessionId){
+ planArea.innerHTML=`<div class="card seaCard"><h3>Resultado MAR</h3><div class="plannerGrid"><label>Metros<input id="seaMeters" type="number"></label><label>Tiempo<input id="seaTime" placeholder="Ej. 18:42.5"></label><label>Parcial medio /500 m<input id="seaPace" placeholder="Ej. 2:04.7"></label><label>PPM reales<input id="seaSpm" type="number" min="10" max="50"></label></div><label>RPE 1–10<input id="seaRpe" type="number" min="1" max="10"></label><label>Notas<textarea id="seaNotes" rows="4" placeholder="Técnica, viento, mar, tripulación, incidencias…"></textarea></label><button id="saveSea" class="primary">Guardar resultado</button> <button id="cancelSea">Cancelar</button></div>`;
+ cancelSea.onclick=renderPlanDay; saveSea.onclick=async()=>{const q=await sb.from('sea_results').insert({training_session_id:Number(sessionId),distance_m:seaMeters.value?Number(seaMeters.value):null,time_text:seaTime.value.trim()||null,pace_500_text:seaPace.value.trim()||null,spm:seaSpm.value?Number(seaSpm.value):null,rpe:seaRpe.value?Number(seaRpe.value):null,notes:seaNotes.value.trim()||null});if(q.error)alert(q.error.message);else renderPlanDay();};
+}
+
 async function results(){
-  content.innerHTML='<div class="card"><h2>Panel del entrenador</h2><div class="info"><b>Equipos:</b> Veteranas · Senior masculino<br><small>MAR: jueves y domingo para ambos equipos.</small></div><p class="muted">Cargando…</p></div>';
+  content.innerHTML='<div class="card"><h2>Panel del entrenador</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">Cargando…</p></div>';
 
   const {data:profiles,error:e1}=await sb.from("profiles").select("user_id,full_name,height_cm");
   const {data:roles,error:eRole}=await sb.from("user_roles").select("user_id,role");

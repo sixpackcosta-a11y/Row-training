@@ -43,3 +43,20 @@ Los access/refresh tokens se guardan en `concept2_connections`, una tabla sin ac
 - El ERGO programado 3×10' abre directamente su enlace ErgData.
 - Cursor pointer global en controles interactivos.
 - Ejecutar `setup_v38.sql` una vez en Supabase.
+
+## V39
+- Semana visual lunes-domingo.
+- Panel Planificar para entrenador: GYM / ERG / MAR / descanso.
+- MAR editable por tiempo o metros mediante bloques simples, ppm y niveles BAJO/MEDIO/ALTO.
+- Registro MAR: metros, tiempo, parcial /500, ppm reales, RPE y notas.
+- Competiciones por equipo y fecha.
+- Preparado para Veteranas femenino, Senior masculino, Senior femenino y Veteranos masculino.
+- Tabla coach_team_access para permisos por entrenador/equipo. El entrenador existente conserva acceso total mientras no tenga asignaciones explícitas.
+- Identidad visual Club de Remo Pedregalejo / Tiburon@s sin incrustar un escudo web de baja calidad.
+
+## V41
+Después de `setup_v39.sql` y `setup_v40.sql`, ejecutar `setup_v41.sql`.
+V41 copia la planificación base por categoría de forma independiente:
+- Veteranas femenino → Veteranos masculino.
+- Senior masculino → Senior femenino.
+Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
