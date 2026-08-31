@@ -102,3 +102,11 @@ Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
 Semana 1 (31/08–06/09/2026) cerrada para Veteranas femenino y Senior masculino. GYM ~55–60 min, ERGO UT2 y sesiones MAR completas de 60 min. `setup_v57.sql` actualiza/crea la semana de forma idempotente.
 
 V58: editor GYM por ejercicios, ERGO asignado visible y semana 1 MAR con bloques concretos.
+
+
+## V59 - Semana 1 operativa
+- GYM A/B/C revisados para 31/8-6/9.
+- Dibujos mostrados solo para movimientos verificados de esta semana; los dudosos quedan ocultos.
+- Se elimina marcha en el sitio con mancuernas y alternativas confusas de la semana.
+- Repeticiones fijas; el remero registra peso + Fácil/Bien/Duro + nota.
+- Sin cambios SQL respecto a V58.
