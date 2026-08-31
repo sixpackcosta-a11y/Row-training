@@ -1,0 +1,1004 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Remo V29</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
+.realPhoto{object-fit:contain;background:#fff;display:block}.thumb.realPhoto{width:min(220px,42vw);height:auto;max-width:42%;max-height:none}.fullimg.realPhoto{width:100%;height:auto;max-width:100%;object-fit:contain}
+.athleteHead{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.workoutDetail{border-top:1px solid #e3e9f0;padding-top:12px;margin-top:12px}
+.workoutTitle{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.exerciseTable{margin-top:10px;border:1px solid #e3e9f0;border-radius:12px;overflow:hidden}
+.exerciseRow{display:grid;grid-template-columns:2fr .8fr .8fr .8fr;gap:8px;padding:10px;border-bottom:1px solid #e3e9f0;align-items:center}
+.exerciseRow:last-child{border-bottom:0}
+@media(max-width:640px){
+  .athleteHead{align-items:flex-start;flex-direction:column}
+  .exerciseRow{grid-template-columns:1fr 1fr}
+}
+
+.visualPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(520px,100%)}
+.visualPair>div{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.visualPair small{display:block;padding:6px 8px 0;font-weight:800;color:#475569}
+.visualPair img{display:block;width:100%;height:auto;object-fit:contain}
+.visualPair.large{margin:10px auto}
+.realPhoto{display:block;object-fit:contain!important;height:auto!important;max-height:none!important;background:#fff}
+.thumb.realPhoto{width:min(220px,42vw)!important;max-width:42%!important}
+.fullimg.realPhoto{width:100%;max-width:520px;margin:10px auto}
+.ex summary{display:flex;align-items:center;gap:8px}
+.ex details p{margin:10px 0 0}
+.exhead .thumb{flex:0 0 auto}
+.exhead .visualPair{flex:0 0 min(260px,45%)}
+@media(max-width:520px){
+  .exhead{align-items:flex-start;flex-wrap:wrap}
+  .visualPair{grid-column:1/-1;width:100%}
+}
+
+.keepLogin{display:flex;gap:8px;align-items:center;margin:2px 0 14px}
+.keepLogin input{width:auto;margin:0}
+.todayHero{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.ergoActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ergoForm{margin-top:14px}
+.ocrBox{background:#f5f8fb;border-radius:12px;padding:12px;margin-top:10px}
+.photoPreview{width:100%;max-width:420px;border-radius:12px;margin:10px 0;display:none}
+.fourGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(max-width:520px){.fourGrid{grid-template-columns:1fr}.todayHero{flex-direction:column}}
+
+.saveStatus{margin:10px 0;padding:10px 12px;border-radius:10px;background:#f5f8fb}
+.saveStatus.ok{background:#eaf8ef}
+.saveStatus.err{background:#fff0f0}
+
+.exerciseVisual{width:100%;max-width:560px;display:block;margin:10px auto;border-radius:14px;object-fit:contain;background:#fff}
+.thumb.realPhoto{width:min(260px,44vw)!important;max-width:44%!important;object-fit:contain!important}
+.fullimg.realPhoto{width:100%!important;max-width:560px!important;object-fit:contain!important}
+.alternatives{background:#eef7ff;border:1px solid #cfe5ff}.alternatives summary{font-size:15px}.alternatives li{margin:8px 0}
+
+.altGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.altCard{background:#fff;border:1px solid #dbe6f3;border-radius:16px;padding:14px}
+.altCard .altHead{display:flex;gap:14px;align-items:center}
+.altCard .altVisual{width:150px;max-width:42%;flex:0 0 auto}
+.altCard .altVisual img{width:100%;height:auto;border-radius:12px;display:block}
+.altCard .altName{font-weight:800;font-size:1.05rem;line-height:1.2}
+.altCard .altDose{font-weight:700;margin-top:4px}
+.altCard .altMeta{margin:8px 0 0;color:#334155}
+.altCard details{margin-top:10px;background:#f7f9fc;border-radius:12px;padding:10px 12px}
+.altCard summary{font-weight:750;cursor:pointer}
+.altNoVisual{background:#eef4fb;border-radius:12px;padding:14px;text-align:center;font-weight:700;color:#50647b}
+@media(max-width:640px){
+  .altCard .altHead{align-items:flex-start}
+  .altCard .altVisual{width:115px;max-width:38%}
+}
+
+
+.altChoose{margin-top:10px;width:100%;border:1px solid #8bbcf4;background:#eef7ff;font-weight:800}
+.altChoose.selected{background:#dff4e6;border-color:#70c28a}
+.variantStatus{margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:#eef7ff;font-weight:750}
+.mainChoose{margin:8px 0 0;width:100%}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><b>🚣 Remo</b><span id="role"></span></header><main>
+<div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><p class="muted">No se guarda la contraseña.</p></div>
+<div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
+<script>
+
+const alternativeExerciseLibrary = {
+  "Sentadilla goblet a cajón": {img:"goblet", dose:"3×8-10", rest:"90 s",
+    how:"Sujeta una mancuerna junto al pecho, lleva la cadera atrás y baja con control hasta tocar suavemente el cajón; sube empujando el suelo.",
+    keys:"Pie completo apoyado · rodillas siguen la línea de los pies · pecho estable.",
+    error:"Dejarse caer al cajón o levantar los talones."},
+  "Zancada asistida": {asset:"assets/alt_zancada.jpg",img:null, dose:"3×8/lado", rest:"75-90 s",
+    how:"Sujétate a una pared, poste o banco. Da un paso amplio y baja de forma vertical hasta donde controles sin dolor.",
+    keys:"Tronco alto · rodilla alineada · empuja con el pie delantero.",
+    error:"Perder el equilibrio o dejar que la rodilla caiga hacia dentro."},
+  "Sentadilla con mancuerna": {asset:"assets/alt_goblet_mancuerna.jpg",img:"goblet", dose:"3×10", rest:"90 s",
+    how:"Sujeta una mancuerna frente al pecho y baja como si fueras a sentarte, manteniendo el pie completo apoyado.",
+    keys:"Abdomen firme · rodillas alineadas · controla la bajada.",
+    error:"Redondear la espalda o despegar los talones."},
+  "Peso muerto rumano con mancuernas": {img:"rumano", dose:"3×8-10", rest:"90-120 s",
+    how:"Con una mancuerna en cada mano, lleva la cadera atrás y desliza las cargas cerca de los muslos sin redondear la espalda.",
+    keys:"Cadera atrás · espalda neutra · tensión en isquios y glúteos.",
+    error:"Bajar doblando demasiado las rodillas o curvar la espalda."},
+  "Buenos días con banda": {img:null, dose:"3×12", rest:"60-75 s",
+    how:"Pisa una banda y colócala sobre la parte alta de la espalda. Lleva la cadera atrás con el tronco firme y vuelve extendiendo la cadera.",
+    keys:"Espalda neutra · rodillas suaves · movimiento desde la cadera.",
+    error:"Flexionar la columna o convertirlo en una sentadilla."},
+  "Puente de glúteo / hip thrust": {img:"hip", dose:"3×12", rest:"75-90 s",
+    how:"Apoya los pies, eleva la cadera y aprieta glúteos arriba sin arquear la zona lumbar.",
+    keys:"Costillas abajo · barbilla recogida · pausa arriba.",
+    error:"Hiperextender la espalda en lugar de extender la cadera."},
+  "Jalón con banda elástica desde arriba": {img:"jalon", dose:"3×12", rest:"60-75 s",
+    how:"Ancla la banda por encima de la cabeza y tira de los codos hacia abajo acercando las manos a la parte alta del pecho.",
+    keys:"Pecho alto · hombros lejos de las orejas · vuelta controlada.",
+    error:"Balancearse o encoger los hombros."},
+  "Dominada asistida": {img:"jalon", dose:"3×6-8", rest:"90 s",
+    how:"Utiliza una máquina o una banda de asistencia. Sube llevando el pecho hacia la barra y baja lentamente.",
+    keys:"Hombros abajo · abdomen firme · movimiento controlado.",
+    error:"Impulsarse con las piernas o caer en la bajada."},
+  "Remo con banda si no hay anclaje alto": {img:"remo", dose:"3×12", rest:"60-75 s",
+    how:"Ancla la banda frente a ti a la altura del abdomen y lleva los codos hacia atrás sin mover el tronco.",
+    keys:"Pecho estable · hombros bajos · aprieta la espalda al final.",
+    error:"Inclinarse hacia atrás para ganar recorrido."},
+  "Remo con mancuerna": {img:"remo_unilateral", dose:"3×10/lado", rest:"75-90 s",
+    how:"Apoya una mano y lleva la mancuerna hacia la cadera manteniendo el tronco estable.",
+    keys:"Espalda neutra · codo hacia la cadera · hombro bajo.",
+    error:"Girar el torso para subir la mancuerna."},
+  "Remo con banda elástica": {img:"remo", dose:"3×12", rest:"60-75 s",
+    how:"Con la banda anclada delante, lleva los codos hacia atrás y junta suavemente las escápulas.",
+    keys:"Tronco quieto · hombros bajos · controla la vuelta.",
+    error:"Balancearse o subir los hombros."},
+  "Remo pecho apoyado con mancuernas": {img:"remo", dose:"3×10", rest:"75-90 s",
+    how:"Apoya el pecho en un banco inclinado y rema con ambas mancuernas llevando los codos atrás.",
+    keys:"Pecho apoyado · cuello neutro · pausa arriba.",
+    error:"Despegar el pecho del banco o encoger hombros."},
+  "Pallof press con banda": {img:"pallof", dose:"3×10/lado", rest:"45-60 s",
+    how:"Colócate de lado al anclaje, lleva las manos al frente y evita que la banda te haga girar.",
+    keys:"Costillas abajo · glúteos activos · pelvis quieta.",
+    error:"Rotar el tronco o acercarte al anclaje."},
+  "Isométrico antirotación con banda": {img:"pallof", dose:"3×20-30 s/lado", rest:"45 s",
+    how:"Extiende los brazos al frente y mantén la posición sin permitir que el tronco rote.",
+    keys:"Abdomen firme · hombros relajados · respiración normal.",
+    error:"Inclinarse o girar hacia el anclaje."},
+  "Dead bug si no hay anclaje": {img:"plancha", dose:"3×8/lado", rest:"45-60 s",
+    how:"Tumbado boca arriba, mantén la zona lumbar estable mientras extiendes brazo y pierna contrarios.",
+    keys:"Lumbar estable · movimiento lento · exhala al extender.",
+    error:"Arquear la espalda al alejar la pierna."},
+  "Paseo con kettlebells": {img:"farmer", dose:"3×30-40 m", rest:"60-75 s",
+    how:"Camina erguido con una carga en cada mano y pasos cortos y controlados.",
+    keys:"Postura alta · abdomen firme · hombros relajados.",
+    error:"Inclinar el tronco o acelerar perdiendo postura."},
+  "Paseo con discos": {img:"farmer", dose:"3×30-40 m", rest:"60-75 s",
+    how:"Sujeta un disco en cada mano y camina manteniendo el tronco alto y estable.",
+    keys:"Agarre firme · abdomen activo · pasos controlados.",
+    error:"Encoger los hombros o balancear las cargas."},
+  "Marcha en el sitio con mancuernas": {img:"farmer", dose:"3×40-45 s", rest:"60 s",
+    how:"Sujeta una mancuerna en cada mano y marcha en el sitio manteniendo una postura alta.",
+    keys:"Abdomen firme · cadera estable · respiración continua.",
+    error:"Balancearse lateralmente o encoger hombros."},
+  "Sentadilla a banco sin carga": {asset:"assets/alt_sentadilla_banco.jpg",img:"goblet", dose:"3×10-12", rest:"60-75 s",
+    how:"Colócate delante de un banco o silla. Lleva la cadera atrás, toca el banco con control y vuelve a levantarte.",
+    keys:"Pie completo · rodillas alineadas · controla el contacto con el banco.",
+    error:"Dejarse caer o impulsarse con las manos."},
+  "Sentadilla goblet sin cajón": {asset:"assets/alt_goblet_mancuerna.jpg",img:"goblet", dose:"3×8-10", rest:"75-90 s",
+    how:"Sujeta la mancuerna junto al pecho y baja hasta la profundidad que controles manteniendo el tronco estable.",
+    keys:"Talones apoyados · rodillas alineadas · pecho estable.",
+    error:"Perder la postura al buscar demasiada profundidad."},
+  "Prensa si está disponible": {asset:"assets/alt_prensa.jpg",img:"prensa", dose:"3×8-10", rest:"90-120 s",
+    how:"Apoya toda la espalda y empuja la plataforma con el pie completo, controlando el regreso.",
+    keys:"Pelvis apoyada · rodillas alineadas · recorrido cómodo.",
+    error:"Despegar la pelvis o bloquear las rodillas."},
+  "Puente de glúteo en suelo": {img:"hip", dose:"3×12-15", rest:"60-75 s",
+    how:"Tumbado boca arriba con rodillas flexionadas, eleva la cadera y aprieta glúteos arriba.",
+    keys:"Costillas abajo · pies firmes · pausa arriba.",
+    error:"Empujar desde la zona lumbar."},
+  "Hip thrust con mancuerna": {img:"hip", dose:"3×10-12", rest:"75-90 s",
+    how:"Apoya la parte alta de la espalda en un banco, coloca una mancuerna sobre la cadera y extiende hasta alinear hombros, cadera y rodillas.",
+    keys:"Barbilla recogida · abdomen firme · pausa arriba.",
+    error:"Arquear excesivamente la espalda."},
+  "Puente de glúteo con banda": {img:"hip", dose:"3×15", rest:"60-75 s",
+    how:"Coloca una banda sobre las rodillas y eleva la cadera manteniendo una ligera presión hacia fuera.",
+    keys:"Rodillas alineadas · glúteos activos · movimiento controlado.",
+    error:"Juntar las rodillas o hiperextender la lumbar."},
+  "Remo con banda a una mano": {img:"remo_unilateral", dose:"3×10-12/lado", rest:"60-75 s",
+    how:"Ancla una banda frente a ti y rema con una mano llevando el codo hacia la cadera.",
+    keys:"Tronco estable · hombro bajo · controla la vuelta.",
+    error:"Rotar el cuerpo al tirar."},
+  "Remo pecho apoyado": {img:"remo", dose:"3×10", rest:"75-90 s",
+    how:"Apoya el pecho en un banco inclinado y lleva los codos hacia atrás manteniendo el cuello neutro.",
+    keys:"Pecho apoyado · hombros bajos · pausa al final.",
+    error:"Despegar el pecho o tirar con impulso."},
+  "Remo en polea sentado": {img:"remo", dose:"3×10-12", rest:"75-90 s",
+    how:"Sentado frente a la polea, lleva el agarre hacia el abdomen sin echar el tronco hacia atrás.",
+    keys:"Pecho estable · codos atrás · regreso controlado.",
+    error:"Balancear el tronco."},
+  "Press con mancuernas": {img:"press", dose:"3×8-12", rest:"75-90 s",
+    how:"Tumbado en banco, baja las mancuernas con control y empuja manteniendo las muñecas estables.",
+    keys:"Pies firmes · hombros apoyados · recorrido controlado.",
+    error:"Arquear en exceso la espalda o chocar las mancuernas."},
+  "Press en máquina": {img:"press", dose:"3×8-12", rest:"75-90 s",
+    how:"Ajusta el asiento para que las empuñaduras queden a la altura del pecho y empuja sin bloquear los codos.",
+    keys:"Espalda apoyada · hombros bajos · controla la vuelta.",
+    error:"Adelantar los hombros o despegar la espalda."},
+  "Flexiones inclinadas": {img:"press", dose:"3×8-12", rest:"60-75 s",
+    how:"Apoya las manos en un banco o mesa estable y lleva el pecho hacia el apoyo manteniendo el cuerpo alineado.",
+    keys:"Cuerpo en bloque · codos controlados · abdomen firme.",
+    error:"Hundir la cadera o encoger los hombros."},
+  "Plancha con rodillas apoyadas": {img:"plancha", dose:"3×25-35 s", rest:"45-60 s",
+    how:"Apoya antebrazos y rodillas y mantén una línea estable desde hombros hasta rodillas.",
+    keys:"Glúteos activos · abdomen firme · respira.",
+    error:"Dejar caer la cadera."},
+  "Dead bug": {img:"plancha", dose:"3×8/lado", rest:"45-60 s",
+    how:"Tumbado boca arriba, extiende brazo y pierna contrarios sin perder el contacto lumbar con el suelo.",
+    keys:"Movimiento lento · lumbar estable · exhala al extender.",
+    error:"Arquear la zona lumbar."},
+  "Plancha elevada en banco": {img:"plancha", dose:"3×30-40 s", rest:"45-60 s",
+    how:"Apoya los antebrazos en un banco y mantén el cuerpo alineado desde la cabeza hasta los pies.",
+    keys:"Abdomen firme · glúteos activos · hombros relajados.",
+    error:"Dejar caer o elevar demasiado la cadera."}
+};
+
+function normalizeAltName(txt){
+  return String(txt||"").replace(/\s*·.*$/,"").trim();
+}
+function altExerciseCard(altTxt,exerciseIndex){
+  const name=normalizeAltName(altTxt);
+  const a=alternativeExerciseLibrary[name] || {
+    img:null, dose:(String(altTxt).includes("·")?String(altTxt).split("·").slice(1).join("·").trim():"Según sesión"),
+    rest:"60-90 s",
+    how:"Realiza la variante con movimiento controlado y sin dolor. Usa una carga que te permita terminar cada serie con 2-3 repeticiones en reserva.",
+    keys:"Técnica estable · recorrido cómodo · sin llegar al fallo.",
+    error:"Forzar el movimiento o utilizar una carga que altere la técnica."
+  };
+  let visual="";
+  if(a.asset){
+    visual=`<div class="altVisual">${renderSingleImage(a.asset,name,"realPhoto")}</div>`;
+  }else if(a.img && visuals[a.img]){
+    visual=`<div class="altVisual">${renderSingleImage(visuals[a.img].src,name,"realPhoto")}</div>`;
+  }else{
+    visual=`<div class="altVisual"><div class="altNoVisual">Guía visual<br>del movimiento</div></div>`;
+  }
+  return `<div class="altCard" data-altcard="${exerciseIndex}" data-altname="${encodeURIComponent(name)}">
+    <div class="altHead">
+      ${visual}
+      <div>
+        <div class="altName">${name}</div>
+        <div class="altDose">${a.dose}${a.rest?` · Descanso ${a.rest}`:""}</div>
+      </div>
+    </div>
+    <details>
+      <summary>📖 Cómo hacerlo</summary>
+      <p><b>Cómo:</b> ${a.how}</p>
+      <p><b>Claves:</b> ${a.keys}</p>
+      <p><b>Evita:</b> ${a.error}</p>
+      <a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name+" técnica ejercicio")}">▶️ Ver vídeo</a>
+    </details>
+    <button type="button" class="altChoose" data-ex="${exerciseIndex}" data-alt="${encodeURIComponent(name)}">✓ Elegir esta alternativa</button>
+  </div>`;
+}
+const gyms={"A": {"name": "Fuerza piernas + espalda", "items": [{"name": "Prensa", "dose": "3×8-10", "rest": "2 min", "img": "prensa", "alternatives":["Sentadilla goblet a cajón","Zancada asistida","Sentadilla con mancuerna"], "how": "Empuja con todo el pie y controla la bajada.", "keys": "Rodillas alineadas · pelvis apoyada · bajada controlada.", "error": "No despegar la pelvis ni bloquear las rodillas."}, {"name": "Peso muerto rumano", "dose": "3×8-10", "rest": "2 min", "img": "rumano", "alternatives":["Peso muerto rumano con mancuernas","Buenos días con banda","Puente de glúteo / hip thrust"], "how": "Lleva la cadera atrás manteniendo la espalda neutra.", "keys": "Cadera atrás · carga cerca · abdomen firme.", "error": "Redondear la espalda o convertirlo en sentadilla."}, {"name": "Jalón al pecho", "dose": "3×8-12", "rest": "90 s", "img": "jalon", "alternatives":["Jalón con banda elástica desde arriba","Dominada asistida","Remo con banda si no hay anclaje alto"], "how": "Lleva la barra hacia la parte alta del pecho sin balancearte.", "keys": "Pecho alto · hombros abajo · controla la vuelta.", "error": "Tirar con impulso o llevar la barra tras la nuca."}, {"name": "Remo", "dose": "3×8-12", "rest": "90 s", "img": "remo", "alternatives":["Remo con mancuerna","Remo con banda elástica","Remo pecho apoyado con mancuernas"], "how": "Lleva los codos atrás manteniendo estable el tronco.", "keys": "Pecho estable · hombros bajos · pausa al final.", "error": "Balancear el cuerpo para mover más peso."}, {"name": "Pallof press", "dose": "3×10/lado", "rest": "60 s", "img": "pallof", "alternatives":["Pallof press con banda","Isométrico antirotación con banda","Dead bug si no hay anclaje"], "how": "Aleja las manos del pecho resistiendo el giro del tronco.", "keys": "Costillas abajo · glúteos activos · no gires.", "error": "Dejar que el tronco rote."}, {"name": "Farmer carry", "dose": "3×30-40 m", "rest": "60-90 s", "img": "farmer", "alternatives":["Paseo con kettlebells","Paseo con discos","Marcha en el sitio con mancuernas"], "how": "Camina erguido sujetando carga a ambos lados.", "keys": "Postura alta · abdomen firme · pasos controlados.", "error": "Inclinarte o encoger los hombros."}]}, "B": {"name": "Cadena posterior + core", "items": [{"name": "Goblet squat a cajón", "dose": "3×8-10", "rest": "90 s", "img": "goblet", "alternatives":["Sentadilla a banco sin carga","Sentadilla goblet sin cajón","Prensa si está disponible"], "how": "Baja con control hasta tocar el cajón y vuelve a subir.", "keys": "Pie completo · rodillas alineadas · pecho estable.", "error": "Dejarte caer sobre el cajón."}, {"name": "Hip thrust", "dose": "3×8-12", "rest": "90 s", "img": "hip", "alternatives":["Puente de glúteo en suelo","Hip thrust con mancuerna","Puente de glúteo con banda"], "how": "Extiende la cadera y aprieta glúteos arriba.", "keys": "Barbilla recogida · costillas abajo · pausa arriba.", "error": "Hiperextender la zona lumbar."}, {"name": "Remo unilateral", "dose": "3×8-12/lado", "rest": "90 s", "img": "remo_unilateral", "alternatives":["Remo con banda a una mano","Remo pecho apoyado","Remo en polea sentado"], "how": "Lleva el codo hacia la cadera sin girar el torso.", "keys": "Espalda neutra · hombro bajo · control.", "error": "Rotar el torso."}, {"name": "Press", "dose": "3×8-12", "rest": "90 s", "img": "press", "alternatives":["Press con mancuernas","Press en máquina","Flexiones inclinadas"], "how": "Empuja manteniendo el tronco estable.", "keys": "Abdomen firme · muñeca neutra · movimiento controlado.", "error": "Arquear demasiado la espalda."}, {"name": "Plancha", "dose": "3×20-40 s", "rest": "60 s", "img": "plancha", "alternatives":["Plancha con rodillas apoyadas","Dead bug","Plancha elevada en banco"], "how": "Mantén una línea estable entre hombros, cadera y pies.", "keys": "Glúteos activos · abdomen firme · respira.", "error": "Dejar caer o subir demasiado la cadera."}]}, "C": {"name":"Fuerza general + estabilidad","items":[{"name":"Prensa","dose":"3×8-10","rest":"2 min","img":"prensa","alternatives":["Sentadilla goblet con mancuerna · 3×10","Zancada asistida con mancuernas · 3×8/lado","Sentadilla con banda elástica · 3×12","Sentadilla a silla en casa · 3×12"],"how":"Empuja con todo el pie y controla la bajada.","keys":"Rodillas alineadas · pelvis apoyada · bajada controlada.","error":"No despegar la pelvis ni bloquear las rodillas."},{"name":"Remo","dose":"3×10","rest":"90 s","img":"remo","alternatives":["Remo con mancuerna · 3×10/lado","Remo con banda elástica · 3×12","Remo con mochila en casa · 3×12"],"how":"Lleva los codos atrás manteniendo estable el tronco.","keys":"Pecho estable · hombros bajos · pausa al final.","error":"Balancear el cuerpo para mover más peso."},{"name":"Farmer carry","dose":"3×30-40 m","rest":"60-90 s","img":"farmer","alternatives":["Paseo con mancuernas · 3×30-40 m","Marcha con banda + carga · 3×45 s","Marcha en casa con garrafas o mochilas · 3×45 s"],"how":"Camina erguido sujetando carga a ambos lados.","keys":"Postura alta · abdomen firme · pasos controlados.","error":"Inclinarte o encoger los hombros."},{"name":"Plancha","dose":"3×30-40 s","rest":"60 s","img":"plancha","alternatives":["Plancha con rodillas apoyadas · 3×30 s","Dead bug · 3×8/lado","Plancha elevada en mesa o banco · 3×30-40 s"],"how":"Mantén una línea estable entre hombros, cadera y pies.","keys":"Glúteos activos · abdomen firme · respira.","error":"Dejar caer o subir demasiado la cadera."}]}};
+const schedules={
+  veterans:[
+    ["Mar",1,"GYM","A","Fuerza general"],
+    ["Mié",2,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
+    ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
+    ["Vie",4,"GYM","B","Cadena posterior + core"],
+    ["Sáb",5,"DESC",null,"Descanso / movilidad"],
+    ["Dom",6,"MAR",null,"🚣 Sesión de mar"],
+    ["Lun",7,"DESC",null,"Descanso"]
+  ],
+  senior:[
+    ["Mar",1,"GYM","A","Fuerza general"],
+    ["Mié",2,"GYM","B","Cadena posterior + core"],
+    ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
+    ["Vie",4,"GYM","C","Fuerza + estabilidad"],
+    ["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
+    ["Dom",6,"MAR",null,"🚣 Sesión de mar"],
+    ["Lun",7,"DESC",null,"Descanso"]
+  ]
+};
+function teamKey(){
+  const t=((typeof profile!=="undefined"&&profile?.team)||"")+" "+((typeof profile!=="undefined"&&profile?.full_name)||"");
+  return t.toLowerCase().includes("veter")?"veterans":"senior";
+}
+let schedule=schedules[teamKey()];
+function refreshTeamSchedule(){schedule=schedules[teamKey()];}
+
+const visuals={
+  prensa:{type:"composite",src:"assets/prensa.png"},
+  rumano:{type:"composite",src:"assets/rumano.png"},
+  jalon:{type:"composite",src:"assets/jalon.png"},
+  remo:{type:"composite",src:"assets/remo.png"},
+  pallof:{type:"composite",src:"assets/pallof.png"},
+  farmer:{type:"composite",src:"assets/farmer.png"},
+  goblet:{type:"composite",src:"assets/goblet.png"},
+  hip:{type:"composite",src:"assets/hip.png"},
+  remo_unilateral:{type:"composite",src:"assets/remo_unilateral.png"},
+  press:{type:"composite",src:"assets/press.png"},
+  plancha:{type:"composite",src:"assets/plancha.png"}
+};
+function renderSingleImage(src,alt,klass){
+  return `<img class="${klass} realPhoto" src="${src}" alt="${alt}" referrerpolicy="no-referrer" loading="lazy">`;
+}
+function renderPair(src1,src2,name,large=false){
+  return `<div class="visualPair ${large?"large":""}">
+      <div><small>INICIO</small><img src="${src1}" alt="Inicio ${name}" referrerpolicy="no-referrer" loading="lazy"></div>
+      <div><small>FINAL</small><img src="${src2}" alt="Final ${name}" referrerpolicy="no-referrer" loading="lazy"></div>
+    </div>`;
+}
+function visualHTML(i,large=false){
+  const v=visuals[i.img];
+  if(!v) return "";
+  if(v.type==="pair") return renderPair(v.src,v.src2,i.name,large);
+  if(v.type==="singlepair") return renderPair(v.src,v.src2||v.src,i.name,large);
+  const klass = `${large?"fullimg":"thumb"}`;
+  return renderSingleImage(v.src,i.name,klass);
+}
+
+let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d)),set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
+const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+let currentUser=null;
+
+async function startApp(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user) return;
+  currentUser=user;
+  const {data,error}=await sb.from("user_roles").select("role").eq("user_id",user.id).single();
+  if(error){alert("Error leyendo rol: "+error.message);return}
+  r=data.role;
+  login.classList.add("hidden"); app.classList.remove("hidden");
+  role.textContent=r==="coach"?"ENTRENADOR":"REMERO";
+  draw(); render();
+}
+const savedKeep=localStorage.getItem("remo_keep_session");
+if(savedKeep!==null) keepSession.checked=savedKeep==="1";
+
+window.addEventListener("pagehide",()=>{
+  if(localStorage.getItem("remo_keep_session")==="0") sb.auth.signOut();
+});
+
+enter.onclick=async()=>{
+  enter.disabled=true;
+  localStorage.setItem("remo_keep_session",keepSession.checked?"1":"0");
+  const {error}=await sb.auth.signInWithPassword({email:u.value.trim(),password:p.value});
+  enter.disabled=false;
+  if(error) return alert("No se pudo iniciar sesión: "+error.message);
+  startApp();
+};
+sb.auth.getSession().then(({data})=>{if(data.session) startApp()});
+
+function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Semana"],["result","Resultados"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
+function title(x){if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
+function render(){
+  refreshTeamSchedule();if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="hist")history();else if(tab==="perfil")profile();else results()}
+
+function getTodayIndex(){
+  // Until the real season calendar is loaded from Supabase,
+  // use the currently selected day as the "today" demo day.
+  return selected;
+}
+
+function todayView(){
+  const i=getTodayIndex();
+  const x=schedule[i];
+  content.innerHTML=`<div class="card">
+    <div class="todayHero">
+      <div>
+        <span class="tag">HOY · ${x[0]} ${x[1]}</span>
+        <h2>${title(x)}</h2>
+      </div>
+      <button id="goWeek">Ver semana</button>
+    </div>
+    <div class="info"><b>ℹ️ No llegues al fallo en ningún ejercicio.</b><br>Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div>
+    <div id="todaySession"></div>
+  </div>`;
+  goWeek.onclick=()=>{tab="semana";draw();render()};
+  showSessionIn("todaySession",x);
+}
+
+function showSessionIn(targetId,x){
+  const el=document.getElementById(targetId);
+  if(x[2]==="GYM"){
+    el.innerHTML=`<div class="session">
+      <h3>${title(x)}</h3>
+      <p class="muted">⏱️ 75-90 min</p>
+      <button id="todayOpenGym" class="primary">Abrir entrenamiento</button>
+    </div>`;
+    todayOpenGym.onclick=()=>gym(x[3]);
+  } else if(x[2]==="ERG"){
+    renderErgoCard(el,x);
+  } else if(x[2]==="MAR"){
+    el.innerHTML='<div class="session"><h3>🚣 Sesión de mar</h3></div>';
+  } else {
+    el.innerHTML='<div class="session"><h3>Descanso / movilidad</h3></div>';
+  }
+}
+
+function renderErgoCard(el,x){
+  el.innerHTML=`<div class="session">
+    <span class="tag">${x[0]} ${x[1]} · ERG</span>
+    <h2>${title(x)}</h2>
+    <p><b>3×10 min @20 ppm</b><br>Recuperación: <b>3 min suaves entre series</b><br>Calentamiento: 10 min · Vuelta a la calma: 8-10 min</p>
+    <div class="ergoActions">
+      <button id="ergoManual" class="primary">Registrar resultado</button>
+      <label class="btn">📷 Foto / Galería
+        <input id="ergoPhotos" type="file" accept="image/*" multiple hidden>
+      </label>
+    </div>
+    <div id="ergoFormWrap" class="hidden"></div>
+  </div>`;
+
+  ergoManual.onclick=()=>showErgoForm();
+
+  ergoPhotos.onchange=(e)=>{
+    const files=[...(e.target.files||[])];
+    if(!files.length)return;
+    showErgoForm(files);
+  };
+}
+
+function showErgoForm(files=[]){
+  if(files && !Array.isArray(files)) files=[files];
+  const wrap=document.getElementById("ergoFormWrap");
+  wrap.classList.remove("hidden");
+  wrap.innerHTML=`<div class="ergoForm">
+    ${files.length?`<div id="ergoPreviews"></div>`:''}
+    ${files.length?'<div class="ocrBox"><b>OCR</b><p id="ocrStatus">Preparando lectura…</p><textarea id="ocrText" rows="4" placeholder="Texto detectado"></textarea></div>':''}
+    ${files.length?`<label class="btn" style="display:inline-block;margin:8px 0">➕ Añadir más fotos<input id="ergoMorePhotos" type="file" accept="image/*" multiple hidden></label>`:""}
+    <div class="fourGrid">
+      <label>Distancia (m)<input id="ergoDistance" type="number"></label>
+      <label>Tiempo total <input id="ergoTime" placeholder="mm:ss"></label>
+      <label>Ritmo /500 <input id="ergoPace" placeholder="mm:ss"></label>
+      <label>SPM <input id="ergoSpm" type="number"></label>
+      <label>FC media <input id="ergoAvgHr" type="number"></label>
+      <label>FC máxima <input id="ergoMaxHr" type="number"></label>
+      <label>RPE 1-10 <input id="ergoRpe" type="number" min="1" max="10"></label>
+    </div>
+    <label>Notas<textarea id="ergoNotes"></textarea></label>
+    <button id="saveErgo" class="primary">Guardar resultado</button>
+  </div>`;
+
+  if(files.length){
+    const previews=document.getElementById("ergoPreviews");
+    files.forEach((file,idx)=>{
+      const box=document.createElement("div");
+      box.style.marginBottom="12px";
+      box.innerHTML=`<b>Foto ${idx+1}</b><img class="photoPreview" style="display:block;margin-top:6px">`;
+      box.querySelector("img").src=URL.createObjectURL(file);
+      previews.appendChild(box);
+    });
+    runErgoOCRMulti(files);
+    const more=document.getElementById("ergoMorePhotos");
+    if(more) more.onchange=(e)=>{
+      const added=[...(e.target.files||[])];
+      if(added.length) showErgoForm(files.concat(added));
+    };
+  }
+
+  saveErgo.onclick=saveErgoResult;
+}
+
+function timeTextToSeconds(v){
+  if(!v)return null;
+  const p=v.trim().split(":").map(Number);
+  if(p.some(Number.isNaN))return null;
+  if(p.length===2)return p[0]*60+p[1];
+  if(p.length===3)return p[0]*3600+p[1]*60+p[2];
+  return Number(v)||null;
+}
+
+function secondsToTime(sec){
+  if(!sec && sec!==0)return "";
+  const m=Math.floor(sec/60), s=Math.round(sec%60);
+  return `${m}:${String(s).padStart(2,"0")}`;
+}
+
+async function runErgoOCRMulti(files){
+  const status=document.getElementById("ocrStatus");
+  const txt=document.getElementById("ocrText");
+  let combined=[];
+  for(let i=0;i<files.length;i++){
+    status.textContent=`Leyendo foto ${i+1} de ${files.length}…`;
+    try{
+      const {data}=await Tesseract.recognize(files[i],"eng");
+      combined.push(`--- FOTO ${i+1} ---\n${(data.text||"").trim()}`);
+    }catch(e){ combined.push(`--- FOTO ${i+1}: no se pudo leer ---`); }
+  }
+  txt.value=combined.join("\n\n");
+  status.textContent=`Lectura terminada (${files.length} foto${files.length===1?"":"s"}). Revisa los datos antes de guardar.`;
+  // La extracción automática usa cada foto; los campos nunca se bloquean y pueden corregirse manualmente.
+  for(const f of files){ await runErgoOCR(f,true); }
+  txt.value=combined.join("\n\n");
+}
+
+async function runErgoOCR(file,multiMode=false){
+  const status=document.getElementById("ocrStatus");
+  const txt=document.getElementById("ocrText");
+  try{
+    status.textContent="Leyendo la pantalla…";
+    const {data:{text}}=await Tesseract.recognize(file,"eng",{
+      logger:m=>{
+        if(m.status==="recognizing text" && status){
+          status.textContent=`Leyendo… ${Math.round((m.progress||0)*100)}%`;
+        }
+      }
+    });
+    txt.value=text.trim();
+    if(!multiMode) status.textContent="Lectura terminada. Revisa los datos antes de guardar.";
+
+    // Heuristics: detect common erg screen values. Always leave user in control.
+    const compact=text.replace(/\s+/g," ");
+    const times=[...compact.matchAll(/\b(\d{1,2}:\d{2}(?:\.\d)?)\b/g)].map(m=>m[1]);
+    const nums=[...compact.matchAll(/\b(\d{3,5})\b/g)].map(m=>Number(m[1]));
+    if(times[0])ergoTime.value=times[0];
+    if(times[1])ergoPace.value=times[1];
+    const plausibleDistance=nums.find(n=>n>=100 && n<=50000);
+    if(plausibleDistance)ergoDistance.value=plausibleDistance;
+  }catch(err){
+    status.textContent="No se pudo leer automáticamente. Puedes introducir los datos manualmente.";
+  }
+}
+
+async function saveErgoResult(){
+  if(!currentUser)return alert("Sesión no iniciada");
+  const {data:workout,error:werr}=await sb.from("workout_logs").insert({
+    user_id:currentUser.id,
+    session_code:"ERG-1",
+    session_type:"ergo",
+    status:"completed"
+  }).select("id").single();
+  if(werr)return alert(werr.message);
+
+  const timeSec=timeTextToSeconds(ergoTime.value);
+  const paceSec=timeTextToSeconds(ergoPace.value);
+
+  const {error}=await sb.from("ergo_results").insert({
+    user_id:currentUser.id,
+    workout_id:workout.id,
+    test_name:"UT2 · 3×10 min @20 ppm",
+    distance_m:ergoDistance.value?Number(ergoDistance.value):null,
+    time_seconds:timeSec,
+    pace_500_seconds:paceSec,
+    spm:ergoSpm.value?Number(ergoSpm.value):null,
+    avg_hr:ergoAvgHr.value?Number(ergoAvgHr.value):null,
+    max_hr:ergoMaxHr.value?Number(ergoMaxHr.value):null,
+    rpe:ergoRpe.value?Number(ergoRpe.value):null,
+    notes:ergoNotes.value||null
+  });
+  if(error)return alert(error.message);
+  alert("Resultado de ergómetro guardado");
+  tab="hist";draw();render();
+}
+
+function weekly(){let x=schedule[selected];content.innerHTML=`<div class="card"><div class="weekhead"><button disabled title="La temporada empieza el 1 de septiembre">←</button><h3>1–7 septiembre 2026</h3><button disabled title="Se activará al cargar las siguientes semanas">→</button></div><div class="calendar">${schedule.map((d,i)=>`<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}</small><div class="num">${d[1]}</div><div class="dot">${i<2?"✅":i===selected?"●":"○"}</div></div>`).join("")}</div><div class="info"><b>ℹ️ No llegues al fallo en ningún ejercicio.</b><br>Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div></div><div id="selectedSession"></div>`;content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});showSelected()}
+function showSelected(){
+  const x=schedule[selected];
+  const el=document.getElementById("selectedSession");
+  if(x[2]==="GYM"){
+    el.innerHTML=`<div class="card session"><span class="tag">${x[0]} ${x[1]} · GYM</span><h2>${title(x)}</h2><p class="muted">Sin llegar al fallo. Valora cada ejercicio de forma sencilla. · ⏱️ 75-90 min</p><button id="openGym" class="primary">Abrir entrenamiento</button></div>`;
+    openGym.onclick=()=>gym(x[3]);
+  } else if(x[2]==="ERG"){
+    el.innerHTML='<div class="card"></div>';
+    renderErgoCard(el.firstElementChild,x);
+  } else {
+    showSessionIn("selectedSession",x);
+  }
+}
+function last(n){let h=get("gh",[]).slice().reverse();for(let s of h){let i=s.items.find(z=>z.name===n&&z.weight);if(i)return `${i.weight} kg × ${i.reps||"-"} reps (${i.feel})`}return "Sin registro anterior"}
+
+let gymVariantSelections={};
+
+function storedExerciseMeta(row){
+  const raw=row?.note||"";
+  const m=raw.match(/^\[\[ASIGNADO:(.*?)\]\]\s*/);
+  return {
+    assigned:m?m[1]:null,
+    userNote:m?raw.slice(m[0].length):raw
+  };
+}
+function gym(k){
+  let gs=gyms[k];
+  gymVariantSelections={};
+  content.innerHTML=`<div class="card"><button id="back">← Semana</button><h2>${"GYM-"+k+" · "+gs.name}</h2><div class="info"><b>No llegues al fallo.</b> Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div><form id="gf">${gs.items.map((i,n)=>`<div class="ex">
+    <div class="exhead">${visualHTML(i,false)}<div><div class="big">${i.name}</div><div class="dose">${i.dose} · Descanso ${i.rest}</div></div></div>
+    <div class="target">🎯 <b>Peso adecuado:</b> termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div>
+    <details><summary>📖 Cómo hacerlo</summary>${visualHTML(i,true)}<p><b>Cómo:</b> ${i.how}</p><p><b>Claves:</b> ${i.keys}</p><p><b>Evita:</b> ${i.error}</p><a class="btn" target="_blank" href="https://www.youtube.com/results?search_query=${encodeURIComponent(i.name+" técnica ejercicio")}">▶️ Ver vídeo</a></details>
+    ${i.alternatives?.length?`<details class="alternatives"><summary>🔁 Ver alternativas si no tienes máquina o no puedes hacer este ejercicio</summary>
+      <div id="variantStatus${n}" class="variantStatus">Se registrará: <b>${i.name}</b></div>
+      <button type="button" class="mainChoose" data-main="${n}">Usar ejercicio principal</button>
+      <div class="altGrid">${i.alternatives.map(a=>altExerciseCard(a,n)).join("")}</div>
+    </details>`:""}
+    <div class="last">Última vez: <b>${last(i.name)}</b></div>
+    <div class="grid"><label>Peso (kg)<input id="w${n}" type="number" step=".5"></label><label>Repeticiones<input id="rp${n}" type="number"></label></div>
+    <div class="choices"><label><input type="radio" name="f${n}" value="Fácil"> Fácil</label><label><input type="radio" name="f${n}" value="Bien" checked> Bien</label><label><input type="radio" name="f${n}" value="Duro"> Duro</label></div>
+    <label>Nota (opcional)<textarea id="note${n}" placeholder="Añade una nota..."></textarea></label>
+  </div>`).join("")}<button class="primary">Guardar entrenamiento</button></form></div>`;
+
+  back.onclick=()=>{tab="semana";draw();render()};
+
+  document.querySelectorAll(".altChoose").forEach(btn=>{
+    btn.onclick=()=>{
+      const n=Number(btn.dataset.ex);
+      const chosen=decodeURIComponent(btn.dataset.alt);
+      gymVariantSelections[n]=chosen;
+      const st=document.getElementById("variantStatus"+n);
+      if(st) st.innerHTML=`Se registrará como alternativa: <b>${chosen}</b>`;
+      document.querySelectorAll(`.altChoose[data-ex="${n}"]`).forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+    };
+  });
+
+  document.querySelectorAll(".mainChoose").forEach(btn=>{
+    btn.onclick=()=>{
+      const n=Number(btn.dataset.main);
+      delete gymVariantSelections[n];
+      const st=document.getElementById("variantStatus"+n);
+      if(st) st.innerHTML=`Se registrará: <b>${gs.items[n].name}</b>`;
+      document.querySelectorAll(`.altChoose[data-ex="${n}"]`).forEach(b=>b.classList.remove("selected"));
+    };
+  });
+
+  gf.onsubmit=async e=>{
+    e.preventDefault();
+    const {data:workout,error:werr}=await sb.from("workout_logs").insert({
+      user_id:currentUser.id,session_code:"GYM-"+k,session_type:"gym",status:"completed"
+    }).select("id").single();
+    if(werr)return alert(werr.message);
+
+    const rows=gs.items.map((i,n)=>{
+      const selected=gymVariantSelections[n]||i.name;
+      const typedNote=document.getElementById("note"+n).value||"";
+      const note=(selected!==i.name?`[[ASIGNADO:${i.name}]] `:"")+typedNote;
+      return {
+        workout_id:workout.id,
+        user_id:currentUser.id,
+        exercise_name:selected,
+        weight_kg:document.getElementById("w"+n).value?Number(document.getElementById("w"+n).value):null,
+        reps:document.getElementById("rp"+n).value?Number(document.getElementById("rp"+n).value):null,
+        perceived_difficulty:document.querySelector(`input[name=f${n}]:checked`).value==="Fácil"?"easy":document.querySelector(`input[name=f${n}]:checked`).value==="Duro"?"hard":"good",
+        note:note||null
+      };
+    });
+    const {error:gerr}=await sb.from("gym_exercise_results").insert(rows);
+    if(gerr)return alert(gerr.message);
+    alert("Entrenamiento guardado y sincronizado");
+    tab="hist";draw();render();
+  };
+}
+
+async function history(){
+  content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando…</p></div>';
+  const {data:workouts,error:e1}=await sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50);
+  const {data:items,error:e2}=await sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300);
+  const err=e1||e2;
+  if(err){content.innerHTML=`<div class="card"><h2>Historial</h2><p>${err.message}</p></div>`;return}
+  content.innerHTML='<div class="card"><h2>Historial</h2>'+
+    (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
+  '</div>';
+}
+
+
+function estimateMaxHR(age, sex, trained){
+  age=Number(age);
+  if(!age || age<10 || age>100) return null;
+
+  if(trained){
+    // Whyte et al. equations commonly cited for trained athletes.
+    if(sex==="female") return Math.round(216 - 1.09*age);
+    if(sex==="male") return Math.round(202 - 0.55*age);
+  }
+
+  // General fallback: Tanaka.
+  return Math.round(208 - 0.7*age);
+}
+
+function karvonenZones(maxHr, restHr){
+  const reserve=maxHr-restHr;
+  if(!maxHr || !restHr || reserve<=0) return null;
+
+  const z=(low,high)=>({
+    min:Math.round(restHr + reserve*low),
+    max:Math.round(restHr + reserve*high)
+  });
+
+  return {
+    ut2:z(0.55,0.65),
+    ut1:z(0.65,0.75),
+    at:z(0.75,0.85),
+    tr:z(0.85,0.95),
+    an:z(0.95,1.00)
+  };
+}
+
+
+
+async function withRetry(fn, attempts=3){
+  let lastErr=null;
+  for(let i=0;i<attempts;i++){
+    try{
+      const result=await fn();
+      if(result?.error) return result;
+      return result;
+    }catch(err){
+      lastErr=err;
+      if(i<attempts-1) await new Promise(r=>setTimeout(r,700*(i+1)));
+    }
+  }
+  throw lastErr;
+}
+
+
+const CONCEPT2_CLIENT_ID="bx8m9j1Qj8GZnN3ni8Wz5QEb15SHB9amysaSgelu";
+const CONCEPT2_REDIRECT_URI="https://rowtraining.vercel.app/concept2-callback.html";
+const CONCEPT2_SCOPE="user:read,results:read";
+
+function connectConcept2(){
+  const state=(crypto?.randomUUID?.() || (Date.now()+"-"+Math.random())).replace(/[^a-zA-Z0-9_-]/g,"");
+  sessionStorage.setItem("concept2_oauth_state",state);
+  const u=new URL("https://log.concept2.com/oauth/authorize");
+  u.searchParams.set("client_id",CONCEPT2_CLIENT_ID);
+  u.searchParams.set("scope",CONCEPT2_SCOPE);
+  u.searchParams.set("response_type","code");
+  u.searchParams.set("redirect_uri",CONCEPT2_REDIRECT_URI);
+  u.searchParams.set("state",state);
+  location.href=u.toString();
+}
+async function profile(){
+  const {data:pdata}=await sb.from("profiles").select("*").eq("user_id",currentUser.id).single();
+  const {data:mdata}=await sb.from("athlete_metrics").select("*").eq("user_id",currentUser.id).order("recorded_at",{ascending:false}).limit(1);
+  const m=mdata?.[0]||{};
+
+  const savedAge=localStorage.getItem("remo_age")||"";
+  const savedSex=localStorage.getItem("remo_sex")||"";
+  const savedTrained=localStorage.getItem("remo_trained")==="1";
+
+  content.innerHTML=`<div class="card"><h2>Perfil</h2>
+  <label>Nombre<input id="pf_name" value="${pdata?.full_name||""}"></label>
+  <label>Altura (cm)<input id="pf_height" type="number" step=".1" value="${pdata?.height_cm??""}"></label>
+
+  <div class="grid">
+    <label>Peso (kg)<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
+    <label>FC reposo<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
+  </div>
+
+  <div class="card" style="background:#f8fafc">
+    <h3>FC máxima</h3>
+    <label>FC máxima conocida
+      <input id="pf_max" type="number" value="${m.max_hr??""}" placeholder="Ej. 188">
+    </label>
+
+    <div class="muted" style="margin:8px 0 12px">Si no la conoces, puedes estimarla por edad.</div>
+
+    <div class="grid">
+      <label>Edad<input id="pf_age" type="number" min="10" max="100" value="${savedAge}"></label>
+      <label>Sexo
+        <select id="pf_sex" style="width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px">
+          <option value="">Seleccionar</option>
+          <option value="male" ${savedSex==="male"?"selected":""}>Hombre</option>
+          <option value="female" ${savedSex==="female"?"selected":""}>Mujer</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="keepLogin">
+      <input id="pf_trained" type="checkbox" ${savedTrained?"checked":""}>
+      Deportista entrenado
+    </label>
+
+    <div class="actions">
+      <button id="estimateHr" type="button">Estimar FC máx por edad</button>
+    </div>
+    <div id="estimateInfo" class="muted" style="margin-top:8px"></div>
+  </div>
+
+  <div class="info">
+    <b>Zonas automáticas por Karvonen</b><br>
+    Se calculan con FC máxima + FC de reposo. Si la FC máxima es estimada, las zonas también son orientativas.
+  </div>
+
+  <div class="actions">
+    <button id="calcZones" type="button">Calcular zonas</button>
+  </div>
+
+  <h3>Zonas FC</h3>
+  ${["ut2","ut1","at","tr","an"].map(z=>`<div class="grid">
+    <label>${z.toUpperCase()} mín<input id="${z}_min" type="number" value="${m[z+"_min"]??""}"></label>
+    <label>${z.toUpperCase()} máx<input id="${z}_max" type="number" value="${m[z+"_max"]??""}"></label>
+  </div>`).join("")}
+
+  <label>Notas<textarea id="pf_notes">${m.notes??""}</textarea></label>
+  <div id="saveProfileStatus" class="saveStatus hidden"></div>
+  <button id="saveProfile" class="primary">Guardar perfil</button>
+  </div>
+  <div class="card">
+    <h2>Concept2 / ErgData</h2>
+    <p>Conecta tu propia cuenta de Concept2 para comprobar que Row Training puede leer tus entrenamientos sincronizados desde ErgData.</p>
+    <div class="info"><b>Piloto seguro:</b> esta prueba solo lee tus datos. No escribe resultados en Concept2 y todavía no guarda el token de conexión.</div>
+    <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
+    <p class="muted"><small>Permisos solicitados: perfil y resultados en modo lectura.</small></p>
+  </div>`;
+
+  function fillZones(){
+    const maxHr=Number(pf_max.value);
+    const restHr=Number(pf_rest.value);
+    const zones=karvonenZones(maxHr,restHr);
+    if(!zones) return alert("Introduce una FC máxima y una FC de reposo válidas.");
+    Object.entries(zones).forEach(([z,v])=>{
+      document.getElementById(z+"_min").value=v.min;
+      document.getElementById(z+"_max").value=v.max;
+    });
+  }
+
+  function estimateHrMax(){
+    const age=Number(pf_age.value);
+    const sex=pf_sex.value;
+    const trained=pf_trained.checked;
+
+    if(!age) return alert("Introduce la edad.");
+    if(trained && !sex) return alert("Selecciona el sexo para usar la fórmula de deportistas.");
+
+    const estimated=estimateMaxHR(age,sex,trained);
+    if(!estimated) return alert("No se pudo calcular la FC máxima.");
+
+    pf_max.value=estimated;
+
+    const formula = trained
+      ? (sex==="female" ? "Whyte: 216 − 1,09 × edad" : "Whyte: 202 − 0,55 × edad")
+      : "Tanaka: 208 − 0,7 × edad";
+
+    estimateInfo.innerHTML=`FC máx estimada: <b>${estimated} lpm</b><br>${formula}<br><small>Es una estimación. Una FC máxima medida en test o competición tiene prioridad.</small>`;
+
+    localStorage.setItem("remo_age",String(age));
+    localStorage.setItem("remo_sex",sex);
+    localStorage.setItem("remo_trained",trained?"1":"0");
+
+    if(pf_rest.value) fillZones();
+  }
+
+  estimateHr.onclick=estimateHrMax;
+  calcZones.onclick=fillZones;
+  connectConcept2.onclick=connectConcept2;
+
+  // Auto-recalculate zones when HR values change.
+  pf_max.addEventListener("change",()=>{ if(pf_rest.value) fillZones(); });
+  pf_rest.addEventListener("change",()=>{ if(pf_max.value) fillZones(); });
+
+  // If no zones are stored but HR data exists, fill them automatically.
+  const hasSavedZones=["ut2","ut1","at","tr","an"].some(z=>m[z+"_min"]||m[z+"_max"]);
+  if(!hasSavedZones && m.max_hr && m.resting_hr){
+    setTimeout(fillZones,0);
+  }
+
+  saveProfile.onclick=async()=>{
+    const status=document.getElementById("saveProfileStatus");
+    const setStatus=(msg,type="")=>{
+      status.className="saveStatus "+type;
+      status.textContent=msg;
+      status.classList.remove("hidden");
+    };
+
+    if(!navigator.onLine){
+      setStatus("Sin conexión a Internet. No se ha guardado nada.","err");
+      return;
+    }
+
+    saveProfile.disabled=true;
+    setStatus("Guardando perfil…");
+
+    try{
+      localStorage.setItem("remo_age",pf_age.value||"");
+      localStorage.setItem("remo_sex",pf_sex.value||"");
+      localStorage.setItem("remo_trained",pf_trained.checked?"1":"0");
+
+      const profileRes=await withRetry(()=>sb.from("profiles").update({
+        full_name:pf_name.value,
+        height_cm:pf_height.value?Number(pf_height.value):null,
+        updated_at:new Date().toISOString()
+      }).eq("user_id",currentUser.id));
+
+      if(profileRes.error) throw new Error("Perfil: "+profileRes.error.message);
+
+      const row={
+        user_id:currentUser.id,
+        weight_kg:pf_weight.value?Number(pf_weight.value):null,
+        resting_hr:pf_rest.value?Number(pf_rest.value):null,
+        max_hr:pf_max.value?Number(pf_max.value):null,
+        notes:pf_notes.value||null
+      };
+
+      ["ut2","ut1","at","tr","an"].forEach(z=>{
+        row[z+"_min"]=document.getElementById(z+"_min").value?Number(document.getElementById(z+"_min").value):null;
+        row[z+"_max"]=document.getElementById(z+"_max").value?Number(document.getElementById(z+"_max").value):null;
+      });
+
+      setStatus("Guardando FC y zonas…");
+
+      const metricRes=await withRetry(()=>sb.from("athlete_metrics").insert(row));
+      if(metricRes.error) throw new Error("FC y zonas: "+metricRes.error.message);
+
+      setStatus("Perfil, FC máxima y zonas guardados correctamente.","ok");
+    }catch(err){
+      console.error("Error guardando perfil",err);
+      const network = /NetworkError|fetch|Failed to fetch/i.test(String(err?.message||err));
+      setStatus(
+        network
+          ? "No se pudo conectar con Supabase. Revisa la conexión/VPN y vuelve a pulsar Guardar. La app no ha borrado tus datos."
+          : "Error al guardar: "+(err?.message||err),
+        "err"
+      );
+    }finally{
+      saveProfile.disabled=false;
+    }
+  };
+}
+
+async function results(){
+  content.innerHTML='<div class="card"><h2>Panel del entrenador</h2><div class="info"><b>Equipos:</b> Veteranas · Senior masculino<br><small>MAR: jueves y domingo para ambos equipos.</small></div><p class="muted">Cargando…</p></div>';
+
+  const {data:profiles,error:e1}=await sb.from("profiles").select("user_id,full_name,height_cm");
+  const {data:roles,error:eRole}=await sb.from("user_roles").select("user_id,role");
+  const {data:metrics,error:eM}=await sb.from("athlete_metrics").select("*").order("recorded_at",{ascending:false});
+  const {data:workouts,error:e2}=await sb.from("workout_logs")
+    .select("id,user_id,session_code,session_type,session_date,status,effort,feeling,notes,created_at")
+    .order("created_at",{ascending:false});
+  const {data:gym,error:e3}=await sb.from("gym_exercise_results")
+    .select("id,workout_id,user_id,exercise_name,weight_kg,reps,perceived_difficulty,note,created_at")
+    .order("created_at",{ascending:false});
+
+  const {data:ergo,error:e4}=await sb.from("ergo_results").select("*").order("created_at",{ascending:false});
+
+  const err=e1||eRole||eM||e2||e3||e4;
+  if(err){
+    content.innerHTML=`<div class="card"><h2>Panel del entrenador</h2><p>${err.message}</p></div>`;
+    return;
+  }
+
+  const athleteIds=new Set((roles||[]).filter(x=>x.role==="athlete").map(x=>x.user_id));
+  const athletes=(profiles||[]).filter(p=>athleteIds.has(p.user_id));
+
+  const prettyFeel=v=>v==="easy"?"Fácil":v==="hard"?"Duro":"Bien";
+  const prettyStatus=v=>v==="completed"?"Completado":v==="partial"?"Parcial":"No realizado";
+
+  content.innerHTML=`<div class="card">
+    <h2>Panel del entrenador</h2>
+    <p class="muted">${athletes.length} remeros</p>
+
+    ${athletes.map((p,idx)=>{
+      const ws=(workouts||[]).filter(w=>w.user_id===p.user_id);
+      const latest=ws[0];
+      return `<div class="card athleteCard">
+        <div class="athleteHead">
+          <div>
+            <div class="big">${p.full_name||"Sin nombre"}</div>
+            <div class="muted">${p.height_cm?`${p.height_cm} cm · `:""}${ws.length} entrenamientos registrados</div>
+            ${(()=>{
+              const mm=(metrics||[]).find(x=>x.user_id===p.user_id);
+              return mm?`<div class="muted">FC reposo ${mm.resting_hr??"-"} · FC máx ${mm.max_hr??"-"} · UT2 ${mm.ut2_min??"-"}-${mm.ut2_max??"-"} · UT1 ${mm.ut1_min??"-"}-${mm.ut1_max??"-"} · AT ${mm.at_min??"-"}-${mm.at_max??"-"} · TR ${mm.tr_min??"-"}-${mm.tr_max??"-"} · AN ${mm.an_min??"-"}-${mm.an_max??"-"}</div>`:"";
+            })()}
+          </div>
+          <button class="toggleAthlete" data-id="a${idx}">${ws.length?"Ver entrenamientos":"Sin entrenamientos"}</button>
+        </div>
+        ${latest?`<div class="last">
+          <b>Último:</b> ${latest.session_code||latest.session_type||"Sesión"} · ${new Date(latest.created_at).toLocaleDateString("es-ES")}
+        </div>`:""}
+        <div id="a${idx}" class="hidden">
+          ${ws.length?ws.map(w=>{
+            const items=(gym||[]).filter(g=>g.workout_id===w.id);
+            return `<div class="workoutDetail">
+              <div class="workoutTitle">
+                <b>${w.session_code||w.session_type||"Sesión"}</b>
+                <span class="tag">${new Date(w.created_at).toLocaleString("es-ES")}</span>
+              </div>
+              <p><b>Estado:</b> ${prettyStatus(w.status)}</p>
+              ${w.effort?`<p><b>Esfuerzo:</b> ${w.effort}/10</p>`:""}
+              ${w.notes?`<p><b>Nota sesión:</b> ${w.notes}</p>`:""}
+              ${items.length?`<div class="exerciseTable">
+                ${items.map(i=>{const m=storedExerciseMeta(i);return `<div class="exerciseRow">
+                  <div><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>
+                  <div>${i.weight_kg??"-"} kg</div>
+                  <div>${i.reps??"-"} reps</div>
+                  <div>${prettyFeel(i.perceived_difficulty)}</div>
+                </div>`}).join("")}
+              </div>`:""}
+              ${(ergo||[]).filter(e=>e.workout_id===w.id).map(e=>`<div class="last">
+                <b>Ergómetro</b><br>
+                ${e.distance_m?`${e.distance_m} m · `:""}
+                ${e.time_seconds?`Tiempo ${secondsToTime(e.time_seconds)} · `:""}
+                ${e.pace_500_seconds?`/500 ${secondsToTime(e.pace_500_seconds)} · `:""}
+                ${e.spm?`${e.spm} spm · `:""}
+                ${e.avg_hr?`FC med ${e.avg_hr} · `:""}
+                ${e.max_hr?`FC máx ${e.max_hr}`:""}
+              </div>`).join("")}
+              ${!items.length && !(ergo||[]).some(e=>e.workout_id===w.id)?`<p class="muted">Sin resultados asociados.</p>`:""}
+            </div>`;
+          }).join(""):"<p class='muted'>Aún no hay entrenamientos registrados.</p>"}
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+
+  document.querySelectorAll(".toggleAthlete").forEach(b=>{
+    b.onclick=()=>{
+      const el=document.getElementById(b.dataset.id);
+      el.classList.toggle("hidden");
+      b.textContent=el.classList.contains("hidden")?"Ver entrenamientos":"Ocultar";
+    };
+  });
+}
+</script>
+</body></html>
