@@ -67,3 +67,10 @@ Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
 - La Biblioteca ERGO reconoce agosto como fase BASE, evitando que aparezca vacía el 31/08.
 - La categoría se obtiene del equipo asignado, no del nombre del remero.
 - Los entrenadores con filas en `coach_team_access` solo ven esos equipos en Planificar; sin filas conservan acceso global de administrador.
+
+
+## V47
+- Planificación con vista Mes / Temporada completa (Sep-May) y navegación sin teclear fechas.
+- Resultados MAR con calendarios de toda la temporada y selección entre meses.
+- Comparación de ejercicios/bloques MAR repetidos mediante exercise_name.
+- Salto fiable desde Mes a Planificar usando fecha/equipo seleccionados.
