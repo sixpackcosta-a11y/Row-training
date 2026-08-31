@@ -410,7 +410,18 @@ sb.auth.getSession().then(({data})=>{if(data.session) startApp()});
 function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Calendario"],["mes","Mes"],["temporada","Temporada"],["planificar","Planificar"],["biblioteca","Biblioteca ERGO"],["result","Resultados"],["salir","Salir"]]:[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["salir","Salir"]];nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})}
 function title(x){if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
-  refreshTeamSchedule();if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="planificar")coachPlanner();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="perfil")profileView();else results()}
+  refreshTeamSchedule();
+  if(tab==="semana") weekly();
+  else if(tab==="hoy") todayView();
+  else if(tab==="mes") coachMonthView();
+  else if(tab==="temporada") coachSeasonView();
+  else if(tab==="planificar") coachPlanner();
+  else if(tab==="biblioteca") ergoLibrary();
+  else if(tab==="hist") history();
+  else if(tab==="perfil") profileView();
+  else if(tab==="result" && r==="coach") coachSeaResultsView();
+  else results();
+}
 
 function getTodayIndex(){
   // Until the real season calendar is loaded from Supabase,
@@ -418,6 +429,14 @@ function getTodayIndex(){
   return selected;
 }
 
+function gymSeasonGuidance(){
+  const ph=seasonPhaseForDate(new Date().toISOString().slice(0,10));
+  if(ph==="BASE") return "Trabajo técnico y controlado. Termina normalmente con 2–3 repeticiones posibles.";
+  if(ph==="FUERZA") return "En ejercicios principales puedes terminar con 1–2 repeticiones posibles; accesorios con 2–3. Nunca al fallo.";
+  if(ph==="TRANSFERENCIA") return "Mantén calidad y velocidad de ejecución. 1–2 repeticiones posibles en principales, reduciendo volumen si hay fatiga.";
+  if(ph==="ESPECÍFICO") return "Prioriza frescura para el mar: mantén intensidad, reduce volumen y evita fatiga residual.";
+  return "Puesta a punto: volumen bajo, ejecución rápida y limpia; nada de fatiga residual.";
+}
 function todayView(){
   const i=getTodayIndex();
   const x=schedule[i];
@@ -429,7 +448,7 @@ function todayView(){
       </div>
       <button id="goWeek">Ver semana</button>
     </div>
-    <div class="info"><b>ℹ️ No llegues al fallo en ningún ejercicio.</b><br>Termina cada serie pudiendo hacer <b>2-3 repeticiones más</b>.</div>
+    ${x[2]==="GYM"?`<div class="info"><b>ℹ️ ${gymSeasonGuidance()}</b></div>`:x[2]==="DESC"?`<div class="info"><b>Recuperación.</b> Prioriza descanso, movilidad suave y llegar fresco a la siguiente sesión.</div>`:""}
     <div id="todaySession"></div>
   </div>`;
   goWeek.onclick=()=>{tab="semana";draw();render()};
@@ -1131,6 +1150,31 @@ async function createLibraryItem(kind){
   const q=await sb.from('training_library').insert({kind,name,content,is_active:true,created_by:currentUser.id});
   if(q.error) alert('No se pudo guardar: '+q.error.message); else renderEditorLibrary(kind);
 }
+function metricSeconds(v){
+  if(!v)return null; const a=String(v).trim().split(':').map(Number); if(a.some(Number.isNaN))return null;
+  return a.length===2?a[0]*60+a[1]:a.length===3?a[0]*3600+a[1]*60+a[2]:Number(v)||null;
+}
+function fmtMetricSeconds(v){if(v==null||!isFinite(v))return "—"; const m=Math.floor(v/60),sec=v-m*60;return `${m}:${sec.toFixed(1).padStart(4,'0')}`;}
+async function getSeaResultsForTeam(team,start,end){
+  const ss=await sb.from('training_sessions').select('id,session_date,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
+  if(ss.error||!ss.data?.length)return {sessions:ss.data||[],results:[]};
+  const ids=ss.data.map(x=>x.id); const rr=await sb.from('sea_results').select('*').in('training_session_id',ids).order('created_at');
+  const map=new Map(ss.data.map(x=>[x.id,x])); return {sessions:ss.data,results:(rr.data||[]).map(x=>({...x,session:map.get(x.training_session_id)}))};
+}
+function seaSummary(rows){
+  const nums=(key)=>rows.map(x=>Number(x[key])).filter(x=>Number.isFinite(x)&&x[key]!=null);
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const pace=rows.map(x=>metricSeconds(x.pace_500_text)).filter(x=>x!=null);
+  const dist=nums('distance_m'); return {n:rows.length,meters:dist.reduce((a,b)=>a+b,0),pace:avg(pace),spm:avg(nums('spm')),rpe:avg(nums('rpe'))};
+}
+function seaSummaryHtml(rows){const z=seaSummary(rows);return `<div class="info"><b>${z.n} registros MAR</b> · ${z.meters?z.meters.toLocaleString('es-ES')+' m':'sin metros'} · /500 medio ${fmtMetricSeconds(z.pace)} · PPM ${z.spm!=null?z.spm.toFixed(1):'—'} · RPE ${z.rpe!=null?z.rpe.toFixed(1):'—'}</div>`;}
+function seaRowsHtml(rows){return rows.length?`<div class="tableWrap"><table><thead><tr><th>Fecha</th><th>Sesión</th><th>Metros</th><th>Tiempo</th><th>/500</th><th>PPM</th><th>RPE</th><th>Notas</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.session?.session_date||'—'}</td><td>${x.session?.title||'MAR'}</td><td>${x.distance_m??'—'}</td><td>${x.time_text||'—'}</td><td>${x.pace_500_text||'—'}</td><td>${x.spm??'—'}</td><td>${x.rpe??'—'}</td><td>${x.notes||''}</td></tr>`).join('')}</tbody></table></div>`:`<p class="muted">Todavía no hay resultados MAR registrados en este periodo.</p>`;}
+async function coachSeaResultsView(){
+  if(r!=="coach")return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
+  content.innerHTML=`<div class="card"><h2>Resultados MAR · Equipo</h2><p class="muted">Estos resultados pertenecen a la tripulación/equipo, no a un remero individual.</p><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Vista<select id="seaResPeriod"><option value="season">Temporada</option><option value="month">Mes</option></select></label><label>Mes<input id="seaResMonth" type="month" value="2026-09"></label></div><button id="loadSeaResults" class="primary">Actualizar</button><div id="seaResArea"></div></div>`;
+  const load=async()=>{let start='2026-09-01',end='2027-05-31';if(seaResPeriod.value==='month'){const [y,m]=seaResMonth.value.split('-').map(Number);start=seaResMonth.value+'-01';end=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10)}const {results}=await getSeaResultsForTeam(seaResTeam.value,start,end);let monthly='';if(seaResPeriod.value==='season'){const months=[['2026-09','Sep'],['2026-10','Oct'],['2026-11','Nov'],['2026-12','Dic'],['2027-01','Ene'],['2027-02','Feb'],['2027-03','Mar'],['2027-04','Abr'],['2027-05','May']];monthly=`<h3>Comparativa por mes</h3><div class="tableWrap"><table><thead><tr><th>Mes</th><th>Registros</th><th>Metros</th><th>/500 medio</th><th>PPM</th><th>RPE</th></tr></thead><tbody>${months.map(([ym,n])=>{const a=results.filter(x=>x.session?.session_date?.startsWith(ym)),z=seaSummary(a);return `<tr><td>${n}</td><td>${z.n}</td><td>${z.meters||'—'}</td><td>${fmtMetricSeconds(z.pace)}</td><td>${z.spm!=null?z.spm.toFixed(1):'—'}</td><td>${z.rpe!=null?z.rpe.toFixed(1):'—'}</td></tr>`}).join('')}</tbody></table></div>`}seaResArea.innerHTML=seaSummaryHtml(results)+monthly+'<h3>Sesiones registradas</h3>'+seaRowsHtml(results)};
+  seaResPeriod.onchange=()=>{seaResMonth.disabled=seaResPeriod.value!=='month';load()}; loadSeaResults.onclick=load; seaResMonth.disabled=true; await load();
+}
 async function coachMonthView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const now='2026-09';
@@ -1145,6 +1189,7 @@ async function renderCoachMonth(){
   let cells=Array(first).fill('<div class="calday muted"></div>');
   for(let d=1;d<=days;d++){const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds);cells.push(`<div class="calday" style="min-height:120px"><b>${d}</b>${cs.map(c=>`<div class="tag" style="margin-top:5px">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div style="margin-top:5px;font-size:.78rem"><b>${x.session_type}</b> ${x.title}</div>`).join('')}<button class="editDay" data-date="${ds}" style="margin-top:8px">Editar</button></div>`)}
   monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div><div class="calendar" style="grid-template-columns:repeat(7,1fr)">${['L','M','X','J','V','S','D'].map(x=>`<div class="calday"><b>${x}</b></div>`).join('')}${cells.join('')}</div>`;
+  const sea=await getSeaResultsForTeam(team,start,end); monthArea.innerHTML+=`<h3>Resultados MAR del equipo</h3>${seaSummaryHtml(sea.results)}${seaRowsHtml(sea.results)}`;
   document.querySelectorAll('.editDay').forEach(b=>b.onclick=()=>{tab='planificar';draw();render().then?.(()=>{}); setTimeout(()=>{if(window.planDate){planDate.value=b.dataset.date;planTeam.value=team;renderPlanDay()}},100)});
 }
 async function coachSeasonView(){
@@ -1156,6 +1201,7 @@ async function renderCoachSeason(){
   const team=seasonTeam.value; const ss=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date','2026-09-01').lte('session_date','2027-05-31'); const cc=await sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[team]); const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
   const months=[['2026-09','Septiembre'],['2026-10','Octubre'],['2026-11','Noviembre'],['2026-12','Diciembre'],['2027-01','Enero'],['2027-02','Febrero'],['2027-03','Marzo'],['2027-04','Abril'],['2027-05','Mayo']];
   seasonArea.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Mes</th><th>Fase</th><th>GYM</th><th>ERGO</th><th>MAR</th><th>Descanso</th><th>Comp.</th></tr></thead><tbody>${months.map(([ym,n])=>{const xs=sessions.filter(x=>x.session_date.startsWith(ym)); const c=comps.filter(x=>x.competition_date.startsWith(ym)); const ct=t=>xs.filter(x=>x.session_type===t).length;return `<tr><td>${n}</td><td>${seasonPhaseForDate(ym+'-01')}</td><td>${ct('GYM')}</td><td>${ct('ERG')}</td><td>${ct('MAR')}</td><td>${ct('DESC')}</td><td>${c.length}</td></tr>`}).join('')}</tbody></table></div><div class="info"><b>Total temporada:</b> ${sessions.length} sesiones planificadas · ${comps.length} competiciones. Usa “Resultados” para comparar remeros y registros; esta vista permite comprobar la carga y distribución global antes de editar.</div>`;
+  const sea=await getSeaResultsForTeam(team,'2026-09-01','2027-05-31'); seasonArea.innerHTML+=`<h3>Resultados MAR · evolución del equipo</h3>${seaSummaryHtml(sea.results)}<div class="tableWrap"><table><thead><tr><th>Mes</th><th>Registros</th><th>Metros</th><th>/500 medio</th><th>PPM</th><th>RPE</th></tr></thead><tbody>${months.map(([ym,n])=>{const a=sea.results.filter(x=>x.session?.session_date?.startsWith(ym)),z=seaSummary(a);return `<tr><td>${n}</td><td>${z.n}</td><td>${z.meters||'—'}</td><td>${fmtMetricSeconds(z.pace)}</td><td>${z.spm!=null?z.spm.toFixed(1):'—'}</td><td>${z.rpe!=null?z.rpe.toFixed(1):'—'}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 
 const TEAM_OPTIONS=[
@@ -1299,6 +1345,18 @@ async function results(){
       const el=document.getElementById(b.dataset.id);
       el.classList.toggle("hidden");
       b.textContent=el.classList.contains("hidden")?"Ver entrenamientos":"Ocultar";
+    };
+  });
+  document.querySelectorAll(".saveAthleteTeam").forEach(b=>{
+    b.onclick=async()=>{
+      const userId=b.dataset.user;
+      const sel=document.querySelector(`.athleteTeam[data-user="${userId}"]`);
+      const teamCode=sel.value||null;
+      b.disabled=true; b.textContent="Guardando…";
+      const q=await sb.from("profiles").update({team_code:teamCode}).eq("user_id",userId);
+      if(q.error){ alert("No se pudo guardar el equipo: "+q.error.message); b.textContent="Guardar equipo"; }
+      else { const a=athletes.find(x=>x.user_id===userId); if(a)a.team_code=teamCode; b.textContent="Guardado ✓"; setTimeout(()=>{b.textContent="Guardar equipo";b.disabled=false},1200); }
+      if(q.error)b.disabled=false;
     };
   });
 }
