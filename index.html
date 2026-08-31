@@ -101,6 +101,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .seasonCalendars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.seasonMonth{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;min-width:0}.seasonMonth h4{margin:0 0 8px;text-align:center}.viewToggle{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.viewToggle button.active{background:#071b38;color:white}.calendarHint{margin:8px 0 0}.monthSelect{min-width:190px}.coachDay.selectedEdit{outline:3px solid #0b5ed7;outline-offset:-2px}@media(max-width:1000px){.seasonCalendars{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.seasonCalendars{grid-template-columns:1fr}.seasonMonth{padding:7px}}
 @media(max-width:390px){.coachDay{min-height:74px}.miniSess{white-space:normal}.compareCards{grid-template-columns:1fr}}
 
+
+.coachWeekGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:16px}.coachWeekDay{border:1px solid var(--line);border-radius:16px;padding:10px;min-width:0}.coachWeekDayHead{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.weekSess{padding:9px;border-radius:10px;background:#f4f7fb;margin:7px 0;font-size:.86rem;overflow-wrap:anywhere}.weekSess p{font-size:.78rem;white-space:pre-line;margin:6px 0 0}.weekEdit{width:100%;margin-top:8px}.coachWeekDay .seaCard{border-left:4px solid #18a5b8;background:#eefbfc}@media(max-width:900px){.coachWeekGrid{grid-template-columns:1fr}.coachWeekDay{display:grid;grid-template-columns:90px 1fr auto;align-items:start;gap:8px}.coachWeekDayHead{display:block}.coachWeekDay .weekEdit{width:auto;margin:0}.weekSess{margin:0}.coachWeekDay>p{margin:0}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><p class="muted">No se guarda la contraseña.</p></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
@@ -254,9 +256,13 @@ function altExerciseCard(altTxt,exerciseIndex){
     error:"Forzar el movimiento o utilizar una carga que altere la técnica."
   };
   let visual="";
-  const lower=name.toLowerCase();
-  const inferred=a.img || (lower.includes('sentadilla')?'goblet':lower.includes('zancada')?'goblet':lower.includes('peso muerto')||lower.includes('rumano')?'rumano':lower.includes('hip')||lower.includes('puente')?'hip':lower.includes('remo')?'remo':lower.includes('jalón')||lower.includes('dominada')?'jalon':lower.includes('press')||lower.includes('flexion')?'press':lower.includes('pallof')||lower.includes('anti')?'pallof':lower.includes('plancha')||lower.includes('dead bug')?'plancha':lower.includes('paseo')||lower.includes('farmer')?'farmer':'remo');
-  visual=`<div class="altVisual">${renderSingleImage(clubVisualSrc(inferred),name,"realPhoto")}</div>`;
+  if(a.asset){
+    visual=`<div class="altVisual">${renderSingleImage(a.asset,name,"realPhoto")}</div>`;
+  }else if(a.img && visuals[a.img]){
+    visual=`<div class="altVisual">${renderSingleImage(visuals[a.img].src,name,"realPhoto")}</div>`;
+  }else{
+    visual=`<div class="altVisual"><div class="altNoVisual">Guía visual<br>del movimiento</div></div>`;
+  }
   return `<div class="altCard" data-altcard="${exerciseIndex}" data-altname="${encodeURIComponent(name)}">
     <div class="altHead">
       ${visual}
@@ -315,6 +321,7 @@ async function ergoLibrary(){
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[];
 let plannerJumpDate=null,plannerJumpTeam=null;
+let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 
 const schedules={
   veterans:[
@@ -345,20 +352,36 @@ function teamLabel(code){
 let schedule=schedules[teamKey()];
 function refreshTeamSchedule(){schedule=schedules[teamKey()];}
 
-const visuals={};
-const CLUB_GYM={
- female:{
-  prensa:'assets/club-gym/f_prensa.svg',rumano:'assets/club-gym/f_rumano.png',jalon:'assets/club-gym/f_jalon.png',remo:'assets/club-gym/f_remo2.png',pallof:'assets/club-gym/f_pallof.png',farmer:'assets/club-gym/f_farmer.svg',goblet:'assets/club-gym/f_sentadilla.png',hip:'assets/club-gym/f_hip2.png',remo_unilateral:'assets/club-gym/f_remo.png',press:'assets/club-gym/f_press2.png',plancha:'assets/club-gym/f_plancha.png'
- },
- male:{
-  prensa:'assets/club-gym/m_prensa.svg',rumano:'assets/club-gym/m_rumano.png',jalon:'assets/club-gym/m_dominadas.png',remo:'assets/club-gym/m_remo.png',pallof:'assets/club-gym/m_pallof.svg',farmer:'assets/club-gym/m_farmer.svg',goblet:'assets/club-gym/m_goblet.svg',hip:'assets/club-gym/m_hip.svg',remo_unilateral:'assets/club-gym/m_remo.png',press:'assets/club-gym/m_press.png',plancha:'assets/club-gym/m_plancha.svg'
- }
+const visuals={
+  prensa:{type:"composite",src:"assets/prensa.png"},
+  rumano:{type:"composite",src:"assets/rumano.png"},
+  jalon:{type:"composite",src:"assets/jalon.png"},
+  remo:{type:"composite",src:"assets/remo.png"},
+  pallof:{type:"composite",src:"assets/pallof.png"},
+  farmer:{type:"composite",src:"assets/farmer.png"},
+  goblet:{type:"composite",src:"assets/goblet.png"},
+  hip:{type:"composite",src:"assets/hip.png"},
+  remo_unilateral:{type:"composite",src:"assets/remo_unilateral.png"},
+  press:{type:"composite",src:"assets/press.png"},
+  plancha:{type:"composite",src:"assets/plancha.png"}
 };
-function clubGender(){return (currentTeamCode==='veteranas'||currentTeamCode==='senior_f')?'female':'male'}
-function clubVisualSrc(img){const g=CLUB_GYM[clubGender()]||CLUB_GYM.male;return g[img]||g.remo}
-function renderSingleImage(src,alt,klass){return `<img class="${klass} realPhoto clubGymImg" src="${src}" alt="${alt}" loading="lazy">`;}
-function renderPair(src1,src2,name,large=false){return `<div class="visualPair ${large?'large':''}"><div><small>REFERENCIA</small><img class="clubGymImg" src="${src1}" alt="${name}" loading="lazy"></div><div><small>TÉCNICA</small><img class="clubGymImg" src="${src2}" alt="${name}" loading="lazy"></div></div>`;}
-function visualHTML(i,large=false){const src=clubVisualSrc(i.img);return renderSingleImage(src,i.name,`${large?'fullimg':'thumb'}`);}
+function renderSingleImage(src,alt,klass){
+  return `<img class="${klass} realPhoto" src="${src}" alt="${alt}" referrerpolicy="no-referrer" loading="lazy">`;
+}
+function renderPair(src1,src2,name,large=false){
+  return `<div class="visualPair ${large?"large":""}">
+      <div><small>INICIO</small><img src="${src1}" alt="Inicio ${name}" referrerpolicy="no-referrer" loading="lazy"></div>
+      <div><small>FINAL</small><img src="${src2}" alt="Final ${name}" referrerpolicy="no-referrer" loading="lazy"></div>
+    </div>`;
+}
+function visualHTML(i,large=false){
+  const v=visuals[i.img];
+  if(!v) return "";
+  if(v.type==="pair") return renderPair(v.src,v.src2,i.name,large);
+  if(v.type==="singlepair") return renderPair(v.src,v.src2||v.src,i.name,large);
+  const klass = `${large?"fullimg":"thumb"}`;
+  return renderSingleImage(v.src,i.name,klass);
+}
 
 let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d)),set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
@@ -408,7 +431,7 @@ function draw(){let a=r==="coach"?[["hoy","Hoy"],["semana","Calendario"],["mes",
 function title(x){if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
   refreshTeamSchedule();
-  if(tab==="semana") weekly();
+  if(tab==="semana") (r==="coach"?coachWeekView():weekly());
   else if(tab==="hoy") todayView();
   else if(tab==="mes") coachMonthView();
   else if(tab==="temporada") coachSeasonView();
@@ -418,6 +441,24 @@ function render(){
   else if(tab==="perfil") profileView();
   else if(tab==="result" && r==="coach") coachSeaResultsView();
   else results();
+}
+
+function addDaysISO(ds,n){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d+n));return x.toISOString().slice(0,10)}
+function mondayOfISO(ds){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d));const off=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-off);return x.toISOString().slice(0,10)}
+function shortDateES(ds){const [y,m,d]=ds.split('-').map(Number);return `${d}/${m}`}
+async function openCoachPlanner(team,date){plannerJumpTeam=team;plannerJumpDate=date;coachSelectedTeam=team;tab='planificar';draw();await coachPlanner();}
+async function coachWeekView(){
+  const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
+  const team=coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam)?coachSelectedTeam:(currentTeamCode&&allowed.some(x=>x[0]===currentTeamCode)?currentTeamCode:allowed[0]?.[0]);
+  coachSelectedTeam=team;
+  const start=mondayOfISO(coachWeekStart),end=addDaysISO(start,6); coachWeekStart=start;
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Calendario del entrenador</h2><p class="muted">Sesiones reales guardadas en la planificación. MAR se muestra completo al entrenador.</p></div><label style="min-width:260px">Equipo<select id="coachWeekTeam">${allowed.map(x=>`<option value="${x[0]}" ${x[0]===team?'selected':''}>${x[1]}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekArea"><p class="muted">Cargando…</p></div></div>`;
+  const {data,error}=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at');
+  const sessions=error?[]:(data||[]); const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${xs.length?xs.map(x=>`<div class="weekSess ${x.session_type==='MAR'?'seaCard':''}"><span class="tag">${x.session_type}</span><b>${x.title}</b>${x.content?`<p>${x.content}</p>`:''}</div>`).join(''):'<p class="muted">Sin sesión</p>'}<button type="button" class="weekEdit" data-date="${ds}">Editar día</button></section>`}).join('')}</div>`;
+  coachWeekTeam.onchange=()=>{coachSelectedTeam=coachWeekTeam.value;coachWeekView()};
+  coachWeekPrev.onclick=()=>{coachWeekStart=addDaysISO(start,-7);coachWeekView()}; coachWeekNext.onclick=()=>{coachWeekStart=addDaysISO(start,7);coachWeekView()};
+  coachWeekArea.querySelectorAll('.weekEdit').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
 }
 
 function getTodayIndex(){
@@ -1219,10 +1260,10 @@ async function coachMonthView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const now='2026-09';
   content.innerHTML=`<div class="card"><h2>Visión mensual</h2><div class="plannerGrid"><label>Equipo<select id="monthTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Mes<input id="monthPick" type="month" value="${now}"></label></div><button id="loadMonth" class="primary">Ver mes</button><div id="monthArea"></div></div>`;
-  loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
+  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
 }
 async function renderCoachMonth(){
-  const team=monthTeam.value,ym=monthPick.value; const [y,m]=ym.split('-').map(Number); const start=`${ym}-01`; const end=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);
+  const team=monthTeam.value,ym=monthPick.value; coachSelectedTeam=team; const [y,m]=ym.split('-').map(Number); const start=`${ym}-01`; const end=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);
   const [ss,cc]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team])]);
   const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]); const days=new Date(Date.UTC(y,m,0)).getUTCDate(); const first=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7;
   const counts=t=>sessions.filter(x=>x.session_type===t).length;
@@ -1230,15 +1271,15 @@ async function renderCoachMonth(){
   for(let d=1;d<=days;d++){const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds);cells.push(`<div class="calday" style="min-height:120px"><b>${d}</b>${cs.map(c=>`<div class="tag" style="margin-top:5px">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div style="margin-top:5px;font-size:.78rem"><b>${x.session_type}</b> ${x.title}</div>`).join('')}<button class="editDay" data-date="${ds}" style="margin-top:8px">Editar</button></div>`)}
   monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div><div class="calendar" style="grid-template-columns:repeat(7,1fr)">${['L','M','X','J','V','S','D'].map(x=>`<div class="calday"><b>${x}</b></div>`).join('')}${cells.join('')}</div>`;
   const sea=await getSeaResultsForTeam(team,start,end); monthArea.innerHTML+=`<h3>Resultados MAR del equipo</h3>${seaSummaryHtml(sea.results)}${seaRowsHtml(sea.results)}`;
-  document.querySelectorAll('.editDay').forEach(b=>b.onclick=()=>{plannerJumpDate=b.dataset.date;plannerJumpTeam=team;tab='planificar';draw();render();});
+  document.querySelectorAll('.editDay').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
 }
 async function coachSeasonView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   content.innerHTML=`<div class="card"><h2>Temporada 2026–27</h2><div class="plannerGrid"><label>Equipo<select id="seasonTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><div><button id="loadSeason" class="primary">Actualizar</button></div></div><div id="seasonArea"></div></div>`;
-  loadSeason.onclick=renderCoachSeason; await renderCoachSeason();
+  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) seasonTeam.value=coachSelectedTeam; seasonTeam.onchange=renderCoachSeason; loadSeason.onclick=renderCoachSeason; await renderCoachSeason();
 }
 async function renderCoachSeason(){
-  const team=seasonTeam.value; const ss=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date','2026-09-01').lte('session_date','2027-05-31'); const cc=await sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[team]); const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
+  const team=seasonTeam.value; coachSelectedTeam=team; const ss=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date','2026-09-01').lte('session_date','2027-05-31'); const cc=await sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[team]); const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
   const months=[['2026-09','Septiembre'],['2026-10','Octubre'],['2026-11','Noviembre'],['2026-12','Diciembre'],['2027-01','Enero'],['2027-02','Febrero'],['2027-03','Marzo'],['2027-04','Abril'],['2027-05','Mayo']];
   seasonArea.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Mes</th><th>Fase</th><th>GYM</th><th>ERGO</th><th>MAR</th><th>Descanso</th><th>Comp.</th></tr></thead><tbody>${months.map(([ym,n])=>{const xs=sessions.filter(x=>x.session_date.startsWith(ym)); const c=comps.filter(x=>x.competition_date.startsWith(ym)); const ct=t=>xs.filter(x=>x.session_type===t).length;return `<tr><td>${n}</td><td>${seasonPhaseForDate(ym+'-01')}</td><td>${ct('GYM')}</td><td>${ct('ERG')}</td><td>${ct('MAR')}</td><td>${ct('DESC')}</td><td>${c.length}</td></tr>`}).join('')}</tbody></table></div><div class="info"><b>Total temporada:</b> ${sessions.length} sesiones planificadas · ${comps.length} competiciones. Usa “Resultados” para comparar automáticamente sesiones MAR repetidas del equipo; esta vista permite comprobar la carga y distribución global antes de editar.</div>`;
   const sea=await getSeaResultsForTeam(team,'2026-09-01','2027-05-31'); seasonArea.innerHTML+=`<h3>Resultados MAR · evolución del equipo</h3>${seaSummaryHtml(sea.results)}<div class="tableWrap"><table><thead><tr><th>Mes</th><th>Registros</th><th>Metros</th><th>/500 medio</th><th>PPM</th><th>RPE</th></tr></thead><tbody>${months.map(([ym,n])=>{const a=sea.results.filter(x=>x.session?.session_date?.startsWith(ym)),z=seaSummary(a);return `<tr><td>${n}</td><td>${z.n}</td><td>${z.meters||'—'}</td><td>${fmtMetricSeconds(z.pace)}</td><td>${z.spm!=null?z.spm.toFixed(1):'—'}</td><td>${z.rpe!=null?z.rpe.toFixed(1):'—'}</td></tr>`}).join('')}</tbody></table></div>`;
@@ -1259,8 +1300,8 @@ async function coachPlanner(){
  if(r!=="coach") return;
  const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='season';
  content.innerHTML=`<div class="card"><h2>Planificar equipo</h2><p class="muted">Calendario global de la temporada. Pulsa cualquier día para ver, crear o modificar lo programado.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Ir a mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label></div><div class="viewToggle"><button id="planViewSeason" class="active">Temporada Sep–May</button><button id="planViewMonth">Un mes</button></div><div id="planNav" class="coachMonthBar" style="display:none"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div><hr><div class="plannerGrid"><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label><div class="coachTools" style="align-self:end"><button id="loadPlan" class="primary">Ver día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div></div><div id="planArea"></div></div>`;
- if(plannerJumpTeam) planTeam.value=plannerJumpTeam;
- plannerJumpDate=null; plannerJumpTeam=null;
+ if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
+ coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
  async function drawCalendar(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
@@ -1270,7 +1311,7 @@ async function coachPlanner(){
  loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
- planTeam.onchange=()=>{drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();
+ planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay(); plannerJumpDate=null; plannerJumpTeam=null;
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);

@@ -74,3 +74,10 @@ Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
 - Resultados MAR con calendarios de toda la temporada y selección entre meses.
 - Comparación de ejercicios/bloques MAR repetidos mediante exercise_name.
 - Salto fiable desde Mes a Planificar usando fecha/equipo seleccionados.
+
+
+## V48
+- Restaura las imágenes GYM originales con inicio/final; se retiran las ilustraciones de club provisionales.
+- Calendario del entrenador usa training_sessions reales y muestra contenido MAR completo.
+- Editar desde Mes abre directamente Planificar en el equipo y fecha seleccionados.
+- Selector de equipo se mantiene entre vistas.
