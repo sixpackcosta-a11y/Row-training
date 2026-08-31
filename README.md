@@ -81,3 +81,14 @@ Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
 - Calendario del entrenador usa training_sessions reales y muestra contenido MAR completo.
 - Editar desde Mes abre directamente Planificar en el equipo y fecha seleccionados.
 - Selector de equipo se mantiene entre vistas.
+
+## V49
+- Planificar abre el día seleccionado en primer plano; desde Calendario/Mes "Editar" abre directamente la sesión si solo hay una.
+- MAR de entrenador muestra contenido completo; remero mantiene oculto el contenido MAR.
+- setup_v49.sql sustituye únicamente las sesiones MAR genéricas de la temporada por sesiones completas y variadas, preservando sesiones personalizadas.
+- Corrige etiquetas `undefined` en calendario de resultados MAR.
+
+## V50
+- MAR: sesiones base recalculadas para un máximo aproximado de 60 min incluyendo calentamiento, recuperaciones y vuelta a la calma.
+- GYM: duración objetivo aproximada de 60 min; el volumen baja al acercarse a competición.
+- En bloques MAR por metros se usa un tope total de 60 min y la vuelta a la calma completa el tiempo restante.

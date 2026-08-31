@@ -103,6 +103,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 
 .coachWeekGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:16px}.coachWeekDay{border:1px solid var(--line);border-radius:16px;padding:10px;min-width:0}.coachWeekDayHead{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.weekSess{padding:9px;border-radius:10px;background:#f4f7fb;margin:7px 0;font-size:.86rem;overflow-wrap:anywhere}.weekSess p{font-size:.78rem;white-space:pre-line;margin:6px 0 0}.weekEdit{width:100%;margin-top:8px}.coachWeekDay .seaCard{border-left:4px solid #18a5b8;background:#eefbfc}@media(max-width:900px){.coachWeekGrid{grid-template-columns:1fr}.coachWeekDay{display:grid;grid-template-columns:90px 1fr auto;align-items:start;gap:8px}.coachWeekDayHead{display:block}.coachWeekDay .weekEdit{width:auto;margin:0}.weekSess{margin:0}.coachWeekDay>p{margin:0}}
+
+/* V49 · editor diario prioritario */
+#planArea{margin:16px 0 22px}#planArea>.card{border:2px solid #dbe7f5}#planArea .seaCard{border-left:6px solid var(--sea)}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script></head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email"><input id="p" type="password" placeholder="Contraseña"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><p class="muted">No se guarda la contraseña.</p></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
@@ -320,7 +323,7 @@ async function ergoLibrary(){
 }
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[];
-let plannerJumpDate=null,plannerJumpTeam=null;
+let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 
 const schedules={
@@ -446,7 +449,7 @@ function render(){
 function addDaysISO(ds,n){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d+n));return x.toISOString().slice(0,10)}
 function mondayOfISO(ds){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d));const off=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-off);return x.toISOString().slice(0,10)}
 function shortDateES(ds){const [y,m,d]=ds.split('-').map(Number);return `${d}/${m}`}
-async function openCoachPlanner(team,date){plannerJumpTeam=team;plannerJumpDate=date;coachSelectedTeam=team;tab='planificar';draw();await coachPlanner();}
+async function openCoachPlanner(team,date){plannerJumpTeam=team;plannerJumpDate=date;plannerAutoEdit=true;coachSelectedTeam=team;tab='planificar';draw();await coachPlanner();}
 async function coachWeekView(){
   const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const team=coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam)?coachSelectedTeam:(currentTeamCode&&allowed.some(x=>x[0]===currentTeamCode)?currentTeamCode:allowed[0]?.[0]);
@@ -1135,12 +1138,12 @@ function seasonPhaseForDate(dateStr){
 function gymAdviceForDate(dateStr){
   const p=seasonPhaseForDate(dateStr);
   const map={
-    'BASE':'Prioriza técnica y control. Usa una carga con la que puedas terminar cada serie con 2–3 repeticiones de margen.',
-    'FUERZA':'Trabajo de fuerza: en los ejercicios principales deja normalmente 1–2 repeticiones de margen; en accesorios, 2–3. Nunca sacrifiques técnica.',
-    'TRANSFERENCIA':'Mantén intensidad con menos volumen. Deja alrededor de 1–2 repeticiones de margen y evita acumular fatiga que perjudique MAR/ERGO.',
-    'PRECOMPETICIÓN':'Fuerza de mantenimiento: 2 repeticiones de margen y volumen reducido. Evita piernas pesadas cerca de sesiones duras o regatas.',
-    'ESPECÍFICO':'Calidad por encima de cantidad: 2–3 repeticiones de margen, pocas series y sin agujetas que interfieran con el mar.',
-    'PUESTA A PUNTO':'Objetivo frescura: volumen muy bajo, cargas conocidas y 3 repeticiones o más de margen. Nada de buscar fatiga.'
+    'BASE':'Duración objetivo 55–60 min. Prioriza técnica y control. Usa una carga con la que puedas terminar cada serie con 2–3 repeticiones de margen.',
+    'FUERZA':'Duración objetivo 55–60 min. Trabajo de fuerza: en los ejercicios principales deja normalmente 1–2 repeticiones de margen; en accesorios, 2–3. Nunca sacrifiques técnica.',
+    'TRANSFERENCIA':'Duración objetivo 50–60 min. Mantén intensidad con menos volumen. Deja alrededor de 1–2 repeticiones de margen y evita acumular fatiga que perjudique MAR/ERGO.',
+    'PRECOMPETICIÓN':'Duración objetivo 45–55 min. Fuerza de mantenimiento: 2 repeticiones de margen y volumen reducido. Evita piernas pesadas cerca de sesiones duras o regatas.',
+    'ESPECÍFICO':'Duración objetivo 45–55 min. Calidad por encima de cantidad: 2–3 repeticiones de margen, pocas series y sin agujetas que interfieran con el mar.',
+    'PUESTA A PUNTO':'Duración objetivo 35–50 min. Objetivo frescura: volumen muy bajo, cargas conocidas y 3 repeticiones o más de margen. Nada de buscar fatiga.'
   };
   return `<b>${p}:</b> ${map[p]}`;
 }
@@ -1194,7 +1197,7 @@ function metricSeconds(v){
 }
 function fmtMetricSeconds(v){if(v==null||!isFinite(v))return "—"; const m=Math.floor(v/60),sec=v-m*60;return `${m}:${sec.toFixed(1).padStart(4,'0')}`;}
 async function getSeaResultsForTeam(team,start,end){
-  const ss=await sb.from('training_sessions').select('id,session_date,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
+  const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
   if(ss.error||!ss.data?.length)return {sessions:ss.data||[],results:[]};
   const ids=ss.data.map(x=>x.id); const rr=await sb.from('sea_results').select('*').in('training_session_id',ids).order('created_at');
   const map=new Map(ss.data.map(x=>[x.id,x])); return {sessions:ss.data,results:(rr.data||[]).map(x=>({...x,session:map.get(x.training_session_id)}))};
@@ -1225,7 +1228,7 @@ function calendarCellsHtml(ym,sessions=[],comps=[],results=[],mode='edit',select
   const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds), mars=xs.filter(x=>x.session_type==='MAR');
   const rs=mars.map(x=>({s:x,r:resultForSession(results,x.id)})).filter(x=>x.r); const sel=rs.some(x=>selectedIds.includes(String(x.r.id)));
   const cls=['coachDay',mars.length?'hasMar':'',rs.length?'hasResult':'',sel?'selectedCompare':''].filter(Boolean).join(' ');
-  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}">${x.session_type} · ${x.title.replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
+  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}">${x.session_type||'MAR'} · ${(x.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
  }
  return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
 }
@@ -1298,8 +1301,8 @@ async function loadCoachCalendar(team,date){
 }
 async function coachPlanner(){
  if(r!=="coach") return;
- const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='season';
- content.innerHTML=`<div class="card"><h2>Planificar equipo</h2><p class="muted">Calendario global de la temporada. Pulsa cualquier día para ver, crear o modificar lo programado.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Ir a mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label></div><div class="viewToggle"><button id="planViewSeason" class="active">Temporada Sep–May</button><button id="planViewMonth">Un mes</button></div><div id="planNav" class="coachMonthBar" style="display:none"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div><hr><div class="plannerGrid"><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label><div class="coachTools" style="align-self:end"><button id="loadPlan" class="primary">Ver día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div></div><div id="planArea"></div></div>`;
+ const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='month';
+ content.innerHTML=`<div class="card"><h2>Planificar equipo</h2><p class="muted">Edita primero el día seleccionado. El calendario inferior sirve para saltar rápidamente a otra fecha.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
@@ -1311,7 +1314,13 @@ async function coachPlanner(){
  loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
- planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay(); plannerJumpDate=null; plannerJumpTeam=null;
+ planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();
+ if(plannerAutoEdit){
+   const data=await loadCoachCalendar(planTeam.value,planDate.value);
+   if(data.sessions.length===1) sessionEditor(data.sessions[0]);
+   plannerAutoEdit=false;
+ }
+ plannerJumpDate=null; plannerJumpTeam=null;
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
