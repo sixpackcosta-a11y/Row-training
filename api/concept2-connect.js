@@ -62,7 +62,13 @@ module.exports=async function handler(req,res){
     const sr=await rest("concept2_connections?on_conflict=user_id",{
       method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=representation"},body:JSON.stringify(payload)
     });
-    if(!sr.ok)return res.status(500).json({error:"No se pudo guardar la conexión Concept2. Ejecuta primero setup_v36.sql en Supabase."});
+    if(!sr.ok){
+  const detail = await sr.text();
+  console.error("Supabase concept2_connections:", sr.status, detail);
+  return res.status(500).json({
+    error:"Supabase rechazó el guardado: "+sr.status+" · "+detail
+  });
+}
 
     return res.json({ok:true,user:{id:u.id,username:u.username||u.name||null}});
   }catch(e){
