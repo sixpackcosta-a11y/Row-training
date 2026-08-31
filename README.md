@@ -1,112 +1,35 @@
-## Row Training V56
+# Row Training V61
 
-Navegación simplificada para entrenador: Hoy · Planificación · Análisis · Biblioteca ERGO. Calendario/Mes/Temporada quedan integrados en Planificación; Resultados pasa a Análisis con MAR y ERGO/Remeros.
+Versión completa que incluye todo V60 (registro público de remeros, Altas y guía) y la nueva estructura profesional GYM/ERGO.
 
-# Row Training V36
+## No necesitas V60
+Si no llegaste a subir ni ejecutar V60, usa directamente V61.
 
-## Qué cambia
-- Concept2 queda conectado de forma persistente por remero.
-- Renovación automática mediante refresh token.
-- Sincronización manual desde Perfil.
-- Importación deduplicada por `Concept2 result ID`.
-- Historial del remero muestra resultados Concept2/ErgData.
-- Preparado el emparejamiento: `matched`, `review`, `unplanned`.
-- Cursor de mano en botones/enlaces/elementos interactivos, incluido GYM.
-- OCR/manual se mantiene como respaldo.
+### Supabase
+Ejecuta **solo `setup_v61.sql`**. Incluye:
+- altas de remeros y aprobación por entrenador,
+- enlaces de invitación,
+- estructura semanal GYM/ERGO de septiembre a mayo,
+- martes conjunto GYM + ERGO por grupos,
+- segundo estímulo ERGO con progresión de temporada,
+- primera semana MAR cerrada con bloques concretos.
 
-## Antes de desplegar
-1. En Supabase > SQL Editor ejecuta `setup_v36.sql`.
-2. En Vercel > Settings > Environment Variables conserva:
-   - `CONCEPT2_CLIENT_SECRET`
-3. Añade otra variable **Sensitive / Production**:
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - Su valor se obtiene en Supabase > Project Settings > API > service_role.
-   - NO ponerla en HTML, GitHub ni compartirla por chat.
-4. Sube estos archivos a GitHub `Row-training` y haz commit a `main`.
-5. Vercel desplegará automáticamente.
+### Estructura base
+- Veteran@s: martes MIX GYM+ERGO, jueves MAR, viernes GYM, sábado ERGO (según fase), domingo MAR.
+- Senior: lunes GYM hasta enero, martes MIX GYM+ERGO, jueves MAR, viernes GYM, sábado ERGO (según fase), domingo MAR.
+- Desde febrero baja el volumen de fuerza y el segundo ERGO pasa a ser menos frecuente.
+- En abril-mayo se prioriza MAR y frescura.
 
-## Sobre el emparejamiento
-V36 ya tiene la base de emparejamiento y tabla `ergo_intents`.
-Para que una sesión pueda emparejarse con alta confianza, la planificación deberá guardar una intención ERGO con fecha y, cuando exista, distancia/tipo esperado. La temporada completa todavía no está cargada en la app; por eso los resultados históricos pueden aparecer inicialmente como "No programado". No se inventa una asociación.
+### Martes conjunto
+Dos grupos:
+1. GYM 25–28 min
+2. ERGO 25–28 min
+Después intercambian.
 
-## Seguridad
-Los access/refresh tokens se guardan en `concept2_connections`, una tabla sin acceso para `authenticated`/`anon`. Solo las funciones de servidor con `SUPABASE_SERVICE_ROLE_KEY` pueden leerlos.
+ERGO del martes: UT2 2×10 min @20 ppm, rec 3 min.
 
-## V37 · emparejamiento ERGO automático
-1. Ejecutar `setup_v37.sql` una vez en Supabase.
-2. Al mostrar una sesión ERGO, Row Training crea su intención programada (fecha, código, duración, SPM y tipo).
-3. `Sincronizar ahora` o abrir `Historial` importa Concept2 y compara fecha + duración/distancia + SPM + tipo.
-4. ≥80%: asociado automáticamente. 60–79%: coincidencia dudosa. <60%: no programado.
-5. El botón `Abrir entrenamiento en ErgData` usa `ergdata_url` de la intención. Hasta que el entrenador cargue el enlace compartido, avisa sin inventar una URL.
+## Registro
+Enlace general: `https://rowtraining.vercel.app/?registro=1`
+En el panel **Altas** el entrenador puede copiar enlaces por equipo, aprobar y asignar remeros.
 
-## V38
-- Biblioteca ERGO integrada y editable por entrenador.
-- Enlaces ErgData depurados precargados.
-- Biblioteca adicional del remero filtrada por equipo/fase.
-- Sesiones adicionales se registran como intención `additional` y no sustituyen la programada.
-- El ERGO programado 3×10' abre directamente su enlace ErgData.
-- Cursor pointer global en controles interactivos.
-- Ejecutar `setup_v38.sql` una vez en Supabase.
-
-## V39
-- Semana visual lunes-domingo.
-- Panel Planificar para entrenador: GYM / ERG / MAR / descanso.
-- MAR editable por tiempo o metros mediante bloques simples, ppm y niveles BAJO/MEDIO/ALTO.
-- Registro MAR: metros, tiempo, parcial /500, ppm reales, RPE y notas.
-- Competiciones por equipo y fecha.
-- Preparado para Veteranas femenino, Senior masculino, Senior femenino y Veteranos masculino.
-- Tabla coach_team_access para permisos por entrenador/equipo. El entrenador existente conserva acceso total mientras no tenga asignaciones explícitas.
-- Identidad visual Club de Remo Pedregalejo / Tiburon@s sin incrustar un escudo web de baja calidad.
-
-## V41
-Después de `setup_v39.sql` y `setup_v40.sql`, ejecutar `setup_v41.sql`.
-V41 copia la planificación base por categoría de forma independiente:
-- Veteranas femenino → Veteranos masculino.
-- Senior masculino → Senior femenino.
-Los cambios posteriores de cada entrenador afectan únicamente a su equipo.
-
-## V42
-- La cabecera muestra el nombre real del usuario.
-- Cada remero tiene `profiles.team_code` y el entrenador puede asignarlo desde Panel del entrenador.
-- La Biblioteca ERGO reconoce agosto como fase BASE, evitando que aparezca vacía el 31/08.
-- La categoría se obtiene del equipo asignado, no del nombre del remero.
-- Los entrenadores con filas en `coach_team_access` solo ven esos equipos en Planificar; sin filas conservan acceso global de administrador.
-
-
-## V47
-- Planificación con vista Mes / Temporada completa (Sep-May) y navegación sin teclear fechas.
-- Resultados MAR con calendarios de toda la temporada y selección entre meses.
-- Comparación de ejercicios/bloques MAR repetidos mediante exercise_name.
-- Salto fiable desde Mes a Planificar usando fecha/equipo seleccionados.
-
-
-## V48
-- Restaura las imágenes GYM originales con inicio/final; se retiran las ilustraciones de club provisionales.
-- Calendario del entrenador usa training_sessions reales y muestra contenido MAR completo.
-- Editar desde Mes abre directamente Planificar en el equipo y fecha seleccionados.
-- Selector de equipo se mantiene entre vistas.
-
-## V49
-- Planificar abre el día seleccionado en primer plano; desde Calendario/Mes "Editar" abre directamente la sesión si solo hay una.
-- MAR de entrenador muestra contenido completo; remero mantiene oculto el contenido MAR.
-- setup_v49.sql sustituye únicamente las sesiones MAR genéricas de la temporada por sesiones completas y variadas, preservando sesiones personalizadas.
-- Corrige etiquetas `undefined` en calendario de resultados MAR.
-
-## V50
-- MAR: sesiones base recalculadas para un máximo aproximado de 60 min incluyendo calentamiento, recuperaciones y vuelta a la calma.
-- GYM: duración objetivo aproximada de 60 min; el volumen baja al acercarse a competición.
-- En bloques MAR por metros se usa un tope total de 60 min y la vuelta a la calma completa el tiempo restante.
-
-
-## V57
-Semana 1 (31/08–06/09/2026) cerrada para Veteranas femenino y Senior masculino. GYM ~55–60 min, ERGO UT2 y sesiones MAR completas de 60 min. `setup_v57.sql` actualiza/crea la semana de forma idempotente.
-
-V58: editor GYM por ejercicios, ERGO asignado visible y semana 1 MAR con bloques concretos.
-
-
-## V59 - Semana 1 operativa
-- GYM A/B/C revisados para 31/8-6/9.
-- Dibujos mostrados solo para movimientos verificados de esta semana; los dudosos quedan ocultos.
-- Se elimina marcha en el sitio con mancuernas y alternativas confusas de la semana.
-- Repeticiones fijas; el remero registra peso + Fácil/Bien/Duro + nota.
-- Sin cambios SQL respecto a V58.
+El email de aviso es opcional y requiere configurar Resend en Vercel para `api/registration-notify.js`.
