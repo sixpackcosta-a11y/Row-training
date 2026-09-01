@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V82</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V83</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -549,6 +549,9 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
+const APP_VERSION="83";
+const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
+let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 async function loadRegistrationState(){
@@ -643,6 +646,8 @@ async function startApp(){
   login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
   renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
+  setTimeout(()=>checkForAppUpdate(),1200);
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
 }
@@ -675,8 +680,8 @@ function publicGuideHtml(){return `<h2>Guía de Row Training</h2><p class="muted
 <div class="guideStep"><b>4 · Hoy y Semana</b>Comprueba qué sesión toca. Los martes el grupo puede dividirse entre GYM y ERGO y después intercambiar.</div>
 <div class="guideStep"><b>5 · GYM</b>Las series y repeticiones ya están prescritas. Registra principalmente el peso y marca Fácil / Bien / Duro. Si no completas lo indicado con técnica correcta, baja la carga. Puedes usar una alternativa cuando corresponda.</div>
 <div class="guideStep"><b>6 · Conectar Concept2</b>En Perfil → Concept2 / ErgData pulsa Conectar Concept2 y autoriza Row Training. Solo hace falta una vez. Row Training usa acceso de lectura a perfil y resultados; tu contraseña de Concept2 no pasa por la app.</div>
-<div class="guideStep"><b>7 · ERGO con ErgData</b>En el día ERGO pulsa Abrir entrenamiento en ErgData. En ErgData conecta el PM5 y realiza la sesión. Al terminar, deja que ErgData sincronice con tu Concept2 Online Logbook y después pulsa Sincronizar ahora en Row Training si fuera necesario.</div>
-<div class="guideStep"><b>8 · Resultados ERGO</b>Row Training intenta asociar automáticamente el resultado de Concept2 con la sesión programada. <b>Historial abre los datos ya guardados y no fuerza una sincronización</b>, para que la app siga fluida. Cuando quieras traer resultados nuevos usa Perfil → Sincronizar ahora. Si aparece como no programado, queda en el historial para revisión.</div>
+<div class="guideStep"><b>7 · ERGO con ErgData</b>En el día ERGO pulsa Abrir entrenamiento en ErgData. En ErgData conecta el PM5 y realiza la sesión. Al terminar, deja que ErgData sincronice con tu Concept2 Online Logbook. Al volver a Row Training, la app buscará automáticamente resultados nuevos.</div>
+<div class="guideStep"><b>8 · Resultados ERGO</b>Row Training sincroniza Concept2 automáticamente al abrir o volver a la app y también al entrar en Historial. Después intenta asociar el resultado con la sesión programada. El botón Perfil → Sincronizar ahora queda solo como respaldo manual. Si aparece como no programado, queda en el historial para revisión.</div>
 <div class="guideStep"><b>9 · MAR</b>El remero ve “Sesión de mar”. El contenido completo, las series y los resultados colectivos los gestiona el entrenador.</div>
 <div class="guideStep"><b>10 · Al terminar</b>Marca completada / parcial / no realizada, esfuerzo y añade una nota cuando sea útil. En Historial puedes revisar tu evolución.</div>
 <div class="guideStep"><b>11 · Alta de equipo</b>Tras registrarte y confirmar el correo, un entrenador aprueba tu solicitud y te asigna al equipo. Después recibirás un correo de bienvenida con el acceso y estas instrucciones.</div>
@@ -738,6 +743,17 @@ else if(new URLSearchParams(location.search).get("guia")==="1") openPublicGuide(
 
 window.addEventListener("pagehide",()=>{
   if(localStorage.getItem("remo_keep_session")==="0") sb.auth.signOut();
+});
+
+// Al volver desde ErgData/Concept2, intenta traer el entrenamiento sin que el remero pulse nada.
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible")return;
+  checkForAppUpdate();
+  if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
+});
+window.addEventListener("focus",()=>{
+  checkForAppUpdate();
+  if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
 });
 
 enter.onclick=async()=>{
@@ -1309,9 +1325,8 @@ function gym(k,x=null){
   };
 }
 
-async function history(){
-  // Historial debe abrir al instante con los datos ya guardados.
-  // La sincronización Concept2 se hace manualmente desde Perfil para no bloquear la navegación.
+async function history(opts={}){
+  // Historial abre primero los datos ya guardados y, en paralelo, busca nuevos resultados de Concept2.
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,session_date,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
@@ -1333,6 +1348,9 @@ async function history(){
     c2html+
     (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${w.session_date?shortDateES(w.session_date):new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
   '</div>';
+
+  // No bloquea la pantalla: si llegan resultados nuevos, Historial se repinta una sola vez.
+  if(!opts.skipAuto) autoSyncConcept2({refreshHistory:true});
 }
 
 function estimateMaxHR(age, sex, trained){
@@ -1438,6 +1456,40 @@ async function syncConcept2(showAlert=true){
   })();
   try{return await concept2SyncInFlight;}finally{concept2SyncInFlight=null;}
 }
+
+async function autoSyncConcept2({refreshHistory=false,force=false}={}){
+  if(currentMode!=="athlete" || !currentUser || !currentTeamCode || !navigator.onLine) return null;
+  const key=`rowtraining_c2_auto_sync_${currentUser.id}`;
+  const last=Number(localStorage.getItem(key)||0);
+  if(!force && Date.now()-last<AUTO_C2_SYNC_MIN_MS) return null;
+  // Reservamos el intento antes de salir a red para que focus + visibilitychange no dupliquen llamadas.
+  localStorage.setItem(key,String(Date.now()));
+  try{
+    const st=await concept2Status();
+    if(!st?.connected) return null;
+    const data=await syncConcept2(false);
+    if(refreshHistory && tab==="hist" && data?.ok && ((data.imported||0)>0 || (data.updated||0)>0)){
+      await history({skipAuto:true});
+    }
+    return data;
+  }catch(e){return null;}
+}
+
+async function checkForAppUpdate(){
+  if(Date.now()-lastAppUpdateCheck<30000) return;
+  lastAppUpdateCheck=Date.now();
+  try{
+    const r=await fetch(`/version.json?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok)return;
+    const v=await r.json();
+    if(v?.version && String(v.version)!==APP_VERSION){
+      const u=new URL(location.href);
+      u.searchParams.set("appv",String(v.version));
+      location.replace(u.toString());
+    }
+  }catch(e){}
+}
+
 async function profileView(){
   const {data:pdata}=await sb.from("profiles").select("*").eq("user_id",currentUser.id).single();
   const {data:mdata}=await sb.from("athlete_metrics").select("*").eq("user_id",currentUser.id).order("recorded_at",{ascending:false}).limit(1);
@@ -1508,13 +1560,13 @@ async function profileView(){
   </div>
   <div class="card">
     <h2>Concept2 / ErgData</h2>
-    <p>Conecta tu propia cuenta una sola vez. Row Training podrá importar tus resultados sincronizados por ErgData.</p>
+    <p>Conecta tu propia cuenta una sola vez. Row Training importa automáticamente los resultados que ErgData haya subido a Concept2.</p>
     <div id="concept2State" class="info">Comprobando conexión…</div>
     <div class="actions">
       <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
-      <button id="syncConcept2Btn" type="button">Sincronizar ahora</button>
+      <button id="syncConcept2Btn" type="button">Sincronizar ahora (manual)</button>
     </div>
-    <p class="muted"><small>Solo lectura: perfil y resultados. La contraseña de Concept2 nunca pasa por Row Training.</small></p>
+    <p class="muted"><small>Sincronización automática al abrir/volver a la app y al entrar en Historial. El botón manual queda como respaldo. Solo lectura: perfil y resultados.</small></p>
   </div>`;
 
   function fillZones(){
