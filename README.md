@@ -7,3 +7,10 @@
 
 
 V77: Registro MAR por series. Expande automáticamente 3×4 min en tres filas, fija tiempo/distancia prescritos y calcula ritmo /500 m automáticamente. El acceso desde Planificación usa el mismo editor.
+
+
+## V78
+- Registro MAR: RPE único y opcional para toda la sesión; los bloques conservan notas propias.
+- Navegación móvil: las pestañas se muestran en rejilla y ya no quedan ocultas fuera de pantalla.
+- Nueva pestaña Sistema para administrador global con contadores de uso real de la aplicación.
+- No requiere SQL nuevo respecto a V77.
