@@ -1,4 +1,4 @@
-# Row Training V73
+# Row Training V74
 
 V62 parte de V61 e incorpora el flujo de correo y ayuda para nuevas altas.
 
@@ -150,3 +150,11 @@ Con confirmación de email activada, Supabase no devuelve una sesión en el mome
 - Se eliminan de esa pantalla los formularios manuales de GYM y ERGO para evitar duplicidad/confusión.
 - GYM sigue siendo registro individual del remero y ERGO se sincroniza mediante ErgData/Concept2.
 - No requiere SQL nuevo respecto a V72.
+
+
+## V74 · edición directa desde Hoy y Semana
+- En modo entrenador, el botón Editar de cada sesión abre Planificación con esa sesión concreta ya abierta en el editor.
+- Si hay varias sesiones el mismo día, no hay que volver a elegir cuál editar.
+- En la vista semanal cada sesión tiene su propio botón Editar; Abrir día mantiene el acceso al conjunto del día.
+- Se elimina el doble render al saltar desde Hoy a Planificación.
+- No requiere SQL nuevo.

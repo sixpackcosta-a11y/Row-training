@@ -454,7 +454,7 @@ async function ergoLibrary(){
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null;
 let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],currentMode="athlete";
-let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false;
+let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false,plannerTargetSessionId=null;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 
 const schedules={
@@ -748,8 +748,8 @@ async function staffTodayView(){
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
   const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
   const sessions=ss.data||[],comps=cc.data||[];
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2><p class="muted">${canEdit?'Entrenador: puedes editar la planificación y registrar datos.':'Ayudante: puedes registrar datos. La planificación es de solo lectura.'}</p></div><label>Equipo<select id="staffTodayTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}">Editar día</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
-  staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date));
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2><p class="muted">${canEdit?'Entrenador: puedes editar la planificación y registrar datos.':'Ayudante: puedes registrar datos. La planificación es de solo lectura.'}</p></div><label>Equipo<select id="staffTodayTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
 }
 async function staffRegisterView(){
   const teams=staffViewTeamCodes();
@@ -803,7 +803,7 @@ function localISODate(){const x=new Date();return `${x.getFullYear()}-${String(x
 function addDaysISO(ds,n){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d+n));return x.toISOString().slice(0,10)}
 function mondayOfISO(ds){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d));const off=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-off);return x.toISOString().slice(0,10)}
 function shortDateES(ds){const [y,m,d]=ds.split('-').map(Number);return `${d}/${m}`}
-async function openCoachPlanner(team,date){plannerJumpTeam=team;plannerJumpDate=date;plannerAutoEdit=true;coachSelectedTeam=team;tab='planificar';draw();await coachPlanner();}
+function openCoachPlanner(team,date,sessionId=null){plannerJumpTeam=team;plannerJumpDate=date;plannerTargetSessionId=sessionId!=null?Number(sessionId):null;plannerAutoEdit=sessionId==null;coachSelectedTeam=team;tab='planificar';draw();}
 async function coachWeekView(){
   const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const team=coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam)?coachSelectedTeam:(currentTeamCode&&allowed.some(x=>x[0]===currentTeamCode)?currentTeamCode:allowed[0]?.[0]);
@@ -812,9 +812,10 @@ async function coachWeekView(){
   content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Calendario del entrenador</h2><p class="muted">Sesiones reales guardadas en la planificación. MAR se muestra completo al entrenador.</p></div><label style="min-width:260px">Equipo<select id="coachWeekTeam">${allowed.map(x=>`<option value="${x[0]}" ${x[0]===team?'selected':''}>${x[1]}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekArea"><p class="muted">Cargando…</p></div></div>`;
   const {data,error}=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at');
   const sessions=error?[]:(data||[]); const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${xs.length?xs.map(x=>`<div class="weekSess ${x.session_type==='MAR'?'seaCard':''}"><span class="tag">${x.session_type}</span><b>${x.title}</b>${x.content?trainingContentHtml(x.content,true):''}</div>`).join(''):'<p class="muted">Sin sesión</p>'}<button type="button" class="weekEdit" data-date="${ds}">Editar día</button></section>`}).join('')}</div>`;
+  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${xs.length?xs.map(x=>`<div class="weekSess ${x.session_type==='MAR'?'seaCard':''}"><span class="tag">${x.session_type}</span><b>${x.title}</b>${x.content?trainingContentHtml(x.content,true):''}<button type="button" class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button></div>`).join(''):'<p class="muted">Sin sesión</p>'}<button type="button" class="weekEdit" data-date="${ds}">Abrir día</button></section>`}).join('')}</div>`;
   coachWeekTeam.onchange=()=>{coachSelectedTeam=coachWeekTeam.value;coachWeekView()};
   coachWeekPrev.onclick=()=>{coachWeekStart=addDaysISO(start,-7);coachWeekView()}; coachWeekNext.onclick=()=>{coachWeekStart=addDaysISO(start,7);coachWeekView()};
+  coachWeekArea.querySelectorAll('.weekEditSession').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date,Number(b.dataset.id)));
   coachWeekArea.querySelectorAll('.weekEdit').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
 }
 
@@ -1759,10 +1760,16 @@ async function coachPlanner(){
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
  planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();
- if(plannerAutoEdit){
+ if(plannerTargetSessionId!=null || plannerAutoEdit){
    const data=await loadCoachCalendar(planTeam.value,planDate.value);
-   if(data.sessions.length===1) sessionEditor(data.sessions[0]);
+   if(plannerTargetSessionId!=null){
+     const target=data.sessions.find(x=>Number(x.id)===Number(plannerTargetSessionId));
+     if(target) sessionEditor(target);
+   }else if(plannerAutoEdit && data.sessions.length===1){
+     sessionEditor(data.sessions[0]);
+   }
    plannerAutoEdit=false;
+   plannerTargetSessionId=null;
  }
  plannerJumpDate=null; plannerJumpTeam=null;
 }
