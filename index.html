@@ -114,6 +114,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 @media(max-width:650px){.guideSteps,.inviteLinks{grid-template-columns:1fr}.requestHead{flex-direction:column}}
 /* V63 · recuperación de contraseña */
 .authSubcard{max-width:620px;margin:12px auto}.authHint{background:#eef6ff;border:1px solid #c9def6;border-radius:12px;padding:11px;margin:10px 0}.linkButton{background:transparent;border:0;color:#0b5ed7;text-decoration:underline;padding:8px 0;font-weight:700;cursor:pointer}.passwordRules{font-size:.9rem;color:#52657a;margin:6px 0 12px}
+
+/* V72 · roles por equipo + entrenamiento legible */
+.modeSwitch{margin-top:5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:4px 8px;font-size:.78rem}.staffRoleBadge{display:inline-block;margin:3px 4px 0 0;padding:3px 7px;border-radius:999px;background:#e8f1fb;font-size:.74rem;font-weight:800}.staffRoleBadge.assistant{background:#f2f4f7}.permNote{padding:10px 12px;border-radius:10px;background:#fff6d9;border:1px solid #f0d98a;margin:10px 0}.staffGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.staffPerson{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.staffDayCard{border-left:5px solid #6b7280}.staffDayCard.mar{border-left-color:#18a5b8}.staffActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.workoutReadable{display:flex;flex-direction:column;gap:7px;margin:10px 0}.workoutRow{display:grid;grid-template-columns:minmax(135px,190px) 1fr;gap:10px;align-items:start;padding:9px 11px;border:1px solid #dce6f0;border-radius:10px;background:#fff}.workoutLabel{font-weight:850;color:#082744;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}.workoutValue{font-size:.9rem;line-height:1.35;color:#17283a}.workoutRow.work{background:#f5f9fd}.workoutRow.recovery{background:#f8fafc}.workoutRow.warm{background:#fffaf0}.workoutRow.cool{background:#f4fbf8}.workoutRow.note{background:#eef6ff}.workoutCompact .workoutRow{grid-template-columns:110px 1fr;padding:6px 8px;gap:7px}.workoutCompact .workoutLabel{font-size:.67rem}.workoutCompact .workoutValue{font-size:.76rem}.workoutPyramidLinear{font-weight:800}.workoutArrow{color:#0b5ed7;font-weight:900;padding:0 3px}@media(max-width:700px){.staffGrid{grid-template-columns:1fr}.workoutRow,.workoutCompact .workoutRow{grid-template-columns:1fr;gap:3px}.workoutLabel{font-size:.72rem}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}</style>
 </head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
@@ -449,6 +453,7 @@ async function ergoLibrary(){
 }
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null;
+let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],currentMode="athlete";
 let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 
@@ -470,6 +475,28 @@ function teamLabel(code){
 }
 let schedule=schedules[teamKey()];
 function refreshTeamSchedule(){schedule=schedules[teamKey()];}
+function readableLabel(line){
+  const m=line.match(/^([^·:]{2,32})\s*[·:]\s*(.+)$/);return m?[m[1].trim(),m[2].trim()]:["",line.trim()];
+}
+function workoutRowClass(label,value){
+  const x=(label+" "+value).toLowerCase();
+  if(x.includes("calent"))return "warm";if(x.includes("vuelta a la calma"))return "cool";if(x.includes("recup")||x.includes("descanso"))return "recovery";
+  if(x.includes("trabajo")||x.includes("técnica")||x.includes("tecnica")||x.includes("base")||x.includes("salida")||x.includes("virada")||x.includes("ciaboga")||x.includes("serie")||x.includes("pirámide")||x.includes("piramide"))return "work";
+  return "note";
+}
+function makePyramidLinear(value){
+  return value.replace(/(\d)\s*[-–]\s*(?=\d)/g,'$1 <span class="workoutArrow">→</span> ');
+}
+function trainingContentHtml(content,compact=false){
+  const raw=String(content||"").replace(/\\n/g,"\n").trim();if(!raw)return "";
+  const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  return `<div class="workoutReadable ${compact?'workoutCompact':''}">${lines.map(line=>{
+    let [label,value]=readableLabel(line);if(!label){label="Bloque";value=line;}
+    const isP=/pirámide|piramide/i.test(label+" "+value);if(isP)value=`<span class="workoutPyramidLinear">${makePyramidLinear(esc(value))}</span>`;else value=esc(value);
+    return `<div class="workoutRow ${workoutRowClass(label,value)}"><div class="workoutLabel">${esc(label)}</div><div class="workoutValue">${value}</div></div>`;
+  }).join("")}</div>`;
+}
+
 
 const visuals={
   prensa:{type:"composite",src:"assets/visuals/week1_leg_press.png"},
@@ -527,49 +554,75 @@ async function notifyPendingRegistration(){
     });
   }catch(e){}
 }
+function staffViewTeamCodes(){
+  if(isGlobalCoach){const xs=(coachTeams||[]).filter(x=>TEAM_OPTIONS.some(t=>t[0]===x));return xs.length?xs:TEAM_OPTIONS.map(x=>x[0]);}
+  return [...new Set((staffRoles||[]).map(x=>x.team_code))];
+}
+function editableTeamCodes(){
+  if(isGlobalCoach)return staffViewTeamCodes();
+  return [...new Set((staffRoles||[]).filter(x=>x.staff_role==="coach").map(x=>x.team_code))];
+}
+function staffRoleForTeam(team){
+  if(isGlobalCoach&&staffViewTeamCodes().includes(team))return "coach";
+  return (staffRoles||[]).find(x=>x.team_code===team)?.staff_role||null;
+}
+function canEditTeamJS(team){return staffRoleForTeam(team)==="coach"}
+function canRecordTeamJS(team){return ["coach","assistant"].includes(staffRoleForTeam(team))}
+function hasStaffMode(){return isGlobalCoach||staffRoles.length>0}
+function hasRowerMode(){return !!currentTeamCode}
+function hasAnyCoachTeam(){return isGlobalCoach||editableTeamCodes().length>0}
+function staffRoleText(){
+  if(isGlobalCoach)return "ENTRENADOR · ADMIN";
+  const c=staffRoles.filter(x=>x.staff_role==="coach"),a=staffRoles.filter(x=>x.staff_role==="assistant");
+  if(c.length&&!a.length)return `ENTRENADOR · ${c.map(x=>teamLabel(x.team_code)).join(" / ")}`;
+  if(a.length&&!c.length)return `AYUDANTE · ${a.map(x=>teamLabel(x.team_code)).join(" / ")}`;
+  return "ENTRENADOR / AYUDANTE · roles por equipo";
+}
+function renderIdentityHeaderV72(){
+  userName.textContent=currentUserProfile?.full_name||currentUser?.user_metadata?.full_name||currentUser?.email||"Usuario";
+  role.textContent=currentMode==="staff"?staffRoleText():"REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
+  const old=document.getElementById("modeSwitchV72");if(old)old.remove();
+  if(hasStaffMode()&&hasRowerMode()){
+    const b=document.createElement("button");b.id="modeSwitchV72";b.className="modeSwitch";
+    b.textContent=currentMode==="staff"?"Cambiar a modo remero":"Cambiar a modo staff";
+    b.onclick=()=>switchModeV72(currentMode==="staff"?"athlete":"staff");userHead.appendChild(b);
+  }
+}
+async function switchModeV72(mode){
+  if(mode==="staff"&&!hasStaffMode())return;if(mode==="athlete"&&!hasRowerMode())return;
+  currentMode=mode;localStorage.setItem(`rowtraining_mode_${currentUser.id}`,mode);r=mode==="staff"?"coach":"athlete";
+  if(mode==="staff"){coachTeams=staffViewTeamCodes();tab="hoy";if(isGlobalCoach)await loadPendingRegistrationCount();}
+  else{tab=currentTeamCode?"hoy":"pendiente";await loadRegistrationState();}
+  renderIdentityHeaderV72();refreshTeamSchedule();selected=getTodayIndex();draw();render();
+}
 async function loadPendingRegistrationCount(){
-  pendingRegistrationCount=0;
-  if(r!=="coach") return;
-  try{
-    let q=sb.from("registration_requests").select("id,requested_team",{count:"exact"}).eq("status","pending");
-    const res=await q;
-    if(!res.error){
-      const rows=res.data||[];
-      pendingRegistrationCount=rows.filter(x=>!x.requested_team||!coachTeams.length||coachTeams.includes(x.requested_team)).length;
-    }
-  }catch(e){}
+  pendingRegistrationCount=0;if(!isGlobalCoach)return;
+  try{const res=await sb.from("registration_requests").select("id,requested_team",{count:"exact"}).eq("status","pending");if(!res.error)pendingRegistrationCount=(res.data||[]).length;}catch(e){}
 }
 async function startApp(){
-  const {data:{user}}=await sb.auth.getUser();
-  if(!user) return;
-  currentUser=user;
-  const [{data:roleData,error:roleError},{data:pdata}]=await Promise.all([
+  const {data:{user}}=await sb.auth.getUser();if(!user)return;currentUser=user;
+  const [roleRes,profileRes,staffRes]=await Promise.all([
     sb.from("user_roles").select("role").eq("user_id",user.id).single(),
-    sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle()
+    sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle(),
+    sb.from("team_staff_roles").select("team_code,staff_role").eq("user_id",user.id)
   ]);
-  if(roleError){alert("Error leyendo rol: "+roleError.message);return}
-  r=roleData.role;
-  currentUserProfile=pdata||{};
-  currentTeamCode=currentUserProfile.team_code||null;
-  if(r==="coach"){
-    const {data:access}=await sb.from("coach_team_access").select("team_code").eq("coach_user_id",user.id);
-    coachTeams=(access||[]).map(x=>x.team_code);
-    if(!coachTeams.length) coachTeams=TEAM_OPTIONS.map(x=>x[0]);
-    await loadPendingRegistrationCount();
-  }else{
-    await loadRegistrationState();
-  }
-  login.classList.add("hidden"); register.classList.add("hidden"); publicGuide.classList.add("hidden"); forgotPassword.classList.add("hidden"); resetPassword.classList.add("hidden"); app.classList.remove("hidden");
-  userName.textContent=currentUserProfile.full_name||user.user_metadata?.full_name||user.email||"Usuario";
-  if(r==="coach") role.textContent="ENTRENADOR";
-  else role.textContent="REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
-  if(r!=="coach"&&!currentTeamCode) tab="pendiente";
-  refreshTeamSchedule();
-  selected=getTodayIndex();
-  draw(); render();
-  if(r!=="coach"&&currentRegistration?.status==="pending") setTimeout(()=>notifyPendingRegistration(),100);
-  if(r!=="coach"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60")) setTimeout(()=>showQuickGuideModal(),250);
+  if(roleRes.error){alert("Error leyendo rol: "+roleRes.error.message);return}
+  baseAccountRole=roleRes.data?.role||"athlete";isGlobalCoach=baseAccountRole==="coach";
+  currentUserProfile=profileRes.data||{};currentTeamCode=currentUserProfile.team_code||null;
+  staffRoles=staffRes.error?[]:(staffRes.data||[]);
+  if(isGlobalCoach){const {data:access}=await sb.from("coach_team_access").select("team_code").eq("coach_user_id",user.id);coachTeams=(access||[]).map(x=>x.team_code);if(!coachTeams.length)coachTeams=TEAM_OPTIONS.map(x=>x[0]);await loadPendingRegistrationCount();}
+  else coachTeams=staffViewTeamCodes();
+  await loadRegistrationState();
+  const saved=localStorage.getItem(`rowtraining_mode_${user.id}`);
+  currentMode=(saved==="athlete"&&hasRowerMode())?"athlete":(saved==="staff"&&hasStaffMode())?"staff":hasStaffMode()?"staff":"athlete";
+  r=currentMode==="staff"?"coach":"athlete";
+  login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
+  renderIdentityHeaderV72();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
+  refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
+  if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
 }
+
 const savedKeep=localStorage.getItem("remo_keep_session");
 if(savedKeep!==null) keepSession.checked=savedKeep==="1";
 
@@ -666,29 +719,76 @@ enter.onclick=async()=>{
 sb.auth.getSession().then(({data})=>{if(data.session){if(PASSWORD_RECOVERY_HINT) openResetPassword(); else startApp()}});
 
 function draw(){
- let a;
- if(r==="coach") a=[["hoy","Hoy"],["planificar","Planificación"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
- else if(!currentTeamCode) a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
- else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
- nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
- nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return;}tab=b.dataset.t;draw();render()})
+  let a;
+  if(currentMode==="staff"){
+    if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
+    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro"],["result","Análisis"],["ayuda","Ayuda"],["salir","Salir"]];
+    else a=[["hoy","Hoy"],["registro","Registro"],["ayuda","Ayuda"],["salir","Salir"]];
+  }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
+  else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+  nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
+  nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return}tab=b.dataset.t;draw();render()});
 }
 function title(x){if(x[2]==="MIX")return "MIX · GYM + ERGO";if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
   refreshTeamSchedule();
-  if(tab==="pendiente") return pendingRegistrationView();
-  if(tab==="altas" && r==="coach") return registrationsView();
-  if(tab==="ayuda") return helpView();
-  if(tab==="semana") (r==="coach"?coachWeekView():weekly());
-  else if(tab==="hoy") todayView();
-  else if(tab==="mes") coachMonthView();
-  else if(tab==="temporada") coachSeasonView();
-  else if(tab==="planificar") coachPlanner();
-  else if(tab==="biblioteca") ergoLibrary();
-  else if(tab==="hist") history();
-  else if(tab==="perfil") profileView();
-  else if(tab==="result" && r==="coach") coachSeaResultsView();
-  else results();
+  if(tab==="pendiente")return pendingRegistrationView();if(tab==="ayuda")return helpView();
+  if(currentMode==="staff"){
+    if(tab==="hoy")return staffTodayView();if(tab==="registro")return staffRegisterView();
+    if(tab==="equipo"&&isGlobalCoach)return teamStaffAdminView();if(tab==="altas"&&isGlobalCoach)return registrationsView();
+    if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
+    if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return coachSeaResultsView();}
+    if(tab==="biblioteca"&&isGlobalCoach)return ergoLibrary();return staffTodayView();
+  }
+  if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="perfil")profileView();else results();
+}
+
+async function staffTodayView(){
+  const teams=staffViewTeamCodes(),date=localISODate();if(!teams.length){content.innerHTML='<div class="card"><h2>Sin equipo de staff</h2><p>Un administrador debe asignarte como entrenador o ayudante.</p></div>';return}
+  const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
+  const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
+  const sessions=ss.data||[],comps=cc.data||[];
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2><p class="muted">${canEdit?'Entrenador: puedes editar la planificación y registrar datos.':'Ayudante: puedes registrar datos. La planificación es de solo lectura.'}</p></div><label>Equipo<select id="staffTodayTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}">Editar día</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date));
+}
+async function staffRegisterView(){
+  const teams=staffViewTeamCodes();if(!teams.length)return staffTodayView();const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const date=localStorage.getItem('rowtraining_staff_register_date')||localISODate();
+  content.innerHTML=`<div class="card"><h2>Registro de datos</h2><p class="muted">Entrenador y ayudante pueden registrar datos sin alterar la planificación. MAR es resultado del equipo; GYM y ERGO se guardan en la ficha del remero seleccionado.</p><div class="plannerGrid"><label>Equipo<select id="staffRegTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><label>Fecha<input id="staffRegDate" type="date" value="${date}"></label></div><button id="staffRegLoad" class="primary">Cargar día</button><div id="staffRegArea"></div></div>`;
+  async function load(){
+    const t=staffRegTeam.value,d=staffRegDate.value;coachSelectedTeam=t;localStorage.setItem('rowtraining_staff_register_date',d);
+    const q=await sb.from('training_sessions').select('*').eq('team_code',t).eq('session_date',d).order('created_at');const xs=q.data||[];
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button>`:x.session_type==='GYM'?`<button class="regGym primary" data-id="${x.id}">Registrar GYM de remero</button>`:x.session_type==='ERG'?`<button class="regErgo primary" data-id="${x.id}">Registrar ERGO de remero</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesiones programadas para este día.</div>';
+    staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,load));
+    staffRegArea.querySelectorAll('.regGym').forEach(b=>{const x=xs.find(z=>String(z.id)===String(b.dataset.id));b.onclick=()=>staffGymResultForm(x,t,d,load)});
+    staffRegArea.querySelectorAll('.regErgo').forEach(b=>{const x=xs.find(z=>String(z.id)===String(b.dataset.id));b.onclick=()=>staffErgoResultForm(x,t,d,load)});
+  }
+  staffRegLoad.onclick=load;staffRegTeam.onchange=load;staffRegDate.onchange=load;await load();
+}
+async function staffAthletesForTeam(team){const q=await sb.from('profiles').select('user_id,full_name').eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
+function gymExercisesFromContent(content){
+  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>readableLabel(line)).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|cardio/i.test(label)).map(([label,value])=>({name:label,dose:value}));
+}
+async function staffGymResultForm(session,team,date,backFn){
+  const athletes=await staffAthletesForTeam(team);if(!athletes.length)return alert('No hay remeros asignados a este equipo.');const exercises=gymExercisesFromContent(session?.content);
+  content.innerHTML=`<div class="card"><button id="v72GymBack">← Volver</button><h2>Registrar GYM · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session?.title||'GYM')}</p><label>Remero<select id="v72GymAthlete">${athletes.map(a=>`<option value="${a.user_id}">${esc(a.full_name||a.user_id)}</option>`).join('')}</select></label>${exercises.length?exercises.map((e,i)=>`<div class="ex"><div class="big">${esc(e.name)}</div><div class="dose">${esc(e.dose)}</div><div class="plannerGrid"><label>Peso (kg)<input id="v72gw${i}" type="number" step=".5"></label><label>Sensación<select id="v72gf${i}"><option value="easy">Fácil</option><option value="good" selected>Bien</option><option value="hard">Duro</option></select></label></div></div>`).join(''):'<div class="info">No he podido extraer ejercicios de esta sesión. Puedes registrar el entrenamiento como completado y añadir una nota.</div>'}<label>Nota sesión<textarea id="v72GymNote" rows="3"></textarea></label><button id="v72GymSave" class="primary">Guardar GYM</button></div>`;
+  v72GymBack.onclick=()=>backFn();v72GymSave.onclick=async()=>{v72GymSave.disabled=true;const uid=v72GymAthlete.value;const w=await sb.from('workout_logs').insert({user_id:uid,session_code:session?.title||'GYM',session_type:'gym',session_date:date,status:'completed',notes:v72GymNote.value.trim()||null}).select('id').single();if(w.error){alert(w.error.message);v72GymSave.disabled=false;return}if(exercises.length){const rows=exercises.map((e,i)=>({workout_id:w.data.id,user_id:uid,exercise_name:e.name,weight_kg:document.getElementById('v72gw'+i).value?Number(document.getElementById('v72gw'+i).value):null,reps:null,perceived_difficulty:document.getElementById('v72gf'+i).value,note:null}));const q=await sb.from('gym_exercise_results').insert(rows);if(q.error){alert(q.error.message);v72GymSave.disabled=false;return}}alert('GYM guardado en la ficha del remero');backFn()};
+}
+async function staffErgoResultForm(session,team,date,backFn){
+  const athletes=await staffAthletesForTeam(team);if(!athletes.length)return alert('No hay remeros asignados a este equipo.');
+  content.innerHTML=`<div class="card"><button id="v72ErgoBack">← Volver</button><h2>Registrar ERGO · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session?.title||'ERGO')}</p><label>Remero<select id="v72ErgoAthlete">${athletes.map(a=>`<option value="${a.user_id}">${esc(a.full_name||a.user_id)}</option>`).join('')}</select></label><div class="plannerGrid"><label>Distancia (m)<input id="v72Edist" type="number"></label><label>Tiempo<input id="v72Etime" placeholder="mm:ss"></label><label>/500<input id="v72Epace" placeholder="mm:ss"></label><label>PPM<input id="v72Espm" type="number"></label><label>FC media<input id="v72Eavg" type="number"></label><label>FC máxima<input id="v72Emax" type="number"></label><label>RPE<input id="v72Erpe" type="number" min="1" max="10"></label></div><label>Notas<textarea id="v72Enote" rows="3"></textarea></label><button id="v72ErgoSave" class="primary">Guardar ERGO</button></div>`;
+  v72ErgoBack.onclick=()=>backFn();v72ErgoSave.onclick=async()=>{v72ErgoSave.disabled=true;const uid=v72ErgoAthlete.value;const w=await sb.from('workout_logs').insert({user_id:uid,session_code:session?.title||'ERGO',session_type:'ergo',session_date:date,status:'completed',notes:v72Enote.value.trim()||null}).select('id').single();if(w.error){alert(w.error.message);v72ErgoSave.disabled=false;return}const q=await sb.from('ergo_results').insert({user_id:uid,workout_id:w.data.id,test_name:session?.title||'ERGO',distance_m:v72Edist.value?Number(v72Edist.value):null,time_seconds:timeTextToSeconds(v72Etime.value),pace_500_seconds:timeTextToSeconds(v72Epace.value),spm:v72Espm.value?Number(v72Espm.value):null,avg_hr:v72Eavg.value?Number(v72Eavg.value):null,max_hr:v72Emax.value?Number(v72Emax.value):null,rpe:v72Erpe.value?Number(v72Erpe.value):null,notes:v72Enote.value.trim()||null});if(q.error){alert(q.error.message);v72ErgoSave.disabled=false;return}alert('ERGO guardado en la ficha del remero');backFn()};
+}
+function staffSeaResultForm(sessionId,team,date,backFn){
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registrar resultado MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · resultado del equipo/tripulación, no individual.</p><label>Ejercicio / bloque<input id="v72SeaExercise" placeholder="Ej. 3×5 min @20–22 ppm"></label><div class="plannerGrid"><label>Metros<input id="v72SeaMeters" type="number"></label><label>Tiempo<input id="v72SeaTime" placeholder="18:42.5"></label><label>/500 medio<input id="v72SeaPace" placeholder="2:04.7"></label><label>PPM reales<input id="v72SeaSpm" type="number" min="10" max="50"></label></div><label>RPE 1–10<input id="v72SeaRpe" type="number" min="1" max="10"></label><label>Notas<textarea id="v72SeaNotes" rows="4" placeholder="Viento, mar, técnica, tripulación, incidencias…"></textarea></label><button id="v72SaveSea" class="primary">Guardar resultado</button></div>`;
+  staffSeaBack.onclick=()=>backFn();v72SaveSea.onclick=async()=>{v72SaveSea.disabled=true;const q=await sb.from('sea_results').insert({training_session_id:sessionId,exercise_name:v72SeaExercise.value.trim()||null,distance_m:v72SeaMeters.value?Number(v72SeaMeters.value):null,time_text:v72SeaTime.value.trim()||null,pace_500_text:v72SeaPace.value.trim()||null,spm:v72SeaSpm.value?Number(v72SeaSpm.value):null,rpe:v72SeaRpe.value?Number(v72SeaRpe.value):null,notes:v72SeaNotes.value.trim()||null});if(q.error){alert(q.error.message);v72SaveSea.disabled=false}else{alert('Resultado MAR guardado');backFn()}};
+}
+async function teamStaffAdminView(){
+  if(!isGlobalCoach)return;const [pr,sr]=await Promise.all([sb.from('profiles').select('user_id,full_name,team_code').order('full_name'),sb.from('team_staff_roles').select('*').order('team_code')]);
+  if(pr.error||sr.error){content.innerHTML=`<div class="card"><h2>Equipo / Roles</h2><div class="saveStatus err">${esc((pr.error||sr.error).message)}<br><small>Ejecuta setup_v72.sql.</small></div></div>`;return}
+  const profiles=pr.data||[],roles=sr.data||[];
+  content.innerHTML=`<div class="card"><h2>Equipo / Roles</h2><p class="muted">Una persona puede ser remero y a la vez entrenador o ayudante. Los roles de staff se asignan por equipo y no sustituyen su perfil de remero.</p><div class="info"><b>Entrenador:</b> edita entrenamientos y registra datos. <b>Ayudante:</b> únicamente consulta la sesión y registra datos; no puede editar la planificación.</div><h3>Asignar rol</h3><div class="plannerGrid"><label>Persona<select id="staffPerson">${profiles.map(p=>`<option value="${p.user_id}">${esc(p.full_name||p.user_id)}${p.team_code?` · remero ${esc(teamLabel(p.team_code))}`:''}</option>`).join('')}</select></label><label>Equipo<select id="staffTeam">${TEAM_OPTIONS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('')}</select></label><label>Rol<select id="staffRoleSel"><option value="coach">Entrenador</option><option value="assistant">Ayudante</option></select></label></div><button id="saveStaffRole" class="primary">Guardar rol</button><h3>Staff actual</h3><div class="staffGrid">${TEAM_OPTIONS.map(t=>{const xs=roles.filter(x=>x.team_code===t[0]);return `<div class="staffPerson"><h3>${t[1]}</h3>${xs.length?xs.map(x=>{const p=profiles.find(z=>z.user_id===x.user_id);return `<div class="last"><b>${esc(p?.full_name||x.user_id)}</b> <span class="staffRoleBadge ${x.staff_role==='assistant'?'assistant':''}">${x.staff_role==='coach'?'Entrenador':'Ayudante'}</span>${p?.team_code===x.team_code?' <span class="tag">También remero</span>':''}<button class="removeStaff" data-user="${x.user_id}" data-team="${x.team_code}" style="float:right">Quitar</button></div>`}).join(''):'<p class="muted">Sin staff asignado.</p>'}</div>`}).join('')}</div></div>`;
+  saveStaffRole.onclick=async()=>{const payload={user_id:staffPerson.value,team_code:staffTeam.value,staff_role:staffRoleSel.value,updated_at:new Date().toISOString()};const q=await sb.from('team_staff_roles').upsert(payload,{onConflict:'user_id,team_code'});if(q.error)alert(q.error.message);else teamStaffAdminView()};
+  document.querySelectorAll('.removeStaff').forEach(b=>b.onclick=async()=>{if(!confirm('¿Quitar este rol de staff?'))return;const q=await sb.from('team_staff_roles').delete().eq('user_id',b.dataset.user).eq('team_code',b.dataset.team);if(q.error)alert(q.error.message);else teamStaffAdminView()});
 }
 
 function localISODate(){const x=new Date();return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`}
@@ -704,7 +804,7 @@ async function coachWeekView(){
   content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Calendario del entrenador</h2><p class="muted">Sesiones reales guardadas en la planificación. MAR se muestra completo al entrenador.</p></div><label style="min-width:260px">Equipo<select id="coachWeekTeam">${allowed.map(x=>`<option value="${x[0]}" ${x[0]===team?'selected':''}>${x[1]}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekArea"><p class="muted">Cargando…</p></div></div>`;
   const {data,error}=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at');
   const sessions=error?[]:(data||[]); const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${xs.length?xs.map(x=>`<div class="weekSess ${x.session_type==='MAR'?'seaCard':''}"><span class="tag">${x.session_type}</span><b>${x.title}</b>${x.content?`<p>${x.content}</p>`:''}</div>`).join(''):'<p class="muted">Sin sesión</p>'}<button type="button" class="weekEdit" data-date="${ds}">Editar día</button></section>`}).join('')}</div>`;
+  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${xs.length?xs.map(x=>`<div class="weekSess ${x.session_type==='MAR'?'seaCard':''}"><span class="tag">${x.session_type}</span><b>${x.title}</b>${x.content?trainingContentHtml(x.content,true):''}</div>`).join(''):'<p class="muted">Sin sesión</p>'}<button type="button" class="weekEdit" data-date="${ds}">Editar día</button></section>`}).join('')}</div>`;
   coachWeekTeam.onchange=()=>{coachSelectedTeam=coachWeekTeam.value;coachWeekView()};
   coachWeekPrev.onclick=()=>{coachWeekStart=addDaysISO(start,-7);coachWeekView()}; coachWeekNext.onclick=()=>{coachWeekStart=addDaysISO(start,7);coachWeekView()};
   coachWeekArea.querySelectorAll('.weekEdit').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
@@ -1660,7 +1760,7 @@ async function coachPlanner(){
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
- planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?`<p style="white-space:pre-line">${x.content}</p>`:""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
+ planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?trainingContentHtml(x.content):""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
  document.querySelectorAll('.editSess').forEach(b=>b.onclick=()=>sessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar esta sesión futura?')){await sb.from('training_sessions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
@@ -1668,13 +1768,13 @@ async function renderPlanDay(){
 }
 function sessionEditor(x=null){
  const team=planTeam.value,date=planDate.value;
- planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Pirámide de ritmos"></label></div>
+ planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Técnica + cambios de ritmo"></label></div>
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
  <label>Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${x?.content||''}</textarea>
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
- const refresh=()=>{renderEditorLibrary(sessType.value,x); typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> usa bloques concretos (series por tiempo o metros, pirámides, salidas y Virada-Ciaboga). PPM es opcional y la decide el entrenador.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ const refresh=()=>{renderEditorLibrary(sessType.value,x); typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> usa bloques concretos por tiempo o metros, cambios de ritmo, salidas y Virada-Ciaboga. La app los mostrará en filas legibles; si hay una pirámide se verá como una secuencia lineal, no como un dibujo.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{x=null;refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    let contentValue=sessContent.value.trim();
@@ -1709,7 +1809,7 @@ function pendingRegistrationView(){
   refreshPending.onclick=()=>location.reload(); pendingHelp.onclick=()=>{tab="ayuda";draw();helpView()};
 }
 function helpView(){
-  const coachExtra=r==="coach"?`<div class="guideStep"><b>Entrenador · Planificación</b>Cambia de equipo, abre cualquier día y crea o edita GYM, ERGO, MAR y competiciones.</div><div class="guideStep"><b>Entrenador · Análisis</b>MAR se compara por equipo. ERGO y GYM se revisan por remero.</div><div class="guideStep"><b>Entrenador · Altas</b>Aprueba nuevos remeros y asígnalos al equipo correcto.</div>`:"";
+  const coachExtra=currentMode==="staff"?`<div class="guideStep"><b>Roles de equipo</b><b>Entrenador:</b> puede editar la planificación y registrar datos. <b>Ayudante:</b> puede consultar la sesión completa y registrar datos, pero no modificar entrenamientos.</div><div class="guideStep"><b>Personas con doble función</b>Si también eres remero aparecerá un botón en la cabecera para cambiar entre <b>modo remero</b> y <b>modo staff</b>.</div><div class="guideStep"><b>Formato de sesiones</b>Los bloques se muestran en filas claras. Los cambios de ritmo y pirámides se leen como una secuencia lineal, nunca como un gráfico en forma de pirámide.</div>`:"";
   content.innerHTML=`<div class="card"><h2>Ayuda · Row Training</h2>${publicGuideHtml()}${coachExtra?`<h3>Funciones del entrenador</h3><div class="guideSteps">${coachExtra}</div>`:""}</div>`;
 }
 function showQuickGuideModal(){
@@ -1782,14 +1882,14 @@ async function results(){
   const {data:ergo,error:e4}=await sb.from("ergo_results").select("*").order("created_at",{ascending:false});
   const {data:c2results,error:e5}=await sb.from("concept2_results").select("*").order("workout_date",{ascending:false});
 
-  const err=e1||eRole||eM||e2||e3||e4||e5;
+  const err=e1||eM||e2||e3||e4||e5;
   if(err){
     content.innerHTML=`<div class="card"><h2>Panel del entrenador</h2><p>${err.message}</p></div>`;
     return;
   }
 
-  const athleteIds=new Set((roles||[]).filter(x=>x.role==="athlete").map(x=>x.user_id));
-  const athletes=(profiles||[]).filter(p=>athleteIds.has(p.user_id));
+  const visibleTeams=(currentMode==="staff"&&!isGlobalCoach)?editableTeamCodes():TEAM_OPTIONS.map(x=>x[0]);
+  const athletes=(profiles||[]).filter(p=>p.team_code && (isGlobalCoach||currentMode!=="staff"||visibleTeams.includes(p.team_code)));
 
   const prettyFeel=v=>v==="easy"?"Fácil":v==="hard"?"Duro":"Bien";
   const prettyStatus=v=>v==="completed"?"Completado":v==="partial"?"Parcial":"No realizado";
@@ -1814,7 +1914,7 @@ async function results(){
               return mm?`<div class="muted">FC reposo ${mm.resting_hr??"-"} · FC máx ${mm.max_hr??"-"} · UT2 ${mm.ut2_min??"-"}-${mm.ut2_max??"-"} · UT1 ${mm.ut1_min??"-"}-${mm.ut1_max??"-"} · AT ${mm.at_min??"-"}-${mm.at_max??"-"} · TR ${mm.tr_min??"-"}-${mm.tr_max??"-"} · AN ${mm.an_min??"-"}-${mm.an_max??"-"}</div>`:"";
             })()}
           </div>
-          <div style="min-width:210px"><select class="athleteTeam" data-user="${p.user_id}" style="width:100%;padding:8px;border:1px solid #c8d4e2;border-radius:9px"><option value="">Sin equipo</option>${TEAM_OPTIONS.map(t=>`<option value="${t[0]}" ${p.team_code===t[0]?"selected":""}>${t[1]}</option>`).join("")}</select><button class="saveAthleteTeam" data-user="${p.user_id}" style="margin-top:6px;width:100%">Guardar equipo</button></div><button class="toggleAthlete" data-id="a${idx}">${ws.length?"Ver entrenamientos":"Sin entrenamientos"}</button>
+          ${isGlobalCoach?`<div style="min-width:210px"><select class="athleteTeam" data-user="${p.user_id}" style="width:100%;padding:8px;border:1px solid #c8d4e2;border-radius:9px"><option value="">Sin equipo</option>${TEAM_OPTIONS.map(t=>`<option value="${t[0]}" ${p.team_code===t[0]?"selected":""}>${t[1]}</option>`).join("")}</select><button class="saveAthleteTeam" data-user="${p.user_id}" style="margin-top:6px;width:100%">Guardar equipo</button></div>`:""}<button class="toggleAthlete" data-id="a${idx}">${ws.length?"Ver entrenamientos":"Sin entrenamientos"}</button>
         </div>
         ${latest?`<div class="last">
           <b>Último:</b> ${latest.session_code||latest.session_type||"Sesión"} · ${new Date(latest.created_at).toLocaleDateString("es-ES")}
@@ -1862,7 +1962,7 @@ async function results(){
       b.textContent=el.classList.contains("hidden")?"Ver entrenamientos":"Ocultar";
     };
   });
-  document.querySelectorAll(".saveAthleteTeam").forEach(b=>{
+  if(isGlobalCoach) document.querySelectorAll(".saveAthleteTeam").forEach(b=>{
     b.onclick=async()=>{
       const userId=b.dataset.user;
       const sel=document.querySelector(`.athleteTeam[data-user="${userId}"]`);
