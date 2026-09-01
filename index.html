@@ -765,7 +765,7 @@ async function staffRegisterView(){
     const q=await sb.from('training_sessions').select('*').eq('team_code',t).eq('session_date',d).eq('session_type','MAR').order('created_at');
     const xs=q.data||[];
     staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
-    staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,load));
+    staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
   }
   staffRegLoad.onclick=load;
   staffRegTeam.onchange=load;
@@ -786,9 +786,39 @@ async function staffErgoResultForm(session,team,date,backFn){
   content.innerHTML=`<div class="card"><button id="v72ErgoBack">← Volver</button><h2>Registrar ERGO · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session?.title||'ERGO')}</p><label>Remero<select id="v72ErgoAthlete">${athletes.map(a=>`<option value="${a.user_id}">${esc(a.full_name||a.user_id)}</option>`).join('')}</select></label><div class="plannerGrid"><label>Distancia (m)<input id="v72Edist" type="number"></label><label>Tiempo<input id="v72Etime" placeholder="mm:ss"></label><label>/500<input id="v72Epace" placeholder="mm:ss"></label><label>PPM<input id="v72Espm" type="number"></label><label>FC media<input id="v72Eavg" type="number"></label><label>FC máxima<input id="v72Emax" type="number"></label><label>RPE<input id="v72Erpe" type="number" min="1" max="10"></label></div><label>Notas<textarea id="v72Enote" rows="3"></textarea></label><button id="v72ErgoSave" class="primary">Guardar ERGO</button></div>`;
   v72ErgoBack.onclick=()=>backFn();v72ErgoSave.onclick=async()=>{v72ErgoSave.disabled=true;const uid=v72ErgoAthlete.value;const w=await sb.from('workout_logs').insert({user_id:uid,session_code:session?.title||'ERGO',session_type:'ergo',session_date:date,status:'completed',notes:v72Enote.value.trim()||null}).select('id').single();if(w.error){alert(w.error.message);v72ErgoSave.disabled=false;return}const q=await sb.from('ergo_results').insert({user_id:uid,workout_id:w.data.id,test_name:session?.title||'ERGO',distance_m:v72Edist.value?Number(v72Edist.value):null,time_seconds:timeTextToSeconds(v72Etime.value),pace_500_seconds:timeTextToSeconds(v72Epace.value),spm:v72Espm.value?Number(v72Espm.value):null,avg_hr:v72Eavg.value?Number(v72Eavg.value):null,max_hr:v72Emax.value?Number(v72Emax.value):null,rpe:v72Erpe.value?Number(v72Erpe.value):null,notes:v72Enote.value.trim()||null});if(q.error){alert(q.error.message);v72ErgoSave.disabled=false;return}alert('ERGO guardado en la ficha del remero');backFn()};
 }
-function staffSeaResultForm(sessionId,team,date,backFn){
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registrar resultado MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · resultado del equipo/tripulación, no individual.</p><label>Ejercicio / bloque<input id="v72SeaExercise" placeholder="Ej. 3×5 min @20–22 ppm"></label><div class="plannerGrid"><label>Metros<input id="v72SeaMeters" type="number"></label><label>Tiempo<input id="v72SeaTime" placeholder="18:42.5"></label><label>/500 medio<input id="v72SeaPace" placeholder="2:04.7"></label><label>PPM reales<input id="v72SeaSpm" type="number" min="10" max="50"></label></div><label>RPE 1–10<input id="v72SeaRpe" type="number" min="1" max="10"></label><label>Notas<textarea id="v72SeaNotes" rows="4" placeholder="Viento, mar, técnica, tripulación, incidencias…"></textarea></label><button id="v72SaveSea" class="primary">Guardar resultado</button></div>`;
-  staffSeaBack.onclick=()=>backFn();v72SaveSea.onclick=async()=>{v72SaveSea.disabled=true;const q=await sb.from('sea_results').insert({training_session_id:sessionId,exercise_name:v72SeaExercise.value.trim()||null,distance_m:v72SeaMeters.value?Number(v72SeaMeters.value):null,time_text:v72SeaTime.value.trim()||null,pace_500_text:v72SeaPace.value.trim()||null,spm:v72SeaSpm.value?Number(v72SeaSpm.value):null,rpe:v72SeaRpe.value?Number(v72SeaRpe.value):null,notes:v72SeaNotes.value.trim()||null});if(q.error){alert(q.error.message);v72SaveSea.disabled=false}else{alert('Resultado MAR guardado');backFn()}};
+function seaResultBlocksFromContent(content){
+  const raw=String(content||'').replace(/\\n/g,'\n').trim();
+  if(!raw)return [];
+  return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{
+    const [label0,value0]=readableLabel(line);const label=(label0||'BLOQUE').trim(),value=(value0||line).trim();
+    return {label,value,line:label0?`${label} · ${value}`:line};
+  }).filter(x=>!/^(duración objetivo|duracion objetivo|objetivo|carga)$/i.test(x.label));
+}
+async function staffSeaResultForm(sessionId,team,date,backFn){
+  const sq=await sb.from('training_sessions').select('id,title,content').eq('id',sessionId).maybeSingle();
+  if(sq.error){alert('No se pudo cargar la sesión MAR: '+sq.error.message);return}
+  const session=sq.data||{id:sessionId,title:'Sesión MAR',content:''};
+  let blocks=seaResultBlocksFromContent(session.content);
+  if(!blocks.length)blocks=[{label:'SESIÓN MAR',value:session.title||'Sesión MAR',line:session.title||'Sesión MAR'}];
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p><div class="info"><b>Un resultado por ejercicio o bloque.</b><br>Introduce los datos realizados en cada parte de la sesión. Puedes dejar en blanco los campos que no hayas medido.</div><div id="v76SeaBlocks">${blocks.map((b,i)=>`<section class="card staffDayCard mar seaResultBlock"><span class="tag">${i+1}</span><h3>${esc(b.label)}</h3><p class="muted">${esc(b.value)}</p><div class="plannerGrid"><label>Metros<input id="v76SeaMeters${i}" type="number" min="0"></label><label>Tiempo<input id="v76SeaTime${i}" placeholder="Ej. 18:42.5"></label><label>/500 medio<input id="v76SeaPace${i}" placeholder="Ej. 2:04.7"></label><label>PPM reales<input id="v76SeaSpm${i}" type="number" min="10" max="50"></label><label>RPE 1–10<input id="v76SeaRpe${i}" type="number" min="1" max="10"></label></div><label>Notas<textarea id="v76SeaNotes${i}" rows="2" placeholder="Técnica, viento, mar, incidencias…"></textarea></label></section>`).join('')}</div><button id="v76SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  const goBack=()=>{if(typeof backFn==='function')return backFn();return staffRegisterView()};
+  staffSeaBack.onclick=goBack;
+  v76SaveSeaAll.onclick=async()=>{
+    v76SaveSeaAll.disabled=true;v76SaveSeaAll.textContent='Guardando…';
+    const rows=blocks.map((b,i)=>({
+      training_session_id:Number(sessionId),
+      exercise_name:b.line,
+      distance_m:document.getElementById('v76SeaMeters'+i).value?Number(document.getElementById('v76SeaMeters'+i).value):null,
+      time_text:document.getElementById('v76SeaTime'+i).value.trim()||null,
+      pace_500_text:document.getElementById('v76SeaPace'+i).value.trim()||null,
+      spm:document.getElementById('v76SeaSpm'+i).value?Number(document.getElementById('v76SeaSpm'+i).value):null,
+      rpe:document.getElementById('v76SeaRpe'+i).value?Number(document.getElementById('v76SeaRpe'+i).value):null,
+      notes:document.getElementById('v76SeaNotes'+i).value.trim()||null
+    }));
+    const q=await sb.from('sea_results').insert(rows);
+    if(q.error){alert(q.error.message);v76SaveSeaAll.disabled=false;v76SaveSeaAll.textContent='Guardar resultados MAR';return}
+    alert(`${rows.length} resultado${rows.length===1?'':'s'} MAR guardado${rows.length===1?'':'s'}`);goBack();
+  };
 }
 async function teamStaffAdminView(){
   if(!isGlobalCoach)return;const [pr,sr]=await Promise.all([sb.from('profiles').select('user_id,full_name,team_code').order('full_name'),sb.from('team_staff_roles').select('*').order('team_code')]);
