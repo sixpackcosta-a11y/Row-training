@@ -803,7 +803,7 @@ function localISODate(){const x=new Date();return `${x.getFullYear()}-${String(x
 function addDaysISO(ds,n){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d+n));return x.toISOString().slice(0,10)}
 function mondayOfISO(ds){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d));const off=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-off);return x.toISOString().slice(0,10)}
 function shortDateES(ds){const [y,m,d]=ds.split('-').map(Number);return `${d}/${m}`}
-function openCoachPlanner(team,date,sessionId=null){plannerJumpTeam=team;plannerJumpDate=date;plannerTargetSessionId=sessionId!=null?Number(sessionId):null;plannerAutoEdit=sessionId==null;coachSelectedTeam=team;tab='planificar';draw();}
+function openCoachPlanner(team,date,sessionId=null){plannerJumpTeam=team;plannerJumpDate=date;plannerTargetSessionId=sessionId!=null?Number(sessionId):null;plannerAutoEdit=sessionId==null;coachSelectedTeam=team;tab='planificar';draw();return render();}
 async function coachWeekView(){
   const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const team=coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam)?coachSelectedTeam:(currentTeamCode&&allowed.some(x=>x[0]===currentTeamCode)?currentTeamCode:allowed[0]?.[0]);

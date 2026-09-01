@@ -1,3 +1,9 @@
+## V75 — salto directo a edición desde Hoy/Semana
+
+- Corrige el botón **Editar**: ahora no solo cambia la pestaña, sino que renderiza Planificación y abre directamente la sesión pulsada.
+- Si se pulsa **Abrir día**, abre Planificación en esa fecha; si hay una única sesión, entra directamente en su editor.
+- No requiere SQL nuevo.
+
 # Row Training V74
 
 V62 parte de V61 e incorpora el flujo de correo y ayuda para nuevas altas.
