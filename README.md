@@ -1,4 +1,4 @@
-# Row Training V72
+# Row Training V73
 
 V62 parte de V61 e incorpora el flujo de correo y ayuda para nuevas altas.
 
@@ -132,7 +132,7 @@ Con confirmación de email activada, Supabase no devuelve una sesión en el mome
 - `notify_sent_at` evita correos duplicados aunque el usuario recargue la app.
 - Ejecutar `setup_v70.sql` después de `setup_v69.sql`.
 
-## V72 · roles de entrenador/ayudante + sesiones legibles
+## V73 · roles de entrenador/ayudante + sesiones legibles
 - Nuevo rol de **Entrenador por equipo**: puede ver la sesión completa, registrar datos y editar la planificación de ese equipo.
 - Nuevo rol de **Ayudante por equipo**: puede ver la sesión completa y registrar resultados MAR, pero **no puede editar entrenamientos**.
 - Una misma cuenta puede seguir siendo **remero** y además entrenador/ayudante. En ese caso aparece un botón en la cabecera para cambiar entre **modo remero** y **modo staff**.
@@ -142,3 +142,11 @@ Con confirmación de email activada, Supabase no devuelve una sesión en el mome
 - Si una sesión contiene una pirámide/cambio de ritmo, se representa como una **secuencia lineal** (`20 → 22 → 24 → 22 → 20`) y no como un gráfico en forma de pirámide.
 - Esta versión parte de V70. Ejecutar `setup_v72.sql` después de `setup_v70.sql`.
 - En **Registro**, entrenador y ayudante pueden registrar MAR del equipo y también introducir manualmente GYM/ERGO para un remero del equipo si hace falta. Esto no les concede permiso de edición de la planificación.
+
+
+## V73 · Registro MAR
+- El menú staff `Registro` pasa a llamarse `Registro MAR`.
+- Esa pantalla muestra exclusivamente sesiones MAR y permite registrar resultados del equipo.
+- Se eliminan de esa pantalla los formularios manuales de GYM y ERGO para evitar duplicidad/confusión.
+- GYM sigue siendo registro individual del remero y ERGO se sincroniza mediante ErgData/Concept2.
+- No requiere SQL nuevo respecto a V72.

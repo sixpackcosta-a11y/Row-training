@@ -115,7 +115,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V63 · recuperación de contraseña */
 .authSubcard{max-width:620px;margin:12px auto}.authHint{background:#eef6ff;border:1px solid #c9def6;border-radius:12px;padding:11px;margin:10px 0}.linkButton{background:transparent;border:0;color:#0b5ed7;text-decoration:underline;padding:8px 0;font-weight:700;cursor:pointer}.passwordRules{font-size:.9rem;color:#52657a;margin:6px 0 12px}
 
-/* V72 · roles por equipo + entrenamiento legible */
+/* V73 · roles por equipo + entrenamiento legible */
 .modeSwitch{margin-top:5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:4px 8px;font-size:.78rem}.staffRoleBadge{display:inline-block;margin:3px 4px 0 0;padding:3px 7px;border-radius:999px;background:#e8f1fb;font-size:.74rem;font-weight:800}.staffRoleBadge.assistant{background:#f2f4f7}.permNote{padding:10px 12px;border-radius:10px;background:#fff6d9;border:1px solid #f0d98a;margin:10px 0}.staffGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.staffPerson{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.staffDayCard{border-left:5px solid #6b7280}.staffDayCard.mar{border-left-color:#18a5b8}.staffActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .workoutReadable{display:flex;flex-direction:column;gap:7px;margin:10px 0}.workoutRow{display:grid;grid-template-columns:minmax(135px,190px) 1fr;gap:10px;align-items:start;padding:9px 11px;border:1px solid #dce6f0;border-radius:10px;background:#fff}.workoutLabel{font-weight:850;color:#082744;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}.workoutValue{font-size:.9rem;line-height:1.35;color:#17283a}.workoutRow.work{background:#f5f9fd}.workoutRow.recovery{background:#f8fafc}.workoutRow.warm{background:#fffaf0}.workoutRow.cool{background:#f4fbf8}.workoutRow.note{background:#eef6ff}.workoutCompact .workoutRow{grid-template-columns:110px 1fr;padding:6px 8px;gap:7px}.workoutCompact .workoutLabel{font-size:.67rem}.workoutCompact .workoutValue{font-size:.76rem}.workoutPyramidLinear{font-weight:800}.workoutArrow{color:#0b5ed7;font-weight:900;padding:0 3px}@media(max-width:700px){.staffGrid{grid-template-columns:1fr}.workoutRow,.workoutCompact .workoutRow{grid-template-columns:1fr;gap:3px}.workoutLabel{font-size:.72rem}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -578,22 +578,22 @@ function staffRoleText(){
   if(a.length&&!c.length)return `AYUDANTE · ${a.map(x=>teamLabel(x.team_code)).join(" / ")}`;
   return "ENTRENADOR / AYUDANTE · roles por equipo";
 }
-function renderIdentityHeaderV72(){
+function renderIdentityHeaderV73(){
   userName.textContent=currentUserProfile?.full_name||currentUser?.user_metadata?.full_name||currentUser?.email||"Usuario";
   role.textContent=currentMode==="staff"?staffRoleText():"REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
-  const old=document.getElementById("modeSwitchV72");if(old)old.remove();
+  const old=document.getElementById("modeSwitchV73");if(old)old.remove();
   if(hasStaffMode()&&hasRowerMode()){
-    const b=document.createElement("button");b.id="modeSwitchV72";b.className="modeSwitch";
+    const b=document.createElement("button");b.id="modeSwitchV73";b.className="modeSwitch";
     b.textContent=currentMode==="staff"?"Cambiar a modo remero":"Cambiar a modo staff";
-    b.onclick=()=>switchModeV72(currentMode==="staff"?"athlete":"staff");userHead.appendChild(b);
+    b.onclick=()=>switchModeV73(currentMode==="staff"?"athlete":"staff");userHead.appendChild(b);
   }
 }
-async function switchModeV72(mode){
+async function switchModeV73(mode){
   if(mode==="staff"&&!hasStaffMode())return;if(mode==="athlete"&&!hasRowerMode())return;
   currentMode=mode;localStorage.setItem(`rowtraining_mode_${currentUser.id}`,mode);r=mode==="staff"?"coach":"athlete";
   if(mode==="staff"){coachTeams=staffViewTeamCodes();tab="hoy";if(isGlobalCoach)await loadPendingRegistrationCount();}
   else{tab=currentTeamCode?"hoy":"pendiente";await loadRegistrationState();}
-  renderIdentityHeaderV72();refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  renderIdentityHeaderV73();refreshTeamSchedule();selected=getTodayIndex();draw();render();
 }
 async function loadPendingRegistrationCount(){
   pendingRegistrationCount=0;if(!isGlobalCoach)return;
@@ -617,7 +617,7 @@ async function startApp(){
   currentMode=(saved==="athlete"&&hasRowerMode())?"athlete":(saved==="staff"&&hasStaffMode())?"staff":hasStaffMode()?"staff":"athlete";
   r=currentMode==="staff"?"coach":"athlete";
   login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
-  renderIdentityHeaderV72();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
+  renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
@@ -721,9 +721,9 @@ sb.auth.getSession().then(({data})=>{if(data.session){if(PASSWORD_RECOVERY_HINT)
 function draw(){
   let a;
   if(currentMode==="staff"){
-    if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
-    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro"],["result","Análisis"],["ayuda","Ayuda"],["salir","Salir"]];
-    else a=[["hoy","Hoy"],["registro","Registro"],["ayuda","Ayuda"],["salir","Salir"]];
+    if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
+    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["ayuda","Ayuda"],["salir","Salir"]];
+    else a=[["hoy","Hoy"],["registro","Registro MAR"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
@@ -752,17 +752,25 @@ async function staffTodayView(){
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date));
 }
 async function staffRegisterView(){
-  const teams=staffViewTeamCodes();if(!teams.length)return staffTodayView();const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const date=localStorage.getItem('rowtraining_staff_register_date')||localISODate();
-  content.innerHTML=`<div class="card"><h2>Registro de datos</h2><p class="muted">Entrenador y ayudante pueden registrar datos sin alterar la planificación. MAR es resultado del equipo; GYM y ERGO se guardan en la ficha del remero seleccionado.</p><div class="plannerGrid"><label>Equipo<select id="staffRegTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><label>Fecha<input id="staffRegDate" type="date" value="${date}"></label></div><button id="staffRegLoad" class="primary">Cargar día</button><div id="staffRegArea"></div></div>`;
+  const teams=staffViewTeamCodes();
+  if(!teams.length)return staffTodayView();
+  const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
+  coachSelectedTeam=team;
+  const date=localStorage.getItem('rowtraining_staff_register_date')||localISODate();
+  content.innerHTML=`<div class="card"><h2>Registro MAR</h2><p class="muted">Aquí se registran únicamente los resultados de las sesiones de mar del equipo. GYM lo registra cada remero en su sesión y ERGO se sincroniza con ErgData/Concept2.</p><div class="plannerGrid"><label>Equipo<select id="staffRegTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><label>Fecha<input id="staffRegDate" type="date" value="${date}"></label></div><button id="staffRegLoad" class="primary">Cargar día</button><div id="staffRegArea"></div></div>`;
   async function load(){
-    const t=staffRegTeam.value,d=staffRegDate.value;coachSelectedTeam=t;localStorage.setItem('rowtraining_staff_register_date',d);
-    const q=await sb.from('training_sessions').select('*').eq('team_code',t).eq('session_date',d).order('created_at');const xs=q.data||[];
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button>`:x.session_type==='GYM'?`<button class="regGym primary" data-id="${x.id}">Registrar GYM de remero</button>`:x.session_type==='ERG'?`<button class="regErgo primary" data-id="${x.id}">Registrar ERGO de remero</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesiones programadas para este día.</div>';
+    const t=staffRegTeam.value,d=staffRegDate.value;
+    coachSelectedTeam=t;
+    localStorage.setItem('rowtraining_staff_register_date',d);
+    const q=await sb.from('training_sessions').select('*').eq('team_code',t).eq('session_date',d).eq('session_type','MAR').order('created_at');
+    const xs=q.data||[];
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,load));
-    staffRegArea.querySelectorAll('.regGym').forEach(b=>{const x=xs.find(z=>String(z.id)===String(b.dataset.id));b.onclick=()=>staffGymResultForm(x,t,d,load)});
-    staffRegArea.querySelectorAll('.regErgo').forEach(b=>{const x=xs.find(z=>String(z.id)===String(b.dataset.id));b.onclick=()=>staffErgoResultForm(x,t,d,load)});
   }
-  staffRegLoad.onclick=load;staffRegTeam.onchange=load;staffRegDate.onchange=load;await load();
+  staffRegLoad.onclick=load;
+  staffRegTeam.onchange=load;
+  staffRegDate.onchange=load;
+  await load();
 }
 async function staffAthletesForTeam(team){const q=await sb.from('profiles').select('user_id,full_name').eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
 function gymExercisesFromContent(content){
@@ -1809,7 +1817,7 @@ function pendingRegistrationView(){
   refreshPending.onclick=()=>location.reload(); pendingHelp.onclick=()=>{tab="ayuda";draw();helpView()};
 }
 function helpView(){
-  const coachExtra=currentMode==="staff"?`<div class="guideStep"><b>Roles de equipo</b><b>Entrenador:</b> puede editar la planificación y registrar datos. <b>Ayudante:</b> puede consultar la sesión completa y registrar datos, pero no modificar entrenamientos.</div><div class="guideStep"><b>Personas con doble función</b>Si también eres remero aparecerá un botón en la cabecera para cambiar entre <b>modo remero</b> y <b>modo staff</b>.</div><div class="guideStep"><b>Formato de sesiones</b>Los bloques se muestran en filas claras. Los cambios de ritmo y pirámides se leen como una secuencia lineal, nunca como un gráfico en forma de pirámide.</div>`:"";
+  const coachExtra=currentMode==="staff"?`<div class="guideStep"><b>Roles de equipo</b><b>Entrenador:</b> puede editar la planificación y registrar resultados MAR. <b>Ayudante:</b> puede consultar la sesión completa y registrar resultados MAR, pero no modificar entrenamientos.</div><div class="guideStep"><b>Personas con doble función</b>Si también eres remero aparecerá un botón en la cabecera para cambiar entre <b>modo remero</b> y <b>modo staff</b>.</div><div class="guideStep"><b>Registro MAR</b>Es el único registro manual general del staff: guarda el resultado del equipo en el mar. GYM lo registra cada remero y ERGO llega desde ErgData/Concept2.</div><div class="guideStep"><b>Formato de sesiones</b>Los bloques se muestran en filas claras. Los cambios de ritmo y pirámides se leen como una secuencia lineal, nunca como un gráfico en forma de pirámide.</div>`:"";
   content.innerHTML=`<div class="card"><h2>Ayuda · Row Training</h2>${publicGuideHtml()}${coachExtra?`<h3>Funciones del entrenador</h3><div class="guideSteps">${coachExtra}</div>`:""}</div>`;
 }
 function showQuickGuideModal(){
