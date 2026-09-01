@@ -133,6 +133,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .systemStat strong{display:block;font-size:1.7rem;margin-top:4px}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}</style>
+
+<style id="v79styles">
+.seaSessionList{display:grid;gap:12px;margin:14px 0}.seaMonthGroup{display:grid;gap:9px}.seaMonthGroup>h3{margin:18px 0 3px}.seaSessionPick{border:1px solid #dbe5ef;border-left:5px solid var(--sea);border-radius:14px;padding:12px;background:#fff}.seaSessionPick.selectedSea{outline:3px solid #0b5ed7;outline-offset:-2px;background:#f5f9ff}.seaSessionHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.seaExerciseChips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.seaExerciseChip{display:inline-block;background:#eefbfc;border:1px solid #bfe8ed;border-radius:999px;padding:5px 8px;font-size:.78rem}.seaSessionActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.dangerBtn{background:#fff0ef;color:#9d1c14;border:1px solid #f2bbb6}.seaCompareExercise{border:1px solid #dbe5ef;border-radius:14px;padding:12px;margin:10px 0;background:#fff}.seaCompareExercise h4{margin:0 0 8px}.seriesMiniTable td,.seriesMiniTable th{padding:6px 8px;font-size:.82rem}.weeklyCompliance{margin:12px 0;padding:12px;border-radius:14px;background:#f7fafc;border:1px solid #dce6ef}.complianceLine{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.compliancePercent{font-size:1.45rem;font-weight:900;min-width:66px}.progressTrack{height:10px;min-width:160px;flex:1;background:#e7edf5;border-radius:99px;overflow:hidden}.progressFill{height:100%;background:#0f7b6c;border-radius:99px}.complianceTable td{vertical-align:middle}.athleteSelectorBar{display:grid;grid-template-columns:minmax(180px,1fr) minmax(220px,1.2fr);gap:10px;margin:12px 0}.athleteDetailCard{border:1px solid #dbe5ef;border-radius:16px;padding:14px;margin-top:14px}.athleteWeekSummary{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#f7fafc;border-radius:12px;padding:10px;margin:10px 0}.athleteHistoryItem{border-top:1px solid #e3e9f0;padding:12px 0}.analysisWeekNav{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}.analysisWeekNav strong{min-width:170px;text-align:center}@media(max-width:700px){.athleteSelectorBar{grid-template-columns:1fr}.seaSessionHead{display:block}.seaSessionActions button{flex:1}.complianceLine{align-items:flex-start}.progressTrack{flex-basis:100%;min-width:0}.analysisWeekNav{justify-content:flex-start}}
+</style>
 </head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
@@ -1040,7 +1044,7 @@ async function openErgDataFor(x){
 }
 
 function renderErgoCard(el,x){
-  const pr=ergoPrescription(x); currentErgoPrescription=pr;
+  const pr=ergoPrescription(x); currentErgoPrescription={...pr,scheduledDate:scheduledDateFor(x)};
   el.innerHTML=`<div class="session"><span class="tag">${x[0]} ${x[1]} · ERG</span><h2>${pr.name}</h2><p><b>${pr.work}</b><br>Recuperación: <b>3 min suaves entre series</b><br>Calentamiento: ${pr.warmup}${pr.cooldown?` · Vuelta a la calma: ${pr.cooldown}`:""} · Total ${pr.block}</p><div class="ergoActions"><button id="openErgData" class="primary">Abrir entrenamiento en ErgData</button><button id="ergoManual">Registrar manualmente</button><label class="btn">📷 Foto / Galería<input id="ergoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
   ensureErgoIntent(x); openErgData.onclick=()=>openErgDataFor(x); ergoManual.onclick=()=>showErgoForm(); ergoPhotos.onchange=(e)=>{const files=[...(e.target.files||[])];if(files.length)showErgoForm(files)};
 }
@@ -1153,6 +1157,7 @@ async function saveErgoResult(){
     user_id:currentUser.id,
     session_code:currentErgoPrescription?.code||"ERG-1",
     session_type:"ergo",
+    session_date:currentErgoPrescription?.scheduledDate||localISODate(),
     status:"completed"
   }).select("id").single();
   if(werr)return alert(werr.message);
@@ -1181,11 +1186,12 @@ async function saveErgoResult(){
 function weekly(){
   const start=Math.floor(selected/7)*7, visible=schedule.slice(start,start+7), today=localISODate();
   const startDate=scheduleDateAt(start), endDate=scheduleDateAt(Math.min(start+6,schedule.length-1));
-  content.innerHTML=`<div class="card"><div class="weekhead"><button id="rowerPrevWeek" ${start===0?'disabled':''}>← Semana</button><h3>${shortDateES(startDate)} – ${shortDateES(endDate)}</h3><button id="rowerNextWeek" ${start+7>=schedule.length?'disabled':''}>Semana →</button></div><div class="calendar">${visible.map((d,j)=>{const i=start+j;return `<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}${scheduleDateAt(i)===today?" · HOY":""}</small><div class="num">${d[1]}</div><div class="dot">${i===selected?"●":"○"}</div></div>`}).join("")}</div></div><div id="selectedSession"></div>`;
+  content.innerHTML=`<div class="card"><div class="weekhead"><button id="rowerPrevWeek" ${start===0?'disabled':''}>← Semana</button><h3>${shortDateES(startDate)} – ${shortDateES(endDate)}</h3><button id="rowerNextWeek" ${start+7>=schedule.length?'disabled':''}>Semana →</button></div><div id="rowerWeekCompliance" class="weeklyCompliance"><span class="muted">Calculando cumplimiento semanal…</span></div><div class="calendar">${visible.map((d,j)=>{const i=start+j;return `<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}${scheduleDateAt(i)===today?" · HOY":""}</small><div class="num">${d[1]}</div><div class="dot">${i===selected?"●":"○"}</div></div>`}).join("")}</div></div><div id="selectedSession"></div>`;
   content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});
   const prev=document.getElementById('rowerPrevWeek'),next=document.getElementById('rowerNextWeek');
   if(prev&&!prev.disabled)prev.onclick=()=>{selected=Math.max(0,start-7);weekly()};
   if(next&&!next.disabled)next.onclick=()=>{selected=Math.min(schedule.length-1,start+7);weekly()};
+  loadRowerWeekCompliance(startDate,endDate);
   showSelected();
 }
 function showSelected(){
@@ -1263,7 +1269,7 @@ function gym(k,x=null){
   gf.onsubmit=async e=>{
     e.preventDefault();
     const {data:workout,error:werr}=await sb.from("workout_logs").insert({
-      user_id:currentUser.id,session_code:"GYM-"+k,session_type:"gym",status:"completed"
+      user_id:currentUser.id,session_code:"GYM-"+k,session_type:"gym",session_date:gymDate,status:"completed"
     }).select("id").single();
     if(werr)return alert(werr.message);
 
@@ -1293,7 +1299,7 @@ async function history(){
   // La sincronización Concept2 se hace manualmente desde Perfil para no bloquear la navegación.
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
-    sb.from("workout_logs").select("id,session_code,session_type,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
+    sb.from("workout_logs").select("id,session_code,session_type,session_date,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
     sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300),
     sb.from("concept2_results").select("*").eq("user_id",currentUser.id).order("workout_date",{ascending:false}).limit(100)
   ]);
@@ -1310,7 +1316,7 @@ async function history(){
 
   content.innerHTML='<div class="card"><h2>Historial</h2>'+
     c2html+
-    (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
+    (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${w.session_date?shortDateES(w.session_date):new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
   '</div>';
 }
 
@@ -2102,5 +2108,188 @@ async function results(){
   });
 }
 </script>
-<!-- Row Training V46 -->
+<!-- Row Training V79 -->
+
+<script id="v79logic">
+/* V79 · análisis MAR por ejercicio + cumplimiento semanal + ficha directa por remero */
+function v79Norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim()}
+function v79WorkoutDate(w){return w?.session_date||String(w?.created_at||'').slice(0,10)||null}
+function v79DateInRange(ds,start,end){return !!ds && ds>=start && ds<=end}
+function v79PlannedGymNames(session){return gymExercisesFromContent(session?.content||'').map(x=>x.name).filter(Boolean)}
+function v79GymActualName(row){const m=storedExerciseMeta(row);return m.assigned||row.exercise_name||''}
+function v79SessionGymCode(session){const m=String(session?.title||'').match(/\bGYM-([A-ZM])\b/i);return m?`GYM-${m[1].toUpperCase()}`:null}
+function v79ComplianceForAthlete(userId,sessions,workouts,gymRows,c2Rows,start,end){
+  const plans=(sessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&(s.session_type==='GYM'||s.session_type==='ERG')).sort((a,b)=>a.session_date.localeCompare(b.session_date));
+  const ws=(workouts||[]).filter(w=>w.user_id===userId);
+  const gs=(gymRows||[]).filter(g=>g.user_id===userId);
+  const c2=(c2Rows||[]).filter(x=>x.user_id===userId);
+  const usedWorkouts=new Set();
+  let expected=0,completed=0;
+  const details=[];
+  for(const s of plans){
+    if(s.session_type==='GYM'){
+      const planned=v79PlannedGymNames(s); expected+=planned.length;
+      const code=v79SessionGymCode(s);
+      let cand=ws.filter(w=>String(w.session_type||'').toLowerCase()==='gym'&&!usedWorkouts.has(String(w.id))&&v79WorkoutDate(w)===s.session_date);
+      if(!cand.length&&code)cand=ws.filter(w=>String(w.session_type||'').toLowerCase()==='gym'&&!usedWorkouts.has(String(w.id))&&String(w.session_code||'').toUpperCase()===code&&v79DateInRange(v79WorkoutDate(w),start,end));
+      const w=cand[0]; let done=0;
+      if(w){
+        usedWorkouts.add(String(w.id));
+        const actual=gs.filter(g=>String(g.workout_id)===String(w.id)).map(v79GymActualName).map(v79Norm);
+        const actualSet=new Set(actual);
+        done=planned.filter(n=>actualSet.has(v79Norm(n))).length;
+        if(done===0&&actual.length)done=Math.min(planned.length,new Set(actual).size);
+      }
+      completed+=done; details.push({date:s.session_date,type:'GYM',title:s.title,done,total:planned.length});
+    }else if(s.session_type==='ERG'){
+      expected+=1;
+      let done=ws.some(w=>!usedWorkouts.has(String(w.id))&&String(w.session_type||'').toLowerCase()==='ergo'&&v79WorkoutDate(w)===s.session_date);
+      if(done){const hit=ws.find(w=>!usedWorkouts.has(String(w.id))&&String(w.session_type||'').toLowerCase()==='ergo'&&v79WorkoutDate(w)===s.session_date);if(hit)usedWorkouts.add(String(hit.id));}
+      if(!done)done=c2.some(x=>String(x.workout_date||'').slice(0,10)===s.session_date);
+      completed+=done?1:0; details.push({date:s.session_date,type:'ERGO',title:s.title,done:done?1:0,total:1});
+    }
+  }
+  completed=Math.min(completed,expected);
+  return {expected,completed,percent:expected?Math.round(completed*100/expected):null,details};
+}
+function v79ComplianceHtml(c,small=false){
+  if(!c||!c.expected)return `<div class="muted">Sin ejercicios individuales planificados esta semana.</div>`;
+  const pct=Math.max(0,Math.min(100,c.percent||0));
+  return `<div class="complianceLine"><div class="compliancePercent">${pct}%</div><div class="progressTrack" aria-label="Cumplimiento ${pct}%"><div class="progressFill" style="width:${pct}%"></div></div><div><b>${c.completed}/${c.expected}</b> ejercicios completados${small?'':' esta semana'}</div></div>`;
+}
+async function loadRowerWeekCompliance(start,end){
+  const box=document.getElementById('rowerWeekCompliance'); if(!box||!currentUser||!currentTeamCode)return;
+  try{
+    const [ss,ww,gg,cc]=await Promise.all([
+      sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',currentTeamCode).gte('session_date',start).lte('session_date',end).in('session_type',['GYM','ERG']),
+      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,status,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100),
+      sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,note,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(500),
+      sb.from('concept2_results').select('id,user_id,workout_date,match_status,matched_session_code').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(100)
+    ]);
+    const err=ss.error||ww.error||gg.error||cc.error; if(err)throw err;
+    const c=v79ComplianceForAthlete(currentUser.id,ss.data||[],ww.data||[],gg.data||[],cc.data||[],start,end);
+    if(!document.getElementById('rowerWeekCompliance'))return;
+    box.innerHTML=`<b>Cumplimiento semanal</b>${v79ComplianceHtml(c)}<div class="muted" style="margin-top:6px">Cuenta GYM por ejercicio y cada sesión ERGO como 1 ejercicio. MAR no entra en el porcentaje porque es un resultado del equipo.</div>`;
+  }catch(e){box.innerHTML='<span class="muted">No se pudo calcular el cumplimiento semanal.</span>';}
+}
+
+function v79SeaBaseName(x){
+  let s=String(x?.exercise_name||x||'MAR').trim();
+  s=s.replace(/\s*·\s*Serie\s+\d+\s*$/i,'').trim();
+  return s;
+}
+function v79SeaIdentity(x){
+  const base=v79SeaBaseName(x),parts=readableLabel(base),label=parts[0]||base,value=parts[1]||'';
+  const prescription=String(value).split(/\s*·\s*rec(?:uperaci[oó]n)?\b/i)[0].split(/\s*·\s*(?:objetivo|nota)\b/i)[0].trim();
+  return `${v79Norm(label)}|${v79Norm(prescription)}`;
+}
+function v79SeaDisplayName(x){
+  const base=v79SeaBaseName(x),parts=readableLabel(base),label=parts[0]||base,value=parts[1]||'';
+  const prescription=String(value).split(/\s*·\s*rec(?:uperaci[oó]n)?\b/i)[0].split(/\s*·\s*(?:objetivo|nota)\b/i)[0].trim();
+  return prescription?`${label} · ${prescription}`:label;
+}
+function v79Avg(nums){const a=nums.filter(v=>Number.isFinite(v));return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
+function v79SeaOccurrence(rows){
+  const a=[...(rows||[])]; if(!a.length)return null;
+  const timeSecs=a.map(x=>metricSeconds(x.time_text)).filter(x=>x!=null),dist=a.map(x=>Number(x.distance_m)).filter(x=>Number.isFinite(x)&&x>0);
+  const totalTime=timeSecs.length?timeSecs.reduce((x,y)=>x+y,0):null,totalDist=dist.length?dist.reduce((x,y)=>x+y,0):null;
+  const fallbackPaces=a.map(x=>metricSeconds(x.pace_500_text)).filter(x=>x!=null);
+  const pace=(totalTime&&totalDist)?totalTime*500/totalDist:v79Avg(fallbackPaces);
+  const spm=v79Avg(a.map(x=>Number(x.spm)).filter(Number.isFinite)),rpe=v79Avg(a.map(x=>Number(x.rpe)).filter(Number.isFinite));
+  const first=a[0]; return {key:v79SeaIdentity(first),name:v79SeaDisplayName(first),sessionId:first.training_session_id,date:first.session?.session_date||'',sessionTitle:first.session?.title||'MAR',rows:a,totalTime,totalDist,pace,spm,rpe};
+}
+function v79SeaOccurrences(rows){
+  const groups=new Map();
+  (rows||[]).forEach(r=>{const k=`${r.training_session_id}::${v79SeaIdentity(r)}`;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)});
+  return [...groups.values()].map(v79SeaOccurrence).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function v79SeaExerciseChips(session){
+  const blocks=seaResultBlocksFromContent(session?.content||'');
+  if(!blocks.length)return '<span class="seaExerciseChip">Sesión MAR</span>';
+  return blocks.map(b=>{const fake={exercise_name:b.line};return `<span class="seaExerciseChip">${esc(v79SeaDisplayName(fake))}</span>`}).join('');
+}
+function v79SeaSessionListHtml(sessions,results,selectedIds,monthFilter='all'){
+  const ss=(sessions||[]).filter(s=>monthFilter==='all'||s.session_date.startsWith(monthFilter));
+  if(!ss.length)return '<div class="info">No hay sesiones MAR planificadas en este periodo.</div>';
+  const monthGroups={}; ss.forEach(s=>{const ym=s.session_date.slice(0,7);(monthGroups[ym]||(monthGroups[ym]=[])).push(s)});
+  return `<div class="seaSessionList">${Object.entries(monthGroups).sort().map(([ym,list])=>`<section class="seaMonthGroup"><h3>${monthLabel(ym)}</h3>${list.map(s=>{const rr=results.filter(r=>String(r.training_session_id)===String(s.id)),selected=selectedIds.includes(String(s.id));return `<article class="seaSessionPick ${selected?'selectedSea':''}"><div class="seaSessionHead"><div><b>${shortDateES(s.session_date)}</b><div class="big" style="font-size:1.02rem;margin-top:3px">${esc((s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</div></div><span class="tag">${rr.length?`${rr.length} resultados`:'Sin resultados'}</span></div><div class="seaExerciseChips">${v79SeaExerciseChips(s)}</div><div class="seaSessionActions">${rr.length?`<button class="selectSeaSession ${selected?'active':''}" data-session="${s.id}">${selected?'✓ Seleccionada':'Comparar'}</button><button class="deleteSeaResults dangerBtn" data-session="${s.id}" data-date="${s.session_date}">Eliminar resultados</button>`:`<button disabled>Sin datos todavía</button>`}</div></article>`}).join('')}</section>`).join('')}</div>`;
+}
+function compareSeaHtml(rows){
+  const occ=v79SeaOccurrences(rows); if(!occ.length)return '<p class="muted">Selecciona dos o más sesiones MAR con resultados para comparar ejercicios.</p>';
+  const groups={}; occ.forEach(o=>(groups[o.key]||(groups[o.key]=[])).push(o));
+  const repeated=Object.values(groups).filter(a=>new Set(a.map(x=>String(x.sessionId))).size>=2);
+  if(!repeated.length)return `<div class="compareTray"><b>Sesiones seleccionadas: ${new Set(occ.map(x=>x.sessionId)).size}</b><p class="muted">No hay un mismo ejercicio repetido entre las sesiones seleccionadas. Puedes seleccionar otras fechas; la comparación se hace por ejercicio, aunque el resto de la sesión sea distinto.</p></div>`;
+  return `<div class="compareTray"><b>Comparación por ejercicio</b><p class="muted">Solo se enfrentan ejercicios equivalentes. El resto de bloques de cada sesión no afecta a la comparación.</p>${repeated.map(a=>{a.sort((x,y)=>x.date.localeCompare(y.date));const base=a[0];return `<section class="seaCompareExercise"><h4>${esc(base.name)}</h4><div class="compareCards">${a.map((o,i)=>{const delta=(o.pace!=null&&base.pace!=null)?o.pace-base.pace:null;const dl=delta==null?'—':`${delta>0?'+':''}${delta.toFixed(1)} s/500`;return `<div class="compareCard"><b>${shortDateES(o.date)}</b><div class="muted">${esc(o.sessionTitle)}</div><div><b>${fmtMetricSeconds(o.pace)}</b> /500 ${i&&delta!=null?`<span class="${delta<0?'deltaGood':delta>0?'deltaBad':''}">${dl}</span>`:''}</div><div>${o.totalDist?`${Math.round(o.totalDist)} m`:'—'} · ${o.totalTime?secondsToTime(o.totalTime):'—'} · ${o.spm!=null?o.spm.toFixed(1):'—'} ppm</div><details><summary>Ver ${o.rows.length} serie${o.rows.length===1?'':'s'}</summary><div class="tableWrap"><table class="seriesMiniTable"><thead><tr><th>Serie</th><th>Tiempo</th><th>Metros</th><th>PPM</th><th>/500</th></tr></thead><tbody>${o.rows.map((r,n)=>`<tr><td>${n+1}</td><td>${r.time_text||'—'}</td><td>${r.distance_m??'—'}</td><td>${r.spm??'—'}</td><td>${r.pace_500_text||'—'}</td></tr>`).join('')}</tbody></table></div></details></div>`}).join('')}</div></section>`}).join('')}</div>`;
+}
+function autoRepeatedHtml(rows){
+  const occ=v79SeaOccurrences(rows),groups={};occ.forEach(o=>(groups[o.key]||(groups[o.key]=[])).push(o));
+  const rep=Object.values(groups).filter(a=>new Set(a.map(x=>String(x.sessionId))).size>=2).sort((a,b)=>b.length-a.length);
+  if(!rep.length)return '<p class="muted">Cuando un mismo ejercicio aparezca en dos días distintos, se mostrará aquí aunque las sesiones contengan otros ejercicios diferentes.</p>';
+  return rep.map(a=>{a.sort((x,y)=>x.date.localeCompare(y.date));const first=a[0],last=a[a.length-1],delta=(first.pace!=null&&last.pace!=null)?last.pace-first.pace:null;return `<div class="repeatGroup"><b>${esc(last.name)}</b> · ${a.length} días<div>${shortDateES(first.date)} → ${shortDateES(last.date)} · /500 ${fmtMetricSeconds(first.pace)} → ${fmtMetricSeconds(last.pace)} ${delta!=null?`<span class="${delta<0?'deltaGood':delta>0?'deltaBad':''}">${delta>0?'+':''}${delta.toFixed(1)} s/500</span>`:''} · PPM ${first.spm!=null?first.spm.toFixed(1):'—'} → ${last.spm!=null?last.spm.toFixed(1):'—'}</div></div>`}).join('');
+}
+async function coachSeaResultsView(){
+  if(r!=="coach")return;
+  const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
+  let selected=[],monthFilter='all';
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button class="active">MAR · Equipo</button><button id="analysisAthletes">Remeros</button></div><h2>Análisis MAR · Equipo</h2><p class="muted">Aquí solo aparecen sesiones de mar. Cada tarjeta muestra sus ejercicios; puedes seleccionar sesiones de fechas distintas y Row Training compara únicamente los ejercicios que se repiten.</p><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Periodo<select id="seaPeriod"><option value="all">Toda la temporada</option>${monthOptions('')}</select></label></div><div class="actions"><button id="clearSeaSelection">Limpiar selección</button><span id="seaSelectionInfo" class="muted"></span></div><div id="seaCal"></div><h3>Comparación seleccionada</h3><div id="seaCompare"></div><h3>Evolución automática de ejercicios repetidos</h3><div id="seaAuto"></div></div>`;
+  document.getElementById('analysisAthletes').onclick=()=>results();
+  const teamSel=document.getElementById('seaResTeam'),periodSel=document.getElementById('seaPeriod'),cal=document.getElementById('seaCal'),cmp=document.getElementById('seaCompare'),auto=document.getElementById('seaAuto'),info=document.getElementById('seaSelectionInfo');
+  if(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))teamSel.value=coachSelectedTeam;
+  async function load(){
+    coachSelectedTeam=teamSel.value; const all=await getSeaResultsForTeam(teamSel.value,'2026-09-01','2027-05-31');
+    selected=selected.filter(id=>all.sessions.some(s=>String(s.id)===id));
+    cal.innerHTML=v79SeaSessionListHtml(all.sessions,all.results,selected,monthFilter);
+    const chosenRows=all.results.filter(r=>selected.includes(String(r.training_session_id)));
+    cmp.innerHTML=compareSeaHtml(chosenRows); auto.innerHTML=autoRepeatedHtml(all.results); info.textContent=selected.length?`${selected.length} sesión${selected.length===1?'':'es'} seleccionada${selected.length===1?'':'s'}`:'Ninguna sesión seleccionada';
+    cal.querySelectorAll('.selectSeaSession').forEach(b=>b.onclick=()=>{const id=String(b.dataset.session);selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];load()});
+    cal.querySelectorAll('.deleteSeaResults').forEach(b=>b.onclick=async()=>{const id=String(b.dataset.session),rr=all.results.filter(x=>String(x.training_session_id)===id);if(!rr.length)return;if(!confirm(`¿Eliminar los ${rr.length} resultados MAR de ${shortDateES(b.dataset.date)}?\n\nSe borra solo el registro de resultados, no la planificación de la sesión.`))return;b.disabled=true;b.textContent='Eliminando…';const q=await sb.from('sea_results').delete().eq('training_session_id',Number(id));if(q.error){alert('No se pudieron eliminar: '+q.error.message);b.disabled=false;b.textContent='Eliminar resultados';return}selected=selected.filter(x=>x!==id);await load()});
+  }
+  teamSel.onchange=()=>{selected=[];load()}; periodSel.onchange=()=>{monthFilter=periodSel.value;load()}; document.getElementById('clearSeaSelection').onclick=()=>{selected=[];load()}; await load();
+}
+
+function v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2){
+  const ws=(workouts||[]).filter(w=>w.user_id===p.user_id).sort((a,b)=>String(b.session_date||b.created_at).localeCompare(String(a.session_date||a.created_at)));
+  const c2s=(c2||[]).filter(x=>x.user_id===p.user_id).slice().sort((a,b)=>String(b.workout_date).localeCompare(String(a.workout_date)));
+  const pieces=[];
+  ws.forEach(w=>{const items=(gym||[]).filter(g=>String(g.workout_id)===String(w.id)),ers=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id));pieces.push({date:v79WorkoutDate(w)||'',html:`<div class="athleteHistoryItem"><div><b>${esc(w.session_code||w.session_type||'Sesión')}</b> <span class="tag">${v79WorkoutDate(w)?shortDateES(v79WorkoutDate(w)):new Date(w.created_at).toLocaleDateString('es-ES')}</span></div>${items.length?`<div class="exerciseTable">${items.map(i=>{const m=storedExerciseMeta(i);return `<div class="exerciseRow"><div><b>${esc(i.exercise_name||'Ejercicio')}</b>${m.assigned?`<br><small>Asignado: ${esc(m.assigned)}</small>`:''}</div><div>${i.weight_kg??'—'} kg</div><div>${i.perceived_difficulty==='easy'?'Fácil':i.perceived_difficulty==='hard'?'Duro':'Bien'}</div></div>`}).join('')}</div>`:''}${ers.map(e=>`<div class="last"><b>ERGO</b> · ${e.distance_m??'—'} m · ${e.time_seconds?secondsToTime(e.time_seconds):'—'} · /500 ${e.pace_500_seconds?secondsToTime(e.pace_500_seconds):'—'} · ${e.spm??'—'} ppm</div>`).join('')}${w.notes?`<p><b>Notas:</b> ${esc(w.notes)}</p>`:''}</div>`})});
+  c2s.forEach(x=>pieces.push({date:String(x.workout_date||'').slice(0,10),html:`<div class="athleteHistoryItem"><div><b>Concept2 / ErgData</b> <span class="tag">${shortDateES(String(x.workout_date||'').slice(0,10))}</span></div><div>${x.distance_m??'—'} m · ${x.time_formatted||'—'} · /500 ${x.pace_500_seconds?secondsToTime(x.pace_500_seconds):'—'} · ${x.spm??'—'} ppm</div>${x.match_status?`<small class="muted">${x.match_status==='matched'?'Asociado a planificación':'Estado: '+esc(x.match_status)}</small>`:''}</div>`}));
+  pieces.sort((a,b)=>b.date.localeCompare(a.date)); return pieces.length?pieces.slice(0,40).map(x=>x.html).join(''):'<p class="muted">Aún no hay entrenamientos registrados.</p>';
+}
+async function results(){
+  content.innerHTML='<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">Remeros</button></div><h2>Análisis de remeros</h2><p class="muted">Cargando…</p></div>';
+  const visibleTeams=(currentMode==='staff'&&!isGlobalCoach)?editableTeamCodes():TEAM_OPTIONS.map(x=>x[0]);
+  const [pr,mt,wo,gy,er,c2,ss]=await Promise.all([
+    sb.from('profiles').select('user_id,full_name,height_cm,team_code').order('full_name'),
+    sb.from('athlete_metrics').select('*').order('recorded_at',{ascending:false}),
+    sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,status,effort,feeling,notes,created_at').order('created_at',{ascending:false}),
+    sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,weight_kg,reps,perceived_difficulty,note,created_at').order('created_at',{ascending:false}),
+    sb.from('ergo_results').select('*').order('created_at',{ascending:false}),
+    sb.from('concept2_results').select('*').order('workout_date',{ascending:false}),
+    sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').in('team_code',visibleTeams).gte('session_date','2026-08-31').lte('session_date','2027-05-31').in('session_type',['GYM','ERG']).order('session_date')
+  ]);
+  const err=pr.error||mt.error||wo.error||gy.error||er.error||c2.error||ss.error;if(err){content.innerHTML=`<div class="card"><h2>Análisis de remeros</h2><p>${esc(err.message)}</p></div>`;return}
+  const profiles=(pr.data||[]).filter(p=>p.team_code&&visibleTeams.includes(p.team_code)),metrics=mt.data||[],workouts=wo.data||[],gym=gy.data||[],ergo=er.data||[],c2rows=c2.data||[],sessions=ss.data||[];
+  let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete='';
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSea">MAR · Equipo</button><button class="active">Remeros</button></div><h2>Análisis de remeros</h2><p class="muted">Compara el cumplimiento semanal del equipo y abre directamente la ficha de cualquier remero por su nombre.</p><div class="athleteSelectorBar"><label>Equipo<select id="analysisTeam">${visibleTeams.map(t=>`<option value="${t}">${esc(teamLabel(t))}</option>`).join('')}</select></label><label>Remero<select id="analysisAthlete"></select></label></div><div class="analysisWeekNav"><button id="analysisPrevWeek">← Semana</button><strong id="analysisWeekLabel"></strong><button id="analysisNextWeek">Semana →</button></div><div id="teamCompliance"></div><div id="athleteDetail"></div></div>`;
+  const teamSel=document.getElementById('analysisTeam'),athSel=document.getElementById('analysisAthlete'),teamBox=document.getElementById('teamCompliance'),detail=document.getElementById('athleteDetail'),weekLabel=document.getElementById('analysisWeekLabel');teamSel.value=team;
+  document.getElementById('analysisSea').onclick=()=>coachSeaResultsView();
+  function teamAthletes(){return profiles.filter(p=>p.team_code===team).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es'))}
+  function renderClient(){
+    coachSelectedTeam=team;const end=addDaysISO(weekStart,6),ats=teamAthletes();weekLabel.textContent=`${shortDateES(weekStart)} – ${shortDateES(end)}`;
+    if(!selectedAthlete||!ats.some(a=>a.user_id===selectedAthlete))selectedAthlete=ats[0]?.user_id||'';
+    athSel.innerHTML=ats.length?ats.map(a=>`<option value="${a.user_id}" ${a.user_id===selectedAthlete?'selected':''}>${esc(a.full_name||'Sin nombre')}</option>`).join(''):'<option value="">Sin remeros</option>';
+    const teamSessions=sessions.filter(s=>s.team_code===team);
+    const rows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,weekStart,end)}));
+    teamBox.innerHTML=`<h3>Cumplimiento semanal del equipo</h3><p class="muted">GYM cuenta ejercicio por ejercicio; cada sesión ERGO cuenta como 1. MAR no entra porque se registra como resultado del equipo.</p>${rows.length?`<div class="tableWrap"><table class="complianceTable"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completados</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>`<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td>${c.percent==null?'—':`<b>${c.percent}%</b>`}</td><td>${c.expected?`${c.completed}/${c.expected}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
+    teamBox.querySelectorAll('.openAthlete').forEach(b=>b.onclick=()=>{selectedAthlete=b.dataset.user;athSel.value=selectedAthlete;renderAthlete();detail.scrollIntoView({behavior:'smooth',block:'start'})});
+    renderAthlete();
+  }
+  function renderAthlete(){
+    const p=profiles.find(a=>a.user_id===selectedAthlete);if(!p){detail.innerHTML='';return}athSel.value=selectedAthlete;const end=addDaysISO(weekStart,6),comp=v79ComplianceForAthlete(p.user_id,sessions.filter(s=>s.team_code===p.team_code),workouts,gym,c2rows,weekStart,end),mm=metrics.find(x=>x.user_id===p.user_id);
+    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(p.team_code))}${p.height_cm?` · ${p.height_cm} cm`:''}</div></div>${isGlobalCoach?`<div style="min-width:210px"><select id="v79AthleteTeam" style="width:100%;padding:8px;border:1px solid #c8d4e2;border-radius:9px"><option value="">Sin equipo</option>${TEAM_OPTIONS.map(t=>`<option value="${t[0]}" ${p.team_code===t[0]?'selected':''}>${t[1]}</option>`).join('')}</select><button id="v79SaveAthleteTeam" style="margin-top:6px;width:100%">Guardar equipo</button></div>`:''}</div><div class="athleteWeekSummary"><b>Semana actual:</b>${v79ComplianceHtml(comp,true)}</div>${mm?`<div class="info"><b>FC:</b> reposo ${mm.resting_hr??'—'} · máx ${mm.max_hr??'—'} · UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:''}<h3>Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows)}</section>`;
+    if(isGlobalCoach&&document.getElementById('v79SaveAthleteTeam'))document.getElementById('v79SaveAthleteTeam').onclick=async()=>{const b=document.getElementById('v79SaveAthleteTeam'),sel=document.getElementById('v79AthleteTeam');b.disabled=true;b.textContent='Guardando…';const q=await sb.from('profiles').update({team_code:sel.value||null}).eq('user_id',p.user_id);if(q.error){alert(q.error.message);b.disabled=false;b.textContent='Guardar equipo';return}p.team_code=sel.value||null;b.textContent='Guardado ✓';setTimeout(()=>results(),500)};
+  }
+  teamSel.onchange=()=>{team=teamSel.value;selectedAthlete='';renderClient()};athSel.onchange=()=>{selectedAthlete=athSel.value;renderAthlete()};document.getElementById('analysisPrevWeek').onclick=()=>{weekStart=addDaysISO(weekStart,-7);renderClient()};document.getElementById('analysisNextWeek').onclick=()=>{weekStart=addDaysISO(weekStart,7);renderClient()};renderClient();
+}
+</script>
 </body></html>
