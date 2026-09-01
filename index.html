@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V78</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V82</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -608,13 +608,19 @@ function renderIdentityHeaderV73(){
 async function switchModeV73(mode){
   if(mode==="staff"&&!hasStaffMode())return;if(mode==="athlete"&&!hasRowerMode())return;
   currentMode=mode;localStorage.setItem(`rowtraining_mode_${currentUser.id}`,mode);r=mode==="staff"?"coach":"athlete";
-  if(mode==="staff"){coachTeams=staffViewTeamCodes();tab="hoy";if(isGlobalCoach)await loadPendingRegistrationCount();}
+  if(mode==="staff"){coachTeams=staffViewTeamCodes();tab="hoy";if(hasAnyCoachTeam())await loadPendingRegistrationCount();}
   else{tab=currentTeamCode?"hoy":"pendiente";await loadRegistrationState();}
   renderIdentityHeaderV73();refreshTeamSchedule();selected=getTodayIndex();draw();render();
 }
 async function loadPendingRegistrationCount(){
-  pendingRegistrationCount=0;if(!isGlobalCoach)return;
-  try{const res=await sb.from("registration_requests").select("id,requested_team",{count:"exact"}).eq("status","pending");if(!res.error)pendingRegistrationCount=(res.data||[]).length;}catch(e){}
+  pendingRegistrationCount=0;if(!hasAnyCoachTeam())return;
+  try{
+    const res=await sb.from("registration_requests").select("id,requested_team").eq("status","pending");
+    if(!res.error){
+      const allowed=isGlobalCoach?(coachTeams.length?coachTeams:TEAM_OPTIONS.map(x=>x[0])):editableTeamCodes();
+      pendingRegistrationCount=(res.data||[]).filter(x=>!x.requested_team||allowed.includes(x.requested_team)).length;
+    }
+  }catch(e){}
 }
 async function startApp(){
   const {data:{user}}=await sb.auth.getUser();if(!user)return;currentUser=user;
@@ -627,8 +633,9 @@ async function startApp(){
   baseAccountRole=roleRes.data?.role||"athlete";isGlobalCoach=baseAccountRole==="coach";
   currentUserProfile=profileRes.data||{};currentTeamCode=currentUserProfile.team_code||null;
   staffRoles=staffRes.error?[]:(staffRes.data||[]);
-  if(isGlobalCoach){const {data:access}=await sb.from("coach_team_access").select("team_code").eq("coach_user_id",user.id);coachTeams=(access||[]).map(x=>x.team_code);if(!coachTeams.length)coachTeams=TEAM_OPTIONS.map(x=>x[0]);await loadPendingRegistrationCount();}
+  if(isGlobalCoach){const {data:access}=await sb.from("coach_team_access").select("team_code").eq("coach_user_id",user.id);coachTeams=(access||[]).map(x=>x.team_code);if(!coachTeams.length)coachTeams=TEAM_OPTIONS.map(x=>x[0]);}
   else coachTeams=staffViewTeamCodes();
+  if(hasAnyCoachTeam())await loadPendingRegistrationCount();
   await loadRegistrationState();
   const saved=localStorage.getItem(`rowtraining_mode_${user.id}`);
   currentMode=(saved==="athlete"&&hasRowerMode())?"athlete":(saved==="staff"&&hasStaffMode())?"staff":hasStaffMode()?"staff":"athlete";
@@ -716,7 +723,15 @@ doRegister.onclick=async()=>{
   regStatus.className="saveStatus ok";
   regStatus.innerHTML=data.session?`<b>Inscripción enviada.</b><br>Tu cuenta está pendiente de aprobación por un entrenador. Cuando te apruebe recibirás un correo de bienvenida con el enlace de la app y la guía de instalación.`:`<b>Cuenta creada.</b><br>Revisa tu correo y pulsa <b>Confirmar</b>. El enlace debe devolverte a Row Training. Después quedarás pendiente de aprobación; cuando te asignen a un equipo recibirás un correo de bienvenida con el acceso y la guía.`;
   regPass.value=regPass2.value="";
-  try{if(data.session) fetch('/api/registration-notify',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},body:JSON.stringify({full_name:name,requested_team:REG_TEAM_VALID})})}catch(e){}
+  try{
+    const notifyHeaders={'Content-Type':'application/json'};
+    if(data.session?.access_token) notifyHeaders.Authorization='Bearer '+data.session.access_token;
+    fetch('/api/registration-notify',{
+      method:'POST',
+      headers:notifyHeaders,
+      body:JSON.stringify({user_id:data.user?.id||null,full_name:name,email,requested_team:REG_TEAM_VALID})
+    });
+  }catch(e){}
 };
 if(new URLSearchParams(location.search).get("registro")==="1") openRegister();
 else if(new URLSearchParams(location.search).get("guia")==="1") openPublicGuide();
@@ -739,7 +754,7 @@ function draw(){
   let a;
   if(currentMode==="staff"){
     if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["sistema","Sistema"],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
-    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["ayuda","Ayuda"],["salir","Salir"]];
+    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["ayuda","Ayuda"],["salir","Salir"]];
     else a=[["hoy","Hoy"],["registro","Registro MAR"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
@@ -752,7 +767,7 @@ function render(){
   if(tab==="pendiente")return pendingRegistrationView();if(tab==="ayuda")return helpView();
   if(currentMode==="staff"){
     if(tab==="hoy")return staffTodayView();if(tab==="registro")return staffRegisterView();
-    if(tab==="equipo"&&isGlobalCoach)return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&isGlobalCoach)return registrationsView();
+    if(tab==="equipo"&&isGlobalCoach)return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return registrationsView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return coachSeaResultsView();}
     if(tab==="biblioteca"&&isGlobalCoach)return ergoLibrary();return staffTodayView();
@@ -1956,9 +1971,10 @@ async function registrationsView(){
   content.innerHTML=`<div class="card"><h2>Altas de remeros</h2><p class="muted">Cargando solicitudes…</p></div>`;
   const q=await sb.from("registration_requests").select("*").order("created_at",{ascending:false});
   if(q.error){content.innerHTML=`<div class="card"><h2>Altas de remeros</h2><div class="saveStatus err">${esc(q.error.message)}<br><small>Si acabas de actualizar la app, ejecuta setup_v61.sql en Supabase.</small></div></div>`;return}
-  const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
+  const manageCodes=isGlobalCoach?(coachTeams.length?coachTeams:TEAM_OPTIONS.map(x=>x[0])):editableTeamCodes();
+  const allowed=TEAM_OPTIONS.filter(x=>manageCodes.includes(x[0]));
   const all=q.data||[];
-  const pending=all.filter(x=>x.status==="pending"&&(!x.requested_team||!coachTeams.length||coachTeams.includes(x.requested_team)));
+  const pending=all.filter(x=>x.status==="pending"&&(!x.requested_team||manageCodes.includes(x.requested_team)));
   const recent=all.filter(x=>x.status!=="pending").slice(0,12);
   const generic=invitationUrl(null);
   content.innerHTML=`<div class="card"><h2>Altas de remeros ${pending.length?`<span class="regBadge">${pending.length}</span>`:""}</h2><p class="muted">Envía un enlace de inscripción. El remero no entra en ningún equipo hasta que un entrenador lo aprueba.</p><h3>Enlaces de inscripción</h3><div class="inviteLinks"><div class="inviteLink"><b>Enlace general</b><p class="muted">Sin equipo preseleccionado.</p><button class="copyInvite" data-url="${esc(generic)}">Copiar enlace</button></div>${allowed.map(t=>{const u=invitationUrl(t[0]);return `<div class="inviteLink"><b>${esc(t[1])}</b><p class="muted">La solicitud llega etiquetada para este equipo.</p><button class="copyInvite" data-url="${esc(u)}">Copiar enlace</button></div>`}).join("")}</div><hr><h3>Pendientes</h3>${pending.length?pending.map(x=>`<div class="requestCard" data-id="${x.id}"><div class="requestHead"><div><div class="big">${esc(x.full_name||"Sin nombre")}</div><div class="muted">${esc(x.email||"")} · ${new Date(x.created_at).toLocaleString("es-ES")}</div>${x.requested_team?`<div style="margin-top:6px"><span class="tag">Invitación: ${esc(teamLabel(x.requested_team))}</span></div>`:""}</div><label style="min-width:230px">Asignar a<select class="approveTeam" data-id="${x.id}">${allowed.map(t=>`<option value="${t[0]}" ${x.requested_team===t[0]?"selected":""}>${esc(t[1])}</option>`).join("")}</select></label></div><div class="requestActions"><button class="approveReq primary" data-id="${x.id}">Aprobar y asignar</button><button class="rejectReq" data-id="${x.id}">Rechazar</button></div></div>`).join(""):`<div class="info"><b>No hay solicitudes pendientes.</b></div>`}${recent.length?`<h3>Revisadas recientemente</h3>${recent.map(x=>`<div class="last"><b>${esc(x.full_name)}</b> · ${x.status==="approved"?"Aprobada":"Rechazada"}${x.assigned_team?` · ${esc(teamLabel(x.assigned_team))}`:""}${x.status==="approved"?` <button class="resendWelcome" data-id="${x.id}" style="margin-left:8px">Reenviar bienvenida</button>`:""}</div>`).join("")}`:""}</div>`;
@@ -2108,7 +2124,7 @@ async function results(){
   });
 }
 </script>
-<!-- Row Training V79 -->
+<!-- Row Training V80 -->
 
 <script id="v79logic">
 /* V79 · análisis MAR por ejercicio + cumplimiento semanal + ficha directa por remero */

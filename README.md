@@ -1,16 +1,19 @@
-# Row Training V79
+# Row Training V82
 
-Versión completa basada en V78.
+Cambios sobre V81:
+- Corrige el aviso de **nueva alta al entrenador** cuando Supabase tiene confirmación de email activada y `signUp` devuelve `session = null`.
+- El primer aviso se intenta **inmediatamente al registrarse**, antes de confirmar el correo.
+- Tras confirmar el correo se mantiene un **segundo intento** por seguridad.
+- `notify_sent_at` se usa como reserva atómica para **evitar avisos duplicados**; si Gmail falla, la reserva se libera para permitir el reintento.
+- Mantiene íntegramente las funciones de V81, incluido el panel **Altas** para entrenadores de equipo.
 
-Cambios principales:
-- Análisis MAR rediseñado: ya no usa un calendario lleno de días; muestra únicamente las sesiones MAR y enseña sus ejercicios.
-- La comparativa MAR se hace por ejercicio repetido, aunque ese ejercicio aparezca otro día dentro de una sesión con bloques distintos.
-- Las series de un mismo ejercicio se agrupan para comparar su resultado global y se pueden desplegar para revisar serie por serie.
-- Botón para eliminar resultados MAR de una sesión con confirmación. Solo elimina resultados, nunca la planificación.
-- Cumplimiento semanal por remero: GYM cuenta ejercicio por ejercicio y cada sesión ERGO cuenta como 1. MAR no entra en el porcentaje individual.
-- El remero ve su porcentaje de cumplimiento en Semana.
-- El entrenador ve una tabla comparativa de cumplimiento semanal de todo el equipo.
-- Análisis de remeros con selector directo por nombre y ficha completa, sin tener que localizar al remero por sus ejercicios.
-- Los nuevos registros GYM y ERGO guardan también la fecha programada para mejorar el cálculo semanal.
+## IMPORTANTE
+V82 **no necesita SQL nuevo** si V81/V70 ya estaban instaladas.
 
-No requiere SQL nuevo sobre V72/V78.
+Mantén en Vercel estas variables:
+- `ROWTRAINING_GMAIL_USER`
+- `ROWTRAINING_GMAIL_APP_PASSWORD`
+- `REGISTRATION_NOTIFY_EMAIL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+No volver a ejecutar scripts antiguos de planificación.
