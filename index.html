@@ -373,7 +373,7 @@ function altExerciseCard(altTxt,exerciseIndex){
   </div>`;
 }
 const gyms={
-"M":{"name":"MIX · GYM + ERGO · bloque GYM 25–28 min","items":[
+"M":{"name":"MIX · GYM + ERGO · bloque GYM 22–25 min","items":[
  {"name":"Prensa de piernas","dose":"3×10","rest":"75 s","img":"prensa","alternatives":["Sentadilla goblet a cajón"],"how":"Apoya espalda y pelvis. Baja con control y empuja con todo el pie sin bloquear las rodillas.","keys":"Pie completo · rodillas alineadas · pelvis apoyada.","error":"Despegar la pelvis, juntar las rodillas o bloquearlas."},
  {"name":"Remo sentado en polea","dose":"3×10","rest":"60 s","img":"remo","alternatives":["Remo con banda elástica"],"how":"Desde brazos extendidos, lleva el agarre al abdomen manteniendo el tronco estable.","keys":"Pecho estable · hombros bajos · codos atrás.","error":"Balancear el tronco o encoger los hombros."},
  {"name":"Hip thrust","dose":"3×10","rest":"75 s","img":"hip","alternatives":["Puente de glúteo en suelo"],"how":"Eleva la cadera hasta alinear hombros, cadera y rodillas; pausa y baja controlando.","keys":"Costillas abajo · barbilla recogida · empuja con talones.","error":"Hiperextender la zona lumbar."},
@@ -394,6 +394,13 @@ const gyms={
  {"name":"Press de pecho","dose":"3×10","rest":"90 s","img":null,"alternatives":["Flexiones inclinadas"],"how":"Empuja con control para equilibrar el volumen de tirón de la semana.","keys":"Escápulas estables · muñeca neutra.","error":"Forzar rango o perder la posición de hombros."},
  {"name":"Pallof press","dose":"3×10/lado","rest":"45–60 s","img":"pallof","alternatives":["Dead bug"],"how":"Extiende las manos sin permitir rotación.","keys":"Pelvis quieta · tronco estable.","error":"Girar hacia el cable."},
  {"name":"Dead bug","dose":"3×8/lado","rest":"45 s","img":"deadbug","alternatives":[],"how":"Extiende brazo y pierna contrarios manteniendo la zona lumbar estable.","keys":"Movimiento lento · control respiratorio.","error":"Despegar la zona lumbar."}
+]},
+"D":{"name":"Superior + core complementario","items":[
+ {"name":"Remo sentado en polea","dose":"3×10","rest":"75 s","img":"remo","alternatives":["Remo con banda elástica"],"how":"Lleva el agarre al abdomen con el tronco estable y los hombros bajos.","keys":"Codos atrás · pecho estable · retorno controlado.","error":"Balancear el tronco o encoger los hombros."},
+ {"name":"Jalón al pecho","dose":"3×10","rest":"75–90 s","img":"jalon","alternatives":["Remo con banda elástica"],"how":"Lleva la barra a la parte alta del pecho bajando los codos sin balanceo.","keys":"Pecho alto · hombros bajos · regreso controlado.","error":"Tirar tras la nuca o usar impulso."},
+ {"name":"Press de pecho","dose":"3×10","rest":"90 s","img":null,"alternatives":["Flexiones inclinadas"],"how":"Empuja desde el pecho con muñecas neutras y hombros estables; vuelve con control.","keys":"Escápulas estables · pies firmes · recorrido sin dolor.","error":"Arquear en exceso o adelantar los hombros."},
+ {"name":"Pallof press","dose":"3×10/lado","rest":"45–60 s","img":"pallof","alternatives":["Dead bug"],"how":"Extiende los brazos al frente resistiendo la rotación.","keys":"Costillas abajo · pelvis quieta · respiración controlada.","error":"Girar o inclinar el cuerpo."},
+ {"name":"Dead bug","dose":"3×8/lado","rest":"45 s","img":"deadbug","alternatives":[],"how":"Extiende brazo y pierna contrarios sin perder el contacto lumbar con el suelo.","keys":"Movimiento lento · lumbar estable · exhala al extender.","error":"Arquear la espalda."}
 ]},
 "C":{"name":"Potencia + acondicionamiento","items":[
  {"name":"Salto al cajón","dose":"3×5","rest":"90–120 s","img":null,"alternatives":[],"how":"Salta a una altura cómoda, aterriza estable y baja andando.","keys":"Máxima calidad · pocas repeticiones · recepción silenciosa.","error":"Usar un cajón demasiado alto o hacerlo fatigado."},
@@ -438,7 +445,7 @@ async function ergoLibrary(){
  const visible=coach?rows:rows.filter(x=>x.is_active!==false && (x.teams==="both"||x.teams===team) && String(x.phases||"").split(",").includes(phase));
  content.innerHTML=`<div class="card"><h2>Biblioteca ERGO</h2><p class="muted">${coach?"Gestiona los enlaces compartidos de ErgData. Los cambios se guardan para todos los remeros.":"Sesiones adicionales permitidas en esta fase. No sustituyen el entrenamiento programado."}</p>${visible.length?visible.map(x=>`<div class="ex"><span class="tag">${x.zone||"ERGO"}</span><h3>${x.name}</h3>${coach?`<label>Enlace ErgData</label><input class="libUrl" data-code="${x.code}" value="${x.url||""}"><div class="grid"><label>Equipo<select class="libTeam" data-code="${x.code}"><option value="both" ${x.teams==="both"?"selected":""}>Ambos</option><option value="veterans" ${x.teams==="veterans"?"selected":""}>Veteranas</option><option value="senior" ${x.teams==="senior"?"selected":""}>Senior</option></select></label><label>Fases<input class="libPhases" data-code="${x.code}" value="${x.phases||""}"></label></div><button class="saveLib primary" data-code="${x.code}">Guardar</button> ${x.url?`<a class="btn" href="${x.url}" target="_blank">Probar en ErgData</a>`:""}`:(x.url?`<a class="btn primary extraErgo" data-code="${x.code}" href="${x.url}">Abrir en ErgData</a>`:`<span class="muted">Enlace pendiente</span>`)}</div>`).join(""):`<div class="info"><b>No hay sesiones visibles.</b><br>Fase actual: ${phase}. ${currentTeamCode?`Equipo: ${teamLabel(currentTeamCode)}.`:"Tu usuario todavía no tiene equipo asignado; un entrenador puede asignarlo desde su panel."}</div>`}</div>`;
  if(coach) document.querySelectorAll(".saveLib").forEach(b=>b.onclick=async()=>{const code=b.dataset.code,x=rows.find(z=>z.code===code); const url=document.querySelector(`.libUrl[data-code="${code}"]`).value.trim(); const teams=document.querySelector(`.libTeam[data-code="${code}"]`).value; const phases=document.querySelector(`.libPhases[data-code="${code}"]`).value.trim(); const payload={code,name:x.name,zone:x.zone,url:url||null,teams,phases,is_active:true,updated_at:new Date().toISOString()}; const q=await sb.from("ergo_library").upsert(payload,{onConflict:"code"}); if(q.error) alert("No se pudo guardar: "+q.error.message); else {b.textContent="Guardado ✓";setTimeout(()=>b.textContent="Guardar",1200)}});
- if(!coach) document.querySelectorAll(".extraErgo").forEach(a=>a.onclick=async()=>{const x=rows.find(z=>z.code===a.dataset.code); try{await sb.from("ergo_intents").upsert({user_id:currentUser.id,scheduled_date:new Date().toISOString().slice(0,10),session_code:"EXTRA-"+x.code,session_name:x.name,ergdata_url:x.url,status:"additional"},{onConflict:"user_id,scheduled_date,session_code"});}catch(e){}});
+ if(!coach) document.querySelectorAll(".extraErgo").forEach(a=>a.onclick=async()=>{const x=rows.find(z=>z.code===a.dataset.code); try{await sb.from("ergo_intents").upsert({user_id:currentUser.id,scheduled_date:localISODate(),session_code:"EXTRA-"+x.code,session_name:x.name,ergdata_url:x.url,status:"additional"},{onConflict:"user_id,scheduled_date,session_code"});}catch(e){}});
 }
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null;
@@ -447,22 +454,12 @@ let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 
 const schedules={
   veterans:[
-    ["Lun",31,"DESC",null,"Descanso"],
-    ["Mar",1,"MIX","M","GYM + ERGO · trabajo por grupos"],
-    ["Mié",2,"DESC",null,"Descanso / movilidad"],
-    ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
-    ["Vie",4,"GYM","A","Fuerza global"],
-    ["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
-    ["Dom",6,"MAR",null,"🚣 Sesión de mar"]
+    ["Lun",31,"DESC",null,"Descanso"],["Mar",1,"MIX","M","GYM + ERGO · trabajo por grupos"],["Mié",2,"DESC",null,"Descanso / movilidad"],["Jue",3,"MAR",null,"🚣 Sesión de mar"],["Vie",4,"GYM","A","Fuerza global"],["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],["Dom",6,"MAR",null,"🚣 Sesión de mar"],
+    ["Lun",7,"DESC",null,"Descanso / movilidad"],["Mar",8,"MIX","M","GYM + ERGO · trabajo por grupos"],["Mié",9,"DESC",null,"Descanso / movilidad"],["Jue",10,"MAR",null,"🚣 Sesión de mar"],["Vie",11,"GYM","A","Fuerza global"],["Sáb",12,"ERG","UT2","UT2 · 3×12 min @20 ppm · rec 3 min"],["Dom",13,"MAR",null,"🚣 Sesión de mar"]
   ],
   senior:[
-    ["Lun",31,"DESC",null,"Descanso"],
-    ["Mar",1,"MIX","M","GYM + ERGO · trabajo por grupos"],
-    ["Mié",2,"DESC",null,"Descanso / movilidad"],
-    ["Jue",3,"MAR",null,"🚣 Sesión de mar"],
-    ["Vie",4,"GYM","B","Cadena posterior + tirón"],
-    ["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],
-    ["Dom",6,"MAR",null,"🚣 Sesión de mar"]
+    ["Lun",31,"DESC",null,"Descanso"],["Mar",1,"MIX","M","GYM + ERGO · trabajo por grupos"],["Mié",2,"DESC",null,"Descanso / movilidad"],["Jue",3,"MAR",null,"🚣 Sesión de mar"],["Vie",4,"GYM","B","Cadena posterior + tirón"],["Sáb",5,"ERG","UT2","UT2 · 3×10 min @20 ppm · rec 3 min"],["Dom",6,"MAR",null,"🚣 Sesión de mar"],
+    ["Lun",7,"GYM","D","Superior + core complementario"],["Mar",8,"MIX","M","GYM + ERGO · trabajo por grupos"],["Mié",9,"DESC",null,"Descanso / movilidad"],["Jue",10,"MAR",null,"🚣 Sesión de mar"],["Vie",11,"GYM","A","Fuerza global"],["Sáb",12,"ERG","UT2","UT2 · 3×12 min @20 ppm · rec 3 min"],["Dom",13,"MAR",null,"🚣 Sesión de mar"]
   ]
 };
 function teamKey(){
@@ -555,6 +552,8 @@ async function startApp(){
   if(r==="coach") role.textContent="ENTRENADOR";
   else role.textContent="REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
   if(r!=="coach"&&!currentTeamCode) tab="pendiente";
+  refreshTeamSchedule();
+  selected=getTodayIndex();
   draw(); render();
   if(r!=="coach"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60")) setTimeout(()=>showQuickGuideModal(),250);
 }
@@ -679,6 +678,7 @@ function render(){
   else results();
 }
 
+function localISODate(){const x=new Date();return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`}
 function addDaysISO(ds,n){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d+n));return x.toISOString().slice(0,10)}
 function mondayOfISO(ds){const [y,m,d]=ds.split('-').map(Number);const x=new Date(Date.UTC(y,m-1,d));const off=(x.getUTCDay()+6)%7;x.setUTCDate(x.getUTCDate()-off);return x.toISOString().slice(0,10)}
 function shortDateES(ds){const [y,m,d]=ds.split('-').map(Number);return `${d}/${m}`}
@@ -697,14 +697,33 @@ async function coachWeekView(){
   coachWeekArea.querySelectorAll('.weekEdit').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
 }
 
+function scheduleDateAt(i){return addDaysISO("2026-08-31",i)}
 function getTodayIndex(){
-  // Until the real season calendar is loaded from Supabase,
-  // use the currently selected day as the "today" demo day.
-  return selected;
+  const today=localISODate();
+  const idx=schedule.findIndex((_,i)=>scheduleDateAt(i)===today);
+  return idx>=0?idx:selected;
 }
 
+function cardioPrescriptionForDate(dateStr,isMixed=false){
+  const [y,m,d]=String(dateStr||localISODate()).split('-').map(Number);
+  const dow=new Date(y,m-1,d,12,0,0).getDay(); // 0 dom ... 5 vie
+  if(isMixed){
+    if(m>=9 || m===1) return {minutes:"10",type:"Carrera suave",rpe:"RPE 3–4/10",alt:"Bici o elíptica si hay molestias"};
+    if(m===2 || m===3) return {minutes:"8–10",type:"Cardio suave",rpe:"RPE 3/10",alt:"Carrera, bici o elíptica"};
+    return null;
+  }
+  if(dow!==5) return null; // cardio final programado en el GYM del viernes
+  if(m===9 || m===10) return {minutes:"12–15",type:"Carrera suave",rpe:"RPE 3–4/10",alt:"Bici o elíptica si hay molestias"};
+  if(m===11 || m===12 || m===1) return {minutes:"10–12",type:"Cardio suave",rpe:"RPE 3–4/10",alt:"Carrera, bici o elíptica"};
+  if(m===2 || m===3) return {minutes:"8–10",type:"Cardio suave opcional",rpe:"RPE 3/10",alt:"Omitir si hay fatiga o competición próxima"};
+  return null;
+}
+function cardioBlockHTML(dateStr,isMixed=false){
+  const c=cardioPrescriptionForDate(dateStr,isMixed);
+  return c?`<div class="info"><b>🏃 Cardio final · ${c.minutes} min</b><br>${c.type} · ${c.rpe}. ${c.alt}. Ritmo conversacional: no es un test ni una serie dura.</div>`:"";
+}
 function gymSeasonGuidance(){
-  const ph=seasonPhaseForDate(new Date().toISOString().slice(0,10));
+  const ph=seasonPhaseForDate(localISODate());
   if(ph==="BASE") return "Trabajo técnico y controlado. Termina normalmente con 2–3 repeticiones posibles.";
   if(ph==="FUERZA") return "En ejercicios principales puedes terminar con 1–2 repeticiones posibles; accesorios con 2–3. Nunca al fallo.";
   if(ph==="TRANSFERENCIA") return "Mantén calidad y velocidad de ejecución. 1–2 repeticiones posibles en principales, reduciendo volumen si hay fatiga.";
@@ -732,8 +751,9 @@ function todayView(){
 function showSessionIn(targetId,x){
   const el=document.getElementById(targetId);
   if(x[2]==="MIX"){
-    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 25–28 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div><div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button></div></div>`;
-    openMixGym.onclick=()=>gym("M");
+    const mixDate=scheduledDateFor(x);
+    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button></div></div>`;
+    openMixGym.onclick=()=>gym("M",x);
     openMixErgo.onclick=()=>openErgDataFor([x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"]);
   } else if(x[2]==="GYM"){
     el.innerHTML=`<div class="session">
@@ -741,7 +761,7 @@ function showSessionIn(targetId,x){
       <p class="muted">⏱️ aprox. 55-60 min</p>
       <button id="todayOpenGym" class="primary">Abrir entrenamiento</button>
     </div>`;
-    todayOpenGym.onclick=()=>gym(x[3]);
+    todayOpenGym.onclick=()=>gym(x[3],x);
   } else if(x[2]==="ERG"){
     renderErgoCard(el,x);
   } else if(x[2]==="MAR"){
@@ -752,14 +772,15 @@ function showSessionIn(targetId,x){
 }
 
 function scheduledDateFor(x){
-  // Calendario prototipo actual: 1–7 septiembre 2026.
-  return `2026-09-${String(x[1]).padStart(2,"0")}`;
+  const i=schedule.indexOf(x);
+  return i>=0?scheduleDateAt(i):localISODate();
 }
+let currentErgoPrescription=null;
 function ergoPrescription(x){
-  const isMix=x[3]==="MIX";
-  const code=isMix?"ERG-MIX-2X10":"ERG-UT2-3X10";
-  const name=isMix?"UT2 · 2×10 min @20 ppm · rec 3 min":(x[4]||"UT2 · 3×10 min @20 ppm · rec 3 min");
-  return {code,name,duration:isMix?1200:1800,spm:20,workoutType:"VariableInterval"};
+  const label=String(x?.[4]||"");
+  if(x?.[3]==="MIX") return {code:"ERG-MIX-2X10",libraryCode:"UT2-2X10-20",name:"UT2 · 2×10 min @20 ppm · rec 3 min",work:"2×10 min @20 ppm",duration:1200,spm:20,workoutType:"VariableInterval",warmup:"4 min",cooldown:"",block:"25–28 min"};
+  if(label.includes("3×12")) return {code:"ERG-UT2-3X12",libraryCode:"UT2-3X12-20",name:"UT2 · 3×12 min @20 ppm · rec 3 min",work:"3×12 min @20 ppm",duration:2160,spm:20,workoutType:"VariableInterval",warmup:"8 min",cooldown:"6 min",block:"≈56 min"};
+  return {code:"ERG-UT2-3X10",libraryCode:"UT2-3X10-20",name:label||"UT2 · 3×10 min @20 ppm · rec 3 min",work:"3×10 min @20 ppm",duration:1800,spm:20,workoutType:"VariableInterval",warmup:"10 min",cooldown:"8 min",block:"≈54 min"};
 }
 async function ensureErgoIntent(x){
   if(!currentUser || !["ERG","MIX"].includes(x[2])) return null;
@@ -779,36 +800,15 @@ async function openErgDataFor(x){
   const intent=await ensureErgoIntent(x);
   if(!intent) return alert("No se pudo preparar el entrenamiento programado. Revisa la conexión con Supabase.");
   if(intent.ergdata_url){ window.location.href=intent.ergdata_url; return; }
-  const rows=await loadErgoLibrary(); const hit=rows.find(z=>z.code===(x[3]==="MIX"?"UT2-2X10-20":"UT2-3X10-20"));
+  const rows=await loadErgoLibrary(); const pr=ergoPrescription(x); const hit=rows.find(z=>z.code===pr.libraryCode);
   if(hit?.url){ await sb.from("ergo_intents").update({ergdata_url:hit.url}).eq("id",intent.id); window.location.href=hit.url; return; }
   alert("Entrenamiento programado guardado. Falta el enlace ErgData de esta sesión.");
 }
 
 function renderErgoCard(el,x){
-  const mix=x[3]==="MIX";
-  el.innerHTML=`<div class="session">
-    <span class="tag">${x[0]} ${x[1]} · ERG</span>
-    <h2>${mix?"UT2 · 2×10 min @20 ppm":title(x)}</h2>
-    <p><b>${mix?"2×10 min @20 ppm":"3×10 min @20 ppm"}</b><br>Recuperación: <b>3 min suaves entre series</b><br>${mix?"Calentamiento: 4 min · bloque total 25–28 min":"Calentamiento: 10 min · Vuelta a la calma: 8-10 min"}</p>
-    <div class="ergoActions">
-      <button id="openErgData" class="primary">Abrir entrenamiento en ErgData</button>
-      <button id="ergoManual">Registrar manualmente</button>
-      <label class="btn">📷 Foto / Galería
-        <input id="ergoPhotos" type="file" accept="image/*" multiple hidden>
-      </label>
-    </div>
-    <div id="ergoFormWrap" class="hidden"></div>
-  </div>`;
-
-  ensureErgoIntent(x);
-  openErgData.onclick=()=>openErgDataFor(x);
-  ergoManual.onclick=()=>showErgoForm();
-
-  ergoPhotos.onchange=(e)=>{
-    const files=[...(e.target.files||[])];
-    if(!files.length)return;
-    showErgoForm(files);
-  };
+  const pr=ergoPrescription(x); currentErgoPrescription=pr;
+  el.innerHTML=`<div class="session"><span class="tag">${x[0]} ${x[1]} · ERG</span><h2>${pr.name}</h2><p><b>${pr.work}</b><br>Recuperación: <b>3 min suaves entre series</b><br>Calentamiento: ${pr.warmup}${pr.cooldown?` · Vuelta a la calma: ${pr.cooldown}`:""} · Total ${pr.block}</p><div class="ergoActions"><button id="openErgData" class="primary">Abrir entrenamiento en ErgData</button><button id="ergoManual">Registrar manualmente</button><label class="btn">📷 Foto / Galería<input id="ergoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
+  ensureErgoIntent(x); openErgData.onclick=()=>openErgDataFor(x); ergoManual.onclick=()=>showErgoForm(); ergoPhotos.onchange=(e)=>{const files=[...(e.target.files||[])];if(files.length)showErgoForm(files)};
 }
 
 function showErgoForm(files=[]){
@@ -917,7 +917,7 @@ async function saveErgoResult(){
   if(!currentUser)return alert("Sesión no iniciada");
   const {data:workout,error:werr}=await sb.from("workout_logs").insert({
     user_id:currentUser.id,
-    session_code:"ERG-1",
+    session_code:currentErgoPrescription?.code||"ERG-1",
     session_type:"ergo",
     status:"completed"
   }).select("id").single();
@@ -929,7 +929,7 @@ async function saveErgoResult(){
   const {error}=await sb.from("ergo_results").insert({
     user_id:currentUser.id,
     workout_id:workout.id,
-    test_name:"UT2 · 3×10 min @20 ppm",
+    test_name:currentErgoPrescription?.name||"ERGO",
     distance_m:ergoDistance.value?Number(ergoDistance.value):null,
     time_seconds:timeSec,
     pace_500_seconds:paceSec,
@@ -944,7 +944,16 @@ async function saveErgoResult(){
   tab="hist";draw();render();
 }
 
-function weekly(){let x=schedule[selected];content.innerHTML=`<div class="card"><div class="weekhead"><button disabled title="La temporada empieza el 1 de septiembre">←</button><h3>31 agosto – 6 septiembre 2026</h3><button disabled title="Se activará al cargar las siguientes semanas">→</button></div><div class="calendar">${schedule.map((d,i)=>`<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}</small><div class="num">${d[1]}</div><div class="dot">${i===1||i===2?"✅":i===selected?"●":"○"}</div></div>`).join("")}</div></div><div id="selectedSession"></div>`;content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});showSelected()}
+function weekly(){
+  const start=Math.floor(selected/7)*7, visible=schedule.slice(start,start+7), today=localISODate();
+  const startDate=scheduleDateAt(start), endDate=scheduleDateAt(Math.min(start+6,schedule.length-1));
+  content.innerHTML=`<div class="card"><div class="weekhead"><button id="rowerPrevWeek" ${start===0?'disabled':''}>← Semana</button><h3>${shortDateES(startDate)} – ${shortDateES(endDate)}</h3><button id="rowerNextWeek" ${start+7>=schedule.length?'disabled':''}>Semana →</button></div><div class="calendar">${visible.map((d,j)=>{const i=start+j;return `<div class="calday daybtn ${i===selected?"today":""}" data-i="${i}"><small>${d[0]}${scheduleDateAt(i)===today?" · HOY":""}</small><div class="num">${d[1]}</div><div class="dot">${i===selected?"●":"○"}</div></div>`}).join("")}</div></div><div id="selectedSession"></div>`;
+  content.querySelectorAll(".daybtn").forEach(b=>b.onclick=()=>{selected=+b.dataset.i;weekly()});
+  const prev=document.getElementById('rowerPrevWeek'),next=document.getElementById('rowerNextWeek');
+  if(prev&&!prev.disabled)prev.onclick=()=>{selected=Math.max(0,start-7);weekly()};
+  if(next&&!next.disabled)next.onclick=()=>{selected=Math.min(schedule.length-1,start+7);weekly()};
+  showSelected();
+}
 function showSelected(){
   const x=schedule[selected];
   const el=document.getElementById("selectedSession");
@@ -953,7 +962,7 @@ function showSelected(){
     showSessionIn("selectedSession",x);
   } else if(x[2]==="GYM"){
     el.innerHTML=`<div class="card session"><span class="tag">${x[0]} ${x[1]} · GYM</span><h2>${title(x)}</h2><p class="muted">Sin llegar al fallo. Valora cada ejercicio de forma sencilla. · ⏱️ aprox. 55-60 min</p><button id="openGym" class="primary">Abrir entrenamiento</button></div>`;
-    openGym.onclick=()=>gym(x[3]);
+    openGym.onclick=()=>gym(x[3],x);
   } else if(x[2]==="ERG"){
     el.innerHTML='<div class="card"></div>';
     renderErgoCard(el.firstElementChild,x);
@@ -973,8 +982,10 @@ function storedExerciseMeta(row){
     userNote:m?raw.slice(m[0].length):raw
   };
 }
-function gym(k){
+function gym(k,x=null){
   let gs=gyms[k];
+  const gymDate=x?scheduledDateFor(x):localISODate();
+  const cardio=cardioPrescriptionForDate(gymDate,k==="M");
   gymVariantSelections={};
   content.innerHTML=`<div class="card"><button id="back">← Semana</button><h2>${"GYM-"+k+" · "+gs.name}</h2><div class="info" id="gymLoadAdvice"></div><div class="info"><b>Guía visual de esta semana:</b> solo mostramos dibujos que hemos dejado claros para el movimiento. Si un ejercicio no lleva imagen, sigue las instrucciones de técnica y no improvises una variante.</div><form id="gf">${gs.items.map((i,n)=>`<div class="ex">
     <div class="exhead">${visualHTML(i,false)}<div><div class="big">${i.name}</div><div class="dose">${i.dose} · Descanso ${i.rest}</div></div></div>
@@ -989,7 +1000,7 @@ function gym(k){
     <div><label>Peso (kg)<input id="w${n}" type="number" step=".5" inputmode="decimal"></label></div>
     <div class="choices"><label><input type="radio" name="f${n}" value="Fácil"> Fácil</label><label><input type="radio" name="f${n}" value="Bien" checked> Bien</label><label><input type="radio" name="f${n}" value="Duro"> Duro</label></div>
     <label>Nota (opcional)<textarea id="note${n}" placeholder="Añade una nota..."></textarea></label>
-  </div>`).join("")}<button class="primary">Guardar entrenamiento</button></form></div>`;
+  </div>`).join("")}${cardio?`<div class="ex cardioFinisher"><div class="big">🏃 Cardio final</div><div class="dose">${cardio.minutes} min · ${cardio.type}</div><p><b>Intensidad:</b> ${cardio.rpe}. ${cardio.alt}.</p><p><b>Objetivo:</b> sumar base aeróbica sin añadir fatiga. Debes poder mantener una conversación.</p></div>`:""}<button class="primary">Guardar entrenamiento</button></form></div>`;
 
   back.onclick=()=>{tab="semana";draw();render()};
 
@@ -1433,17 +1444,32 @@ function allGymExercises(){
 function gymSelectedNamesFromSession(currentSession){
   const txt=String(currentSession?.content||'').toLowerCase();
   const title=String(currentSession?.title||'');
-  const tpl=(title.match(/GYM-([ABCM])/i)||[])[1] || (/MIX/i.test(title)?"M":null);
+  const tpl=(title.match(/GYM-([ABCDM])/i)||[])[1] || (/MIX/i.test(title)?"M":null);
   const set=new Set();
   if(tpl&&gyms[tpl]) gyms[tpl].items.forEach(i=>set.add(i.name));
   allGymExercises().forEach(i=>{if(txt.includes(i.name.toLowerCase()))set.add(i.name)});
   return set;
 }
+function gymEditorCardioDefaults(currentSession){
+  const txt=String(currentSession?.content||'');
+  const m=txt.match(/CARDIO FINAL\s*·\s*([^\n]*)/i);
+  if(m){
+    const mins=(m[1].match(/(\d+(?:[–-]\d+)?)/)||[])[1]||"10";
+    const low=m[1].toLowerCase();
+    const type=low.includes('bici')?'Bici suave':low.includes('elípt')?'Elíptica suave':low.includes('carrera')?'Carrera suave':'Cardio suave';
+    return {type,minutes:mins};
+  }
+  const date=document.getElementById('planDate')?.value||localISODate();
+  const c=cardioPrescriptionForDate(date,false);
+  return c?{type:c.type.includes('Carrera')?'Carrera suave':'Cardio suave',minutes:c.minutes}:{type:'Ninguno',minutes:'0'};
+}
 function renderGymExerciseEditor(currentSession){
   const rows=allGymExercises(); const selected=gymSelectedNamesFromSession(currentSession);
+  const cardio=gymEditorCardioDefaults(currentSession);
   return `<div class="gymEditHead"><b>Ejercicios de la sesión</b><span class="muted">Marca/desmarca y cambia dosis o descanso. La sesión se guarda con estos ejercicios.</span></div>
   <div class="coachTools"><label>Plantilla<select id="gymTpl"><option value="">— Elegir —</option>${Object.entries(gyms).map(([k,v])=>`<option value="${k}">GYM-${k} · ${v.name}</option>`).join('')}</select></label><button id="applyGymTpl">Cargar plantilla</button></div>
-  <div class="tableWrap"><table><thead><tr><th>Usar</th><th>Ejercicio</th><th>Dosis</th><th>Descanso</th></tr></thead><tbody>${rows.map((i,n)=>`<tr><td><input class="gymUse" type="checkbox" data-i="${n}" ${selected.has(i.name)?'checked':''}></td><td><b>${i.name}</b></td><td><input class="gymDose" data-i="${n}" value="${i.dose}"></td><td><input class="gymRest" data-i="${n}" value="${i.rest}"></td></tr>`).join('')}</tbody></table></div>`;
+  <div class="tableWrap"><table><thead><tr><th>Usar</th><th>Ejercicio</th><th>Dosis</th><th>Descanso</th></tr></thead><tbody>${rows.map((i,n)=>`<tr><td><input class="gymUse" type="checkbox" data-i="${n}" ${selected.has(i.name)?'checked':''}></td><td><b>${i.name}</b></td><td><input class="gymDose" data-i="${n}" value="${i.dose}"></td><td><input class="gymRest" data-i="${n}" value="${i.rest}"></td></tr>`).join('')}</tbody></table></div>
+  <div class="coachTools" style="margin-top:12px"><label>Cardio final<select id="gymCardioType"><option ${cardio.type==='Ninguno'?'selected':''}>Ninguno</option><option ${cardio.type==='Carrera suave'?'selected':''}>Carrera suave</option><option ${cardio.type==='Bici suave'?'selected':''}>Bici suave</option><option ${cardio.type==='Elíptica suave'?'selected':''}>Elíptica suave</option><option ${cardio.type==='Cardio suave'?'selected':''}>Cardio suave</option></select></label><label>Duración<input id="gymCardioMinutes" value="${cardio.minutes}" placeholder="Ej. 12–15"></label></div><div class="muted">Cardio de base: ritmo conversacional, normalmente RPE 3–4/10. En competición puede reducirse u omitirse.</div>`;
 }
 async function renderEditorLibrary(kind,currentSession=null){
   const box=document.getElementById('editorLibrary'); if(!box)return;
@@ -1465,6 +1491,10 @@ async function renderEditorLibrary(kind,currentSession=null){
       const names=new Set(gyms[k].items.map(i=>i.name));
       document.querySelectorAll('.gymUse').forEach(cb=>cb.checked=names.has(allGymExercises()[Number(cb.dataset.i)].name));
       sessTitle.value=k==="M"?"MIX · GYM + ERGO · Bloque GYM":`GYM-${k} · ${gyms[k].name}`;
+      const date=document.getElementById('planDate')?.value||localISODate();
+      const c=cardioPrescriptionForDate(date,k==="M");
+      if(document.getElementById('gymCardioType')) gymCardioType.value=c?(c.type.includes('Carrera')?'Carrera suave':'Cardio suave'):'Ninguno';
+      if(document.getElementById('gymCardioMinutes')) gymCardioMinutes.value=c?c.minutes:'0';
     };
     return;
   }
@@ -1639,7 +1669,10 @@ function sessionEditor(x=null){
      const ex=allGymExercises(); const selected=[];
      document.querySelectorAll('.gymUse').forEach(cb=>{if(cb.checked){const i=Number(cb.dataset.i),item=ex[i],dose=document.querySelector(`.gymDose[data-i="${i}"]`)?.value||item.dose,rest=document.querySelector(`.gymRest[data-i="${i}"]`)?.value||item.rest;selected.push(`${item.name} · ${dose} · rec ${rest}`)}});
      if(!selected.length){alert('Selecciona al menos un ejercicio GYM.');return;}
-     contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
+     const cType=document.getElementById('gymCardioType')?.value||'Ninguno';
+     const cMin=document.getElementById('gymCardioMinutes')?.value?.trim()||'';
+     const cardioLine=cType!=='Ninguno'&&cMin?`\nCARDIO FINAL · ${cMin} min · ${cType} · RPE 3–4/10 · ritmo conversacional`:'';
+     contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}${cardioLine}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error) alert(q.error.message); else renderPlanDay();
  };

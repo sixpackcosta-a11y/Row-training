@@ -1,4 +1,4 @@
-# Row Training V62
+# Row Training V68
 
 V62 parte de V61 e incorpora el flujo de correo y ayuda para nuevas altas.
 
@@ -96,3 +96,29 @@ Los correos de confirmación y recuperación siguen perteneciendo a Supabase Aut
 - Añade botón **Reenviar bienvenida** en altas revisadas/aprobadas.
 - Refuerza el aviso de nueva inscripción con la clave pública de Supabase como fallback.
 - No requiere SQL nuevo.
+
+## V67
+- Corrige la detección de "Hoy" usando la fecha local real del dispositivo, no el día seleccionado del calendario.
+- La semana inicial marca automáticamente el día real (31/08–06/09/2026).
+- Corrige las fechas programadas de la semana y evita usar UTC para acciones que dependen del día local.
+
+## V68 · cardio integrado sin perder especificidad
+- Incluye íntegramente la corrección V67 de **HOY** con fecha local real.
+- Martes conjunto: **GYM 22–25 min + ERGO 25–28 min + 10 min de carrera suave** (aprox. 60–65 min con cambio de grupos).
+- Viernes, septiembre-octubre: fuerza + **12–15 min de cardio suave**; el volumen baja progresivamente durante la temporada.
+- El cardio es de base: **RPE 3–4/10 y ritmo conversacional**, no una sesión dura añadida.
+- Si correr da molestias, se permite **bici o elíptica** con la misma duración/intensidad.
+- Se mantienen dos estímulos ERGO semanales en la fase de base: martes corto + sábado principal.
+- El editor GYM del entrenador incorpora **Cardio final + duración** para que al editar una sesión no se pierda este bloque.
+- Los lunes de fuerza Senior no reciben cardio automático: el bloque aeróbico se concentra en martes/viernes para controlar la fatiga.
+
+### Base de datos
+Si `setup_v61.sql` ya está ejecutado, ejecutar solamente `setup_v68.sql`.
+
+## V69 · semanas 1 y 2 cerradas
+- Rower `Semana` ya permite navegar 31/8–6/9 y 7/9–13/9.
+- Semana 2 cerrada: martes MIX GYM+ERGO+cardio, jueves MAR 60', viernes fuerza global+cardio, sábado UT2 3×12', domingo MAR 60'.
+- Senior añade el lunes un GYM-D superior+core sin piernas pesadas para no interferir con el martes.
+- ERGO del sábado 12 abre correctamente la sesión 3×12' de ErgData y guarda la intención con su código propio.
+- Visuales: en estas dos semanas solo se muestran imágenes que se han dejado como suficientemente claras; el press de pecho sigue sin imagen antes que mostrar una guía dudosa.
+- `setup_v69.sql` incluye el ajuste de cardio de V68. Si no ejecutaste `setup_v68.sql`, ejecuta solo `setup_v69.sql` después de V61.
