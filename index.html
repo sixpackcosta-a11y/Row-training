@@ -117,6 +117,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 /* V73 · roles por equipo + entrenamiento legible */
 .modeSwitch{margin-top:5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:4px 8px;font-size:.78rem}.staffRoleBadge{display:inline-block;margin:3px 4px 0 0;padding:3px 7px;border-radius:999px;background:#e8f1fb;font-size:.74rem;font-weight:800}.staffRoleBadge.assistant{background:#f2f4f7}.permNote{padding:10px 12px;border-radius:10px;background:#fff6d9;border:1px solid #f0d98a;margin:10px 0}.staffGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.staffPerson{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.staffDayCard{border-left:5px solid #6b7280}.staffDayCard.mar{border-left-color:#18a5b8}.staffActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.seaSeriesTable{min-width:760px}.seaSeriesTable th,.seaSeriesTable td{vertical-align:middle}.seaSeriesTable input{min-width:105px;margin:0}.seaSeriesTable input[readonly]{background:#f3f6fa;font-weight:700;color:#25324a}.seaSeriesTable .seriesName{font-weight:800;white-space:nowrap}.seaAutoPace{font-weight:800}.seaBlockMeta{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:12px;margin-top:12px}@media(max-width:700px){.seaBlockMeta{grid-template-columns:1fr}.seaSeriesTable{min-width:650px}}
 .workoutReadable{display:flex;flex-direction:column;gap:7px;margin:10px 0}.workoutRow{display:grid;grid-template-columns:minmax(135px,190px) 1fr;gap:10px;align-items:start;padding:9px 11px;border:1px solid #dce6f0;border-radius:10px;background:#fff}.workoutLabel{font-weight:850;color:#082744;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}.workoutValue{font-size:.9rem;line-height:1.35;color:#17283a}.workoutRow.work{background:#f5f9fd}.workoutRow.recovery{background:#f8fafc}.workoutRow.warm{background:#fffaf0}.workoutRow.cool{background:#f4fbf8}.workoutRow.note{background:#eef6ff}.workoutCompact .workoutRow{grid-template-columns:110px 1fr;padding:6px 8px;gap:7px}.workoutCompact .workoutLabel{font-size:.67rem}.workoutCompact .workoutValue{font-size:.76rem}.workoutPyramidLinear{font-weight:800}.workoutArrow{color:#0b5ed7;font-weight:900;padding:0 3px}@media(max-width:700px){.staffGrid{grid-template-columns:1fr}.workoutRow,.workoutCompact .workoutRow{grid-template-columns:1fr;gap:3px}.workoutLabel{font-size:.72rem}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}</style>
@@ -794,29 +795,70 @@ function seaResultBlocksFromContent(content){
     return {label,value,line:label0?`${label} · ${value}`:line};
   }).filter(x=>!/^(duración objetivo|duracion objetivo|objetivo|carga)$/i.test(x.label));
 }
+function seaPrescription(value){
+  const txt=String(value||'').replace(/×/g,'x').trim();
+  let count=1,fixedTimeSeconds=null,fixedDistanceM=null;
+  const lead=txt.match(/^\s*(\d+)\s*x\s*/i);if(lead)count=Math.max(1,Number(lead[1])||1);
+  const timed=txt.match(/^\s*\d+\s*x\s*(\d+(?:[.,]\d+)?)\s*min\b/i);
+  const dist=txt.match(/^\s*\d+\s*x\s*(\d+(?:[.,]\d+)?)\s*m(?:etros?)?\b/i);
+  if(timed)fixedTimeSeconds=Math.round(Number(timed[1].replace(',','.'))*60);
+  else if(dist)fixedDistanceM=Math.round(Number(dist[1].replace(',','.')));
+  else if(!lead){
+    const oneTime=txt.match(/^\s*(\d+(?:[.,]\d+)?)\s*min\b/i);
+    const oneDist=txt.match(/^\s*(\d+(?:[.,]\d+)?)\s*m(?:etros?)?\b/i);
+    if(oneTime)fixedTimeSeconds=Math.round(Number(oneTime[1].replace(',','.'))*60);
+    else if(oneDist)fixedDistanceM=Math.round(Number(oneDist[1].replace(',','.')));
+  }
+  return {count,fixedTimeSeconds,fixedDistanceM};
+}
+function seaSeriesTimeText(sec){if(sec==null)return '';const m=Math.floor(sec/60),s=sec-m*60;return `${m}:${String(s).padStart(2,'0')}`}
+function updateSeaSeriesPace(blockIndex,seriesIndex){
+  const timeEl=document.getElementById(`v77SeaTime_${blockIndex}_${seriesIndex}`),metersEl=document.getElementById(`v77SeaMeters_${blockIndex}_${seriesIndex}`),paceEl=document.getElementById(`v77SeaPace_${blockIndex}_${seriesIndex}`);
+  if(!timeEl||!metersEl||!paceEl)return;
+  const seconds=timeTextToSeconds(timeEl.value),meters=Number(metersEl.value);
+  paceEl.value=(seconds!=null&&seconds>0&&meters>0)?fmtMetricSeconds(seconds*500/meters):'';
+}
 async function staffSeaResultForm(sessionId,team,date,backFn){
   const sq=await sb.from('training_sessions').select('id,title,content').eq('id',sessionId).maybeSingle();
   if(sq.error){alert('No se pudo cargar la sesión MAR: '+sq.error.message);return}
   const session=sq.data||{id:sessionId,title:'Sesión MAR',content:''};
   let blocks=seaResultBlocksFromContent(session.content);
   if(!blocks.length)blocks=[{label:'SESIÓN MAR',value:session.title||'Sesión MAR',line:session.title||'Sesión MAR'}];
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p><div class="info"><b>Un resultado por ejercicio o bloque.</b><br>Introduce los datos realizados en cada parte de la sesión. Puedes dejar en blanco los campos que no hayas medido.</div><div id="v76SeaBlocks">${blocks.map((b,i)=>`<section class="card staffDayCard mar seaResultBlock"><span class="tag">${i+1}</span><h3>${esc(b.label)}</h3><p class="muted">${esc(b.value)}</p><div class="plannerGrid"><label>Metros<input id="v76SeaMeters${i}" type="number" min="0"></label><label>Tiempo<input id="v76SeaTime${i}" placeholder="Ej. 18:42.5"></label><label>/500 medio<input id="v76SeaPace${i}" placeholder="Ej. 2:04.7"></label><label>PPM reales<input id="v76SeaSpm${i}" type="number" min="10" max="50"></label><label>RPE 1–10<input id="v76SeaRpe${i}" type="number" min="1" max="10"></label></div><label>Notas<textarea id="v76SeaNotes${i}" rows="2" placeholder="Técnica, viento, mar, incidencias…"></textarea></label></section>`).join('')}</div><button id="v76SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  blocks=blocks.map(b=>({...b,prescription:seaPrescription(b.value)}));
+  const blockHtml=blocks.map((b,bi)=>{
+    const p=b.prescription;
+    const rows=Array.from({length:p.count},(_,si)=>{
+      const fixedTime=p.fixedTimeSeconds!=null?seaSeriesTimeText(p.fixedTimeSeconds):'';
+      const fixedMeters=p.fixedDistanceM!=null?String(p.fixedDistanceM):'';
+      return `<tr><td class="seriesName">${p.count>1?`Serie ${si+1}`:'Resultado'}</td><td><input id="v77SeaTime_${bi}_${si}" inputmode="decimal" value="${esc(fixedTime)}" ${p.fixedTimeSeconds!=null?'readonly':''} placeholder="mm:ss"></td><td><input id="v77SeaMeters_${bi}_${si}" type="number" min="0" value="${esc(fixedMeters)}" ${p.fixedDistanceM!=null?'readonly':''} placeholder="m"></td><td><input id="v77SeaSpm_${bi}_${si}" type="number" min="10" max="50" placeholder="ppm"></td><td><input id="v77SeaPace_${bi}_${si}" class="seaAutoPace" readonly placeholder="Automático"></td></tr>`;
+    }).join('');
+    const fixedHint=p.fixedTimeSeconds!=null?`El tiempo está fijado por la planificación (${seaSeriesTimeText(p.fixedTimeSeconds)} por serie). Introduce metros y PPM; el ritmo /500 m se calcula solo.`:p.fixedDistanceM!=null?`La distancia está fijada por la planificación (${p.fixedDistanceM} m por serie). Introduce tiempo y PPM; el ritmo /500 m se calcula solo.`:`Introduce tiempo, metros y PPM; el ritmo /500 m se calcula automáticamente.`;
+    return `<section class="card staffDayCard mar seaResultBlock"><span class="tag">${bi+1}</span><h3>${esc(b.label)}</h3><p class="muted">${esc(b.value)}</p><p class="muted"><b>${esc(fixedHint)}</b></p><div class="tableWrap"><table class="seaSeriesTable"><thead><tr><th>Serie</th><th>Tiempo</th><th>Metros</th><th>PPM</th><th>Ritmo /500 m</th></tr></thead><tbody>${rows}</tbody></table></div><div class="seaBlockMeta"><label>RPE 1–10<input id="v77SeaRpe_${bi}" type="number" min="1" max="10"></label><label>Notas<textarea id="v77SeaNotes_${bi}" rows="2" placeholder="Técnica, viento, mar, incidencias…"></textarea></label></div></section>`;
+  }).join('');
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p><div class="info"><b>Resultados por serie.</b><br>Si la planificación marca 3×4 min, aparecen 3 series con 4:00 ya fijados. Tú introduces los datos reales y Row Training calcula el ritmo /500 m.</div><div id="v77SeaBlocks">${blockHtml}</div><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  blocks.forEach((b,bi)=>Array.from({length:b.prescription.count},(_,si)=>{
+    const timeEl=document.getElementById(`v77SeaTime_${bi}_${si}`),metersEl=document.getElementById(`v77SeaMeters_${bi}_${si}`);
+    if(timeEl&&!timeEl.readOnly)timeEl.addEventListener('input',()=>updateSeaSeriesPace(bi,si));
+    if(metersEl&&!metersEl.readOnly)metersEl.addEventListener('input',()=>updateSeaSeriesPace(bi,si));
+    updateSeaSeriesPace(bi,si);
+  }));
   const goBack=()=>{if(typeof backFn==='function')return backFn();return staffRegisterView()};
   staffSeaBack.onclick=goBack;
-  v76SaveSeaAll.onclick=async()=>{
-    v76SaveSeaAll.disabled=true;v76SaveSeaAll.textContent='Guardando…';
-    const rows=blocks.map((b,i)=>({
-      training_session_id:Number(sessionId),
-      exercise_name:b.line,
-      distance_m:document.getElementById('v76SeaMeters'+i).value?Number(document.getElementById('v76SeaMeters'+i).value):null,
-      time_text:document.getElementById('v76SeaTime'+i).value.trim()||null,
-      pace_500_text:document.getElementById('v76SeaPace'+i).value.trim()||null,
-      spm:document.getElementById('v76SeaSpm'+i).value?Number(document.getElementById('v76SeaSpm'+i).value):null,
-      rpe:document.getElementById('v76SeaRpe'+i).value?Number(document.getElementById('v76SeaRpe'+i).value):null,
-      notes:document.getElementById('v76SeaNotes'+i).value.trim()||null
-    }));
+  v77SaveSeaAll.onclick=async()=>{
+    v77SaveSeaAll.disabled=true;v77SaveSeaAll.textContent='Guardando…';
+    const rows=[];
+    blocks.forEach((b,bi)=>{
+      const p=b.prescription,rpe=document.getElementById(`v77SeaRpe_${bi}`).value,notes=document.getElementById(`v77SeaNotes_${bi}`).value.trim();
+      Array.from({length:p.count},(_,si)=>{
+        const timeEl=document.getElementById(`v77SeaTime_${bi}_${si}`),metersEl=document.getElementById(`v77SeaMeters_${bi}_${si}`),spmEl=document.getElementById(`v77SeaSpm_${bi}_${si}`),paceEl=document.getElementById(`v77SeaPace_${bi}_${si}`);
+        const userHasData=(p.fixedTimeSeconds!=null)?Boolean(metersEl.value||spmEl.value):(p.fixedDistanceM!=null)?Boolean(timeEl.value||spmEl.value):Boolean(timeEl.value||metersEl.value||spmEl.value);
+        if(!userHasData)return;
+        rows.push({training_session_id:Number(sessionId),exercise_name:p.count>1?`${b.line} · Serie ${si+1}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value?Number(spmEl.value):null,rpe:rpe?Number(rpe):null,notes:notes||null});
+      });
+    });
+    if(!rows.length){alert('Introduce al menos un resultado antes de guardar.');v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
     const q=await sb.from('sea_results').insert(rows);
-    if(q.error){alert(q.error.message);v76SaveSeaAll.disabled=false;v76SaveSeaAll.textContent='Guardar resultados MAR';return}
+    if(q.error){alert(q.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
     alert(`${rows.length} resultado${rows.length===1?'':'s'} MAR guardado${rows.length===1?'':'s'}`);goBack();
   };
 }
@@ -1841,9 +1883,8 @@ function raceEditor(){
  cancelRace.onclick=renderPlanDay; saveRace.onclick=async()=>{const q=await sb.from('competitions').insert({name:raceName.value.trim()||'Competición',competition_date:date,team_codes:[team],priority:racePriority.value,notes:raceNotes.value.trim()});if(q.error)alert(q.error.message);else renderPlanDay();};
 }
 function seaResultEditor(sessionId){
- const opts=MAR_LIBRARY.map(x=>`<option value="${x[0]}"></option>`).join('');
- planArea.innerHTML=`<div class="card seaCard"><h3>Resultado MAR</h3><p class="muted">Guarda un registro por ejercicio o bloque si quieres poder repetirlo y compararlo automáticamente semanas o meses después.</p><label>Ejercicio / bloque<input id="seaExercise" list="seaExerciseOptions" placeholder="Ej. Pirámide 20-22-24-26-28"><datalist id="seaExerciseOptions">${opts}</datalist></label><div class="plannerGrid"><label>Metros<input id="seaMeters" type="number"></label><label>Tiempo<input id="seaTime" placeholder="Ej. 18:42.5"></label><label>Parcial medio /500 m<input id="seaPace" placeholder="Ej. 2:04.7"></label><label>PPM reales<input id="seaSpm" type="number" min="10" max="50"></label></div><label>RPE 1–10<input id="seaRpe" type="number" min="1" max="10"></label><label>Notas<textarea id="seaNotes" rows="4" placeholder="Técnica, viento, mar, tripulación, incidencias…"></textarea></label><button id="saveSea" class="primary">Guardar resultado</button> <button id="cancelSea">Cancelar</button></div>`;
- cancelSea.onclick=renderPlanDay; saveSea.onclick=async()=>{const q=await sb.from('sea_results').insert({training_session_id:Number(sessionId),exercise_name:seaExercise.value.trim()||null,distance_m:seaMeters.value?Number(seaMeters.value):null,time_text:seaTime.value.trim()||null,pace_500_text:seaPace.value.trim()||null,spm:seaSpm.value?Number(seaSpm.value):null,rpe:seaRpe.value?Number(seaRpe.value):null,notes:seaNotes.value.trim()||null});if(q.error)alert(q.error.message);else renderPlanDay();};
+ const team=document.getElementById('planTeam')?.value||coachSelectedTeam,date=document.getElementById('planDate')?.value||localISODate();
+ return staffSeaResultForm(Number(sessionId),team,date,renderPlanDay);
 }
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
