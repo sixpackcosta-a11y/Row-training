@@ -122,3 +122,12 @@ Si `setup_v61.sql` ya está ejecutado, ejecutar solamente `setup_v68.sql`.
 - ERGO del sábado 12 abre correctamente la sesión 3×12' de ErgData y guarda la intención con su código propio.
 - Visuales: en estas dos semanas solo se muestran imágenes que se han dejado como suficientemente claras; el press de pecho sigue sin imagen antes que mostrar una guía dudosa.
 - `setup_v69.sql` incluye el ajuste de cardio de V68. Si no ejecutaste `setup_v68.sql`, ejecuta solo `setup_v69.sql` después de V61.
+
+## V70 · aviso automático de nuevas altas
+
+Con confirmación de email activada, Supabase no devuelve una sesión en el momento del registro. Por eso el aviso de alta de V69 podía no enviarse. V70 lo corrige: cuando la remera/remero confirma el correo y vuelve a Row Training, la app envía en segundo plano un aviso al entrenador sin bloquear la interfaz.
+
+- Destinatario: `REGISTRATION_NOTIFY_EMAIL` si existe en Vercel; si no, `ROWTRAINING_GMAIL_USER`.
+- El correo incluye nombre, email, equipo invitado y botón para abrir Row Training.
+- `notify_sent_at` evita correos duplicados aunque el usuario recargue la app.
+- Ejecutar `setup_v70.sql` después de `setup_v69.sql`.

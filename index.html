@@ -515,6 +515,18 @@ async function loadRegistrationState(){
     if(!q.error) currentRegistration=q.data||null;
   }catch(e){}
 }
+async function notifyPendingRegistration(){
+  try{
+    if(r==="coach" || !currentUser || !currentRegistration || currentRegistration.status!=="pending") return;
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session?.access_token) return;
+    await fetch('/api/registration-notify',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({full_name:currentRegistration.full_name||currentUserProfile?.full_name||currentUser.user_metadata?.full_name||'',requested_team:currentRegistration.requested_team||null})
+    });
+  }catch(e){}
+}
 async function loadPendingRegistrationCount(){
   pendingRegistrationCount=0;
   if(r!=="coach") return;
@@ -555,6 +567,7 @@ async function startApp(){
   refreshTeamSchedule();
   selected=getTodayIndex();
   draw(); render();
+  if(r!=="coach"&&currentRegistration?.status==="pending") setTimeout(()=>notifyPendingRegistration(),100);
   if(r!=="coach"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60")) setTimeout(()=>showQuickGuideModal(),250);
 }
 const savedKeep=localStorage.getItem("remo_keep_session");
