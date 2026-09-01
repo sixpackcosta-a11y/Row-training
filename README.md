@@ -88,3 +88,11 @@ Los correos propios de la app (aviso de nueva alta y bienvenida tras aprobación
 La contraseña de aplicación debe guardarse solo como variable de entorno de Vercel y nunca incluirse en GitHub.
 
 Los correos de confirmación y recuperación siguen perteneciendo a Supabase Auth. Para que también salgan como Row Training, configura en Supabase Authentication > SMTP la misma cuenta Gmail y pega las plantillas `email-confirmacion-supabase.html` y `email-restablecer-supabase.html`.
+
+
+## V66
+- Corrige el envío de bienvenida tras aprobar un alta (`coach_check_failed`).
+- La API usa la sesión autenticada y las políticas RLS de Supabase, sin depender de permisos directos de `service_role` sobre `user_roles`.
+- Añade botón **Reenviar bienvenida** en altas revisadas/aprobadas.
+- Refuerza el aviso de nueva inscripción con la clave pública de Supabase como fallback.
+- No requiere SQL nuevo.

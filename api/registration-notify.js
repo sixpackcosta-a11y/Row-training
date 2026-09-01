@@ -11,7 +11,7 @@ module.exports = async function handler(req,res){
     if(!token) return res.status(401).json({error:"missing_token"});
 
     const supabaseUrl=process.env.SUPABASE_URL || "https://bnvduwjisqosdjqypnvq.supabase.co";
-    const apiKey=process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+    const apiKey=process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
     if(!apiKey) return res.status(204).end();
 
     const vr=await fetch(`${supabaseUrl}/auth/v1/user`,{headers:{apikey:apiKey,Authorization:`Bearer ${token}`}});

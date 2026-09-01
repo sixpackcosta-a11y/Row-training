@@ -11,9 +11,8 @@ module.exports = async function handler(req,res){
     if(!token) return res.status(401).json({error:"missing_token"});
 
     const supabaseUrl=process.env.SUPABASE_URL || "https://bnvduwjisqosdjqypnvq.supabase.co";
-    const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const apiKey=process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || serviceKey;
-    if(!serviceKey || !apiKey) return res.status(503).json({error:"supabase_server_not_configured"});
+    const apiKey=process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
+    if(!apiKey) return res.status(503).json({error:"supabase_server_not_configured"});
 
     // 1) Verifica la sesión del usuario que llama.
     const vr=await fetch(`${supabaseUrl}/auth/v1/user`,{
@@ -22,24 +21,22 @@ module.exports = async function handler(req,res){
     if(!vr.ok) return res.status(401).json({error:"invalid_token"});
     const caller=await vr.json();
 
-    // 2) Solo un entrenador puede disparar el correo de bienvenida.
-    const roleUrl=`${supabaseUrl}/rest/v1/user_roles?user_id=eq.${encodeURIComponent(caller.id)}&role=eq.coach&select=role&limit=1`;
-    const rr=await fetch(roleUrl,{headers:{apikey:serviceKey,Authorization:`Bearer ${serviceKey}`}});
-    if(!rr.ok) return res.status(500).json({error:"coach_check_failed"});
-    const roles=await rr.json();
-    if(!Array.isArray(roles)||!roles.length) return res.status(403).json({error:"coach_only"});
-
+    // 2) Lee la solicitud con la sesión real del usuario.
+    // RLS ya limita el acceso: un entrenador puede ver las solicitudes y un remero solo la suya.
+    // Así evitamos depender de permisos directos de service_role sobre user_roles.
     const body=typeof req.body==="string"?JSON.parse(req.body||"{}"):req.body||{};
     const requestId=Number(body.request_id);
     if(!Number.isFinite(requestId)) return res.status(400).json({error:"invalid_request_id"});
 
-    // 3) Lee la solicitud ya aprobada desde servidor.
-    const reqUrl=`${supabaseUrl}/rest/v1/registration_requests?id=eq.${requestId}&select=id,full_name,email,status,assigned_team&limit=1`;
-    const qr=await fetch(reqUrl,{headers:{apikey:serviceKey,Authorization:`Bearer ${serviceKey}`}});
-    if(!qr.ok) return res.status(500).json({error:"request_lookup_failed"});
+    const reqUrl=`${supabaseUrl}/rest/v1/registration_requests?id=eq.${requestId}&select=id,user_id,full_name,email,status,assigned_team&limit=1`;
+    const qr=await fetch(reqUrl,{headers:{apikey:apiKey,Authorization:`Bearer ${token}`}});
+    if(!qr.ok){
+      const detail=await qr.text().catch(()=>"");
+      return res.status(qr.status===401||qr.status===403?403:500).json({error:"request_lookup_failed",message:detail||"No se pudo consultar la solicitud aprobada."});
+    }
     const rows=await qr.json();
     const reg=Array.isArray(rows)?rows[0]:null;
-    if(!reg) return res.status(404).json({error:"registration_not_found"});
+    if(!reg) return res.status(404).json({error:"registration_not_found",message:"No tienes acceso a esa solicitud o ya no existe."});
     if(reg.status!=="approved") return res.status(409).json({error:"registration_not_approved"});
     if(!reg.email) return res.status(409).json({error:"registration_has_no_email"});
 
