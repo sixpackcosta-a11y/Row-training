@@ -1,3 +1,4 @@
+const {sendRowTrainingMail}=require('../lib/mail');
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
 }
@@ -42,10 +43,10 @@ module.exports = async function handler(req,res){
     if(reg.status!=="approved") return res.status(409).json({error:"registration_not_approved"});
     if(!reg.email) return res.status(409).json({error:"registration_has_no_email"});
 
-    const resend=process.env.RESEND_API_KEY;
-    if(!resend) return res.status(503).json({error:"welcome_email_not_configured",message:"Falta RESEND_API_KEY en Vercel."});
+    if(!process.env.ROWTRAINING_GMAIL_USER || !process.env.ROWTRAINING_GMAIL_APP_PASSWORD){
+      return res.status(503).json({error:"welcome_email_not_configured",message:"Falta configurar Gmail de Row Training en Vercel."});
+    }
 
-    const from=process.env.WELCOME_FROM_EMAIL || process.env.REGISTRATION_FROM_EMAIL || "Row Training <onboarding@resend.dev>";
     const appUrl="https://rowtraining.vercel.app/";
     const helpUrl="https://rowtraining.vercel.app/?guia=1";
     const logoUrl="https://rowtraining.vercel.app/assets/club-pedregalejo.png";
@@ -87,19 +88,13 @@ module.exports = async function handler(req,res){
         </div>
       </div></body></html>`;
 
-    const send=await fetch("https://api.resend.com/emails",{
-      method:"POST",
-      headers:{Authorization:`Bearer ${resend}`,"Content-Type":"application/json"},
-      body:JSON.stringify({
-        from,
-        to:[reg.email],
-        subject:`Ya estás dentro · Row Training · ${team}`,
-        html
-      })
+    const info=await sendRowTrainingMail({
+      to:reg.email,
+      subject:`Ya estás dentro · Row Training · ${team}`,
+      html,
+      text:`Hola ${name}. Tu inscripción en Row Training ha sido aprobada y ya perteneces a ${team}. Abre la app: ${appUrl} · Guía: ${helpUrl}`
     });
-    const provider=await send.json().catch(()=>({}));
-    if(!send.ok) return res.status(502).json({error:"welcome_email_failed",message:provider.message||"Resend rechazó el envío."});
-    return res.status(200).json({ok:true,id:provider.id||null});
+    return res.status(200).json({ok:true,id:info.messageId||null,provider:"gmail"});
   }catch(e){
     return res.status(500).json({error:"welcome_email_failed",message:e?.message||"Error enviando bienvenida"});
   }

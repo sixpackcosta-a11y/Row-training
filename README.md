@@ -75,3 +75,16 @@ V62 no requiere SQL nuevo si `setup_v61.sql` ya fue ejecutado.
 - Bloqueo contra sincronizaciones simultáneas y timeout para evitar que la interfaz quede esperando indefinidamente.
 - Protección frente a carreras de render entre Historial y Perfil.
 - Botón Sincronizar ahora muestra estado mientras trabaja.
+
+
+## V65 · correo Gmail de Row Training
+
+Los correos propios de la app (aviso de nueva alta y bienvenida tras aprobación) salen ahora por Gmail SMTP usando:
+
+- `ROWTRAINING_GMAIL_USER`
+- `ROWTRAINING_GMAIL_APP_PASSWORD`
+- `REGISTRATION_NOTIFY_EMAIL` (opcional; si falta, el aviso de alta llega a `ROWTRAINING_GMAIL_USER`)
+
+La contraseña de aplicación debe guardarse solo como variable de entorno de Vercel y nunca incluirse en GitHub.
+
+Los correos de confirmación y recuperación siguen perteneciendo a Supabase Auth. Para que también salgan como Row Training, configura en Supabase Authentication > SMTP la misma cuenta Gmail y pega las plantillas `email-confirmacion-supabase.html` y `email-restablecer-supabase.html`.

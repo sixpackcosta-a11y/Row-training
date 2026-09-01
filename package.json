@@ -1,0 +1,9 @@
+{
+  "name": "row-training",
+  "private": true,
+  "version": "65.0.0",
+  "description": "Row Training · Club de Remo Pedregalejo",
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}
