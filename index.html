@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V100</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V101</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -185,6 +185,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V100 · cumplimiento por sesiones + móvil */
 .complianceTableV100{width:100%;border-collapse:collapse}.complianceTableV100 td,.complianceTableV100 th{padding:10px 8px;text-align:left}.complianceBadgeV100{display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:1rem}.motivationIconV100{font-size:1.35rem}.teamComplianceCardsV100{display:none}.teamComplianceCardV100{border:1px solid #dbe5ef;border-radius:14px;padding:12px;margin:9px 0;background:#fff}.teamComplianceTopV100{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.teamComplianceNameV100{font-weight:850;line-height:1.2}.teamComplianceMetaV100{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:9px 0}.teamComplianceCardV100 .openAthlete{width:100%;margin-top:4px}.rowerMotivationV100{display:flex;align-items:center;gap:10px;margin:8px 0 2px}.rowerMotivationV100 .motivationIconV100{font-size:1.7rem}.rowerMotivationTextV100{font-weight:800}.progressTrack{position:relative}.progressFill{transition:width .35s ease}.complianceLine{margin-top:8px}
 @media(max-width:700px){.complianceTableWrapV100{display:none!important}.teamComplianceCardsV100{display:block}.weeklyCompliance{padding:14px}.compliancePercent{font-size:1.6rem}.rowerMotivationV100{align-items:flex-start}.athleteWeekSummary{display:block}}
+</style>
+
+<style id="v101style">
+.dueProgressV101{margin-top:8px;padding:8px 10px;border-radius:10px;background:#eef6ff;color:#344b65;font-size:.9rem}.dueProgressV101 b{color:#0b1830}
 </style>
 </head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
@@ -1138,7 +1142,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="100";
+const APP_VERSION="101";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -2963,11 +2967,11 @@ function v100Motivation(percent,expected,completed){
   return {icon:'🎯',text:'Tu próxima sesión cuenta'};
 }
 function v79ComplianceForAthlete(userId,sessions,workouts,gymRows,c2Rows,start,end){
-  const cutoff=v100ComplianceCutoff(end);
-  const plans=(sessions||[]).filter(s=>s.session_date>=start&&s.session_date<=cutoff&&(s.session_type==='GYM'||s.session_type==='ERG')).sort((a,b)=>a.session_date.localeCompare(b.session_date));
+  const today=localISODate();
+  const plans=(sessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&(s.session_type==='GYM'||s.session_type==='ERG')).sort((a,b)=>a.session_date.localeCompare(b.session_date));
   const ws=(workouts||[]).filter(w=>w.user_id===userId);
   const c2=(c2Rows||[]).filter(x=>x.user_id===userId);
-  let expected=0,completed=0;
+  let expected=0,completed=0,dueExpected=0,dueCompleted=0;
   const details=[];
   for(const s of plans){
     expected+=1;
@@ -2975,19 +2979,22 @@ function v79ComplianceForAthlete(userId,sessions,workouts,gymRows,c2Rows,start,e
     if(s.session_type==='GYM'){
       done=ws.some(w=>String(w.session_type||'').toLowerCase()==='gym'&&v79WorkoutDate(w)===s.session_date&&String(w.status||'completed').toLowerCase()==='completed');
     }else{
-      done=ws.some(w=>String(w.session_type||'').toLowerCase()==='ergo'&&v79WorkoutDate(w)===s.session_date&&String(w.status||'completed').toLowerCase()==='completed');
+      done=ws.some(w=>['ergo','erg'].includes(String(w.session_type||'').toLowerCase())&&v79WorkoutDate(w)===s.session_date&&String(w.status||'completed').toLowerCase()==='completed');
       if(!done)done=c2.some(x=>String(x.workout_date||'').slice(0,10)===s.session_date);
     }
     if(done)completed+=1;
-    details.push({date:s.session_date,type:s.session_type==='ERG'?'ERGO':'GYM',title:s.title,done:done?1:0,total:1});
+    const due=s.session_date<=today;
+    if(due){dueExpected+=1;if(done)dueCompleted+=1;}
+    details.push({date:s.session_date,type:s.session_type==='ERG'?'ERGO':'GYM',title:s.title,done:done?1:0,total:1,due});
   }
-  completed=Math.min(completed,expected);
-  return {expected,completed,percent:expected?Math.round(completed*100/expected):null,details,cutoff};
+  completed=Math.min(completed,expected);dueCompleted=Math.min(dueCompleted,dueExpected);
+  return {expected,completed,percent:expected?Math.round(completed*100/expected):null,dueExpected,dueCompleted,duePercent:dueExpected?Math.round(dueCompleted*100/dueExpected):null,details};
 }
 function v79ComplianceHtml(c,small=false){
-  if(!c||!c.expected)return `<div class="rowerMotivationV100"><span class="motivationIconV100">📅</span><span class="muted">Aún no hay sesiones GYM/ERGO que deban estar completadas en este periodo.</span></div>`;
+  if(!c||!c.expected)return `<div class="rowerMotivationV100"><span class="motivationIconV100">📅</span><span class="muted">No hay sesiones GYM/ERGO planificadas esta semana.</span></div>`;
   const pct=Math.max(0,Math.min(100,c.percent||0)),m=v100Motivation(pct,c.expected,c.completed);
-  return `<div class="complianceLine"><div class="compliancePercent">${pct}%</div><div class="progressTrack" aria-label="Cumplimiento ${pct}%"><div class="progressFill" style="width:${pct}%"></div></div><div><b>${c.completed}/${c.expected}</b> sesiones completadas${small?'':' hasta hoy'}</div></div><div class="rowerMotivationV100"><span class="motivationIconV100">${m.icon}</span><span class="rowerMotivationTextV100">${m.text}</span></div>`;
+  const dueText=c.dueExpected?`<div class="dueProgressV101">⏱️ <b>Al día:</b> ${c.dueCompleted}/${c.dueExpected} sesiones realizadas hasta hoy${c.duePercent!=null?` · ${c.duePercent}%`:''}</div>`:'';
+  return `<div class="complianceLine"><div class="compliancePercent">${pct}%</div><div class="progressTrack" aria-label="Progreso semanal ${pct}%"><div class="progressFill" style="width:${pct}%"></div></div><div><b>${c.completed}/${c.expected}</b> sesiones de la semana completadas</div></div>${dueText}<div class="rowerMotivationV100"><span class="motivationIconV100">${m.icon}</span><span class="rowerMotivationTextV100">${m.text}</span></div>`;
 }
 async function loadRowerWeekCompliance(start,end){
   const box=document.getElementById('rowerWeekCompliance'); if(!box||!currentUser||!currentTeamCode)return;
@@ -3001,7 +3008,7 @@ async function loadRowerWeekCompliance(start,end){
     const err=ss.error||ww.error||gg.error||cc.error; if(err)throw err;
     const c=v79ComplianceForAthlete(currentUser.id,ss.data||[],ww.data||[],gg.data||[],cc.data||[],start,end);
     if(!document.getElementById('rowerWeekCompliance'))return;
-    box.innerHTML=`<b>Cumplimiento semanal</b>${v79ComplianceHtml(c)}<div class="muted" style="margin-top:6px">Cada sesión GYM y cada sesión ERGO cuentan como 1. Solo se cuentan sesiones cuya fecha ya ha llegado. MAR se registra como resultado del equipo y no entra en este porcentaje.</div>`;
+    box.innerHTML=`<b>Cumplimiento semanal</b>${v79ComplianceHtml(c)}<div class="muted" style="margin-top:6px">El porcentaje principal muestra el progreso sobre todas las sesiones GYM/ERGO de la semana. “Al día” compara solo las sesiones cuya fecha ya ha llegado. MAR se registra como resultado del equipo y no entra en este porcentaje.</div>`;
   }catch(e){box.innerHTML='<span class="muted">No se pudo calcular el cumplimiento semanal.</span>';}
 }
 
@@ -3130,7 +3137,7 @@ async function results(){
     athSel.innerHTML=ats.length?ats.map(a=>`<option value="${a.user_id}" ${a.user_id===selectedAthlete?'selected':''}>${esc(a.full_name||'Sin nombre')}</option>`).join(''):'<option value="">Sin remeros</option>';
     const teamSessions=sessions.filter(s=>s.team_code===team);
     const rows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,weekStart,end)}));
-    teamBox.innerHTML=`<h3>Cumplimiento semanal del equipo</h3><p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. Solo se contabilizan sesiones cuya fecha ya ha llegado; MAR queda fuera del porcentaje.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} sesiones`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} sesiones`:'Sin sesiones vencidas'}</b><span class="muted">${m.text}</span></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
+    teamBox.innerHTML=`<h3>Cumplimiento semanal del equipo</h3><p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. El porcentaje muestra el progreso sobre la semana completa; el detalle “Al día” usa solo las sesiones cuya fecha ya ha llegado. MAR queda fuera.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} semana · ${c.dueExpected?`${c.dueCompleted}/${c.dueExpected} al día`:'sin vencidas'}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} de la semana`:'Sin sesiones'}${c.dueExpected?` · ${c.dueCompleted}/${c.dueExpected} al día`:''}</b><span class="muted">${m.text}</span></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
     teamBox.querySelectorAll('.openAthlete').forEach(b=>b.onclick=()=>{selectedAthlete=b.dataset.user;athSel.value=selectedAthlete;renderAthlete();detail.scrollIntoView({behavior:'smooth',block:'start'})});
     renderAthlete();
   }
