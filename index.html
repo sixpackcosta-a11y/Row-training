@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V94</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V99</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -161,6 +161,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 /* V98 · calendario mensual remero interactivo */
 .athMonthSess{cursor:pointer!important;text-align:left;width:100%;border:0!important;display:block}.athMonthSess:hover{outline:2px solid #8bbcf4}.athMonthSess.mar{cursor:default!important}.athMonthSess.test{font-weight:900;background:#fff3cd!important;color:#7c4a00!important}.athMonthDetail{margin-top:14px}.athMonthDetail .detailCard{background:#fff;border:1px solid #dbe5ef;border-radius:16px;padding:16px}.athMonthDetail pre{white-space:pre-wrap;font-family:inherit;line-height:1.45;margin:10px 0 0}.athMonthClose{float:right}.athleteTwoMonths .miniSess{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.athleteTwoMonths .miniSess.openable{cursor:pointer}.athleteTwoMonths .miniSess.openable:hover{filter:brightness(.97);outline:2px solid #9bc7f5}.athleteTwoMonths .miniSess.test{background:#fff3cd;color:#7c4a00;font-weight:850}
+
+.athWorkoutDetail{display:grid;gap:8px;margin-top:14px}.athWorkoutLine{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:10px;padding:10px 12px;border:1px solid #dbe5ef;border-radius:10px;background:#f8fafc;line-height:1.35}.athWorkoutLine b{color:#0b1830}.athWorkoutPlain{display:block}.detailCard .muted{margin-bottom:8px}@media(max-width:600px){.athWorkoutLine{grid-template-columns:1fr;gap:3px}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -1130,7 +1132,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="97";
+const APP_VERSION="99";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -2549,7 +2551,10 @@ function athleteMonthCalendarHtmlV98(ym,sessions=[],comps=[]){
 }
 function athleteMonthDetailHtmlV98(x){
  const isTest=/test/i.test(String(x.title||''));
- return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">Cerrar</button><div class="tag">${esc(x.session_type||'Entrenamiento')}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||'Entrenamiento')}</h3><div class="muted">${shortDateES(x.session_date)}</div><pre>${esc(x.content||'Sin contenido disponible.')}</pre></div>`;
+ const raw=String(x.content||'').trim();
+ const lines=raw?raw.split(/\n+/).map(v=>v.trim()).filter(Boolean):[];
+ const body=lines.length?`<div class="athWorkoutDetail">${lines.map(line=>{const m=line.match(/^([^·:]{2,35})\s*[·:]\s*(.+)$/);return m?`<div class="athWorkoutLine"><b>${esc(m[1])}</b><span>${esc(m[2])}</span></div>`:`<div class="athWorkoutLine athWorkoutPlain">${esc(line)}</div>`}).join('')}</div>`:'<div class="info">Este entrenamiento todavía no tiene una prescripción detallada.</div>';
+ return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">Cerrar</button><div class="tag">${esc(x.session_type||'Entrenamiento')}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||'Entrenamiento')}</h3><div class="muted">${shortDateES(x.session_date)}</div>${body}</div>`;
 }
 async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;

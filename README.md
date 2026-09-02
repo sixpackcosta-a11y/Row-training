@@ -1,13 +1,16 @@
-# Row Training V98
+# Row Training V99
 
-Corrección de la vista mensual del remero.
-
-## Cambios
-- El calendario de Mes sigue mostrando mes actual + siguiente.
-- GYM, ERGO y TEST ahora son pulsables y abren el entrenamiento completo.
-- Los TEST quedan destacados.
-- MAR solo muestra que existe sesión, sin revelar el contenido.
-- No requiere SQL adicional respecto a V97.
+## Corrección principal
+- La vista mensual del remero abre GYM, ERGO y TEST con contenido real y ordenado.
+- V99 actualiza las sesiones automáticas ya existentes que quedaron con textos genéricos.
+- ERGO incluye calentamiento, bloques, recuperación, ppm/zona, vuelta a la calma y RPE.
+- GYM incluye ejercicios concretos, dosis, descansos y RIR.
+- Las sesiones creadas manualmente por entrenadores no se modifican.
+- MAR continúa mostrando solo que existe sesión, sin revelar el contenido.
 
 ## Instalación
-Reemplaza los archivos del UPDATE, commit `V98` y Push origin normal.
+1. Ejecutar `setup_v99.sql` (o copiar `COPIAR_SQL_V99.txt`) en Supabase SQL Editor.
+2. Debe devolver Success.
+3. Después copiar los archivos del ZIP UPDATE a la raíz del repositorio.
+4. Commit `V99` y Push origin normal.
+5. Esperar a Vercel Ready.
