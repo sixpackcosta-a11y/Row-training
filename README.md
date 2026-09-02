@@ -1,31 +1,20 @@
-# Row Training V89
+# Row Training V91
 
-Versión de consolidación y limpieza de interfaz posterior a V88.
+Versión acumulativa: incluye V90 y añade la revisión visual de GYM con fichas de ejecución INICIO / FINAL.
 
 ## Instalación
+1. Ejecuta `setup_v91.sql` en Supabase → SQL Editor.
+2. En iPhone también se incluye `COPIAR_SQL_V91.txt`, con exactamente el mismo SQL, para abrirlo directamente desde Archivos y copiarlo sin instalar ninguna app.
+3. Si Supabase devuelve Success, sube los archivos del ZIP UPDATE al repositorio.
+4. Commit y Push origin normal. Espera a Vercel Ready.
 
-1. Ejecuta **`setup_v89.sql`** en Supabase → SQL Editor. Es acumulativo e idempotente; sustituye los ajustes necesarios de V88 para esta versión.
-2. Sube los archivos del ZIP UPDATE a la raíz del repositorio.
-3. Commit y **Push origin normal**. No uses force push.
-4. Espera a que Vercel marque **Ready**.
+## V91
+- Mantiene la planificación completa 2026–27, simulaciones y semanas de regata de V90.
+- Mantiene multiequipo, tiempos MAR con autoformato, biblioteca avanzada y vista semanal del entrenador.
+- Fichas visuales GYM revisadas para mostrar INICIO y FINAL en los ejercicios nuevos/principales.
+- Nuevas ilustraciones específicas para step-up, curl femoral, gemelos, face pull, bird dog y crunch en polea.
+- Se reutilizan las ilustraciones INICIO/FINAL ya existentes y coherentes para zancadas, press de hombro, remo unilateral, farmer carry, planchas y elevación de rodillas.
 
-## Cambios principales
 
-- Vista **Semana del entrenador** compacta: resumen por día y botón **Ver detalle**, sin meter todos los bloques en siete columnas. En móvil se apila por días.
-- Limpieza de **Equipo / Roles**: contadores separados, mejor sangría, “Equipo técnico” en castellano, códigos internos discretos y nombres/correos en lugar de UUID cuando están disponibles.
-- Bibliotecas MAR/GYM con filtros responsivos que ya no se montan sobre el buscador, contadores visuales y opción **Solo favoritas**.
-- Corregida la categoría **Viradas / ciaboga**, que antes podía quedar dentro de Técnica por contener la palabra “técnica”.
-- GYM: duración estimada visible y recalculada al añadir, quitar o modificar ejercicios.
-- GYM: nombres de grupos más comprensibles (espalda y bíceps, pecho/hombro/tríceps, manos/antebrazos) con iconos discretos para no sobrecargar la pantalla.
-- Biblioteca compartida: **Favorita** y **Ocultar para mí** son preferencias personales; **Archivar/Desarchivar** queda solo para el administrador.
-- Todas las plantillas base MAR y GYM se guardan también en `training_library`, por lo que el administrador puede archivarlas igual que las creadas posteriormente.
-- Cada elemento muestra **autor, fecha y hora**; las plantillas base figuran como **Sistema**.
-- Antes de archivar, la app comprueba planificación futura de los equipos que lleva el usuario y avisa dónde se está utilizando. Archivar no modifica sesiones ya planificadas ni históricos.
-- Registro MAR móvil: entrada rápida de tiempos sin escribir dos puntos: `523 → 5:23`, `1058 → 10:58`, `58 → 0:58`; teclado numérico, avance a la siguiente serie y diseño de series adaptado a móvil.
-- Se mantiene la gestión dinámica de equipos, las altas por equipo, las bibliotecas, ErgData/Concept2 y el resto de funciones previas.
-
-## Archivado
-
-- **Administrador:** puede archivar y desarchivar cualquier elemento, incluido el contenido base del sistema.
-- **Entrenadores:** pueden marcar Favorita y Ocultar para mí sin afectar a otros.
-- Las archivadas se consultan con el filtro **Archivadas** y pueden recuperarse.
+## CORRECCIÓN SQL
+La V91 usa `rower_team_memberships` para las pertenencias de remeros. Se usa un nombre independiente para evitar colisiones con tablas antiguas llamadas `team_memberships` que puedan existir en Supabase. Si una ejecución anterior de V91 falló en la línea de `team_memberships`, vuelve a ejecutar `setup_v91.sql` completo: es acumulativo e idempotente.
