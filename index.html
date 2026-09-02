@@ -156,8 +156,11 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V93 · editor real de COMBINADOS */
 .mixEditGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.mixEditPanel{border:1px solid #d8e3ef;border-radius:16px;padding:14px;background:#f8fbff}.mixEditHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.mixEditHead>div{flex:1}.mixTitleInput{margin:8px 0 0!important;font-weight:800}.mixSortable{display:flex;flex-direction:column;gap:8px}.mixEditRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid #dbe5ef;border-radius:12px;padding:8px}.mixEditRow.dragging{opacity:.45}.mixEditRow.dragOver{outline:2px solid #1687ff}.dragHandle{font-size:20px;color:#718096;cursor:grab;text-align:center;user-select:none}.mixLineInput{margin:0!important;min-height:48px;resize:vertical}.mixRowActions{display:grid;grid-template-columns:repeat(2,38px);gap:4px}.mixRowActions button{padding:7px 5px;min-width:0}.stickySaveMix{position:sticky;bottom:0;background:#fff;padding:12px 0 4px;margin-top:14px;border-top:1px solid #e5edf5;z-index:3}@media(max-width:800px){.mixEditGrid{grid-template-columns:1fr}.mixEditRow{grid-template-columns:24px minmax(0,1fr)}.mixRowActions{grid-column:2;display:flex;flex-wrap:wrap}.mixRowActions button{min-width:44px}.mixEditHead{flex-direction:column}.mixEditHead button{width:100%}}
 
-/* V97 */
+/* V98 */
 .athleteTwoMonths{grid-template-columns:repeat(2,minmax(0,1fr))!important}.athleteTwoMonths .coachDay{min-height:92px}.athleteTwoMonths .miniSess{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.athleteTwoMonths .race{font-weight:800}.bootAuth{min-height:160px}@media(max-width:850px){.athleteTwoMonths{grid-template-columns:1fr!important}}
+
+/* V98 · calendario mensual remero interactivo */
+.athMonthSess{cursor:pointer!important;text-align:left;width:100%;border:0!important;display:block}.athMonthSess:hover{outline:2px solid #8bbcf4}.athMonthSess.mar{cursor:default!important}.athMonthSess.test{font-weight:900;background:#fff3cd!important;color:#7c4a00!important}.athMonthDetail{margin-top:14px}.athMonthDetail .detailCard{background:#fff;border:1px solid #dbe5ef;border-radius:16px;padding:16px}.athMonthDetail pre{white-space:pre-wrap;font-family:inherit;line-height:1.45;margin:10px 0 0}.athMonthClose{float:right}.athleteTwoMonths .miniSess{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.athleteTwoMonths .miniSess.openable{cursor:pointer}.athleteTwoMonths .miniSess.openable:hover{filter:brightness(.97);outline:2px solid #9bc7f5}.athleteTwoMonths .miniSess.test{background:#fff3cd;color:#7c4a00;font-weight:850}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -2534,20 +2537,36 @@ function autoRepeatedHtml(rows){
  if(!rep.length)return '<p class="muted">Cuando repitas una misma sesión MAR con el mismo título, aparecerá aquí automáticamente su evolución.</p>';
  return rep.map(([k,a])=>{a.sort((x,y)=>x.session.session_date.localeCompare(y.session.session_date));const first=a[0],last=a[a.length-1];return `<div class="repeatGroup"><b>${last.exercise_name||last.session.title}</b> · ${a.length} veces<div>${first.session.session_date} → ${last.session.session_date} · /500 ${first.pace_500_text||'—'} → ${last.pace_500_text||'—'} <span class="${paceDeltaLabel(last.pace_500_text,first.pace_500_text).startsWith('-')?'deltaGood':'deltaBad'}">${paceDeltaLabel(last.pace_500_text,first.pace_500_text)}</span> · PPM ${first.spm??'—'} → ${last.spm??'—'}</div></div>`}).join('');
 }
+function athleteMonthCalendarHtmlV98(ym,sessions=[],comps=[]){
+ const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate();
+ const first=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7; let html='';
+ for(let i=0;i<first;i++)html+='<div class="coachDay out" aria-hidden="true"></div>';
+ for(let d=1;d<=days;d++){
+   const ds=`${ym}-${String(d).padStart(2,'0')}`,xs=sessions.filter(x=>x.session_date===ds),cs=comps.filter(x=>x.competition_date===ds);
+   html+=`<div class="coachDay ${xs.some(x=>x.session_type==='MAR')?'hasMar':''}"><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${xs.map(x=>{const isMar=x.session_type==='MAR';const isTest=/test/i.test(String(x.title||''));const label=isMar?'MAR · Sesión de mar':`${x.session_type||''} · ${esc((x.title||x.session_type||'Entrenamiento').replace(/^ERG\s*[·:\-]?\s*/i,'').replace(/^GYM\s*[·:\-]?\s*/i,''))}`;return `<div class="miniSess ${isMar?'mar':'openable'} ${isTest?'test':''}" ${isMar?'':`data-ath-session="${x.id}" title="Toca para ver el entrenamiento"`}>${label}</div>`}).join('')}</div>`;
+ }
+ return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
+}
+function athleteMonthDetailHtmlV98(x){
+ const isTest=/test/i.test(String(x.title||''));
+ return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">Cerrar</button><div class="tag">${esc(x.session_type||'Entrenamiento')}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||'Entrenamiento')}</h3><div class="muted">${shortDateES(x.session_date)}</div><pre>${esc(x.content||'Sin contenido disponible.')}</pre></div>`;
+}
 async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
   const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Aquí puedes anticipar GYM, ERGO, tests y competiciones. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div></div>';
+  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>';
   const [ss,cc]=await Promise.all([
     sb.from('training_sessions').select('*').eq('team_code',currentTeamCode).gte('session_date',start).lte('session_date',end).order('session_date'),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
   ]);
   if(tab!=="mes")return;
-  const sessions=(ss.error?[]:(ss.data||[])).map(x=>x.session_type==='MAR'?{...x,title:'Sesión de mar',content:''}:x);
+  const sessions=(ss.error?[]:(ss.data||[]));
   const comps=cc.error?[]:(cc.data||[]);
   const box=document.getElementById('athMonthV96'); if(!box)return;
-  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'view',[])}</section>`}).join('')}</div>`;
+  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b))}</section>`}).join('')}</div>`;
+  const detail=document.getElementById('athMonthDetailV98');
+  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
 }
 
 async function coachSeaResultsView(){
@@ -3033,16 +3052,18 @@ async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
   const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Aquí puedes anticipar GYM, ERGO, tests y competiciones. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div></div>';
+  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>';
   const [ss,cc]=await Promise.all([
     sb.from('training_sessions').select('*').eq('team_code',currentTeamCode).gte('session_date',start).lte('session_date',end).order('session_date'),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
   ]);
   if(tab!=="mes")return;
-  const sessions=(ss.error?[]:(ss.data||[])).map(x=>x.session_type==='MAR'?{...x,title:'Sesión de mar',content:''}:x);
+  const sessions=(ss.error?[]:(ss.data||[]));
   const comps=cc.error?[]:(cc.data||[]);
   const box=document.getElementById('athMonthV96'); if(!box)return;
-  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'view',[])}</section>`}).join('')}</div>`;
+  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b))}</section>`}).join('')}</div>`;
+  const detail=document.getElementById('athMonthDetailV98');
+  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
 }
 
 async function coachSeaResultsView(){
