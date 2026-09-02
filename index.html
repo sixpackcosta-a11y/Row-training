@@ -155,6 +155,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 /* V93 · editor real de COMBINADOS */
 .mixEditGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.mixEditPanel{border:1px solid #d8e3ef;border-radius:16px;padding:14px;background:#f8fbff}.mixEditHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.mixEditHead>div{flex:1}.mixTitleInput{margin:8px 0 0!important;font-weight:800}.mixSortable{display:flex;flex-direction:column;gap:8px}.mixEditRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid #dbe5ef;border-radius:12px;padding:8px}.mixEditRow.dragging{opacity:.45}.mixEditRow.dragOver{outline:2px solid #1687ff}.dragHandle{font-size:20px;color:#718096;cursor:grab;text-align:center;user-select:none}.mixLineInput{margin:0!important;min-height:48px;resize:vertical}.mixRowActions{display:grid;grid-template-columns:repeat(2,38px);gap:4px}.mixRowActions button{padding:7px 5px;min-width:0}.stickySaveMix{position:sticky;bottom:0;background:#fff;padding:12px 0 4px;margin-top:14px;border-top:1px solid #e5edf5;z-index:3}@media(max-width:800px){.mixEditGrid{grid-template-columns:1fr}.mixEditRow{grid-template-columns:24px minmax(0,1fr)}.mixRowActions{grid-column:2;display:flex;flex-wrap:wrap}.mixRowActions button{min-width:44px}.mixEditHead{flex-direction:column}.mixEditHead button{width:100%}}
+
+/* V96 */
+.athleteTwoMonths{grid-template-columns:repeat(2,minmax(0,1fr))!important}.athleteTwoMonths .coachDay{min-height:92px}.athleteTwoMonths .miniSess{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.athleteTwoMonths .race{font-weight:800}.bootAuth{min-height:160px}@media(max-width:850px){.athleteTwoMonths{grid-template-columns:1fr!important}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -173,7 +176,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .rowerTeamSwitch{margin-top:6px;max-width:250px;background:#fff;color:#0b1830;border-radius:9px;padding:6px 8px}.libraryCard{transition:.15s ease}.libraryAccordion[open]>.libraryCards{padding:12px}.gymLegendV90{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.zoneLegendItem{display:flex!important;align-items:center;gap:8px!important;padding:7px 9px!important}.zoneLegendItem svg{width:30px;height:42px;flex:0 0 auto}.zoneBase{fill:#e9eef5;stroke:#8aa0b8;stroke-width:1.5}.zoneHi{fill:#ffb24a;opacity:.9}.libraryCard.detailCard{padding:18px}.libraryAccordion[open] summary{background:#f7f9fc}.rowerMemberships{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.membershipTag{display:inline-flex;align-items:center;gap:7px;background:#edf4fb;border:1px solid #d6e2ee;border-radius:10px;padding:7px 9px}.raceSim{border-left:5px solid #f59e0b;background:#fff8ea}.seasonNotice{background:#fff8e7;border:1px solid #f3d28f;border-radius:12px;padding:10px 12px;margin:10px 0}
 </style>
 </head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s</small></div></div><div id="userHead" style="text-align:right"><b id="userName">Usuario</b><small id="role" style="display:block;opacity:.8"></small></div></header><main>
-<div id="login" class="card"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
+<div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
+<div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
 <div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
 <div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
@@ -1123,7 +1127,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="93";
+const APP_VERSION="96";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -1215,9 +1219,11 @@ async function loadPendingRegistrationCount(){
     }
   }catch(e){}
 }
+let appStartingV96=false;
 async function startApp(){
+  if(appStartingV96)return; appStartingV96=true;
   await loadTeamsV88(false);
-  const {data:{user}}=await sb.auth.getUser();if(!user)return;currentUser=user;
+  const {data:{user}}=await sb.auth.getUser();if(!user){appStartingV96=false;openLogin();return;}currentUser=user;
   const [roleRes,profileRes,staffRes,membershipRes]=await Promise.all([
     sb.from("user_roles").select("role").eq("user_id",user.id).single(),
     sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle(),
@@ -1235,13 +1241,14 @@ async function startApp(){
   const saved=localStorage.getItem(`rowtraining_mode_${user.id}`);
   currentMode=(saved==="athlete"&&hasRowerMode())?"athlete":(saved==="staff"&&hasStaffMode())?"staff":hasStaffMode()?"staff":"athlete";
   r=currentMode==="staff"?"coach":"athlete";
-  login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
+  bootAuth?.classList.add("hidden");login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
   renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
   setTimeout(()=>checkForAppUpdate(),1200);
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
+  appStartingV96=false;
 }
 
 const savedKeep=localStorage.getItem("remo_keep_session");
@@ -1250,7 +1257,7 @@ if(savedKeep!==null) keepSession.checked=savedKeep==="1";
 const REG_TEAM_PARAM=new URLSearchParams(location.search).get("team");
 let REG_TEAM_VALID=(REG_TEAM_PARAM&&/^[a-z0-9_-]{2,40}$/i.test(REG_TEAM_PARAM))?REG_TEAM_PARAM:null;
 function hideAuthPanels(){
-  login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");
+  bootAuth?.classList.add("hidden");login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");
 }
 function openForgotPassword(){
   hideAuthPanels();forgotPassword.classList.remove("hidden");forgotEmail.value=(u.value||"").trim();resetRequestStatus.className="saveStatus hidden";
@@ -1263,7 +1270,7 @@ function openRegister(){
   if(REG_TEAM_VALID){inviteTeamBox.classList.remove("hidden");inviteTeamBox.innerHTML=`<b>Invitación para:</b> ${teamLabel(REG_TEAM_VALID)}<br><small>El entrenador confirmará la asignación antes de activar el acceso al equipo.</small>`}
   else inviteTeamBox.classList.add("hidden");
 }
-function openLogin(){register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");login.classList.remove("hidden")}
+function openLogin(){bootAuth?.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.add("hidden");login.classList.remove("hidden")}
 function publicGuideHtml(){return `<h2>Guía de Row Training</h2><p class="muted">Primer acceso, zonas de FC, GYM, ErgData/Concept2 y uso diario.</p><div class="guideSteps">
 <div class="guideStep"><b>1 · Instalar la app</b><b>iPhone/iPad:</b> abre Row Training en Safari → Compartir → Añadir a pantalla de inicio. <b>Android:</b> abre en Chrome → ⋮ → Instalar aplicación o Añadir a pantalla de inicio.</div>
 <div class="guideStep"><b>2 · Contraseña</b>Si la olvidas, en la pantalla de acceso pulsa <b>He olvidado mi contraseña</b>. Recibirás un enlace por email para crear una nueva sin intervención del entrenador.</div>
@@ -1329,10 +1336,7 @@ doRegister.onclick=async()=>{
     });
   }catch(e){}
 };
-loadTeamsV88(true).finally(()=>{
-  if(new URLSearchParams(location.search).get("registro")==="1") openRegister();
-  else if(new URLSearchParams(location.search).get("guia")==="1") openPublicGuide();
-});
+loadTeamsV88(true);
 
 window.addEventListener("pagehide",()=>{
   if(localStorage.getItem("remo_keep_session")==="0") sb.auth.signOut();
@@ -1357,7 +1361,19 @@ enter.onclick=async()=>{
   if(error) return alert("No se pudo iniciar sesión: "+error.message);
   startApp();
 };
-sb.auth.getSession().then(({data})=>{if(data.session){if(PASSWORD_RECOVERY_HINT) openResetPassword(); else startApp()}});
+let authResolvedV96=false;
+(async function resolveInitialAuthV96(){
+  try{
+    const {data,error}=await sb.auth.getSession();
+    authResolvedV96=true;
+    if(error)throw error;
+    if(data?.session){ if(PASSWORD_RECOVERY_HINT) openResetPassword(); else await startApp(); return; }
+    const q=new URLSearchParams(location.search);
+    if(q.get("registro")==="1") openRegister();
+    else if(q.get("guia")==="1") openPublicGuide();
+    else openLogin();
+  }catch(e){authResolvedV96=true;openLogin();}
+})();
 
 function draw(){
   let a;
@@ -1366,7 +1382,7 @@ function draw(){
     else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca"],["ayuda","Ayuda"],["salir","Salir"]];
     else a=[["hoy","Hoy"],["semana","Semana"],["registro","Registro MAR"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
-  else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+  else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
   nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return}tab=b.dataset.t;draw();render()});
 }
@@ -1374,6 +1390,7 @@ function title(x){if(x[2]==="MIX")return "MIX · GYM + ERGO";if(x[2]==="GYM")ret
 function render(){
   refreshTeamSchedule();
   if(tab==="pendiente")return pendingRegistrationView();if(tab==="ayuda")return helpView();
+  if(currentMode==="athlete"&&tab==="mes")return athleteMonthViewV96();
   if(currentMode==="staff"){
     if(tab==="hoy")return staffTodayView();if(tab==="semana")return coachWeekView();if(tab==="registro")return staffRegisterView();
     if(tab==="equipo"&&isGlobalCoach)return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return registrationsView();
@@ -2098,9 +2115,13 @@ async function checkForAppUpdate(){
     if(!r.ok)return;
     const v=await r.json();
     if(v?.version && String(v.version)!==APP_VERSION){
+      const target=String(v.version);
+      const key=`rowtraining_reload_${target}`;
+      if(sessionStorage.getItem(key)==="1") return;
+      sessionStorage.setItem(key,"1");
       const u=new URL(location.href);
-      u.searchParams.set("appv",String(v.version));
-      location.replace(u.toString());
+      u.searchParams.set("appv",target);
+      setTimeout(()=>location.replace(u.toString()),800);
     }
   }catch(e){}
 }
@@ -2513,6 +2534,22 @@ function autoRepeatedHtml(rows){
  if(!rep.length)return '<p class="muted">Cuando repitas una misma sesión MAR con el mismo título, aparecerá aquí automáticamente su evolución.</p>';
  return rep.map(([k,a])=>{a.sort((x,y)=>x.session.session_date.localeCompare(y.session.session_date));const first=a[0],last=a[a.length-1];return `<div class="repeatGroup"><b>${last.exercise_name||last.session.title}</b> · ${a.length} veces<div>${first.session.session_date} → ${last.session.session_date} · /500 ${first.pace_500_text||'—'} → ${last.pace_500_text||'—'} <span class="${paceDeltaLabel(last.pace_500_text,first.pace_500_text).startsWith('-')?'deltaGood':'deltaBad'}">${paceDeltaLabel(last.pace_500_text,first.pace_500_text)}</span> · PPM ${first.spm??'—'} → ${last.spm??'—'}</div></div>`}).join('');
 }
+async function athleteMonthViewV96(){
+  if(currentMode!=="athlete"||!currentTeamCode)return;
+  const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
+  const [start]=monthBounds(curr), [,end]=monthBounds(next);
+  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Aquí puedes anticipar GYM, ERGO, tests y competiciones. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div></div>';
+  const [ss,cc]=await Promise.all([
+    sb.from('training_sessions').select('*').eq('team_code',currentTeamCode).gte('session_date',start).lte('session_date',end).order('session_date'),
+    sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
+  ]);
+  if(tab!=="mes")return;
+  const sessions=(ss.error?[]:(ss.data||[])).map(x=>x.session_type==='MAR'?{...x,title:'Sesión de mar',content:''}:x);
+  const comps=cc.error?[]:(cc.data||[]);
+  const box=document.getElementById('athMonthV96'); if(!box)return;
+  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'view',[])}</section>`}).join('')}</div>`;
+}
+
 async function coachSeaResultsView(){
  if(r!=="coach")return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
  let ym='2026-09', selected=[], view='season';
@@ -2992,6 +3029,22 @@ function autoRepeatedHtml(rows){
   if(!rep.length)return '<p class="muted">Cuando un mismo ejercicio aparezca en dos días distintos, se mostrará aquí aunque las sesiones contengan otros ejercicios diferentes.</p>';
   return rep.map(a=>{a.sort((x,y)=>x.date.localeCompare(y.date));const first=a[0],last=a[a.length-1],delta=(first.pace!=null&&last.pace!=null)?last.pace-first.pace:null;return `<div class="repeatGroup"><b>${esc(last.name)}</b> · ${a.length} días<div>${shortDateES(first.date)} → ${shortDateES(last.date)} · /500 ${fmtMetricSeconds(first.pace)} → ${fmtMetricSeconds(last.pace)} ${delta!=null?`<span class="${delta<0?'deltaGood':delta>0?'deltaBad':''}">${delta>0?'+':''}${delta.toFixed(1)} s/500</span>`:''} · PPM ${first.spm!=null?first.spm.toFixed(1):'—'} → ${last.spm!=null?last.spm.toFixed(1):'—'}</div></div>`}).join('');
 }
+async function athleteMonthViewV96(){
+  if(currentMode!=="athlete"||!currentTeamCode)return;
+  const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
+  const [start]=monthBounds(curr), [,end]=monthBounds(next);
+  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Aquí puedes anticipar GYM, ERGO, tests y competiciones. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div></div>';
+  const [ss,cc]=await Promise.all([
+    sb.from('training_sessions').select('*').eq('team_code',currentTeamCode).gte('session_date',start).lte('session_date',end).order('session_date'),
+    sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
+  ]);
+  if(tab!=="mes")return;
+  const sessions=(ss.error?[]:(ss.data||[])).map(x=>x.session_type==='MAR'?{...x,title:'Sesión de mar',content:''}:x);
+  const comps=cc.error?[]:(cc.data||[]);
+  const box=document.getElementById('athMonthV96'); if(!box)return;
+  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'view',[])}</section>`}).join('')}</div>`;
+}
+
 async function coachSeaResultsView(){
   if(r!=="coach")return;
   const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
