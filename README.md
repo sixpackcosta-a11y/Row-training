@@ -1,3 +1,14 @@
+# Row Training V100
+
+Corrección de cumplimiento semanal y diseño móvil.
+
+- Cumplimiento cuenta sesiones: GYM=1, ERGO=1.
+- Solo cuenta sesiones cuya fecha ya ha llegado.
+- MAR no entra.
+- Indicador visual motivacional para el remero.
+- Tabla del equipo se convierte en tarjetas en móvil; botón Analizar ya no se sale.
+- No requiere SQL nuevo sobre V99.
+
 # Row Training V99
 
 ## Corrección principal
