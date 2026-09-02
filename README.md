@@ -1,4 +1,4 @@
-# Row Training V85
+# Row Training V87
 
 Cambios principales respecto a V84:
 
@@ -19,3 +19,24 @@ Cambios principales respecto a V84:
 Para la cuenta de entrenador global que ya podía crear elementos de `training_library`, V85 puede funcionar sin SQL nuevo.
 
 Se incluye `setup_v85.sql` para dejar formalizados los permisos de la biblioteca también para entrenadores de equipo. Es recomendable ejecutarlo una vez si se van a dar permisos de edición de biblioteca a otros entrenadores.
+
+
+## V86
+- Biblioteca MAR ampliada con 18 sesiones completas y más bloques.
+- Biblioteca GYM ampliada con core, planchas, abdominales, unilateral, agarre y espalda.
+- Sesiones GYM completas reutilizables.
+- Creador GYM manual o con ayuda por duración, objetivos y carga, con duración estimada en vivo.
+- Creador MAR con ayuda por duración, objetivo, carga y parcial medio /500 m para estimar bloques por metros.
+- Las propuestas son editables antes de guardarlas.
+- Incluye `setup_v86.sql`: ejecútalo una vez para permisos de biblioteca de entrenadores y para permitir que un remero rechazado vuelva a solicitar el alta sin crear otra cuenta.
+
+- Corrige el estado de solicitudes rechazadas: ya no se muestran como pendientes y pueden reactivarse desde la propia app.
+
+
+## V87
+- Los entrenadores de equipo con `team_staff_roles.staff_role = 'coach'` pueden ver, aprobar y rechazar las altas dirigidas a sus propios equipos.
+- Un entrenador de equipo no puede aprobar remeros para equipos que no entrena.
+- Las solicitudes del enlace general quedan reservadas al entrenador administrador/global para evitar que dos entrenadores se apropien de la misma solicitud.
+- Los ayudantes no pueden gestionar altas.
+- El correo de bienvenida sigue enviándose tras la aprobación.
+- Ejecuta `setup_v87.sql` una vez en Supabase. Es idempotente e incluye también los ajustes SQL necesarios de V86.
