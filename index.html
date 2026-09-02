@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V82</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V85</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -94,7 +94,7 @@ header{background:linear-gradient(90deg,var(--club),#0b3557)}
 .coachDay{min-height:112px;border:1px solid #dbe5ef;border-radius:12px;background:#fff;padding:7px;text-align:left;overflow:hidden;position:relative}
 button.coachDay{width:100%;font:inherit;color:inherit}
 .coachDay.out{opacity:.35;background:#f8fafc}.coachDay.hasMar{border-color:#7cc6cf}.coachDay.hasResult{background:#eef9f8;border-color:#168c8b}.coachDay.selectedCompare{outline:3px solid #f0b400;background:#fff8db}.coachDay.selectedEdit{outline:3px solid #0b3557}
-.coachDayNum{font-weight:900;margin-bottom:5px}.miniSess{font-size:.72rem;line-height:1.25;margin:3px 0;padding:3px 5px;border-radius:6px;background:#eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.miniSess.mar{background:#e8f7f7}.miniSess.race{background:#fff0ef}.miniResult{font-size:.70rem;line-height:1.25;color:#065f5f;margin-top:4px;font-weight:700}
+.coachDayNum{font-weight:900;margin-bottom:5px}.miniSess{font-size:.72rem;line-height:1.25;margin:3px 0;padding:3px 5px;border-radius:6px;background:#eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.miniSess.mar{background:#e8f7f7}.miniSess.race{background:#fff0ef}.miniSess[draggable="true"]{cursor:grab}.miniSess.dragging{opacity:.45}.coachDay.dragOver{outline:3px dashed #0b5ed7;outline-offset:-3px;background:#eef6ff}.miniResult{font-size:.70rem;line-height:1.25;color:#065f5f;margin-top:4px;font-weight:700}
 .compareTray{position:relative;background:#fffaf0;border:1px solid #f3d37a;border-radius:14px;padding:12px;margin:14px 0}.compareCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px}.compareCard{border:1px solid #e3e9f0;border-radius:11px;padding:10px;background:white}.deltaGood{color:#087f5b;font-weight:800}.deltaBad{color:#b42318;font-weight:800}.repeatGroup{border-top:1px solid #e3e9f0;padding-top:10px;margin-top:12px}
 .clubGymImg{background:#fff;border:1px solid #e5e7eb;border-radius:12px;object-fit:contain!important}
 @media(max-width:700px){.coachCalendar{gap:3px}.coachDay{min-height:84px;padding:5px}.miniSess{font-size:.62rem;padding:2px 3px}.miniResult{font-size:.61rem}.coachDow{font-size:.66rem}.coachDayNum{font-size:.85rem}.coachMonthBar .monthTitle{min-width:120px}.compareCards{grid-template-columns:1fr 1fr}}
@@ -131,6 +131,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .systemGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
 .systemStat{border:1px solid #dbe5ef;border-radius:14px;padding:14px;background:#f8fafc}
 .systemStat strong{display:block;font-size:1.7rem;margin-top:4px}
+
+/* V85 · bibliotecas ERGO / MAR / GYM y sesiones MAR completas */
+.libraryTop{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.libraryTop button{font-weight:800}.librarySectionHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.libraryCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.libraryCard{border:1px solid #dbe5ef;border-radius:14px;padding:13px;background:#fff}.libraryCard h3{margin:6px 0}.libraryCard .actions{margin-top:10px}.libraryCategory{margin-top:18px}.libraryCategory>h3{margin-bottom:6px}.inlineCheck{display:flex;gap:8px;align-items:center;margin:10px 0}.inlineCheck input{width:auto;margin:0}.marBuilder{border:1px solid #cfe5ff;background:#f7fbff;border-radius:14px;padding:12px;margin:12px 0}.marBuilder textarea{min-height:220px}.libraryBadge{display:inline-block;border-radius:999px;padding:4px 8px;background:#eef4fb;font-size:.72rem;font-weight:850}.libraryBadge.aux{background:#fff6dd}.libraryBadge.session{background:#e8f7f7}.libraryBadge.gym{background:#f2ebff}.libraryNote{font-size:.88rem;color:#52657a}.libraryCard pre{white-space:pre-wrap;font-family:inherit;margin:8px 0}.libraryForm{max-width:820px}.libraryForm .plannerGrid{align-items:end}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}</style>
 
@@ -446,7 +449,12 @@ const ERGO_LIBRARY_DEFAULTS=[
  {code:"UT1-2X2000-24",zone:"UT1",name:"UT1 · 2×2000 m @24 · rec 4'",teams:"senior",phases:"development,precomp",url:"https://workout.ergdata.com/shared/6ie64y6v"},
  {code:"UT1-2X12-22",zone:"UT1",name:"UT1 · 2×12' @22 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/andz4pbf"},
  {code:"UT1AT-PROG28",zone:"UT1-AT",name:"UT1-AT · 28' progresivo · 20→28 ppm",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/qjlppccd"},
- {code:"UT1AT-3X1500",zone:"UT1-AT",name:"UT1-AT · 3×(500@22 + 500@24 + 500@26) · rec 4'",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/mhfsanvv"}
+ {code:"UT1AT-3X1500",zone:"UT1-AT",name:"UT1-AT · 3×(500@22 + 500@24 + 500@26) · rec 4'",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/mhfsanvv"},
+ {code:"UT2-45-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 45' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-60-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 60' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-3X15-20",zone:"UT2 · EXTRA",name:"Opcional Senior · 3×15' @20 ppm · rec 3'",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-2X20-20",zone:"UT2 · EXTRA",name:"Opcional Senior · 2×20' @20 ppm · rec 4'",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-4X12-2022",zone:"UT2 · EXTRA",name:"Opcional Senior · 4×12' @20–22 ppm · rec 3'",teams:"senior",phases:"development",url:null}
 ];
 function currentPhase(){
  const m=new Date().getMonth()+1;
@@ -458,8 +466,11 @@ function currentPhase(){
 }
 async function loadErgoLibrary(){
  let rows=[]; try{const q=await sb.from("ergo_library").select("*").order("zone").order("name"); if(!q.error) rows=q.data||[];}catch(e){}
- if(!rows.length) rows=ERGO_LIBRARY_DEFAULTS.map(x=>({...x,is_active:true}));
- return rows;
+ const byCode=new Map(rows.map(x=>[x.code,x]));
+ // Mezcla la biblioteca guardada con las sesiones incluidas en la versión.
+ // Así, las nuevas sesiones aparecen aunque ya existan registros antiguos en Supabase.
+ return ERGO_LIBRARY_DEFAULTS.map(d=>({...d,is_active:true,...(byCode.get(d.code)||{})}))
+   .concat(rows.filter(x=>!ERGO_LIBRARY_DEFAULTS.some(d=>d.code===x.code)));
 }
 async function ergoLibrary(){
  const rows=await loadErgoLibrary(); const coach=r==="coach"; const phase=currentPhase(); const team=teamKey()==="veterans"?"veterans":"senior";
@@ -468,11 +479,103 @@ async function ergoLibrary(){
  if(coach) document.querySelectorAll(".saveLib").forEach(b=>b.onclick=async()=>{const code=b.dataset.code,x=rows.find(z=>z.code===code); const url=document.querySelector(`.libUrl[data-code="${code}"]`).value.trim(); const teams=document.querySelector(`.libTeam[data-code="${code}"]`).value; const phases=document.querySelector(`.libPhases[data-code="${code}"]`).value.trim(); const payload={code,name:x.name,zone:x.zone,url:url||null,teams,phases,is_active:true,updated_at:new Date().toISOString()}; const q=await sb.from("ergo_library").upsert(payload,{onConflict:"code"}); if(q.error) alert("No se pudo guardar: "+q.error.message); else {b.textContent="Guardado ✓";setTimeout(()=>b.textContent="Guardar",1200)}});
  if(!coach) document.querySelectorAll(".extraErgo").forEach(a=>a.onclick=async()=>{const x=rows.find(z=>z.code===a.dataset.code); try{await sb.from("ergo_intents").upsert({user_id:currentUser.id,scheduled_date:localISODate(),session_code:"EXTRA-"+x.code,session_name:x.name,ergdata_url:x.url,status:"additional"},{onConflict:"user_id,scheduled_date,session_code"});}catch(e){}});
 }
+
+function libraryNavHtml(){
+  return `<div class="card"><div class="librarySectionHead"><div><h2 style="margin:0">Biblioteca de entrenamientos</h2><p class="muted" style="margin:5px 0 0">Prepara y edita contenidos sin asignarlos todavía a ningún día.</p></div><div class="libraryTop"><button data-libsec="ERGO" class="${coachLibrarySection==='ERGO'?'active':''}">ERGO</button><button data-libsec="MAR" class="${coachLibrarySection==='MAR'?'active':''}">MAR</button><button data-libsec="GYM" class="${coachLibrarySection==='GYM'?'active':''}">GYM</button></div></div></div>`;
+}
+function wireLibraryNav(){document.querySelectorAll('[data-libsec]').forEach(b=>b.onclick=()=>{coachLibrarySection=b.dataset.libsec;coachLibraryView()})}
+function stripLibraryPrefix(name){return String(name||'').replace(/^(SESIÓN|SESION|CALENTAMIENTO|RECUPERACIÓN|RECUPERACION|VUELTA A LA CALMA|TRABAJO|EJERCICIO)\s*·\s*/i,'').trim()}
+function marCategoryFromName(name){const n=String(name||'');if(/^SESIÓN\s*·/i.test(n)||/^SESION\s*·/i.test(n))return 'session';if(/^CALENTAMIENTO\s*·/i.test(n))return 'warmup';if(/^RECUPERACI[ÓO]N\s*·/i.test(n))return 'recovery';if(/^VUELTA A LA CALMA\s*·/i.test(n))return 'cooldown';return 'work'}
+function marCategoryLabel(cat){return ({warmup:'Calentamiento',work:'Trabajo',recovery:'Recuperación',cooldown:'Vuelta a la calma',session:'Sesión completa'})[cat]||'Trabajo'}
+function marStoredName(cat,name){const p=({warmup:'CALENTAMIENTO',work:'TRABAJO',recovery:'RECUPERACIÓN',cooldown:'VUELTA A LA CALMA',session:'SESIÓN'})[cat]||'TRABAJO';return `${p} · ${String(name||'').trim()}`}
+function marDefaultSessionContent(){return `CALENTAMIENTO · 12 min · 16–20 ppm progresivo + movilidad/activación\nRECUPERACIÓN · 2 min · valor por defecto entre bloques; editar si procede\nVUELTA A LA CALMA · 8–10 min · 15–18 ppm muy suave`}
+function marInsertBeforeAux(text,line){const lines=String(text||'').split(/\n/).map(x=>x.trim()).filter(Boolean);let i=lines.findIndex(x=>/^(RECUPERACI[ÓO]N|VUELTA A LA CALMA)\s*[·:]/i.test(x));if(i<0)i=lines.length;lines.splice(i,0,line);return lines.join('\n')}
+const MAR_BLOCK_DEFAULTS=[
+ {key:'warm-12',category:'warmup',name:'Calentamiento general 12 min',content:'CALENTAMIENTO · 12 min · 16–20 ppm progresivo + movilidad/activación'},
+ {key:'tech-3x4',category:'work',name:'Técnica 3×4 min',content:'TÉCNICA · 3×4 min a 15–18 ppm · rec 1 min · entrada, salida de brazos, core y secuencia'},
+ {key:'start-6x15',category:'work',name:'Salidas 6×15 paladas',content:'SALIDAS · 6×15 paladas · recuperación 45–60 s · salida propia del equipo'},
+ {key:'turn-6',category:'work',name:'Virada-Ciaboga 6 rep',content:'VIRADA-CIABOGA · 6 repeticiones · recuperación 60 s · máxima calidad técnica'},
+ {key:'base-2x7',category:'work',name:'Base 2×7 min',content:'BASE · 2×7 min a 18–20 ppm · rec 2 min · presión uniforme y palada larga'},
+ {key:'base-3x10',category:'work',name:'Base 3×10 min',content:'BASE · 3×10 min a 18–20 ppm · rec 2 min · ritmo estable'},
+ {key:'pyr-20-28',category:'work',name:'Pirámide 20-22-24-26-28',content:'PIRÁMIDE · 3 min @20 + 3 min @22 + 3 min @24 + 3 min @26 + 3 min @28 ppm · continua, sin recuperación entre escalones'},
+ {key:'4x500',category:'work',name:'4×500 m',content:'SERIES · 4×500 m · ppm a decisión del entrenador · rec 2 min'},
+ {key:'6x700',category:'work',name:'6×700 m',content:'SERIES · 6×700 m · ppm a decisión del entrenador · rec 2 min'},
+ {key:'4x4',category:'work',name:'4×4 min',content:'SERIES · 4×4 min · ppm a decisión del entrenador · rec 2 min'},
+ {key:'rec-2',category:'recovery',name:'Recuperación 2 min',content:'RECUPERACIÓN · 2 min · remo muy suave o parada según el bloque'},
+ {key:'cool-8',category:'cooldown',name:'Vuelta a la calma 8–10 min',content:'VUELTA A LA CALMA · 8–10 min · 15–18 ppm muy suave'}
+];
+const MAR_SESSION_DEFAULTS=[
+ {key:'sess-base-tech',name:'Base + técnica',content:`CALENTAMIENTO · 12 min · 16–20 ppm progresivo + movilidad/activación\nTÉCNICA · 3×4 min a 15–18 ppm · rec 1 min · entrada, salida de brazos, core y secuencia\nBASE · 2×7 min a 18–20 ppm · rec 2 min · presión uniforme y palada larga\nRECUPERACIÓN · 2 min · entre bloques si hace falta\nVUELTA A LA CALMA · 8–10 min · 15–18 ppm muy suave`},
+ {key:'sess-rhythm',name:'Técnica + cambios de ritmo',content:`CALENTAMIENTO · 12 min · 16–20 ppm progresivo\nTÉCNICA · 3×4 min a 15–18 ppm · rec 1 min\nPIRÁMIDE · 3 min @20 + 3 min @22 + 3 min @24 + 3 min @26 + 3 min @28 ppm · continua\nSALIDAS · 6×15 paladas · recuperación 45–60 s\nRECUPERACIÓN · 2 min · entre bloques si hace falta\nVUELTA A LA CALMA · 8–10 min · 15–18 ppm muy suave`},
+ {key:'sess-turn-start',name:'Viradas + salidas',content:`CALENTAMIENTO · 12 min · 16–20 ppm progresivo\nTÉCNICA · 8 min · coordinación y entrada limpia\nVIRADA-CIABOGA · 6 repeticiones · recuperación 60 s · máxima calidad técnica\nSALIDAS · 6×15 paladas · recuperación 45–60 s\nRECUPERACIÓN · 2 min · entre bloques si hace falta\nVUELTA A LA CALMA · 8–10 min · 15–18 ppm muy suave`}
+];
+async function loadMarLibraryData(){
+  const custom=await getTrainingLibrary('MAR');
+  const customSessions=custom.filter(x=>marCategoryFromName(x.name)==='session').map(x=>({id:`db-${x.id}`,dbId:x.id,source:'custom',name:stripLibraryPrefix(x.name),content:x.content||'',category:'session'}));
+  const customBlocks=custom.filter(x=>marCategoryFromName(x.name)!=='session').map(x=>({id:`db-${x.id}`,dbId:x.id,source:'custom',name:stripLibraryPrefix(x.name),content:x.content||'',category:marCategoryFromName(x.name)}));
+  const byKey=new Map(customBlocks.map(x=>[`${x.category}|${x.name.toLowerCase()}`,x]));
+  const blocks=MAR_BLOCK_DEFAULTS.map(x=>byKey.get(`${x.category}|${x.name.toLowerCase()}`)||({...x,id:`def-${x.key}`,source:'default'}));
+  customBlocks.forEach(x=>{if(!MAR_BLOCK_DEFAULTS.some(d=>d.category===x.category&&d.name.toLowerCase()===x.name.toLowerCase()))blocks.push(x)});
+  const sessions=[...MAR_SESSION_DEFAULTS.map(x=>({...x,id:`def-${x.key}`,source:'default',category:'session'})),...customSessions];
+  return {blocks,sessions,custom};
+}
+function gymStructuredContent(item){return `DOSIS · ${item.dose||''}\nDESCANSO · ${item.rest||'—'}\nINDICACIONES · ${item.how||''}`}
+function parseGymDbRow(x){
+  let name=stripLibraryPrefix(x.name),txt=String(x.content||'');
+  const dose=(txt.match(/(?:^|\n)DOSIS\s*·\s*([^\n]+)/i)||[])[1]||(txt.match(/(\d+\s*[×x]\s*[^·\n]+)/i)||[])[1]||txt.split('\n')[0]||'';
+  const rest=(txt.match(/(?:^|\n)DESCANSO\s*·\s*([^\n]+)/i)||[])[1]||(txt.match(/(?:rec|descanso)\s*([^·\n]+)/i)||[])[1]||'—';
+  const how=(txt.match(/(?:^|\n)INDICACIONES\s*·\s*([^\n]+)/i)||[])[1]||txt;
+  return {dbId:x.id,source:'custom',name,dose:dose.trim(),rest:rest.trim(),how:how.trim(),content:txt};
+}
+function isGymExerciseDbRow(x){if(/^EJERCICIO\s*·/i.test(String(x.name||'')))return true;const n=(String(x.content||'').match(/\d+\s*[×x]/g)||[]).length;return n===1}
+async function loadGymExerciseLibrary(){
+  const db=await getTrainingLibrary('GYM');const custom=db.filter(isGymExerciseDbRow).map(parseGymDbRow);
+  const byName=new Map(custom.map(x=>[x.name.toLowerCase(),x]));
+  const defaults=allGymExercises().map((x,i)=>({...x,id:`def-gym-${i}`,source:'default'}));
+  const rows=defaults.map(x=>byName.get(x.name.toLowerCase())||x);
+  custom.forEach(x=>{if(!defaults.some(d=>d.name.toLowerCase()===x.name.toLowerCase()))rows.push(x)});return rows;
+}
+async function upsertTrainingLibraryItem(kind,dbId,name,content){
+  if(dbId)return sb.from('training_library').update({name,content,is_active:true,updated_at:new Date().toISOString()}).eq('id',dbId);
+  const existing=await sb.from('training_library').select('id').eq('kind',kind).eq('name',name).maybeSingle();
+  if(!existing.error&&existing.data?.id)return sb.from('training_library').update({content,is_active:true,updated_at:new Date().toISOString()}).eq('id',existing.data.id);
+  return sb.from('training_library').insert({kind,name,content,is_active:true,created_by:currentUser.id});
+}
+async function coachLibraryView(){
+  if(!hasAnyCoachTeam()){content.innerHTML='<div class="card"><h2>Biblioteca</h2><p>No tienes permisos de entrenador para editarla.</p></div>';return}
+  if(coachLibrarySection==='ERGO'){
+    await ergoLibrary();content.insertAdjacentHTML('afterbegin',libraryNavHtml());wireLibraryNav();return;
+  }
+  if(coachLibrarySection==='MAR')return coachMarLibraryView();
+  return coachGymLibraryView();
+}
+async function coachMarLibraryView(){
+  const data=await loadMarLibraryData();const cats=['warmup','work','recovery','cooldown'];
+  content.innerHTML=`${libraryNavHtml()}<div class="card"><div class="librarySectionHead"><div><h2>Biblioteca MAR</h2><p class="muted">Bloques reutilizables y sesiones completas. Calentamiento, recuperación y vuelta a la calma tienen tiempos por defecto, siempre editables.</p></div><div class="actions"><button id="newMarSession" class="primary">+ Sesión MAR completa</button><button id="newMarBlock">+ Bloque MAR</button></div></div><div class="libraryCategory"><h3>Sesiones completas</h3><div class="libraryCards">${data.sessions.map(x=>`<article class="libraryCard"><span class="libraryBadge session">SESIÓN COMPLETA</span><h3>${esc(x.name)}</h3>${trainingContentHtml(x.content,true)}<div class="actions"><button class="editMarSession" data-id="${x.id}">Editar</button><button class="dupMarSession" data-id="${x.id}">Duplicar</button>${x.source==='custom'?`<button class="deleteMarItem dangerBtn" data-db="${x.dbId}">Eliminar</button>`:''}</div></article>`).join('')}</div></div>${cats.map(cat=>`<div class="libraryCategory"><h3>${marCategoryLabel(cat)}</h3><div class="libraryCards">${data.blocks.filter(x=>x.category===cat).map(x=>`<article class="libraryCard"><span class="libraryBadge ${cat==='work'?'':'aux'}">${esc(marCategoryLabel(cat).toUpperCase())}</span><h3>${esc(x.name)}</h3>${trainingContentHtml(x.content,true)}<div class="actions"><button class="editMarBlock" data-id="${x.id}">Editar</button>${x.source==='custom'?`<button class="deleteMarItem dangerBtn" data-db="${x.dbId}">Eliminar</button>`:''}</div></article>`).join('')}</div></div>`).join('')}</div>`;
+  wireLibraryNav();newMarSession.onclick=()=>marSessionLibraryForm(null);newMarBlock.onclick=()=>marBlockLibraryForm(null);
+  document.querySelectorAll('.editMarSession').forEach(b=>b.onclick=()=>marSessionLibraryForm(data.sessions.find(x=>x.id===b.dataset.id)));
+  document.querySelectorAll('.dupMarSession').forEach(b=>b.onclick=async()=>{const x=data.sessions.find(z=>z.id===b.dataset.id);if(!x)return;const q=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',x.name+' · copia'),x.content);if(q.error)alert(q.error.message);else coachMarLibraryView()});
+  document.querySelectorAll('.editMarBlock').forEach(b=>b.onclick=()=>marBlockLibraryForm(data.blocks.find(x=>x.id===b.dataset.id)));
+  document.querySelectorAll('.deleteMarItem').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar este elemento de la biblioteca?'))return;const q=await sb.from('training_library').delete().eq('id',Number(b.dataset.db));if(q.error)alert(q.error.message);else coachMarLibraryView()});
+}
+async function marBlockLibraryForm(item){
+  const cat=item?.category||'work';content.innerHTML=`${libraryNavHtml()}<div class="card libraryForm"><button id="backMarLib">← Biblioteca MAR</button><h2>${item?'Editar':'Nuevo'} bloque MAR</h2><div class="plannerGrid"><label>Tipo<select id="marBlockCat"><option value="warmup" ${cat==='warmup'?'selected':''}>Calentamiento</option><option value="work" ${cat==='work'?'selected':''}>Trabajo</option><option value="recovery" ${cat==='recovery'?'selected':''}>Recuperación</option><option value="cooldown" ${cat==='cooldown'?'selected':''}>Vuelta a la calma</option></select></label><label>Nombre<input id="marBlockName" value="${esc(item?.name||'')}"></label></div><label>Contenido / dosis<textarea id="marBlockContent" rows="5">${esc(item?.content||'')}</textarea></label><button id="saveMarBlock" class="primary">Guardar en biblioteca</button></div>`;wireLibraryNav();backMarLib.onclick=coachMarLibraryView;saveMarBlock.onclick=async()=>{const name=marBlockName.value.trim(),body=marBlockContent.value.trim();if(!name||!body)return alert('Completa nombre y contenido.');const q=await upsertTrainingLibraryItem('MAR',item?.dbId||null,marStoredName(marBlockCat.value,name),body);if(q.error)alert(q.error.message);else coachMarLibraryView()};
+}
+async function marSessionLibraryForm(item){
+  const data=await loadMarLibraryData();const initial=item?.content||marDefaultSessionContent();content.innerHTML=`${libraryNavHtml()}<div class="card libraryForm"><button id="backMarLib">← Biblioteca MAR</button><h2>${item?'Editar':'Nueva'} sesión MAR completa</h2><label>Nombre<input id="marSessionName" value="${esc(item?.name||'')}"></label><div class="marBuilder"><p class="libraryNote"><b>Por defecto:</b> 12 min de calentamiento, 2 min de recuperación y 8–10 min de vuelta a la calma. Edita cualquier valor cuando lo necesites.</p><div class="plannerGrid"><label>Añadir bloque<select id="marSessionBlockPick"><option value="">— Elegir bloque —</option>${data.blocks.map(x=>`<option value="${x.id}">${marCategoryLabel(x.category)} · ${esc(x.name)}</option>`).join('')}</select></label><div><button id="addMarSessionBlock">Añadir al entrenamiento</button></div></div><label>Sesión completa<textarea id="marSessionContent">${esc(initial)}</textarea></label></div><button id="saveMarSession" class="primary">Guardar sesión en biblioteca</button></div>`;wireLibraryNav();backMarLib.onclick=coachMarLibraryView;addMarSessionBlock.onclick=()=>{const x=data.blocks.find(z=>z.id===marSessionBlockPick.value);if(!x)return;marSessionContent.value=marInsertBeforeAux(marSessionContent.value,x.content)};saveMarSession.onclick=async()=>{const name=marSessionName.value.trim(),body=marSessionContent.value.trim();if(!name||!body)return alert('Completa nombre y sesión.');const q=await upsertTrainingLibraryItem('MAR',item?.dbId||null,marStoredName('session',name),body);if(q.error)alert(q.error.message);else coachMarLibraryView()};
+}
+async function coachGymLibraryView(){
+  const rows=await loadGymExerciseLibrary();content.innerHTML=`${libraryNavHtml()}<div class="card"><div class="librarySectionHead"><div><h2>Biblioteca GYM</h2><p class="muted">Ejercicios reutilizables. Puedes editarlos aquí sin tener que crear primero un entrenamiento en un día concreto.</p></div><button id="newGymExercise" class="primary">+ Ejercicio GYM</button></div><div class="libraryCards">${rows.map((x,i)=>`<article class="libraryCard"><span class="libraryBadge gym">GYM</span><h3>${esc(x.name)}</h3><p><b>Dosis:</b> ${esc(x.dose||'—')}<br><b>Descanso:</b> ${esc(x.rest||'—')}</p>${x.how?`<p class="libraryNote">${esc(x.how)}</p>`:''}<div class="actions"><button class="editGymLib" data-i="${i}">Editar</button>${x.source==='custom'?`<button class="deleteGymLib dangerBtn" data-db="${x.dbId}">Eliminar</button>`:''}</div></article>`).join('')}</div></div>`;wireLibraryNav();newGymExercise.onclick=()=>gymLibraryForm(null);document.querySelectorAll('.editGymLib').forEach(b=>b.onclick=()=>gymLibraryForm(rows[Number(b.dataset.i)]));document.querySelectorAll('.deleteGymLib').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar este ejercicio de la biblioteca?'))return;const q=await sb.from('training_library').delete().eq('id',Number(b.dataset.db));if(q.error)alert(q.error.message);else coachGymLibraryView()});
+}
+function gymLibraryForm(item){
+  content.innerHTML=`${libraryNavHtml()}<div class="card libraryForm"><button id="backGymLib">← Biblioteca GYM</button><h2>${item?'Editar':'Nuevo'} ejercicio GYM</h2><label>Nombre<input id="gymLibName" value="${esc(item?.name||'')}"></label><div class="plannerGrid"><label>Dosis / series y repeticiones<input id="gymLibDose" value="${esc(item?.dose||'')}" placeholder="Ej. 3×8–10"></label><label>Descanso<input id="gymLibRest" value="${esc(item?.rest||'')}" placeholder="Ej. 90 s"></label></div><label>Indicaciones<textarea id="gymLibHow" rows="4">${esc(item?.how||'')}</textarea></label><button id="saveGymLib" class="primary">Guardar en biblioteca</button></div>`;wireLibraryNav();backGymLib.onclick=coachLibraryView;saveGymLib.onclick=async()=>{const name=gymLibName.value.trim();if(!name)return alert('Escribe un nombre.');const obj={dose:gymLibDose.value.trim(),rest:gymLibRest.value.trim(),how:gymLibHow.value.trim()};const q=await upsertTrainingLibraryItem('GYM',item?.dbId||null,`EJERCICIO · ${name}`,gymStructuredContent(obj));if(q.error)alert(q.error.message);else coachGymLibraryView()};
+}
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null;
 let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],currentMode="athlete";
 let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false,plannerTargetSessionId=null;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31";
+let coachLibrarySection="ERGO",gymEditorRows=[];
 
 const schedules={
   veterans:[
@@ -549,6 +652,9 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
+const APP_VERSION="85";
+const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
+let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 async function loadRegistrationState(){
@@ -643,6 +749,8 @@ async function startApp(){
   login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
   renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
+  setTimeout(()=>checkForAppUpdate(),1200);
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
 }
@@ -675,9 +783,9 @@ function publicGuideHtml(){return `<h2>Guía de Row Training</h2><p class="muted
 <div class="guideStep"><b>4 · Hoy y Semana</b>Comprueba qué sesión toca. Los martes el grupo puede dividirse entre GYM y ERGO y después intercambiar.</div>
 <div class="guideStep"><b>5 · GYM</b>Las series y repeticiones ya están prescritas. Registra principalmente el peso y marca Fácil / Bien / Duro. Si no completas lo indicado con técnica correcta, baja la carga. Puedes usar una alternativa cuando corresponda.</div>
 <div class="guideStep"><b>6 · Conectar Concept2</b>En Perfil → Concept2 / ErgData pulsa Conectar Concept2 y autoriza Row Training. Solo hace falta una vez. Row Training usa acceso de lectura a perfil y resultados; tu contraseña de Concept2 no pasa por la app.</div>
-<div class="guideStep"><b>7 · ERGO con ErgData</b>En el día ERGO pulsa Abrir entrenamiento en ErgData. En ErgData conecta el PM5 y realiza la sesión. Al terminar, deja que ErgData sincronice con tu Concept2 Online Logbook y después pulsa Sincronizar ahora en Row Training si fuera necesario.</div>
-<div class="guideStep"><b>8 · Resultados ERGO</b>Row Training intenta asociar automáticamente el resultado de Concept2 con la sesión programada. <b>Historial abre los datos ya guardados y no fuerza una sincronización</b>, para que la app siga fluida. Cuando quieras traer resultados nuevos usa Perfil → Sincronizar ahora. Si aparece como no programado, queda en el historial para revisión.</div>
-<div class="guideStep"><b>9 · MAR</b>El remero ve “Sesión de mar”. El contenido completo, las series y los resultados colectivos los gestiona el entrenador.</div>
+<div class="guideStep"><b>7 · ERGO con ErgData</b>En el día ERGO pulsa Abrir entrenamiento en ErgData. En ErgData conecta el PM5 y realiza la sesión. Al terminar, deja que ErgData sincronice con tu Concept2 Online Logbook. Al volver a Row Training, la app buscará automáticamente resultados nuevos.</div>
+<div class="guideStep"><b>8 · Resultados ERGO</b>Row Training sincroniza Concept2 automáticamente al abrir o volver a la app y también al entrar en Historial. Después intenta asociar el resultado con la sesión programada. El botón Perfil → Sincronizar ahora queda solo como respaldo manual. Si aparece como no programado, queda en el historial para revisión.</div>
+<div class="guideStep"><b>9 · MAR</b>El remero ve “Sesión de mar”. El contenido completo lo gestiona el entrenador; el registro MAR muestra solo los bloques de trabajo y observaciones.</div>
 <div class="guideStep"><b>10 · Al terminar</b>Marca completada / parcial / no realizada, esfuerzo y añade una nota cuando sea útil. En Historial puedes revisar tu evolución.</div>
 <div class="guideStep"><b>11 · Alta de equipo</b>Tras registrarte y confirmar el correo, un entrenador aprueba tu solicitud y te asigna al equipo. Después recibirás un correo de bienvenida con el acceso y estas instrucciones.</div>
 </div>`}
@@ -740,6 +848,17 @@ window.addEventListener("pagehide",()=>{
   if(localStorage.getItem("remo_keep_session")==="0") sb.auth.signOut();
 });
 
+// Al volver desde ErgData/Concept2, intenta traer el entrenamiento sin que el remero pulse nada.
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible")return;
+  checkForAppUpdate();
+  if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
+});
+window.addEventListener("focus",()=>{
+  checkForAppUpdate();
+  if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
+});
+
 enter.onclick=async()=>{
   enter.disabled=true;
   localStorage.setItem("remo_keep_session",keepSession.checked?"1":"0");
@@ -753,8 +872,8 @@ sb.auth.getSession().then(({data})=>{if(data.session){if(PASSWORD_RECOVERY_HINT)
 function draw(){
   let a;
   if(currentMode==="staff"){
-    if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["sistema","Sistema"],["biblioteca","Biblioteca ERGO"],["ayuda","Ayuda"],["salir","Salir"]];
-    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["ayuda","Ayuda"],["salir","Salir"]];
+    if(isGlobalCoach)a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["sistema","Sistema"],["biblioteca","Biblioteca"],["ayuda","Ayuda"],["salir","Salir"]];
+    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca"],["ayuda","Ayuda"],["salir","Salir"]];
     else a=[["hoy","Hoy"],["registro","Registro MAR"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else a=[["hoy","Hoy"],["semana","Semana"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
@@ -770,7 +889,7 @@ function render(){
     if(tab==="equipo"&&isGlobalCoach)return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return registrationsView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return coachSeaResultsView();}
-    if(tab==="biblioteca"&&isGlobalCoach)return ergoLibrary();return staffTodayView();
+    if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();return staffTodayView();
   }
   if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="perfil")profileView();else results();
 }
@@ -824,7 +943,7 @@ function seaResultBlocksFromContent(content){
   return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{
     const [label0,value0]=readableLabel(line);const label=(label0||'BLOQUE').trim(),value=(value0||line).trim();
     return {label,value,line:label0?`${label} · ${value}`:line};
-  }).filter(x=>!/^(duración objetivo|duracion objetivo|objetivo|carga)$/i.test(x.label));
+  }).filter(x=>!/(^|\b)(duración objetivo|duracion objetivo|objetivo|carga|calentamiento|recuperación|recuperacion|vuelta a la calma|observaciones?)\b/i.test(x.label));
 }
 function seaPrescription(value){
   const txt=String(value||'').replace(/×/g,'x').trim();
@@ -853,9 +972,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn){
   const sq=await sb.from('training_sessions').select('id,title,content').eq('id',sessionId).maybeSingle();
   if(sq.error){alert('No se pudo cargar la sesión MAR: '+sq.error.message);return}
   const session=sq.data||{id:sessionId,title:'Sesión MAR',content:''};
-  let blocks=seaResultBlocksFromContent(session.content);
-  if(!blocks.length)blocks=[{label:'SESIÓN MAR',value:session.title||'Sesión MAR',line:session.title||'Sesión MAR'}];
-  blocks=blocks.map(b=>({...b,prescription:seaPrescription(b.value)}));
+  let blocks=seaResultBlocksFromContent(session.content).map(b=>({...b,prescription:seaPrescription(b.value)}));
   const blockHtml=blocks.map((b,bi)=>{
     const p=b.prescription;
     const rows=Array.from({length:p.count},(_,si)=>{
@@ -864,9 +981,9 @@ async function staffSeaResultForm(sessionId,team,date,backFn){
       return `<tr><td class="seriesName">${p.count>1?`Serie ${si+1}`:'Resultado'}</td><td><input id="v77SeaTime_${bi}_${si}" inputmode="decimal" value="${esc(fixedTime)}" ${p.fixedTimeSeconds!=null?'readonly':''} placeholder="mm:ss"></td><td><input id="v77SeaMeters_${bi}_${si}" type="number" min="0" value="${esc(fixedMeters)}" ${p.fixedDistanceM!=null?'readonly':''} placeholder="m"></td><td><input id="v77SeaSpm_${bi}_${si}" type="number" min="10" max="50" placeholder="ppm"></td><td><input id="v77SeaPace_${bi}_${si}" class="seaAutoPace" readonly placeholder="Automático"></td></tr>`;
     }).join('');
     const fixedHint=p.fixedTimeSeconds!=null?`El tiempo está fijado por la planificación (${seaSeriesTimeText(p.fixedTimeSeconds)} por serie). Introduce metros y PPM; el ritmo /500 m se calcula solo.`:p.fixedDistanceM!=null?`La distancia está fijada por la planificación (${p.fixedDistanceM} m por serie). Introduce tiempo y PPM; el ritmo /500 m se calcula solo.`:`Introduce tiempo, metros y PPM; el ritmo /500 m se calcula automáticamente.`;
-    return `<section class="card staffDayCard mar seaResultBlock"><span class="tag">${bi+1}</span><h3>${esc(b.label)}</h3><p class="muted">${esc(b.value)}</p><p class="muted"><b>${esc(fixedHint)}</b></p><div class="tableWrap"><table class="seaSeriesTable"><thead><tr><th>Serie</th><th>Tiempo</th><th>Metros</th><th>PPM</th><th>Ritmo /500 m</th></tr></thead><tbody>${rows}</tbody></table></div><div class="seaBlockMeta"><label>Notas del bloque<textarea id="v77SeaNotes_${bi}" rows="2" placeholder="Técnica, viento, mar, incidencias…"></textarea></label></div></section>`;
+    return `<section class="card staffDayCard mar seaResultBlock"><span class="tag">${bi+1}</span><h3>${esc(b.label)}</h3><p class="muted">${esc(b.value)}</p><p class="muted"><b>${esc(fixedHint)}</b></p><div class="tableWrap"><table class="seaSeriesTable"><thead><tr><th>Serie</th><th>Tiempo</th><th>Metros</th><th>PPM</th><th>Ritmo /500 m</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   }).join('');
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p><div class="info"><b>Resultados por serie.</b><br>Si la planificación marca 3×4 min, aparecen 3 series con 4:00 ya fijados. Tú introduces los datos reales y Row Training calcula el ritmo /500 m.</div><div id="v77SeaBlocks">${blockHtml}</div><div class="card"><h3>Valoración global de la sesión</h3><p class="muted">Opcional. Si no rellenas el RPE, los resultados se guardan igualmente.</p><label style="max-width:260px;display:block">RPE global 1–10<input id="v78SeaGlobalRpe" type="number" min="1" max="10" placeholder="Opcional"></label></div><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p><div class="info"><b>Solo se registran los bloques de trabajo.</b><br>Calentamiento, recuperaciones y vuelta a la calma forman parte de la planificación, pero no aparecen aquí.</div>${blocks.length?`<div id="v77SeaBlocks">${blockHtml}</div>`:'<div class="info">Esta sesión no contiene bloques de trabajo registrables.</div>'}<label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label>${blocks.length?'<button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button>':''}</div>`;
   blocks.forEach((b,bi)=>Array.from({length:b.prescription.count},(_,si)=>{
     const timeEl=document.getElementById(`v77SeaTime_${bi}_${si}`),metersEl=document.getElementById(`v77SeaMeters_${bi}_${si}`);
     if(timeEl&&!timeEl.readOnly)timeEl.addEventListener('input',()=>updateSeaSeriesPace(bi,si));
@@ -875,16 +992,17 @@ async function staffSeaResultForm(sessionId,team,date,backFn){
   }));
   const goBack=()=>{if(typeof backFn==='function')return backFn();return staffRegisterView()};
   staffSeaBack.onclick=goBack;
+  if(!blocks.length)return;
   v77SaveSeaAll.onclick=async()=>{
     v77SaveSeaAll.disabled=true;v77SaveSeaAll.textContent='Guardando…';
-    const rows=[];
+    const rows=[],notes=document.getElementById('v85SeaObservations').value.trim();
     blocks.forEach((b,bi)=>{
-      const p=b.prescription,rpe=(document.getElementById('v78SeaGlobalRpe')?.value||''),notes=document.getElementById(`v77SeaNotes_${bi}`).value.trim();
+      const p=b.prescription;
       Array.from({length:p.count},(_,si)=>{
         const timeEl=document.getElementById(`v77SeaTime_${bi}_${si}`),metersEl=document.getElementById(`v77SeaMeters_${bi}_${si}`),spmEl=document.getElementById(`v77SeaSpm_${bi}_${si}`),paceEl=document.getElementById(`v77SeaPace_${bi}_${si}`);
         const userHasData=(p.fixedTimeSeconds!=null)?Boolean(metersEl.value||spmEl.value):(p.fixedDistanceM!=null)?Boolean(timeEl.value||spmEl.value):Boolean(timeEl.value||metersEl.value||spmEl.value);
         if(!userHasData)return;
-        rows.push({training_session_id:Number(sessionId),exercise_name:p.count>1?`${b.line} · Serie ${si+1}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value?Number(spmEl.value):null,rpe:rpe?Number(rpe):null,notes:notes||null});
+        rows.push({training_session_id:Number(sessionId),exercise_name:p.count>1?`${b.line} · Serie ${si+1}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value?Number(spmEl.value):null,rpe:null,notes:notes||null});
       });
     });
     if(!rows.length){alert('Introduce al menos un resultado antes de guardar.');v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
@@ -1005,9 +1123,12 @@ function showSessionIn(targetId,x){
   const el=document.getElementById(targetId);
   if(x[2]==="MIX"){
     const mixDate=scheduledDateFor(x);
-    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button></div></div>`;
+    const mixErgo=[x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"];
+    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button><button id="mixErgoManual">Registrar ERGO manualmente</button><label class="btn">📷 Foto / Galería<input id="mixErgoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
     openMixGym.onclick=()=>gym("M",x);
-    openMixErgo.onclick=()=>openErgDataFor([x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"]);
+    openMixErgo.onclick=()=>openErgDataFor(mixErgo);
+    mixErgoManual.onclick=()=>{const pr=ergoPrescription(mixErgo);currentErgoPrescription={...pr,scheduledDate:mixDate};showErgoForm();};
+    mixErgoPhotos.onchange=(e)=>{const files=[...(e.target.files||[])];if(files.length){const pr=ergoPrescription(mixErgo);currentErgoPrescription={...pr,scheduledDate:mixDate};showErgoForm(files);}};
   } else if(x[2]==="GYM"){
     el.innerHTML=`<div class="session">
       <h3>${title(x)}</h3>
@@ -1309,9 +1430,8 @@ function gym(k,x=null){
   };
 }
 
-async function history(){
-  // Historial debe abrir al instante con los datos ya guardados.
-  // La sincronización Concept2 se hace manualmente desde Perfil para no bloquear la navegación.
+async function history(opts={}){
+  // Historial abre primero los datos ya guardados y, en paralelo, busca nuevos resultados de Concept2.
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,session_date,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
@@ -1333,6 +1453,9 @@ async function history(){
     c2html+
     (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${w.session_date?shortDateES(w.session_date):new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
   '</div>';
+
+  // No bloquea la pantalla: si llegan resultados nuevos, Historial se repinta una sola vez.
+  if(!opts.skipAuto) autoSyncConcept2({refreshHistory:true});
 }
 
 function estimateMaxHR(age, sex, trained){
@@ -1438,6 +1561,40 @@ async function syncConcept2(showAlert=true){
   })();
   try{return await concept2SyncInFlight;}finally{concept2SyncInFlight=null;}
 }
+
+async function autoSyncConcept2({refreshHistory=false,force=false}={}){
+  if(currentMode!=="athlete" || !currentUser || !currentTeamCode || !navigator.onLine) return null;
+  const key=`rowtraining_c2_auto_sync_${currentUser.id}`;
+  const last=Number(localStorage.getItem(key)||0);
+  if(!force && Date.now()-last<AUTO_C2_SYNC_MIN_MS) return null;
+  // Reservamos el intento antes de salir a red para que focus + visibilitychange no dupliquen llamadas.
+  localStorage.setItem(key,String(Date.now()));
+  try{
+    const st=await concept2Status();
+    if(!st?.connected) return null;
+    const data=await syncConcept2(false);
+    if(refreshHistory && tab==="hist" && data?.ok && ((data.imported||0)>0 || (data.updated||0)>0)){
+      await history({skipAuto:true});
+    }
+    return data;
+  }catch(e){return null;}
+}
+
+async function checkForAppUpdate(){
+  if(Date.now()-lastAppUpdateCheck<30000) return;
+  lastAppUpdateCheck=Date.now();
+  try{
+    const r=await fetch(`/version.json?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok)return;
+    const v=await r.json();
+    if(v?.version && String(v.version)!==APP_VERSION){
+      const u=new URL(location.href);
+      u.searchParams.set("appv",String(v.version));
+      location.replace(u.toString());
+    }
+  }catch(e){}
+}
+
 async function profileView(){
   const {data:pdata}=await sb.from("profiles").select("*").eq("user_id",currentUser.id).single();
   const {data:mdata}=await sb.from("athlete_metrics").select("*").eq("user_id",currentUser.id).order("recorded_at",{ascending:false}).limit(1);
@@ -1508,13 +1665,13 @@ async function profileView(){
   </div>
   <div class="card">
     <h2>Concept2 / ErgData</h2>
-    <p>Conecta tu propia cuenta una sola vez. Row Training podrá importar tus resultados sincronizados por ErgData.</p>
+    <p>Conecta tu propia cuenta una sola vez. Row Training importa automáticamente los resultados que ErgData haya subido a Concept2.</p>
     <div id="concept2State" class="info">Comprobando conexión…</div>
     <div class="actions">
       <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
-      <button id="syncConcept2Btn" type="button">Sincronizar ahora</button>
+      <button id="syncConcept2Btn" type="button">Sincronizar ahora (manual)</button>
     </div>
-    <p class="muted"><small>Solo lectura: perfil y resultados. La contraseña de Concept2 nunca pasa por Row Training.</small></p>
+    <p class="muted"><small>Sincronización automática al abrir/volver a la app y al entrar en Historial. El botón manual queda como respaldo. Solo lectura: perfil y resultados.</small></p>
   </div>`;
 
   function fillZones(){
@@ -1696,13 +1853,13 @@ function allGymExercises(){
   }));
   return out;
 }
-function gymSelectedNamesFromSession(currentSession){
+function gymSelectedNamesFromSession(currentSession,rows=allGymExercises()){
   const txt=String(currentSession?.content||'').toLowerCase();
   const title=String(currentSession?.title||'');
   const tpl=(title.match(/GYM-([ABCDM])/i)||[])[1] || (/MIX/i.test(title)?"M":null);
   const set=new Set();
   if(tpl&&gyms[tpl]) gyms[tpl].items.forEach(i=>set.add(i.name));
-  allGymExercises().forEach(i=>{if(txt.includes(i.name.toLowerCase()))set.add(i.name)});
+  rows.forEach(i=>{if(txt.includes(i.name.toLowerCase()))set.add(i.name)});
   return set;
 }
 function gymEditorCardioDefaults(currentSession){
@@ -1718,8 +1875,8 @@ function gymEditorCardioDefaults(currentSession){
   const c=cardioPrescriptionForDate(date,false);
   return c?{type:c.type.includes('Carrera')?'Carrera suave':'Cardio suave',minutes:c.minutes}:{type:'Ninguno',minutes:'0'};
 }
-function renderGymExerciseEditor(currentSession){
-  const rows=allGymExercises(); const selected=gymSelectedNamesFromSession(currentSession);
+function renderGymExerciseEditor(currentSession,rows=allGymExercises()){
+  const selected=gymSelectedNamesFromSession(currentSession,rows);
   const cardio=gymEditorCardioDefaults(currentSession);
   return `<div class="gymEditHead"><b>Ejercicios de la sesión</b><span class="muted">Marca/desmarca y cambia dosis o descanso. La sesión se guarda con estos ejercicios.</span></div>
   <div class="coachTools"><label>Plantilla<select id="gymTpl"><option value="">— Elegir —</option>${Object.entries(gyms).map(([k,v])=>`<option value="${k}">GYM-${k} · ${v.name}</option>`).join('')}</select></label><button id="applyGymTpl">Cargar plantilla</button></div>
@@ -1732,19 +1889,20 @@ async function renderEditorLibrary(kind,currentSession=null){
     const q=await sb.from('ergo_library').select('*').eq('is_active',true).order('zone').order('name'); const rows=q.error?[]:(q.data||[]);
     const curText=`${currentSession?.title||''} ${currentSession?.content||''}`.toLowerCase();
     const current=rows.find(x=>curText.includes(String(x.name||'').toLowerCase()))||null;
-    box.innerHTML=`${current?`<div class="info"><b>ERGO asignado ahora:</b> ${current.zone||'ERGO'} · ${current.name}${current.url?`<br><small>ErgData: ${current.url}</small>`:''}</div>`:'<div class="info"><b>ERGO asignado ahora:</b> no identificado. Elige una sesión de la biblioteca.</div>'}<label>Biblioteca ERGO<select id="libPick"><option value="">— Elegir sesión —</option>${rows.map(x=>`<option value="${x.code}" ${current?.code===x.code?'selected':''}>${x.zone||'ERGO'} · ${x.name}</option>`).join('')}</select></label><div id="ergoPreview" class="muted"></div><div class="coachTools"><button id="loadLib">Usar esta sesión</button><button id="openErgLib">Abrir Biblioteca ERGO</button></div>`;
+    box.innerHTML=`${current?`<div class="info"><b>ERGO asignado ahora:</b> ${current.zone||'ERGO'} · ${current.name}${current.url?`<br><small>ErgData: ${current.url}</small>`:''}</div>`:'<div class="info"><b>ERGO asignado ahora:</b> no identificado. Elige una sesión de la biblioteca.</div>'}<label>Biblioteca ERGO<select id="libPick"><option value="">— Elegir sesión —</option>${rows.map(x=>`<option value="${x.code}" ${current?.code===x.code?'selected':''}>${x.zone||'ERGO'} · ${x.name}</option>`).join('')}</select></label><div id="ergoPreview" class="muted"></div><div class="coachTools"><button id="loadLib">Usar esta sesión</button><button id="openErgLib">Abrir Biblioteca</button></div>`;
     const preview=()=>{const x=rows.find(z=>z.code===libPick.value);ergoPreview.innerHTML=x?`<b>${x.name}</b>${x.url?` · ErgData disponible`:''}`:''};
     libPick.onchange=preview; preview();
-    openErgLib.onclick=()=>{tab='biblioteca';draw();render()};
+    openErgLib.onclick=()=>{coachLibrarySection='ERGO';tab='biblioteca';draw();render()};
     loadLib.onclick=()=>{const x=rows.find(z=>z.code===libPick.value);if(!x)return;sessTitle.value=`ERGO · ${x.name}`;sessContent.value=`CALENTAMIENTO · 10 min\nTRABAJO · ${x.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${x.url?`\nErgData: ${x.url}`:''}`;};
     return;
   }
   if(kind==='GYM'){
-    box.innerHTML=renderGymExerciseEditor(currentSession);
+    gymEditorRows=await loadGymExerciseLibrary();
+    box.innerHTML=renderGymExerciseEditor(currentSession,gymEditorRows);
     applyGymTpl.onclick=()=>{
       const k=gymTpl.value;if(!k||!gyms[k])return;
       const names=new Set(gyms[k].items.map(i=>i.name));
-      document.querySelectorAll('.gymUse').forEach(cb=>cb.checked=names.has(allGymExercises()[Number(cb.dataset.i)].name));
+      document.querySelectorAll('.gymUse').forEach(cb=>cb.checked=names.has(gymEditorRows[Number(cb.dataset.i)]?.name));
       sessTitle.value=k==="M"?"MIX · GYM + ERGO · Bloque GYM":`GYM-${k} · ${gyms[k].name}`;
       const date=document.getElementById('planDate')?.value||localISODate();
       const c=cardioPrescriptionForDate(date,k==="M");
@@ -1754,11 +1912,12 @@ async function renderEditorLibrary(kind,currentSession=null){
     return;
   }
   if(kind==='MAR'){
-    const custom=await getTrainingLibrary('MAR');
-    const rows=[...MAR_LIBRARY.map((x,i)=>({id:`m${i}`,name:x[0],content:x[1]})),...custom.map(x=>({id:x.id,name:x.name,content:x.content||''}))];
-    box.innerHTML=`<div class="info"><b>Bloques MAR:</b> añade bloques concretos. Puedes combinar tiempo, metros, salidas y Virada-Ciaboga. Mantén el total alrededor de 60 min.</div><label>Biblioteca MAR<select id="libPick"><option value="">— Añadir bloque concreto —</option>${rows.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Añadir bloque</button><button id="newLibItem">+ Crear ejercicio MAR</button></div>`;
-    loadLib.onclick=()=>{const x=rows.find(z=>String(z.id)===libPick.value);if(!x)return;sessContent.value+=(sessContent.value?'\n':'')+x.content;};
-    newLibItem.onclick=()=>createLibraryItem('MAR'); return;
+    const data=await loadMarLibraryData();
+    box.innerHTML=`<div class="info"><b>MAR:</b> puedes cargar una sesión completa o construirla con bloques. Calentamiento, recuperación y vuelta a la calma vienen con tiempos por defecto y se pueden editar.</div><label>Sesiones MAR completas<select id="marFullPick"><option value="">— Elegir sesión completa —</option>${data.sessions.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label><div class="coachTools"><button id="loadMarFull">Cargar sesión completa</button><button id="openMarLib">Abrir Biblioteca MAR</button></div><label>Añadir bloque<select id="libPick"><option value="">— Elegir bloque —</option>${data.blocks.map(x=>`<option value="${x.id}">${marCategoryLabel(x.category)} · ${esc(x.name)}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Añadir bloque</button><button id="newLibItem">+ Crear bloque MAR</button></div>`;
+    loadMarFull.onclick=()=>{const x=data.sessions.find(z=>z.id===marFullPick.value);if(!x)return;sessTitle.value=`MAR · ${x.name}`;sessContent.value=x.content};
+    loadLib.onclick=()=>{const x=data.blocks.find(z=>z.id===libPick.value);if(!x)return;sessContent.value=marInsertBeforeAux(sessContent.value,x.content)};
+    newLibItem.onclick=()=>{coachLibrarySection='MAR';marBlockLibraryForm(null)};
+    openMarLib.onclick=()=>{coachLibrarySection='MAR';tab='biblioteca';draw();coachLibraryView()}; return;
   }
   box.innerHTML='<div class="muted">Día de descanso: no necesita biblioteca de ejercicios.</div>';
 }
@@ -1805,7 +1964,7 @@ function calendarCellsHtml(ym,sessions=[],comps=[],results=[],mode='edit',select
   const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds), mars=xs.filter(x=>x.session_type==='MAR');
   const rs=mars.map(x=>({s:x,r:resultForSession(results,x.id)})).filter(x=>x.r); const sel=rs.some(x=>selectedIds.includes(String(x.r.id)));
   const cls=['coachDay',mars.length?'hasMar':'',rs.length?'hasResult':'',sel?'selectedCompare':''].filter(Boolean).join(' ');
-  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}">${x.session_type||'MAR'} · ${(x.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
+  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}" ${mode==='edit'?`draggable="true" data-session-id="${x.id}" title="Arrastra a otro día para mover"`:''}>${x.session_type||'MAR'} · ${(x.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
  }
  return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
 }
@@ -1880,7 +2039,7 @@ async function loadCoachCalendar(team,date){
 async function coachPlanner(){
  if(r!=="coach") return;
  const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='month';
- content.innerHTML=`<div class="card"><h2>Planificación</h2><p class="muted">Un único calendario para crear, consultar y editar GYM, ERGO, MAR, descanso y competiciones. Pulsa un día y edítalo directamente.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
+ content.innerHTML=`<div class="card"><h2>Planificación</h2><p class="muted">Un único calendario para crear, consultar y editar GYM, ERGO, MAR, descanso y competiciones. En ordenador puedes arrastrar un entrenamiento a otro día; en móvil usa “Mover”.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="planBBtn">☁️ Plan B · No hay mar</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
@@ -1888,8 +2047,19 @@ async function coachPlanner(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
   if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'edit',[])}
   planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));renderPlanDay()});
+  let draggedSessionId=null;
+  planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
+    item.addEventListener('click',e=>e.stopPropagation());
+    item.addEventListener('dragstart',e=>{draggedSessionId=item.dataset.sessionId;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedSessionId);});
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');planCalendar.querySelectorAll('.coachDay').forEach(d=>d.classList.remove('dragOver'));});
+  });
+  planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(day=>{
+    day.addEventListener('dragover',e=>{if(!draggedSessionId)return;e.preventDefault();day.classList.add('dragOver');e.dataTransfer.dropEffect='move';});
+    day.addEventListener('dragleave',()=>day.classList.remove('dragOver'));
+    day.addEventListener('drop',async e=>{if(!draggedSessionId)return;e.preventDefault();e.stopPropagation();day.classList.remove('dragOver');const targetDate=day.dataset.date;const q=await sb.from('training_sessions').update({session_date:targetDate,updated_at:new Date().toISOString()}).eq('id',draggedSessionId);if(q.error)alert('No se pudo mover: '+q.error.message);else{planDate.value=targetDate;ym=targetDate.slice(0,7);await drawCalendar();await renderPlanDay();}});
+  });
  }
- loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newRace.onclick=()=>raceEditor();
+ loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
  planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();
@@ -1908,34 +2078,74 @@ async function coachPlanner(){
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
- planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?trainingContentHtml(x.content):""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
+ planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?trainingContentHtml(x.content):""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="moveSess" data-id="${x.id}">Mover</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
  document.querySelectorAll('.editSess').forEach(b=>b.onclick=()=>sessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
+ document.querySelectorAll('.moveSess').forEach(b=>b.onclick=()=>moveSessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar esta sesión futura?')){await sb.from('training_sessions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
 }
-function sessionEditor(x=null){
+const PLAN_B_LIBRARY=[
+ {code:"PB-BASE-2X10",name:"Base · GYM + ERGO 2×10'",desc:"Sustitución suave para un día de mar. Mantiene fuerza general y UT2 sin disparar la fatiga.",gymTitle:"GYM · Fuerza global corta",gymContent:"DURACIÓN OBJETIVO · 35–40 min\nCALENTAMIENTO · 8 min\nPrensa de piernas · 3×10 · rec 2 min\nRemo sentado en polea · 3×10 · rec 75 s\nHip thrust · 3×10 · rec 90 s\nPallof press · 2×10/lado · rec 45 s\nVUELTA A LA CALMA · 5 min\nCarga: RIR 2–3; técnica limpia y sin llegar al fallo.",ergoTitle:"ERGO · UT2 · 2×10' @20 · rec 3'",ergoContent:"4 min calentamiento\n2×10 min @20 ppm · UT2\nRecuperación 3 min suave\n5 min vuelta a la calma"},
+ {code:"PB-BASE-3X10",name:"Base completa · GYM + ERGO 3×10'",desc:"Plan B estándar para sustituir MAR en fase base.",gymTitle:"GYM · Fuerza global",gymContent:"DURACIÓN OBJETIVO · 45–50 min\nCALENTAMIENTO · 8–10 min\nPrensa de piernas · 3×10 · rec 2 min\nPeso muerto rumano · 3×10 · rec 90 s\nRemo sentado en polea · 3×10 · rec 75 s\nPress de pecho · 3×10 · rec 90 s\nPallof press · 3×10/lado · rec 45–60 s\nVUELTA A LA CALMA · 5 min\nCarga: RIR 2–3; no llegar al fallo.",ergoTitle:"ERGO · UT2 · 3×10' @20 · rec 3'",ergoContent:"8–10 min calentamiento\n3×10 min @20 ppm · UT2\nRecuperación 3 min suave\n6–8 min vuelta a la calma"},
+ {code:"PB-POST-3X12",name:"Cadena posterior + ERGO 3×12'",desc:"Más volumen aeróbico, manteniendo la fuerza controlada.",gymTitle:"GYM · Cadena posterior + tirón",gymContent:"DURACIÓN OBJETIVO · 40–45 min\nCALENTAMIENTO · 8 min\nPeso muerto rumano · 3×10 · rec 90 s\nHip thrust · 3×10 · rec 90 s\nJalón al pecho · 3×10 · rec 75–90 s\nPallof press · 3×10/lado · rec 45–60 s\nDead bug · 3×8/lado · rec 45 s\nCarga: RIR 2–3; ejecución estable.",ergoTitle:"ERGO · UT2 · 3×12' @20 · rec 3'",ergoContent:"8 min calentamiento\n3×12 min @20 ppm · UT2\nRecuperación 3 min suave\n6 min vuelta a la calma"},
+ {code:"PB-SENIOR-45",name:"Senior opcional · GYM corto + 45' UT2",desc:"Opción de mayor volumen solo para Senior con base suficiente. No es la sesión estándar del equipo.",gymTitle:"GYM · Superior + core corto",gymContent:"DURACIÓN OBJETIVO · 25–30 min\nCALENTAMIENTO · 6–8 min\nRemo sentado en polea · 3×10 · rec 75 s\nJalón al pecho · 3×10 · rec 75–90 s\nPress de pecho · 3×10 · rec 90 s\nPallof press · 2×10/lado · rec 45 s\nCarga: RIR 2–3; sin fatiga residual.",ergoTitle:"ERGO · UT2 · 45' continuo @18–20 ppm",ergoContent:"45 min continuos · 18–20 ppm · mantener UT2 individual\nRPE aprox. 3–4/10 · técnica estable\nOpcional para Senior con base suficiente."}
+];
+
+function moveSessionEditor(x){
+ if(!x)return;
+ const date=planDate.value;
+ planArea.innerHTML=`<div class="card"><h3>Mover entrenamiento</h3><p><b>${esc(x.session_type)} · ${esc(x.title||'Entrenamiento')}</b></p><p class="muted">Fecha actual: ${shortDateES(x.session_date)}</p><label>Nueva fecha<input id="moveSessDate" type="date" value="${date}"></label><button id="confirmMoveSess" class="primary">Mover aquí</button> <button id="cancelMoveSess">Cancelar</button></div>`;
+ cancelMoveSess.onclick=renderPlanDay;
+ confirmMoveSess.onclick=async()=>{const target=moveSessDate.value;if(!target)return;const team=planTeam.value;const q=await sb.from('training_sessions').update({session_date:target,updated_at:new Date().toISOString()}).eq('id',x.id);if(q.error)alert(q.error.message);else{plannerJumpTeam=team;plannerJumpDate=target;plannerAutoEdit=false;await coachPlanner();}};
+}
+
+function planBPicker(){
  const team=planTeam.value,date=planDate.value;
+ const options=PLAN_B_LIBRARY.filter(x=>x.code!=="PB-SENIOR-45"||team==="senior_m"||team==="senior_f");
+ planArea.innerHTML=`<div class="card"><h3>☁️ Plan B · No hay mar</h3><p class="muted">Elige una combinación GYM + ERGO para sustituir la sesión MAR del ${shortDateES(date)}. Se eliminarán solo las sesiones MAR de ese día y se crearán los dos bloques.</p>${options.map(x=>`<div class="ex"><span class="tag">GYM + ERGO</span><h3>${esc(x.name)}</h3><p>${esc(x.desc)}</p><div class="mixGrid"><div class="info"><b>${esc(x.gymTitle)}</b><br>${esc(x.gymContent).replace(/\n/g,'<br>')}</div><div class="info"><b>${esc(x.ergoTitle)}</b><br>${esc(x.ergoContent).replace(/\n/g,'<br>')}</div></div><button class="applyPlanB primary" data-code="${x.code}">Usar este Plan B</button></div>`).join('')}<button id="cancelPlanB">Cancelar</button></div>`;
+ cancelPlanB.onclick=renderPlanDay;
+ document.querySelectorAll('.applyPlanB').forEach(b=>b.onclick=async()=>{
+   const x=PLAN_B_LIBRARY.find(z=>z.code===b.dataset.code); if(!x)return;
+   if(!confirm(`¿Sustituir la sesión MAR del ${date} por "${x.name}"?`))return;
+   const del=await sb.from('training_sessions').delete().eq('team_code',team).eq('session_date',date).eq('session_type','MAR');
+   if(del.error)return alert('No se pudo retirar MAR: '+del.error.message);
+   const now=new Date().toISOString();
+   const q=await sb.from('training_sessions').insert([
+     {team_code:team,session_date:date,session_type:'GYM',title:x.gymTitle,content:x.gymContent,updated_at:now},
+     {team_code:team,session_date:date,session_type:'ERG',title:x.ergoTitle,content:x.ergoContent,updated_at:now}
+   ]);
+   if(q.error)return alert('No se pudo crear el Plan B: '+q.error.message);
+   alert('Plan B aplicado. Puedes editar cualquiera de los dos bloques.');
+   plannerJumpTeam=team;plannerJumpDate=date;plannerAutoEdit=false;await coachPlanner();
+ });
+}
+
+function sessionEditor(x=null){
+ const team=planTeam.value,date=planDate.value;const initial=x?.content||marDefaultSessionContent();
  planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Técnica + cambios de ritmo"></label></div>
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
- <label>Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${x?.content||''}</textarea>
+ <label>Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea>
+ <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
- const refresh=()=>{renderEditorLibrary(sessType.value,x); typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> usa bloques concretos por tiempo o metros, cambios de ritmo, salidas y Virada-Ciaboga. La app los mostrará en filas legibles; si hay una pirámide se verá como una secuencia lineal, no como un dibujo.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
- sessType.onchange=()=>{x=null;refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
+ const refresh=()=>{renderEditorLibrary(sessType.value,x);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())sessContent.value=marDefaultSessionContent();else if(sessType.value!=='MAR'&&skeleton)sessContent.value='';refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    let contentValue=sessContent.value.trim();
    if(sessType.value==='GYM'){
-     const ex=allGymExercises(); const selected=[];
-     document.querySelectorAll('.gymUse').forEach(cb=>{if(cb.checked){const i=Number(cb.dataset.i),item=ex[i],dose=document.querySelector(`.gymDose[data-i="${i}"]`)?.value||item.dose,rest=document.querySelector(`.gymRest[data-i="${i}"]`)?.value||item.rest;selected.push(`${item.name} · ${dose} · rec ${rest}`)}});
+     const ex=gymEditorRows.length?gymEditorRows:allGymExercises(); const selected=[];
+     document.querySelectorAll('.gymUse').forEach(cb=>{if(cb.checked){const i=Number(cb.dataset.i),item=ex[i];if(!item)return;const dose=document.querySelector(`.gymDose[data-i="${i}"]`)?.value||item.dose,rest=document.querySelector(`.gymRest[data-i="${i}"]`)?.value||item.rest;selected.push(`${item.name} · ${dose} · rec ${rest}`)}});
      if(!selected.length){alert('Selecciona al menos un ejercicio GYM.');return;}
      const cType=document.getElementById('gymCardioType')?.value||'Ninguno';
      const cMin=document.getElementById('gymCardioMinutes')?.value?.trim()||'';
      const cardioLine=cType!=='Ninguno'&&cMin?`\nCARDIO FINAL · ${cMin} min · ${cType} · RPE 3–4/10 · ritmo conversacional`:'';
      contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}${cardioLine}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
    }
-   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error) alert(q.error.message); else renderPlanDay();
+   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error){alert(q.error.message);return}
+   if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
+   renderPlanDay();
  };
 }
 function raceEditor(){

@@ -1,19 +1,21 @@
-# Row Training V82
+# Row Training V85
 
-Cambios sobre V81:
-- Corrige el aviso de **nueva alta al entrenador** cuando Supabase tiene confirmación de email activada y `signUp` devuelve `session = null`.
-- El primer aviso se intenta **inmediatamente al registrarse**, antes de confirmar el correo.
-- Tras confirmar el correo se mantiene un **segundo intento** por seguridad.
-- `notify_sent_at` se usa como reserva atómica para **evitar avisos duplicados**; si Gmail falla, la reserva se libera para permitir el reintento.
-- Mantiene íntegramente las funciones de V81, incluido el panel **Altas** para entrenadores de equipo.
+Cambios principales respecto a V84:
 
-## IMPORTANTE
-V82 **no necesita SQL nuevo** si V81/V70 ya estaban instaladas.
+- Biblioteca del entrenador unificada en tres apartados: **ERGO · MAR · GYM**.
+- **Biblioteca MAR** independiente de la planificación:
+  - bloques de calentamiento, trabajo, recuperación y vuelta a la calma;
+  - tiempos por defecto de 12 min de calentamiento, 2 min de recuperación y 8–10 min de vuelta a la calma, todos editables;
+  - creación, edición y reutilización de bloques;
+  - creación, edición, duplicado y reutilización de **sesiones MAR completas**.
+- En Planificación MAR se puede cargar directamente una sesión completa o construirla con bloques.
+- Al guardar un MAR se puede marcar **“Guardar también esta sesión MAR completa en la biblioteca”**.
+- **REGISTRO MAR** muestra solo los bloques de trabajo. No pide calentamiento, recuperaciones ni vuelta a la calma. Añade un único campo de observaciones globales de la sesión.
+- **Biblioteca GYM** independiente: permite crear y editar ejercicios con nombre, dosis, descanso e indicaciones, y usarlos después al construir una sesión.
+- Se mantienen las mejoras de V84: combinados GYM+ERGO con registro ERGO manual/foto, mover sesiones, Plan B por mal estado del mar, sesiones ERGO opcionales largas y sincronización automática Concept2/ErgData.
 
-Mantén en Vercel estas variables:
-- `ROWTRAINING_GMAIL_USER`
-- `ROWTRAINING_GMAIL_APP_PASSWORD`
-- `REGISTRATION_NOTIFY_EMAIL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+## SQL
 
-No volver a ejecutar scripts antiguos de planificación.
+Para la cuenta de entrenador global que ya podía crear elementos de `training_library`, V85 puede funcionar sin SQL nuevo.
+
+Se incluye `setup_v85.sql` para dejar formalizados los permisos de la biblioteca también para entrenadores de equipo. Es recomendable ejecutarlo una vez si se van a dar permisos de edición de biblioteca a otros entrenadores.
