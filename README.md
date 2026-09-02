@@ -78,3 +78,7 @@ No uses force push.
 - **Archivar** no borra: mueve el elemento a Archivadas.
 - En Archivadas, el creador o el administrador pueden pulsar **Desarchivar** para recuperarlo.
 - Las plantillas archivadas conservan su histórico y no afectan a sesiones ya realizadas.
+
+
+### Nota V88 corregida
+Los equipos dinámicos se guardan en `public.rowing_teams` para no colisionar con una tabla `public.teams` preexistente en Supabase.

@@ -3,9 +3,9 @@
 -- Incluye y sustituye los ajustes SQL de V86/V87 necesarios para esta versión.
 
 -- ============================================================
--- 1) EQUIPOS DINÁMICOS
+-- 1) EQUIPOS DINÁMICOS (tabla propia de Row Training; no toca public.teams existente)
 -- ============================================================
-create table if not exists public.teams (
+create table if not exists public.rowing_teams (
   code text primary key,
   name text not null,
   category text,
@@ -17,27 +17,27 @@ create table if not exists public.teams (
   updated_at timestamptz not null default now()
 );
 
-insert into public.teams(code,name,category,gender,sort_order) values
+insert into public.rowing_teams(code,name,category,gender,sort_order) values
  ('veteranas','Veteranas femenino','Veteranas','Femenino',10),
  ('senior_m','Senior masculino','Senior','Masculino',20),
  ('senior_f','Senior femenino','Senior','Femenino',30),
  ('veteranos_m','Veteranos masculino','Veteranos','Masculino',40)
 on conflict(code) do update set
  name=excluded.name,
- category=coalesce(public.teams.category,excluded.category),
- gender=coalesce(public.teams.gender,excluded.gender),
- sort_order=least(public.teams.sort_order,excluded.sort_order);
+ category=coalesce(public.rowing_teams.category,excluded.category),
+ gender=coalesce(public.rowing_teams.gender,excluded.gender),
+ sort_order=least(public.rowing_teams.sort_order,excluded.sort_order);
 
-alter table public.teams enable row level security;
-grant select on public.teams to anon, authenticated;
-grant insert,update,delete on public.teams to authenticated;
+alter table public.rowing_teams enable row level security;
+grant select on public.rowing_teams to anon, authenticated;
+grant insert,update,delete on public.rowing_teams to authenticated;
 
-drop policy if exists teams_public_read_v88 on public.teams;
-create policy teams_public_read_v88 on public.teams
+drop policy if exists teams_public_read_v88 on public.rowing_teams;
+create policy teams_public_read_v88 on public.rowing_teams
 for select to anon, authenticated using (is_active or auth.role()='authenticated');
 
-drop policy if exists teams_admin_write_v88 on public.teams;
-create policy teams_admin_write_v88 on public.teams
+drop policy if exists teams_admin_write_v88 on public.rowing_teams;
+create policy teams_admin_write_v88 on public.rowing_teams
 for all to authenticated
 using (public.is_coach())
 with check (public.is_coach());
@@ -237,7 +237,7 @@ create or replace function public.approve_registration(p_request_id bigint,p_tea
 returns void language plpgsql security definer set search_path=public as $$
 declare v_req public.registration_requests%rowtype; v_global boolean;
 begin
-  if not exists(select 1 from public.teams where code=p_team_code and is_active) then
+  if not exists(select 1 from public.rowing_teams where code=p_team_code and is_active) then
     raise exception 'Equipo no válido o inactivo';
   end if;
   v_global:=public.is_coach();
