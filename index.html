@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V91</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V92</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -671,7 +671,14 @@ const GYM_EXTRA_EXERCISES=[
  {name:'Face pull',dose:'3×12',rest:'60 s',img:'facepull',tags:['tiron','hombro'],how:'Tira de la cuerda hacia la cara con codos altos y hombros lejos de las orejas.'},
  {name:'Press de hombro en máquina',dose:'3×8–10',rest:'75–90 s',img:'shoulderpress',tags:['empuje','hombro'],how:'Empuja por encima de la cabeza sin arquear la zona lumbar y sin dolor.'},
  {name:'Remo con mancuerna a una mano',dose:'3×10/lado',rest:'60–75 s',img:'onerow',tags:['tiron','espalda'],how:'Apoya bien el tronco y lleva el codo hacia la cadera sin girarte.'},
- {name:'Farmer carry',dose:'4×30–40 m',rest:'60 s',img:'farmer',tags:['agarre','core','general'],how:'Camina alto con cargas a los lados, abdomen firme y hombros estables.'},
+ {name:'Farmer carry',dose:'4×30–40 m',rest:'60 s',img:'farmer_v92',tags:['agarre','core','general'],how:'Camina alto con cargas a los lados, abdomen firme y hombros estables.'},
+ {name:'Dead hang / suspensión en barra',dose:'3×20–40 s',rest:'60–90 s',img:'dead_hang',tags:['agarre','tiron'],how:'Suspéndete de la barra con hombros activos y tronco estable. No aguantes dolor en hombro o codo.'},
+ {name:'Plate pinch hold / pinza con discos',dose:'3×20–30 s/lado',rest:'60 s',img:'plate_pinch',tags:['agarre'],how:'Sujeta uno o dos discos con pinza de dedos, muñeca neutra y hombro relajado.'},
+ {name:'Agarre con toalla en barra',dose:'3×15–30 s',rest:'75–90 s',img:'towel_hang',tags:['agarre','tiron'],how:'Sujeta una toalla pasada por la barra y mantén suspensión controlada; prioriza seguridad del hombro.'},
+ {name:'Curl de muñeca',dose:'3×12–15',rest:'45–60 s',img:'wrist_curl',tags:['agarre'],how:'Antebrazos apoyados, flexiona las muñecas con recorrido controlado sin mover los codos.'},
+ {name:'Curl inverso de muñeca',dose:'3×12–15',rest:'45–60 s',img:'reverse_wrist_curl',tags:['agarre'],how:'Antebrazos apoyados y palmas hacia abajo; extiende las muñecas lentamente sin compensar con los brazos.'},
+ {name:'Extensión de dedos con goma',dose:'3×15–20',rest:'30–45 s',img:'finger_extension',tags:['agarre'],how:'Abre los dedos contra una goma alrededor de ellos. Controla la vuelta y evita movimientos bruscos.'},
+ {name:'Sujeción isométrica pesada',dose:'3×20–30 s',rest:'75–90 s',img:'static_hold',tags:['agarre','core'],how:'Mantén una barra o mancuernas pesadas con postura alta, muñeca neutra y abdomen firme.'},
  {name:'Plancha frontal',dose:'3×30–45 s',rest:'45–60 s',img:'frontplank',tags:['core'],how:'Mantén una línea hombros-cadera-tobillos, abdomen y glúteos activos.'},
  {name:'Plancha lateral',dose:'3×25–40 s/lado',rest:'45 s',img:'sideplank',tags:['core'],how:'Mantén cadera elevada y cuerpo alineado sin rotar el tronco.'},
  {name:'Bird dog',dose:'3×8/lado',rest:'45 s',img:'birddog',tags:['core','estabilidad'],how:'Extiende brazo y pierna contrarios sin mover pelvis ni zona lumbar.'},
@@ -821,7 +828,8 @@ async function marSessionLibraryForm(item){
   saveMarSession.onclick=async()=>{const name=marSessionName.value.trim(),txt=body().trim();if(!name||!txt)return alert('Completa nombre y sesión.');const loadText=v86MarLoad.value==='soft'?'Suave':v86MarLoad.value==='high'?'Alta controlada':'Media';const q=await upsertTrainingLibraryItem('MAR',item?.dbId||null,marStoredName('session',name),txt,{metadata:{...(item?.metadata||{}),objective:v86MarObjective.value,load:loadText}});if(q.error)alert(q.error.message);else coachMarLibraryView()};
 }
 
-function gymGroupV88(x){const tags=gymTagsForExercise(x);if(tags.includes('piernas'))return '🦵 Piernas';if(tags.includes('posterior'))return '🦵 Cadena posterior';if(tags.includes('tiron')||tags.includes('espalda'))return '↩ Espalda y bíceps (tirón)';if(tags.includes('empuje'))return '↗ Pecho, hombro y tríceps (empuje)';if(tags.includes('core'))return '◎ Core / estabilidad';if(tags.includes('agarre'))return '✊ Manos y antebrazos (agarre)';if(tags.includes('potencia'))return '⚡ Potencia / acondicionamiento';return 'Otros'}
+function gymGroupsV92(x){const tags=gymTagsForExercise(x),out=[];if(tags.includes('piernas'))out.push('🦵 Piernas');if(tags.includes('posterior'))out.push('🦵 Cadena posterior');if(tags.includes('tiron')||tags.includes('espalda'))out.push('↩ Espalda y bíceps (tirón)');if(tags.includes('empuje'))out.push('↗ Pecho, hombro y tríceps (empuje)');if(tags.includes('core'))out.push('◎ Core / estabilidad');if(tags.includes('agarre'))out.push('✊ Manos y antebrazos (agarre)');if(tags.includes('potencia'))out.push('⚡ Potencia / acondicionamiento');return out.length?[...new Set(out)]:['Otros']}
+function gymGroupV88(x){return gymGroupsV92(x)[0]}
 function gymImageUrlV88(x){if(x.image_url)return x.image_url;const v=visuals[x.img];return v?.src||null}
 function gymTagLabelV89(t){return ({piernas:'Piernas',posterior:'Cadena posterior',tiron:'Espalda / bíceps',espalda:'Espalda',empuje:'Pecho / hombro / tríceps',core:'Core / estabilidad',agarre:'Manos / antebrazos',potencia:'Potencia',general:'Fuerza general',unilateral:'Unilateral',hombro:'Hombro',estabilidad:'Estabilidad'})[t]||t}
 async function coachGymLibraryView(){
@@ -836,7 +844,7 @@ async function coachGymLibraryView(){
     const sessions=data.sessions.filter(x=>matchLibraryFilterV88(x,state,'GYM')&&(!libraryFavoritesOnly||x._pref?.is_favorite));
     const exercises=data.exercises.filter(x=>{if(!state.showHidden&&x._pref?.is_hidden)return false;if(libraryFavoritesOnly&&!x._pref?.is_favorite)return false;const hay=(x.name+' '+gymTagsForExercise(x).join(' ')+' '+(x.how||'')).toLowerCase();if(state.search&&!hay.includes(state.search.toLowerCase()))return false;if(state.objective&&!hay.includes(state.objective.toLowerCase().replace('fuerza general','general')))return false;return true});
     const groups=['🦵 Piernas','🦵 Cadena posterior','↩ Espalda y bíceps (tirón)','↗ Pecho, hombro y tríceps (empuje)','◎ Core / estabilidad','✊ Manos y antebrazos (agarre)','⚡ Potencia / acondicionamiento','Otros'];
-    gymLibraryBody.innerHTML=accordion('Sesiones completas',sessions,sessionCard)+groups.map(g=>accordion(g,exercises.filter(x=>gymGroupV88(x)===g),exerciseCard)).join('');
+    gymLibraryBody.innerHTML=accordion('Sesiones completas',sessions,sessionCard)+groups.map(g=>accordion(g,exercises.filter(x=>gymGroupsV92(x).includes(g)),exerciseCard)).join('');
     gymLibraryBody.querySelectorAll('.editGymLib').forEach(b=>b.onclick=()=>gymLibraryForm(data.exercises.find(x=>x.id===b.dataset.id)));
     gymLibraryBody.querySelectorAll('.editGymSession').forEach(b=>b.onclick=()=>gymSessionLibraryForm(data.sessions.find(x=>x.id===b.dataset.id)));
     gymLibraryBody.querySelectorAll('.dupGymSession').forEach(b=>b.onclick=async()=>{const x=data.sessions.find(z=>z.id===b.dataset.id);const q=await upsertTrainingLibraryItem('GYM',null,`SESIÓN · ${x.name} · copia`,x.content,{metadata:{...(x.metadata||{}),objective:x.objective||'',load:x.load||''}});if(q.error)alert(q.error.message);else coachGymLibraryView()});
@@ -1045,7 +1053,15 @@ const visuals={
   sideplank:{type:"composite",src:"assets/visuals/side_plank.png"},
   birddog:{type:"composite",src:"assets/visuals/v91_bird_dog.png"},
   cablecrunch:{type:"composite",src:"assets/visuals/v91_cable_crunch.png"},
-  legraise:{type:"composite",src:"assets/visuals/leg_raise.png"}
+  legraise:{type:"composite",src:"assets/visuals/leg_raise.png"},
+  farmer_v92:{type:"composite",src:"assets/visuals/v92_farmer_carry.png"},
+  dead_hang:{type:"composite",src:"assets/visuals/v92_dead_hang.png"},
+  plate_pinch:{type:"composite",src:"assets/visuals/v92_plate_pinch.png"},
+  towel_hang:{type:"composite",src:"assets/visuals/v92_towel_hang.png"},
+  wrist_curl:{type:"composite",src:"assets/visuals/v92_wrist_curl.png"},
+  reverse_wrist_curl:{type:"composite",src:"assets/visuals/v92_reverse_wrist_curl.png"},
+  finger_extension:{type:"composite",src:"assets/visuals/v92_finger_extension.png"},
+  static_hold:{type:"composite",src:"assets/visuals/v92_static_hold.png"}
 };
 function renderSingleImage(src,alt,klass){
   return `<img class="${klass} realPhoto" src="${src}" alt="${alt}" referrerpolicy="no-referrer" loading="lazy">`;
@@ -3002,6 +3018,34 @@ async function results(){
   }
   teamSel.onchange=()=>{team=teamSel.value;selectedAthlete='';renderClient()};athSel.onchange=()=>{selectedAthlete=athSel.value;renderAthlete()};document.getElementById('analysisPrevWeek').onclick=()=>{weekStart=addDaysISO(weekStart,-7);renderClient()};document.getElementById('analysisNextWeek').onclick=()=>{weekStart=addDaysISO(weekStart,7);renderClient()};renderClient();
 }
+
+GYM_SESSION_DEFAULTS.push(
+ {key:'gym-grip-core-v92',name:'Agarre + core · 40 min',objective:'Agarre / Core',load:'Media',content:`OBJETIVO · Agarre + estabilidad
+CARGA · Media · calidad técnica
+CALENTAMIENTO · 7 min
+Farmer carry · 4×30 m · rec 60 s
+Dead hang / suspensión en barra · 3×25 s · rec 75 s
+Plate pinch hold / pinza con discos · 3×25 s/lado · rec 60 s
+Pallof press · 3×10/lado · rec 45 s
+Plancha frontal · 3×35 s · rec 45 s
+Extensión de dedos con goma · 2×20 · rec 30 s`},
+ {key:'gym-grip-pull-v92',name:'Agarre + tirón · 45 min',objective:'Agarre / Espalda',load:'Media',content:`OBJETIVO · Agarre + tirón
+CARGA · Media · RIR 2–3
+CALENTAMIENTO · 8 min
+Remo sentado en polea · 3×10 · rec 75 s
+Jalón al pecho · 3×10 · rec 75 s
+Agarre con toalla en barra · 3×20 s · rec 90 s
+Farmer carry · 4×30 m · rec 60 s
+Curl inverso de muñeca · 3×15 · rec 45 s
+Extensión de dedos con goma · 2×20 · rec 30 s`},
+ {key:'gym-grip-short-v92',name:'Bloque corto de agarre · 15–20 min',objective:'Agarre',load:'Suave-media',content:`OBJETIVO · Refuerzo específico de agarre
+CARGA · Suave-media
+Dead hang / suspensión en barra · 3×20–30 s · rec 60 s
+Plate pinch hold / pinza con discos · 3×20 s/lado · rec 45 s
+Curl de muñeca · 2×15 · rec 45 s
+Curl inverso de muñeca · 2×15 · rec 45 s
+Extensión de dedos con goma · 2×20 · rec 30 s`}
+);
 
 function bodyZoneSvgV90(zone){
   const parts={

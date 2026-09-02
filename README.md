@@ -1,20 +1,14 @@
-# Row Training V91
+# Row Training V92
 
-Versión acumulativa: incluye V90 y añade la revisión visual de GYM con fichas de ejecución INICIO / FINAL.
+Corrección de biblioteca GYM centrada en categorías múltiples y agarre.
+
+## Qué corrige
+- Farmer carry no había desaparecido: estaba etiquetado como agarre + core, pero la UI solo lo mostraba en la primera categoría coincidente. V92 permite que un ejercicio aparezca en todas las categorías que le corresponden sin duplicar la fila en Supabase.
+- Añade 7 ejercicios específicos de agarre más Farmer carry: dead hang, pinza con discos, toalla en barra, curl de muñeca, curl inverso, extensiones de dedos y sujeción isométrica.
+- Añade 3 sesiones completas: Agarre + core, Agarre + tirón y Bloque corto de agarre.
+- Incluye ilustraciones INICIO / FINAL para el bloque de agarre.
 
 ## Instalación
-1. Ejecuta `setup_v91.sql` en Supabase → SQL Editor.
-2. En iPhone también se incluye `COPIAR_SQL_V91.txt`, con exactamente el mismo SQL, para abrirlo directamente desde Archivos y copiarlo sin instalar ninguna app.
-3. Si Supabase devuelve Success, sube los archivos del ZIP UPDATE al repositorio.
-4. Commit y Push origin normal. Espera a Vercel Ready.
-
-## V91
-- Mantiene la planificación completa 2026–27, simulaciones y semanas de regata de V90.
-- Mantiene multiequipo, tiempos MAR con autoformato, biblioteca avanzada y vista semanal del entrenador.
-- Fichas visuales GYM revisadas para mostrar INICIO y FINAL en los ejercicios nuevos/principales.
-- Nuevas ilustraciones específicas para step-up, curl femoral, gemelos, face pull, bird dog y crunch en polea.
-- Se reutilizan las ilustraciones INICIO/FINAL ya existentes y coherentes para zancadas, press de hombro, remo unilateral, farmer carry, planchas y elevación de rodillas.
-
-
-## CORRECCIÓN SQL
-La V91 usa `rower_team_memberships` para las pertenencias de remeros. Se usa un nombre independiente para evitar colisiones con tablas antiguas llamadas `team_memberships` que puedan existir en Supabase. Si una ejecución anterior de V91 falló en la línea de `team_memberships`, vuelve a ejecutar `setup_v91.sql` completo: es acumulativo e idempotente.
+1. Ejecuta `setup_v92.sql` (o copia `COPIAR_SQL_V92.txt`) en Supabase SQL Editor.
+2. Si devuelve Success, copia los archivos del ZIP UPDATE a la raíz del repositorio.
+3. Commit y Push origin normal.
