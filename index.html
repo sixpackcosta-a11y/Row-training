@@ -156,7 +156,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V93 · editor real de COMBINADOS */
 .mixEditGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.mixEditPanel{border:1px solid #d8e3ef;border-radius:16px;padding:14px;background:#f8fbff}.mixEditHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.mixEditHead>div{flex:1}.mixTitleInput{margin:8px 0 0!important;font-weight:800}.mixSortable{display:flex;flex-direction:column;gap:8px}.mixEditRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid #dbe5ef;border-radius:12px;padding:8px}.mixEditRow.dragging{opacity:.45}.mixEditRow.dragOver{outline:2px solid #1687ff}.dragHandle{font-size:20px;color:#718096;cursor:grab;text-align:center;user-select:none}.mixLineInput{margin:0!important;min-height:48px;resize:vertical}.mixRowActions{display:grid;grid-template-columns:repeat(2,38px);gap:4px}.mixRowActions button{padding:7px 5px;min-width:0}.stickySaveMix{position:sticky;bottom:0;background:#fff;padding:12px 0 4px;margin-top:14px;border-top:1px solid #e5edf5;z-index:3}@media(max-width:800px){.mixEditGrid{grid-template-columns:1fr}.mixEditRow{grid-template-columns:24px minmax(0,1fr)}.mixRowActions{grid-column:2;display:flex;flex-wrap:wrap}.mixRowActions button{min-width:44px}.mixEditHead{flex-direction:column}.mixEditHead button{width:100%}}
 
-/* V96 */
+/* V97 */
 .athleteTwoMonths{grid-template-columns:repeat(2,minmax(0,1fr))!important}.athleteTwoMonths .coachDay{min-height:92px}.athleteTwoMonths .miniSess{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.athleteTwoMonths .race{font-weight:800}.bootAuth{min-height:160px}@media(max-width:850px){.athleteTwoMonths{grid-template-columns:1fr!important}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
@@ -1127,7 +1127,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="96";
+const APP_VERSION="97";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
