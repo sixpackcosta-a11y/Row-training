@@ -1,14 +1,29 @@
-# Row Training V92
+# Row Training V93
 
-Corrección de biblioteca GYM centrada en categorías múltiples y agarre.
+Corrección rápida del editor de sesiones COMBINADAS (GYM + ERGO).
 
-## Qué corrige
-- Farmer carry no había desaparecido: estaba etiquetado como agarre + core, pero la UI solo lo mostraba en la primera categoría coincidente. V92 permite que un ejercicio aparezca en todas las categorías que le corresponden sin duplicar la fila en Supabase.
-- Añade 7 ejercicios específicos de agarre más Farmer carry: dead hang, pinza con discos, toalla en barra, curl de muñeca, curl inverso, extensiones de dedos y sujeción isométrica.
-- Añade 3 sesiones completas: Agarre + core, Agarre + tirón y Bloque corto de agarre.
-- Incluye ilustraciones INICIO / FINAL para el bloque de agarre.
+## Instalación desde V92
 
-## Instalación
-1. Ejecuta `setup_v92.sql` (o copia `COPIAR_SQL_V92.txt`) en Supabase SQL Editor.
-2. Si devuelve Success, copia los archivos del ZIP UPDATE a la raíz del repositorio.
-3. Commit y Push origin normal.
+**No hay cambios de base de datos en V93. No hace falta ejecutar SQL.**
+
+1. Copia los archivos del ZIP `Row-training-V93-UPDATE.zip` sobre la raíz del repositorio.
+2. Acepta reemplazar.
+3. Commit `V93` en GitHub Desktop.
+4. Push origin normal.
+5. Espera a Vercel `Ready`.
+
+## Novedades V93
+
+- El botón **Editar** de COMBINADOS abre ahora un editor real del contenido guardado.
+- GYM: editar cualquier línea, dosis, series, repeticiones y descansos.
+- ERGO: editar cualquier bloque, tiempo/distancia, ppm y recuperación.
+- Reordenar ejercicios y bloques con **↑ / ↓** en móvil y PC.
+- En ordenador también se pueden **arrastrar y soltar**.
+- Eliminar y duplicar filas.
+- Añadir ejercicios o bloques manualmente.
+- Cambiar la plantilla GYM o ERGO base sin confundirlo con editar.
+- Estimación de duración se recalcula con el contenido editado.
+- **Guardar cambios** conserva la plantilla.
+- **Guardar como nueva plantilla** crea una copia editable cuando se parte de una plantilla guardada.
+
+V93 conserva todo V92: planificación completa, multiequipo, registro MAR, biblioteca de agarre, etc.
