@@ -1,23 +1,12 @@
-# Row Training V83
+# Row Training V84
 
-Cambios sobre V82:
-- Sincronización **automática** de Concept2/ErgData para remeros que ya han conectado su cuenta.
-- Se intenta al abrir la app, al volver desde ErgData/otra app y al entrar en **Historial**.
-- Historial sigue abriendo primero los datos guardados para no bloquear la navegación; si llegan resultados nuevos se actualiza solo.
-- El botón **Sincronizar ahora (manual)** permanece en Perfil como respaldo.
-- Protección de 2 minutos entre intentos automáticos para evitar llamadas duplicadas por eventos de foco/visibilidad.
-- Añadido control de versión (`version.json`): desde V83, cuando se despliegue una versión futura en la misma URL, la app detectará la nueva versión al volver al primer plano y recargará automáticamente.
-- Mantiene íntegramente las correcciones de V82 para avisos de nuevas altas.
+Cambios principales respecto a V83:
 
-## SQL
-V83 **no necesita SQL nuevo** si V82/V81/V70 ya estaban instaladas.
+- Los entrenamientos combinados GYM + ERGO permiten registrar el ERGO manualmente o desde Foto/Galería, igual que un ERGO normal.
+- Planificación: en ordenador se puede arrastrar un entrenamiento a otro día; en móvil cada sesión tiene botón Mover como alternativa fiable.
+- Planificación: nuevo Plan B · No hay mar, con biblioteca de combinaciones GYM + ERGO que sustituyen una sesión MAR del día seleccionado.
+- Biblioteca ERGO: añadidas opciones Senior más largas (45 min, 60 min, 3x15, 2x20 y 4x12) como trabajo opcional, sin cambiar la duración de la planificación oficial. Los enlaces ErgData quedan editables y pueden añadirse después desde la propia Biblioteca ERGO.
+- La biblioteca mezcla las sesiones nuevas incluidas en la versión con las ya guardadas en Supabase, para que las nuevas aparezcan sin SQL adicional.
+- Se mantiene la sincronización automática Concept2/ErgData introducida en V83.
 
-## Vercel
-Mantén las variables existentes:
-- `ROWTRAINING_GMAIL_USER`
-- `ROWTRAINING_GMAIL_APP_PASSWORD`
-- `REGISTRATION_NOTIFY_EMAIL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `CONCEPT2_CLIENT_SECRET`
-
-No volver a ejecutar scripts antiguos de planificación.
+V84 no requiere SQL nuevo si V83 ya estaba funcionando.

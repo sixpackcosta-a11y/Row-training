@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V83</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V84</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -94,7 +94,7 @@ header{background:linear-gradient(90deg,var(--club),#0b3557)}
 .coachDay{min-height:112px;border:1px solid #dbe5ef;border-radius:12px;background:#fff;padding:7px;text-align:left;overflow:hidden;position:relative}
 button.coachDay{width:100%;font:inherit;color:inherit}
 .coachDay.out{opacity:.35;background:#f8fafc}.coachDay.hasMar{border-color:#7cc6cf}.coachDay.hasResult{background:#eef9f8;border-color:#168c8b}.coachDay.selectedCompare{outline:3px solid #f0b400;background:#fff8db}.coachDay.selectedEdit{outline:3px solid #0b3557}
-.coachDayNum{font-weight:900;margin-bottom:5px}.miniSess{font-size:.72rem;line-height:1.25;margin:3px 0;padding:3px 5px;border-radius:6px;background:#eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.miniSess.mar{background:#e8f7f7}.miniSess.race{background:#fff0ef}.miniResult{font-size:.70rem;line-height:1.25;color:#065f5f;margin-top:4px;font-weight:700}
+.coachDayNum{font-weight:900;margin-bottom:5px}.miniSess{font-size:.72rem;line-height:1.25;margin:3px 0;padding:3px 5px;border-radius:6px;background:#eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.miniSess.mar{background:#e8f7f7}.miniSess.race{background:#fff0ef}.miniSess[draggable="true"]{cursor:grab}.miniSess.dragging{opacity:.45}.coachDay.dragOver{outline:3px dashed #0b5ed7;outline-offset:-3px;background:#eef6ff}.miniResult{font-size:.70rem;line-height:1.25;color:#065f5f;margin-top:4px;font-weight:700}
 .compareTray{position:relative;background:#fffaf0;border:1px solid #f3d37a;border-radius:14px;padding:12px;margin:14px 0}.compareCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px}.compareCard{border:1px solid #e3e9f0;border-radius:11px;padding:10px;background:white}.deltaGood{color:#087f5b;font-weight:800}.deltaBad{color:#b42318;font-weight:800}.repeatGroup{border-top:1px solid #e3e9f0;padding-top:10px;margin-top:12px}
 .clubGymImg{background:#fff;border:1px solid #e5e7eb;border-radius:12px;object-fit:contain!important}
 @media(max-width:700px){.coachCalendar{gap:3px}.coachDay{min-height:84px;padding:5px}.miniSess{font-size:.62rem;padding:2px 3px}.miniResult{font-size:.61rem}.coachDow{font-size:.66rem}.coachDayNum{font-size:.85rem}.coachMonthBar .monthTitle{min-width:120px}.compareCards{grid-template-columns:1fr 1fr}}
@@ -446,7 +446,12 @@ const ERGO_LIBRARY_DEFAULTS=[
  {code:"UT1-2X2000-24",zone:"UT1",name:"UT1 · 2×2000 m @24 · rec 4'",teams:"senior",phases:"development,precomp",url:"https://workout.ergdata.com/shared/6ie64y6v"},
  {code:"UT1-2X12-22",zone:"UT1",name:"UT1 · 2×12' @22 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/andz4pbf"},
  {code:"UT1AT-PROG28",zone:"UT1-AT",name:"UT1-AT · 28' progresivo · 20→28 ppm",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/qjlppccd"},
- {code:"UT1AT-3X1500",zone:"UT1-AT",name:"UT1-AT · 3×(500@22 + 500@24 + 500@26) · rec 4'",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/mhfsanvv"}
+ {code:"UT1AT-3X1500",zone:"UT1-AT",name:"UT1-AT · 3×(500@22 + 500@24 + 500@26) · rec 4'",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/mhfsanvv"},
+ {code:"UT2-45-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 45' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-60-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 60' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-3X15-20",zone:"UT2 · EXTRA",name:"Opcional Senior · 3×15' @20 ppm · rec 3'",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-2X20-20",zone:"UT2 · EXTRA",name:"Opcional Senior · 2×20' @20 ppm · rec 4'",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-4X12-2022",zone:"UT2 · EXTRA",name:"Opcional Senior · 4×12' @20–22 ppm · rec 3'",teams:"senior",phases:"development",url:null}
 ];
 function currentPhase(){
  const m=new Date().getMonth()+1;
@@ -458,8 +463,11 @@ function currentPhase(){
 }
 async function loadErgoLibrary(){
  let rows=[]; try{const q=await sb.from("ergo_library").select("*").order("zone").order("name"); if(!q.error) rows=q.data||[];}catch(e){}
- if(!rows.length) rows=ERGO_LIBRARY_DEFAULTS.map(x=>({...x,is_active:true}));
- return rows;
+ const byCode=new Map(rows.map(x=>[x.code,x]));
+ // Mezcla la biblioteca guardada con las sesiones incluidas en la versión.
+ // Así, las nuevas sesiones aparecen aunque ya existan registros antiguos en Supabase.
+ return ERGO_LIBRARY_DEFAULTS.map(d=>({...d,is_active:true,...(byCode.get(d.code)||{})}))
+   .concat(rows.filter(x=>!ERGO_LIBRARY_DEFAULTS.some(d=>d.code===x.code)));
 }
 async function ergoLibrary(){
  const rows=await loadErgoLibrary(); const coach=r==="coach"; const phase=currentPhase(); const team=teamKey()==="veterans"?"veterans":"senior";
@@ -549,7 +557,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="83";
+const APP_VERSION="84";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -1021,9 +1029,12 @@ function showSessionIn(targetId,x){
   const el=document.getElementById(targetId);
   if(x[2]==="MIX"){
     const mixDate=scheduledDateFor(x);
-    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button></div></div>`;
+    const mixErgo=[x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"];
+    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button><button id="mixErgoManual">Registrar ERGO manualmente</button><label class="btn">📷 Foto / Galería<input id="mixErgoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
     openMixGym.onclick=()=>gym("M",x);
-    openMixErgo.onclick=()=>openErgDataFor([x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"]);
+    openMixErgo.onclick=()=>openErgDataFor(mixErgo);
+    mixErgoManual.onclick=()=>{const pr=ergoPrescription(mixErgo);currentErgoPrescription={...pr,scheduledDate:mixDate};showErgoForm();};
+    mixErgoPhotos.onchange=(e)=>{const files=[...(e.target.files||[])];if(files.length){const pr=ergoPrescription(mixErgo);currentErgoPrescription={...pr,scheduledDate:mixDate};showErgoForm(files);}};
   } else if(x[2]==="GYM"){
     el.innerHTML=`<div class="session">
       <h3>${title(x)}</h3>
@@ -1857,7 +1868,7 @@ function calendarCellsHtml(ym,sessions=[],comps=[],results=[],mode='edit',select
   const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds), mars=xs.filter(x=>x.session_type==='MAR');
   const rs=mars.map(x=>({s:x,r:resultForSession(results,x.id)})).filter(x=>x.r); const sel=rs.some(x=>selectedIds.includes(String(x.r.id)));
   const cls=['coachDay',mars.length?'hasMar':'',rs.length?'hasResult':'',sel?'selectedCompare':''].filter(Boolean).join(' ');
-  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}">${x.session_type||'MAR'} · ${(x.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
+  html+=`<button type="button" class="${cls}" data-date="${ds}" ${mode==='compare'&&!rs.length?'disabled':''}><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div class="miniSess ${x.session_type==='MAR'?'mar':''}" ${mode==='edit'?`draggable="true" data-session-id="${x.id}" title="Arrastra a otro día para mover"`:''}>${x.session_type||'MAR'} · ${(x.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/,'')}</div>`).join('')}${rs.map(x=>`<div class="miniResult">✓ ${x.r.pace_500_text?x.r.pace_500_text+'/500':''}${x.r.spm?' · '+x.r.spm+' ppm':''}</div>`).join('')}</button>`;
  }
  return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
 }
@@ -1932,7 +1943,7 @@ async function loadCoachCalendar(team,date){
 async function coachPlanner(){
  if(r!=="coach") return;
  const fallback='2026-09-01'; const date=plannerJumpDate||fallback; let ym=date.slice(0,7),view='month';
- content.innerHTML=`<div class="card"><h2>Planificación</h2><p class="muted">Un único calendario para crear, consultar y editar GYM, ERGO, MAR, descanso y competiciones. Pulsa un día y edítalo directamente.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
+ content.innerHTML=`<div class="card"><h2>Planificación</h2><p class="muted">Un único calendario para crear, consultar y editar GYM, ERGO, MAR, descanso y competiciones. En ordenador puedes arrastrar un entrenamiento a otro día; en móvil usa “Mover”.</p><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label><label>Día seleccionado<input id="planDate" type="date" value="${date}"></label></div><div class="coachTools"><button id="loadPlan" class="primary">Cargar día</button><button id="newSession">+ Entrenamiento</button><button id="planBBtn">☁️ Plan B · No hay mar</button><button id="newRace">+ Competición</button></div><div id="planArea"></div><hr><h3>Ir a otra fecha</h3><div class="plannerGrid"><label>Mes<select id="planMonthPick" class="monthSelect">${monthOptions(ym)}</select></label><div class="viewToggle"><button id="planViewMonth" class="active">Mes</button><button id="planViewSeason">Temporada Sep–May</button></div></div><div id="planNav" class="coachMonthBar"><button id="planPrev">← Mes anterior</button><div id="planMonthTitle" class="monthTitle"></div><button id="planNext">Mes siguiente →</button></div><div id="planCalendar"></div></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
@@ -1940,8 +1951,19 @@ async function coachPlanner(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
   if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'edit',[])}
   planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));renderPlanDay()});
+  let draggedSessionId=null;
+  planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
+    item.addEventListener('click',e=>e.stopPropagation());
+    item.addEventListener('dragstart',e=>{draggedSessionId=item.dataset.sessionId;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedSessionId);});
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');planCalendar.querySelectorAll('.coachDay').forEach(d=>d.classList.remove('dragOver'));});
+  });
+  planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(day=>{
+    day.addEventListener('dragover',e=>{if(!draggedSessionId)return;e.preventDefault();day.classList.add('dragOver');e.dataTransfer.dropEffect='move';});
+    day.addEventListener('dragleave',()=>day.classList.remove('dragOver'));
+    day.addEventListener('drop',async e=>{if(!draggedSessionId)return;e.preventDefault();e.stopPropagation();day.classList.remove('dragOver');const targetDate=day.dataset.date;const q=await sb.from('training_sessions').update({session_date:targetDate,updated_at:new Date().toISOString()}).eq('id',draggedSessionId);if(q.error)alert('No se pudo mover: '+q.error.message);else{planDate.value=targetDate;ym=targetDate.slice(0,7);await drawCalendar();await renderPlanDay();}});
+  });
  }
- loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newRace.onclick=()=>raceEditor();
+ loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
  planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;drawCalendar();renderPlanDay()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();
@@ -1960,12 +1982,49 @@ async function coachPlanner(){
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
- planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?trainingContentHtml(x.content):""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
+ planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p><button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${x.content?trainingContentHtml(x.content):""}${x.session_type==="MAR"?`<button class="seaResult" data-id="${x.id}">Registrar resultado MAR</button> `:""}<button class="editSess" data-id="${x.id}">Editar</button> <button class="moveSess" data-id="${x.id}">Mover</button> <button class="delSess" data-id="${x.id}">Eliminar</button></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
  document.querySelectorAll('.editSess').forEach(b=>b.onclick=()=>sessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
+ document.querySelectorAll('.moveSess').forEach(b=>b.onclick=()=>moveSessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar esta sesión futura?')){await sb.from('training_sessions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
 }
+const PLAN_B_LIBRARY=[
+ {code:"PB-BASE-2X10",name:"Base · GYM + ERGO 2×10'",desc:"Sustitución suave para un día de mar. Mantiene fuerza general y UT2 sin disparar la fatiga.",gymTitle:"GYM · Fuerza global corta",gymContent:"DURACIÓN OBJETIVO · 35–40 min\nCALENTAMIENTO · 8 min\nPrensa de piernas · 3×10 · rec 2 min\nRemo sentado en polea · 3×10 · rec 75 s\nHip thrust · 3×10 · rec 90 s\nPallof press · 2×10/lado · rec 45 s\nVUELTA A LA CALMA · 5 min\nCarga: RIR 2–3; técnica limpia y sin llegar al fallo.",ergoTitle:"ERGO · UT2 · 2×10' @20 · rec 3'",ergoContent:"4 min calentamiento\n2×10 min @20 ppm · UT2\nRecuperación 3 min suave\n5 min vuelta a la calma"},
+ {code:"PB-BASE-3X10",name:"Base completa · GYM + ERGO 3×10'",desc:"Plan B estándar para sustituir MAR en fase base.",gymTitle:"GYM · Fuerza global",gymContent:"DURACIÓN OBJETIVO · 45–50 min\nCALENTAMIENTO · 8–10 min\nPrensa de piernas · 3×10 · rec 2 min\nPeso muerto rumano · 3×10 · rec 90 s\nRemo sentado en polea · 3×10 · rec 75 s\nPress de pecho · 3×10 · rec 90 s\nPallof press · 3×10/lado · rec 45–60 s\nVUELTA A LA CALMA · 5 min\nCarga: RIR 2–3; no llegar al fallo.",ergoTitle:"ERGO · UT2 · 3×10' @20 · rec 3'",ergoContent:"8–10 min calentamiento\n3×10 min @20 ppm · UT2\nRecuperación 3 min suave\n6–8 min vuelta a la calma"},
+ {code:"PB-POST-3X12",name:"Cadena posterior + ERGO 3×12'",desc:"Más volumen aeróbico, manteniendo la fuerza controlada.",gymTitle:"GYM · Cadena posterior + tirón",gymContent:"DURACIÓN OBJETIVO · 40–45 min\nCALENTAMIENTO · 8 min\nPeso muerto rumano · 3×10 · rec 90 s\nHip thrust · 3×10 · rec 90 s\nJalón al pecho · 3×10 · rec 75–90 s\nPallof press · 3×10/lado · rec 45–60 s\nDead bug · 3×8/lado · rec 45 s\nCarga: RIR 2–3; ejecución estable.",ergoTitle:"ERGO · UT2 · 3×12' @20 · rec 3'",ergoContent:"8 min calentamiento\n3×12 min @20 ppm · UT2\nRecuperación 3 min suave\n6 min vuelta a la calma"},
+ {code:"PB-SENIOR-45",name:"Senior opcional · GYM corto + 45' UT2",desc:"Opción de mayor volumen solo para Senior con base suficiente. No es la sesión estándar del equipo.",gymTitle:"GYM · Superior + core corto",gymContent:"DURACIÓN OBJETIVO · 25–30 min\nCALENTAMIENTO · 6–8 min\nRemo sentado en polea · 3×10 · rec 75 s\nJalón al pecho · 3×10 · rec 75–90 s\nPress de pecho · 3×10 · rec 90 s\nPallof press · 2×10/lado · rec 45 s\nCarga: RIR 2–3; sin fatiga residual.",ergoTitle:"ERGO · UT2 · 45' continuo @18–20 ppm",ergoContent:"45 min continuos · 18–20 ppm · mantener UT2 individual\nRPE aprox. 3–4/10 · técnica estable\nOpcional para Senior con base suficiente."}
+];
+
+function moveSessionEditor(x){
+ if(!x)return;
+ const date=planDate.value;
+ planArea.innerHTML=`<div class="card"><h3>Mover entrenamiento</h3><p><b>${esc(x.session_type)} · ${esc(x.title||'Entrenamiento')}</b></p><p class="muted">Fecha actual: ${shortDateES(x.session_date)}</p><label>Nueva fecha<input id="moveSessDate" type="date" value="${date}"></label><button id="confirmMoveSess" class="primary">Mover aquí</button> <button id="cancelMoveSess">Cancelar</button></div>`;
+ cancelMoveSess.onclick=renderPlanDay;
+ confirmMoveSess.onclick=async()=>{const target=moveSessDate.value;if(!target)return;const team=planTeam.value;const q=await sb.from('training_sessions').update({session_date:target,updated_at:new Date().toISOString()}).eq('id',x.id);if(q.error)alert(q.error.message);else{plannerJumpTeam=team;plannerJumpDate=target;plannerAutoEdit=false;await coachPlanner();}};
+}
+
+function planBPicker(){
+ const team=planTeam.value,date=planDate.value;
+ const options=PLAN_B_LIBRARY.filter(x=>x.code!=="PB-SENIOR-45"||team==="senior_m"||team==="senior_f");
+ planArea.innerHTML=`<div class="card"><h3>☁️ Plan B · No hay mar</h3><p class="muted">Elige una combinación GYM + ERGO para sustituir la sesión MAR del ${shortDateES(date)}. Se eliminarán solo las sesiones MAR de ese día y se crearán los dos bloques.</p>${options.map(x=>`<div class="ex"><span class="tag">GYM + ERGO</span><h3>${esc(x.name)}</h3><p>${esc(x.desc)}</p><div class="mixGrid"><div class="info"><b>${esc(x.gymTitle)}</b><br>${esc(x.gymContent).replace(/\n/g,'<br>')}</div><div class="info"><b>${esc(x.ergoTitle)}</b><br>${esc(x.ergoContent).replace(/\n/g,'<br>')}</div></div><button class="applyPlanB primary" data-code="${x.code}">Usar este Plan B</button></div>`).join('')}<button id="cancelPlanB">Cancelar</button></div>`;
+ cancelPlanB.onclick=renderPlanDay;
+ document.querySelectorAll('.applyPlanB').forEach(b=>b.onclick=async()=>{
+   const x=PLAN_B_LIBRARY.find(z=>z.code===b.dataset.code); if(!x)return;
+   if(!confirm(`¿Sustituir la sesión MAR del ${date} por "${x.name}"?`))return;
+   const del=await sb.from('training_sessions').delete().eq('team_code',team).eq('session_date',date).eq('session_type','MAR');
+   if(del.error)return alert('No se pudo retirar MAR: '+del.error.message);
+   const now=new Date().toISOString();
+   const q=await sb.from('training_sessions').insert([
+     {team_code:team,session_date:date,session_type:'GYM',title:x.gymTitle,content:x.gymContent,updated_at:now},
+     {team_code:team,session_date:date,session_type:'ERG',title:x.ergoTitle,content:x.ergoContent,updated_at:now}
+   ]);
+   if(q.error)return alert('No se pudo crear el Plan B: '+q.error.message);
+   alert('Plan B aplicado. Puedes editar cualquiera de los dos bloques.');
+   plannerJumpTeam=team;plannerJumpDate=date;plannerAutoEdit=false;await coachPlanner();
+ });
+}
+
 function sessionEditor(x=null){
  const team=planTeam.value,date=planDate.value;
  planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Técnica + cambios de ritmo"></label></div>
