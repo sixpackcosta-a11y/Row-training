@@ -1,29 +1,13 @@
-# Row Training V93
+# Row Training V94 · CORREGIDA
 
-Corrección rápida del editor de sesiones COMBINADAS (GYM + ERGO).
+## Corrección importante
+La primera V94 intentaba guardar `MIX` en `training_sessions.session_type`, pero la base solo admite `GYM`, `ERG`, `MAR` y `DESC`.
 
-## Instalación desde V92
+Esta corrección guarda una sesión combinada como **dos registros el mismo día: GYM + ERG**.
 
-**No hay cambios de base de datos en V93. No hace falta ejecutar SQL.**
+## Instalación
+1. Ejecuta `setup_v94.sql` (o copia `COPIAR_SQL_V94.txt`) en Supabase SQL Editor.
+2. Debe devolver Success.
+3. Después sube los archivos del UPDATE a GitHub y haz Push origin normal.
 
-1. Copia los archivos del ZIP `Row-training-V93-UPDATE.zip` sobre la raíz del repositorio.
-2. Acepta reemplazar.
-3. Commit `V93` en GitHub Desktop.
-4. Push origin normal.
-5. Espera a Vercel `Ready`.
-
-## Novedades V93
-
-- El botón **Editar** de COMBINADOS abre ahora un editor real del contenido guardado.
-- GYM: editar cualquier línea, dosis, series, repeticiones y descansos.
-- ERGO: editar cualquier bloque, tiempo/distancia, ppm y recuperación.
-- Reordenar ejercicios y bloques con **↑ / ↓** en móvil y PC.
-- En ordenador también se pueden **arrastrar y soltar**.
-- Eliminar y duplicar filas.
-- Añadir ejercicios o bloques manualmente.
-- Cambiar la plantilla GYM o ERGO base sin confundirlo con editar.
-- Estimación de duración se recalcula con el contenido editado.
-- **Guardar cambios** conserva la plantilla.
-- **Guardar como nueva plantilla** crea una copia editable cuando se parte de una plantilla guardada.
-
-V93 conserva todo V92: planificación completa, multiequipo, registro MAR, biblioteca de agarre, etc.
+La V94 corregida mantiene MAR martes/domingo, tests ERGO 2000 m, semanas de regata y la duración objetivo de GYM elegida por el entrenador.
