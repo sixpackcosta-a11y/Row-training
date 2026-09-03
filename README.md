@@ -22,9 +22,15 @@
 No uses Force Push.
 
 
-## V105 — aviso de activación de notificaciones
+## V106 — aviso de activación de notificaciones
 - Al primer acceso tras actualizar, cada usuario sin push activo recibe un aviso para activar notificaciones.
 - Funciona también para usuarios que ya tenían la PWA instalada.
 - El aviso se muestra una vez por usuario/dispositivo en esta versión; si ya está suscrito no aparece.
 - En iPhone fuera del modo instalado, explica que debe abrirse desde la pantalla de inicio.
 - No añade cambios SQL respecto a V104. Si V104 no se instaló, ejecutar setup_v104.sql y configurar VAPID en Vercel antes de desplegar.
+
+
+## V106
+- Alta de push corregida: la suscripción del propio dispositivo se guarda con el JWT del usuario y RLS, sin depender de SUPABASE_SERVICE_ROLE_KEY.
+- Prueba push del propio usuario también funciona sin service role.
+- Los avisos de nuevas altas a entrenadores siguen requiriendo SUPABASE_SERVICE_ROLE_KEY en Vercel.
