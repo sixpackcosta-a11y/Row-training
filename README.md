@@ -53,6 +53,12 @@ No uses Force Push.
 - El globo rojo de la campana desaparece cuando hay 0 notificaciones sin leer.
 
 
+## V111
+- Corrige el selector de destinatarios en Notificaciones.
+- Cuando se elige “Un equipo”, el campo “Remero” queda oculto como corresponde.
+- Cuando se elige “Un remero”, aparece el selector y carga los remeros del equipo elegido.
+- No requiere SQL.
+
 ## V110
 - Envío manual de notificaciones desde la campana para entrenadores: todos sus equipos, un equipo o un remero concreto.
 - Cada aviso se guarda dentro de Row Training y también se envía por push a los dispositivos suscritos.
