@@ -40,3 +40,8 @@ No uses Force Push.
 - Web Push: registro verificado del dispositivo en servidor.
 - La prueba diferencia entre dispositivo no registrado y envío rechazado.
 - Re-registra la suscripción antes de enviar la prueba.
+
+
+## V108
+- Web Push iPhone: VAPID subject normalizado a https://rowtraining.vercel.app para compatibilidad con Apple Web Push.
+- La prueba muestra dispositivos encontrados, enviados y fallidos, con detalle del error.

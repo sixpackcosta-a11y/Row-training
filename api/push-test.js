@@ -9,7 +9,7 @@ module.exports=async function handler(req,res){
   const userToken=(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(!userToken)return res.status(401).json({error:'missing_token'});
   const vr=await fetch(`${supabaseUrl}/auth/v1/user`,{headers:{apikey:anonKey,Authorization:`Bearer ${userToken}`}});if(!vr.ok)return res.status(401).json({error:'invalid_token'});const user=await vr.json();
   const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;if(!pub||!priv)return res.status(400).json({error:'push_not_configured'});
-  webpush.setVapidDetails('mailto:rowtraining@pedregalejo.local',pub,priv);
+  webpush.setVapidDetails('https://rowtraining.vercel.app',pub,priv);
   const apiKey=serviceKey||anonKey,token=serviceKey||userToken;
   const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=eq.${user.id}&select=id,endpoint,p256dh,auth`,{apiKey,token});
   let sent=0;const errors=[];

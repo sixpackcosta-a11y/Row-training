@@ -80,7 +80,7 @@ module.exports = async function handler(req,res){
         }
         const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
         if(pub&&priv&&pushCoachIds.length){
-          webpush.setVapidDetails('mailto:rowtraining@example.com',pub,priv);
+          webpush.setVapidDetails('https://rowtraining.vercel.app',pub,priv);
           const ids=pushCoachIds.map(encodeURIComponent).join(',');
           const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=in.(${ids})&select=id,user_id,endpoint,p256dh,auth`,{key:serviceKey})||[];
           for(const ps of subs){
