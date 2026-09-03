@@ -1306,7 +1306,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="113";
+const APP_VERSION="114";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -2751,7 +2751,7 @@ function athleteMonthCalendarHtmlV98(ym,sessions=[],comps=[]){
 }
 function athleteMonthDetailHtmlV98(x){
  const isTest=/test/i.test(String(x.title||''));
- const raw=String(x.content||'').trim();
+ const raw=String(x.content||'').replace(/\\n/g,'\n').trim();
  const lines=raw?raw.split(/\n+/).map(v=>v.trim()).filter(Boolean):[];
  const body=lines.length?`<div class="athWorkoutDetail">${lines.map(line=>{const m=line.match(/^([^·:]{2,35})\s*[·:]\s*(.+)$/);return m?`<div class="athWorkoutLine"><b>${esc(m[1])}</b><span>${esc(m[2])}</span></div>`:`<div class="athWorkoutLine athWorkoutPlain">${esc(line)}</div>`}).join('')}</div>`:'<div class="info">Este entrenamiento todavía no tiene una prescripción detallada.</div>';
  return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">Cerrar</button><div class="tag">${esc(x.session_type||'Entrenamiento')}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||'Entrenamiento')}</h3><div class="muted">${shortDateES(x.session_date)}</div>${body}</div>`;
