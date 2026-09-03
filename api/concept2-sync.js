@@ -54,7 +54,7 @@ function scoreResult(result,intents){
   let best=null;
   for(const i of intents){
     let score=0;
-    if(dateOnly(result.date||result.date_utc)===i.scheduled_date)score+=45;
+    if(dateOnly(result.date||result.date_utc)===i.scheduled_date)score+=i.from_planning?85:45;
     const d=Number(result.distance||0);
     if(i.expected_distance_m&&d){const diff=Math.abs(d-i.expected_distance_m)/i.expected_distance_m;if(diff<=.03)score+=25;else if(diff<=.10)score+=15;}
     const secs=resultSeconds(result);
@@ -67,6 +67,38 @@ function scoreResult(result,intents){
   if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null};
   if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
   return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
+}
+async function plannedErgoIntents(userId,results){
+  const mr=await rest(`rower_team_memberships?user_id=eq.${encodeURIComponent(userId)}&is_rower=eq.true&select=team_code`);
+  if(!mr.ok)return [];
+  const teams=[...new Set((await mr.json()).map(x=>x.team_code).filter(Boolean))];
+  const dates=results.map(x=>dateOnly(x.date||x.date_utc)).filter(Boolean).sort();
+  if(!teams.length||!dates.length)return [];
+  const teamFilter=teams.map(encodeURIComponent).join(',');
+  const sr=await rest(`training_sessions?team_code=in.(${teamFilter})&session_type=eq.ERG&session_date=gte.${encodeURIComponent(dates[0])}&session_date=lte.${encodeURIComponent(dates[dates.length-1])}&select=id,team_code,session_date,title,content`);
+  if(!sr.ok)return [];
+  return (await sr.json()).map(x=>({
+    id:null,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',
+    expected_distance_m:null,expected_duration_seconds:null,expected_spm:null,expected_workout_type:null,
+    from_planning:true
+  }));
+}
+async function enrichIntervalDetails(results,token){
+  const detailed=[];
+  const candidates=results.filter(x=>/(interval|splits)/i.test(String(x.workout_type||''))).slice(0,20);
+  const byId=new Map(results.map(x=>[String(x.id),x]));
+  for(let i=0;i<candidates.length;i+=5){
+    const batch=await Promise.all(candidates.slice(i,i+5).map(async x=>{
+      try{
+        const r=await fetchTimed(`https://log.concept2.com/api/users/me/results/${encodeURIComponent(x.id)}`,{headers:{Authorization:`Bearer ${token}`,Accept:"application/vnd.c2logbook.v1+json"}},10000);
+        if(!r.ok)return x;
+        const j=await r.json().catch(()=>({})); return j.data||x;
+      }catch(e){return x;}
+    }));
+    detailed.push(...batch);
+  }
+  detailed.forEach(x=>byId.set(String(x.id),x));
+  return results.map(x=>byId.get(String(x.id))||x);
 }
 module.exports=async function handler(req,res){
   try{
@@ -85,15 +117,18 @@ module.exports=async function handler(req,res){
     },15000);
     const rj=await rr.json().catch(()=>({}));
     if(!rr.ok)return res.status(rr.status).json({error:rj.message||"No se pudieron leer resultados de Concept2."});
-    const results=Array.isArray(rj)?rj:(rj.data||[]);
+    let results=Array.isArray(rj)?rj:(rj.data||[]);
     if(!results.length){
       const now=new Date().toISOString();
       await rest(`concept2_connections?user_id=eq.${encodeURIComponent(me.id)}`,{method:"PATCH",body:JSON.stringify({last_sync_at:now,updated_at:now})});
       return res.json({ok:true,imported:0,updated:0,total:0});
     }
 
+    results=await enrichIntervalDetails(results,token);
     const ir=await rest(`ergo_intents?user_id=eq.${encodeURIComponent(me.id)}&select=*&order=scheduled_date.desc`);
-    const intents=ir.ok?await ir.json():[];
+    const savedIntents=ir.ok?await ir.json():[];
+    const planningIntents=await plannedErgoIntents(me.id,results).catch(()=>[]);
+    const intents=[...savedIntents,...planningIntents];
 
     // Una única consulta para saber cuáles ya existían.
     const idList=results.map(x=>String(x.id)).filter(Boolean);
