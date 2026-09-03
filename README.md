@@ -1,20 +1,30 @@
-# Row Training V103
+# Row Training V104
 
-## V103 CORREGIDA · novedades
-- **TEST ERGO muy visible en calendario**: color violeta intenso + icono 🧪, para identificarlo aunque el texto se corte.
-- **Estado ErgData/Concept2** en Gestión de equipos, comparación y ficha individual: punto azul = conectado; gris = sin conectar. Nunca se exponen tokens OAuth.
-- **Editar perfil de cualquier remero autorizado** desde Análisis.
-- Datos editables: nombre, fecha de nacimiento, altura, peso, FC de reposo, FC máxima, UT2, UT1, AT, TR, AN y notas.
-- Botón **Calcular zonas** con Karvonen a partir de FC reposo + FC máxima.
-- **Comparar perfiles** por equipo: edad, altura, peso, FC y todas las zonas en una tabla de escritorio y tarjetas en móvil.
-- Los datos que faltan aparecen como **Pendiente**, nunca como 0.
-- Compatible con **multiequipo**: Análisis usa `rower_team_memberships` y no depende solo del `team_code` antiguo.
-- El propio remero también puede guardar su **fecha de nacimiento** desde Perfil.
+## Novedades
+- Campana **🔔 Notificaciones** dentro de Row Training, con contador de avisos no leídos.
+- **Web Push real** para avisos aunque la PWA esté cerrada (en iPhone requiere Row Training instalada en la pantalla de inicio y permiso de notificaciones).
+- **Nueva alta de remero**: crea un aviso interno y envía push al entrenador administrador y al entrenador del equipo solicitado.
+- El push funciona **aunque falle Gmail**: el correo queda como canal adicional, no como requisito.
+- Botón **Activar notificaciones** desde la campana y botón **Enviar prueba** para comprobar el dispositivo.
+- Al tocar una notificación de alta se abre directamente **Altas**.
 
-## Instalación
-1. Ejecuta `setup_v103.sql` (o `COPIAR_SQL_V103.txt`) en Supabase SQL Editor.
-2. Si devuelve **Success**, copia los archivos del UPDATE a la raíz del repositorio.
-3. Commit `V103 corregida` y **Push origin** normal.
-4. Espera a Vercel `Ready`.
+## Instalación V104
+1. Ejecuta `setup_v104.sql` (o `COPIAR_SQL_V104.txt`) en Supabase SQL Editor. Debe dar **Success**.
+2. En Vercel > Project > Settings > Environment Variables añade `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY` usando el archivo privado que te entrego aparte.
+3. Copia los archivos del UPDATE a la raíz del repositorio.
+4. Commit `V104 notificaciones` y **Push origin** normal.
+5. Espera Vercel `Ready`.
+6. En el iPhone abre Row Training desde el icono instalado > toca 🔔 > **Activar notificaciones** > Permitir.
+7. Pulsa **Enviar prueba**.
+
+**Importante:** el archivo con `VAPID_PRIVATE_KEY` NO se copia al repositorio ni se sube a GitHub. Solo se usa para crear las variables de entorno en Vercel.
 
 No uses Force Push.
+
+
+## V105 — aviso de activación de notificaciones
+- Al primer acceso tras actualizar, cada usuario sin push activo recibe un aviso para activar notificaciones.
+- Funciona también para usuarios que ya tenían la PWA instalada.
+- El aviso se muestra una vez por usuario/dispositivo en esta versión; si ya está suscrito no aparece.
+- En iPhone fuera del modo instalado, explica que debe abrirse desde la pantalla de inicio.
+- No añade cambios SQL respecto a V104. Si V104 no se instaló, ejecutar setup_v104.sql y configurar VAPID en Vercel antes de desplegar.

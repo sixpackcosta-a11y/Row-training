@@ -1,13 +1,14 @@
 const {sendRowTrainingMail}=require('../lib/mail');
+const webpush=require('web-push');
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
 }
 
-async function rest(url,{method='GET',key,body}={}){
+async function rest(url,{method='GET',key,body,prefer}={}){
   const r=await fetch(url,{
     method,
-    headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json',Prefer:'return=representation'},
+    headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json',Prefer:prefer||'return=representation'},
     body:body===undefined?undefined:JSON.stringify(body)
   });
   if(!r.ok) throw new Error(`supabase_${r.status}`);
@@ -59,8 +60,43 @@ module.exports = async function handler(req,res){
       return res.status(204).end();
     }
 
+    // V104: crea aviso interno y, si el entrenador activó push, envía notificación al móvil.
+    // Los destinatarios son el entrenador administrador y los entrenadores del equipo solicitado.
+    if(serviceKey && requestRow){
+      try{
+        const globalRows=await rest(`${supabaseUrl}/rest/v1/user_roles?role=eq.coach&select=user_id`,{key:serviceKey})||[];
+        let teamRows=[];
+        if(requestRow.requested_team){
+          teamRows=await rest(`${supabaseUrl}/rest/v1/team_staff_roles?team_code=eq.${encodeURIComponent(requestRow.requested_team)}&staff_role=eq.coach&select=user_id`,{key:serviceKey})||[];
+        }
+        const coachIds=[...new Set([...globalRows,...teamRows].map(x=>x.user_id).filter(Boolean))];
+        const teamLabelsV104={veteranas:'Veteranas femenino',senior_m:'Senior masculino',senior_f:'Senior femenino',veteranos_m:'Veteranos masculino'};
+        const nName=String(requestRow.full_name||requestRow.email||'Nuevo remero').slice(0,160);
+        const nTeam=teamLabelsV104[requestRow.requested_team]||'Sin equipo preseleccionado';
+        const pushCoachIds=[];
+        for(const uid of coachIds){
+          const inserted=await rest(`${supabaseUrl}/rest/v1/app_notifications?on_conflict=user_id,source_key`,{method:'POST',key:serviceKey,prefer:'resolution=ignore-duplicates,return=representation',body:{user_id:uid,type:'registration',title:'Nueva alta pendiente',body:`${nName} · ${nTeam}`,url:'/?tab=altas',source_key:`registration:${requestRow.id}`}});
+          if(Array.isArray(inserted)&&inserted.length)pushCoachIds.push(uid);
+        }
+        const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
+        if(pub&&priv&&pushCoachIds.length){
+          webpush.setVapidDetails('mailto:rowtraining@example.com',pub,priv);
+          const ids=pushCoachIds.map(encodeURIComponent).join(',');
+          const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=in.(${ids})&select=id,user_id,endpoint,p256dh,auth`,{key:serviceKey})||[];
+          for(const ps of subs){
+            try{
+              await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title:'Nueva alta en Row Training',body:`${nName} · ${nTeam}`,url:'/?tab=altas',tag:`registration-${requestRow.id}`}));
+            }catch(pushErr){
+              if(pushErr?.statusCode===404||pushErr?.statusCode===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey});}catch(e){}}
+            }
+          }
+        }
+      }catch(pushError){ console.warn('push_notification_warning',pushError?.message||pushError); }
+    }
+
     const to=process.env.REGISTRATION_NOTIFY_EMAIL || process.env.ROWTRAINING_GMAIL_USER;
-    if(!to || !process.env.ROWTRAINING_GMAIL_USER || !process.env.ROWTRAINING_GMAIL_APP_PASSWORD) return res.status(204).end();
+    // El push/aviso interno no depende de Gmail. Si el correo no está configurado, terminamos aquí con éxito.
+    if(!to || !process.env.ROWTRAINING_GMAIL_USER || !process.env.ROWTRAINING_GMAIL_APP_PASSWORD) return res.status(200).json({ok:true,push:true,email:false});
 
     // Reserva atómica del aviso para que dos intentos simultáneos no manden dos correos.
     let claimedAt=null;

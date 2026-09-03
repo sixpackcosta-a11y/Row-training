@@ -1,9 +1,10 @@
 {
   "name": "row-training",
   "private": true,
-  "version": "0.96.0",
+  "version": "1.04.0",
   "description": "Row Training · Club de Remo Pedregalejo",
   "dependencies": {
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "web-push": "^3.6.7"
   }
 }
