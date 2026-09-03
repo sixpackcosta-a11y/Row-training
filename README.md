@@ -51,3 +51,11 @@ No uses Force Push.
 - Un único usuario activo por dispositivo push: al cambiar de cuenta, el endpoint se reasigna automáticamente.
 - Limpieza de endpoints duplicados y restricción única por endpoint (setup_v109.sql).
 - El globo rojo de la campana desaparece cuando hay 0 notificaciones sin leer.
+
+
+## V110
+- Envío manual de notificaciones desde la campana para entrenadores: todos sus equipos, un equipo o un remero concreto.
+- Cada aviso se guarda dentro de Row Training y también se envía por push a los dispositivos suscritos.
+- En el editor de entrenamientos aparece la casilla **Enviar notificación a los remeros**, desmarcada por defecto para evitar avisos por retoques internos.
+- Al mover una sesión, cancelar una sesión o aplicar un Plan B, el entrenador puede decidir en ese momento si quiere notificar el cambio.
+- No añade SQL nuevo sobre V109. Si aún no se ejecutó `setup_v109.sql`, debe ejecutarse antes del despliegue.
