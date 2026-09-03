@@ -1118,7 +1118,19 @@ async function showPushOnboardingV106(){
   modal.querySelector('#pushOkV106')?.addEventListener('click',()=>dismiss('seen'));
   modal.querySelector('#pushEnableV106')?.addEventListener('click',async()=>{const b=modal.querySelector('#pushEnableV106');b.disabled=true;b.textContent='Activando…';const ok=await enablePushV104();if(ok){dismiss('enabled');setTimeout(()=>loadNotificationsV104(),100)}else{b.disabled=false;b.textContent='🔔 Activar notificaciones'}});
 }
-async function testPushV104(){const {data:{session}}=await sb.auth.getSession();const r=await fetch('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});const j=await r.json().catch(()=>({}));if(j.error==='push_not_configured')return alert('Falta terminar la configuración de Web Push en Vercel.');alert(j.sent?`Prueba enviada a ${j.sent} dispositivo${j.sent===1?'':'s'}.`:'No se encontró ningún dispositivo suscrito. Activa primero las notificaciones.');}
+async function testPushV104(){
+  const {data:{session}}=await sb.auth.getSession();
+  try{
+    const reg=await navigator.serviceWorker.getRegistration();const sub=reg?await reg.pushManager.getSubscription():null;
+    if(sub){const sr=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({subscription:sub.toJSON()})});const sj=await sr.json().catch(()=>({}));if(!sr.ok)return alert('El dispositivo tiene permiso, pero no se pudo registrar en el servidor.\n\nDetalle: '+(sj.error||sr.status));}
+    const r=await fetch('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});const j=await r.json().catch(()=>({}));
+    if(j.error==='push_not_configured')return alert('Falta terminar la configuración de Web Push en Vercel.');
+    if(!r.ok)return alert('No se pudo hacer la prueba.\n\nDetalle: '+(j.error||r.status));
+    if(j.sent)return alert(`Prueba enviada a ${j.sent} dispositivo${j.sent===1?'':'s'}.`);
+    if((j.found||0)===0)return alert('El iPhone tiene el permiso activado, pero todavía no figura registrado en el servidor. Vuelve a pulsar Activar notificaciones.');
+    const d=j.errors?.[0];return alert('El dispositivo está registrado, pero el envío push fue rechazado.\n\nDetalle: '+(d?.statusCode?d.statusCode+' · ':'')+(d?.message||'sin detalle'));
+  }catch(e){alert('No se pudo hacer la prueba.\n\nDetalle: '+(e?.message||e));}
+}
 async function openNotificationsV104(){
  await loadNotificationsV104();const on=await pushStatusV104();
  let panel=document.getElementById('notifyPanelV104');if(panel)panel.remove();panel=document.createElement('div');panel.id='notifyPanelV104';panel.className='notifyPanelV104';

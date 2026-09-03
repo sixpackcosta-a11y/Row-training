@@ -34,3 +34,9 @@ No uses Force Push.
 - Alta de push corregida: la suscripción del propio dispositivo se guarda con el JWT del usuario y RLS, sin depender de SUPABASE_SERVICE_ROLE_KEY.
 - Prueba push del propio usuario también funciona sin service role.
 - Los avisos de nuevas altas a entrenadores siguen requiriendo SUPABASE_SERVICE_ROLE_KEY en Vercel.
+
+
+## V107
+- Web Push: registro verificado del dispositivo en servidor.
+- La prueba diferencia entre dispositivo no registrado y envío rechazado.
+- Re-registra la suscripción antes de enviar la prueba.
