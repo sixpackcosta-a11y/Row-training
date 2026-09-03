@@ -1,14 +1,14 @@
-# Row Training V101
-
-Corrección del cumplimiento semanal.
+# Row Training V102
 
 ## Cambios
-- El porcentaje principal usa **toda la semana planificada**: cada GYM = 1 sesión y cada ERGO = 1 sesión.
-- Se añade un segundo dato **Al día** que compara solo las sesiones cuya fecha ya ha llegado.
-- Ejemplo: si hay 4 sesiones GYM/ERGO en la semana, ha completado 1 y hasta hoy debían haberse hecho 2, se muestra **25% · 1/4 semana** y **Al día 1/2 · 50%**.
-- ERGO registrados como `ERG` o `ERGO` se reconocen correctamente; ErgData/Concept2 sigue contando por fecha.
-- MAR no entra en este porcentaje.
-- Se mantiene el detalle ejercicio a ejercicio al pulsar Analizar.
+
+- Nueva vista de **Plantillas de los equipos** dentro de Equipo / Roles.
+- Por cada equipo muestra total de remeros, entrenadores y ayudantes.
+- Lista clara de integrantes y sus roles por equipo.
+- Bloque **Por revisar** para detectar personas sin equipo/rol y altas pendientes.
+- Mantiene la gestión existente para crear equipos, asignar remeros y equipo técnico.
+- Diseño responsive para móvil.
 
 ## Instalación
-No necesita SQL. Copia los archivos del UPDATE sobre el repositorio, commit `V101`, Push origin normal y espera Vercel Ready.
+
+No necesita SQL nuevo sobre V101. Sustituye los archivos del UPDATE, commit `V102` y Push origin normal.
