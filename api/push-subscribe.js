@@ -19,7 +19,7 @@ module.exports=async function handler(req,res){
     const user=await vr.json(); const s=req.body?.subscription;
     if(!s?.endpoint||!s?.keys?.p256dh||!s?.keys?.auth)return res.status(400).json({error:'bad_subscription'});
     const apiKey=serviceKey||anonKey, token=serviceKey||userToken;
-    await rest(`${supabaseUrl}/rest/v1/push_subscriptions?on_conflict=user_id,endpoint`,{
+    await rest(`${supabaseUrl}/rest/v1/push_subscriptions?on_conflict=endpoint`,{
       method:'POST',apiKey,token,
       prefer:'resolution=merge-duplicates,return=representation',
       body:{user_id:user.id,endpoint:s.endpoint,p256dh:s.keys.p256dh,auth:s.keys.auth,user_agent:String(req.headers['user-agent']||'').slice(0,500),updated_at:new Date().toISOString()}

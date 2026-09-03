@@ -45,3 +45,9 @@ No uses Force Push.
 ## V108
 - Web Push iPhone: VAPID subject normalizado a https://rowtraining.vercel.app para compatibilidad con Apple Web Push.
 - La prueba muestra dispositivos encontrados, enviados y fallidos, con detalle del error.
+
+
+## V109
+- Un único usuario activo por dispositivo push: al cambiar de cuenta, el endpoint se reasigna automáticamente.
+- Limpieza de endpoints duplicados y restricción única por endpoint (setup_v109.sql).
+- El globo rojo de la campana desaparece cuando hay 0 notificaciones sin leer.
