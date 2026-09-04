@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V123</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training V124</title><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
@@ -38,6 +38,8 @@ button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cu
 .ergoForm{margin-top:14px}
 .ocrBox{background:#f5f8fb;border-radius:12px;padding:12px;margin-top:10px}
 .photoPreview{width:100%;max-width:420px;border-radius:12px;margin:10px 0;display:none}
+.ergoSplitEditorV124{margin:14px 0;padding:12px;border:1px solid #d8e4ee;border-radius:14px;background:#f8fbfd}.ergoSplitEditorHeadV124{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.ergoSplitEditorHeadV124 h3{margin:0;font-size:18px}.ergoSplitRowsV124{display:grid;gap:10px}.ergoSplitRowV124{position:relative;padding:12px;border:1px solid #dce6ee;border-radius:13px;background:#fff}.ergoSplitRowHeadV124{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.ergoSplitRowHeadV124 b{font-size:15px}.ergoSplitRemoveV124{padding:6px 9px;color:#9d1c14;background:#fff0ef;border:1px solid #efc0bc}.ergoSplitGridV124{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ergoSplitGridV124 label{font-size:12px;color:#66768b}.ergoSplitGridV124 input{width:100%;margin-top:3px}.ergoSplitHintV124{margin:8px 0 0;color:#6d7d91;font-size:13px}.ergoPhotoGalleryV124{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:10px}.ergoPhotoGalleryV124 a{display:block}.ergoPhotoGalleryV124 img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;border:1px solid #d7e1ea;background:#eef3f7}.ergoPhotoGalleryV124 small{display:block;margin-top:4px;color:#66768b}.ergoSavedPartialsV124{margin-top:10px}.ergoSavedPartialsV124 .seaResultRow{margin-top:8px}.ocrDetectedV124{padding:9px 11px;border-radius:10px;background:#e8f6ef;color:#176047;font-weight:750}
+@media(max-width:560px){.ergoSplitGridV124{grid-template-columns:repeat(2,minmax(0,1fr))}.ergoSplitEditorHeadV124{align-items:flex-start;flex-direction:column}.ergoSplitEditorHeadV124 button{width:100%}}
 .fourGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 @media(max-width:520px){.fourGrid{grid-template-columns:1fr}.todayHero{flex-direction:column}}
 
@@ -231,7 +233,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 <style id="v104style">
 .notifyHeadV104{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid #ffffff55;background:#ffffff18;color:white;font-size:19px;position:relative;margin-left:8px;vertical-align:middle}.notifyHeadV104 .nBadge{position:absolute;right:-4px;top:-5px;min-width:18px;height:18px;border-radius:99px;background:#e73343;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}.notifyHeadV104 .nBadge.hidden{display:none}.notifyPanelV104{position:fixed;inset:0;background:#07162f99;z-index:10050;display:flex;align-items:flex-start;justify-content:flex-end;padding:72px 12px 12px}.notifyCardV104{width:min(420px,100%);max-height:78vh;overflow:auto;background:#fff;border-radius:18px;padding:16px;box-shadow:0 20px 60px #0004}.notifyItemV104{padding:12px;border:1px solid #dbe5ef;border-radius:12px;margin:8px 0;background:#fff}.notifyItemV104.unread{background:#eef6ff;border-color:#acd0f5}.notifyTopV104{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.pushStateV104{padding:10px 12px;border-radius:12px;background:#f5f8fb;margin:8px 0 12px}.pushDotV104{display:inline-block;width:10px;height:10px;border-radius:50%;background:#94a3b8;margin-right:6px}.pushDotV104.on{background:#1685ff}.notifyActionsV104{display:flex;gap:8px;flex-wrap:wrap}.notifyActionsV104 button{flex:1;min-width:140px}.notifyComposeV110{border:1px solid #dbe5ef;border-radius:14px;padding:12px;margin:12px 0;background:#fbfdff}.notifyComposeV110 h3{margin:0 0 8px}.notifyComposeV110 label{display:block;font-size:.86rem;font-weight:750}.notifyComposeV110 .hidden{display:none!important}.notifyComposeV110 select{width:100%;font-size:15px;padding:9px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px;background:#fff}.notifyComposeV110 textarea{min-height:84px}.notifyHintV110{font-size:.8rem;color:#64748b;margin-top:3px}.notifyResultV110{font-size:.86rem;margin-top:8px}.notifyToggleV110{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1px solid #dbe5ef;border-radius:12px;background:#f8fbff;margin:10px 0}.notifyToggleV110 input{width:auto;margin:2px 0 0}.notifyToggleV110 span{font-size:.88rem;line-height:1.35}.pushOnboardV106{position:fixed;inset:0;background:#07162fb8;z-index:10080;display:flex;align-items:center;justify-content:center;padding:16px}.pushOnboardCardV106{width:min(430px,100%);background:#fff;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0005;text-align:center}.pushOnboardIconV106{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;background:#eaf4ff;font-size:34px}.pushOnboardCardV106 h2{margin:0 0 8px}.pushOnboardCardV106 p{line-height:1.45}.pushOnboardActionsV106{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}.pushOnboardActionsV106 button{flex:1;min-width:140px}.pushOnboardNoteV106{font-size:.84rem;color:#64748b;margin-top:10px}@media(max-width:520px){.pushOnboardV106{align-items:flex-end;padding:10px}.pushOnboardCardV106{border-radius:22px 22px 16px 16px;padding:20px 17px}.pushOnboardActionsV106{flex-direction:column}.pushOnboardActionsV106 button{width:100%}}@media(max-width:700px){.notifyPanelV104{padding:64px 8px 8px}.notifyCardV104{width:100%;max-height:84vh}.notifyHeadV104{width:36px;height:36px}}
 </style>
-</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V123</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
+</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V124</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
 <div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
@@ -1320,7 +1322,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="123";
+const APP_VERSION="124";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -1916,14 +1918,22 @@ function renderErgoCard(el,x){
   ensureErgoIntent(x); openErgData.onclick=()=>openErgDataFor(x); ergoManual.onclick=()=>showErgoForm(); ergoPhotos.onchange=(e)=>{const files=[...(e.target.files||[])];if(files.length)showErgoForm(files)};
 }
 
-function showErgoForm(files=[]){
-  if(files && !Array.isArray(files)) files=[files];
+let currentErgoFilesV124=[];
+function v124TimeText(sec){if(sec===null||sec===undefined||!Number.isFinite(Number(sec)))return '';const n=Number(sec),h=Math.floor(n/3600),m=Math.floor((n-h*3600)/60),s=n-h*3600-m*60,raw=s.toFixed(1).replace(/\.0$/,''),tail=s<10?`0${raw}`:raw;return h?`${h}:${String(m).padStart(2,'0')}:${tail}`:`${m}:${tail}`}
+function v124DefaultErgoSplits(){const text=`${currentErgoPrescription?.name||''} ${currentErgoPrescription?.work||''}`,m=text.match(/(\d+)\s*[×x]\s*(\d+(?:[.,]\d+)?)\s*min/i),count=m?Math.min(12,Math.max(0,Number(m[1]))):0,mins=m?Number(String(m[2]).replace(',','.')):0;return Array.from({length:count},()=>({distance_m:'',time_text:mins?v124TimeText(mins*60):'',pace_text:'',spm:'',avg_hr:'',max_hr:'',rest_text:''}))}
+function v124ReadSplitRows(){return [...document.querySelectorAll('.ergoSplitRowV124')].map(row=>{const get=k=>row.querySelector(`[data-split-field="${k}"]`)?.value.trim()||'';return {distance_m:get('distance'),time_text:get('time'),pace_text:get('pace'),spm:get('spm'),avg_hr:get('avg_hr'),max_hr:get('max_hr'),rest_text:get('rest')}})}
+function v124UpdateErgoTotals(){const rows=v124ReadSplitRows(),valid=rows.filter(x=>x.distance_m||x.time_text);if(!valid.length)return;const distance=valid.reduce((a,x)=>a+(Number(x.distance_m)||0),0),time=valid.reduce((a,x)=>a+(timeTextToSeconds(x.time_text)||0),0);if(distance)ergoDistance.value=Math.round(distance);if(time)ergoTime.value=v124TimeText(time);if(distance&&time)ergoPace.value=v124TimeText(time*500/distance)}
+function v124RenderSplitRows(rows=[]){const box=document.getElementById('ergoSplitRowsV124');if(!box)return;box.innerHTML=rows.map((x,i)=>`<div class="ergoSplitRowV124"><div class="ergoSplitRowHeadV124"><b>Parcial ${i+1}</b><button type="button" class="ergoSplitRemoveV124" aria-label="Eliminar parcial ${i+1}">Eliminar</button></div><div class="ergoSplitGridV124"><label>Metros<input data-split-field="distance" type="number" inputmode="numeric" value="${esc(x.distance_m??'')}"></label><label>Tiempo<input data-split-field="time" inputmode="decimal" placeholder="mm:ss" value="${esc(x.time_text??'')}"></label><label>Ritmo /500<input data-split-field="pace" inputmode="decimal" placeholder="mm:ss" value="${esc(x.pace_text??'')}"></label><label>PPM<input data-split-field="spm" type="number" inputmode="numeric" value="${esc(x.spm??'')}"></label><label>FC media<input data-split-field="avg_hr" type="number" inputmode="numeric" value="${esc(x.avg_hr??'')}"></label><label>FC máxima<input data-split-field="max_hr" type="number" inputmode="numeric" value="${esc(x.max_hr??'')}"></label><label>Descanso<input data-split-field="rest" inputmode="decimal" placeholder="mm:ss" value="${esc(x.rest_text??'')}"></label></div></div>`).join('');box.querySelectorAll('input').forEach(x=>x.addEventListener('input',v124UpdateErgoTotals));box.querySelectorAll('.ergoSplitRemoveV124').forEach((b,i)=>b.onclick=()=>{const next=v124ReadSplitRows();next.splice(i,1);v124RenderSplitRows(next);v124UpdateErgoTotals()})}
+function v124ErgoDraft(){return {distance:document.getElementById('ergoDistance')?.value||'',time:document.getElementById('ergoTime')?.value||'',pace:document.getElementById('ergoPace')?.value||'',spm:document.getElementById('ergoSpm')?.value||'',avgHr:document.getElementById('ergoAvgHr')?.value||'',maxHr:document.getElementById('ergoMaxHr')?.value||'',rpe:document.getElementById('ergoRpe')?.value||'',notes:document.getElementById('ergoNotes')?.value||'',splits:v124ReadSplitRows()}}
+function v124RestoreErgoDraft(d){if(!d)return;ergoDistance.value=d.distance;ergoTime.value=d.time;ergoPace.value=d.pace;ergoSpm.value=d.spm;ergoAvgHr.value=d.avgHr;ergoMaxHr.value=d.maxHr;ergoRpe.value=d.rpe;ergoNotes.value=d.notes;v124RenderSplitRows(d.splits||[])}
+function showErgoForm(files=[],draft=null){
+  if(files && !Array.isArray(files)) files=[files];currentErgoFilesV124=files;
   const wrap=document.getElementById("ergoFormWrap");
   wrap.classList.remove("hidden");
   wrap.innerHTML=`<div class="ergoForm">
     ${files.length?`<div id="ergoPreviews"></div>`:''}
     ${files.length?'<div class="ocrBox"><b>OCR</b><p id="ocrStatus">Preparando lectura…</p><textarea id="ocrText" rows="4" placeholder="Texto detectado"></textarea></div>':''}
-    ${files.length?`<label class="btn" style="display:inline-block;margin:8px 0">➕ Añadir más fotos<input id="ergoMorePhotos" type="file" accept="image/*" multiple hidden></label>`:""}
+    <label class="btn" style="display:inline-block;margin:8px 0">${files.length?'➕ Añadir más fotos':'📷 Añadir fotos'}<input id="ergoMorePhotos" type="file" accept="image/*" multiple hidden></label>
     <div class="fourGrid">
       <label>Distancia (m)<input id="ergoDistance" type="number"></label>
       <label>Tiempo total <input id="ergoTime" placeholder="mm:ss"></label>
@@ -1933,9 +1943,13 @@ function showErgoForm(files=[]){
       <label>FC máxima <input id="ergoMaxHr" type="number"></label>
       <label>RPE 1-10 <input id="ergoRpe" type="number" min="1" max="10"></label>
     </div>
+    <div class="ergoSplitEditorV124"><div class="ergoSplitEditorHeadV124"><div><h3>Parciales</h3><div class="ergoSplitHintV124">Introduce cada serie. El total y el ritmo medio se calculan automáticamente.</div></div><button id="ergoAddSplitV124" type="button">+ Añadir parcial</button></div><div id="ergoSplitRowsV124" class="ergoSplitRowsV124"></div></div>
     <label>Notas<textarea id="ergoNotes"></textarea></label>
     <button id="saveErgo" class="primary">Guardar resultado</button>
   </div>`;
+
+  v124RenderSplitRows(draft?.splits||v124DefaultErgoSplits());v124RestoreErgoDraft(draft);
+  ergoAddSplitV124.onclick=()=>{const rows=v124ReadSplitRows();rows.push({distance_m:'',time_text:'',pace_text:'',spm:'',avg_hr:'',max_hr:'',rest_text:''});v124RenderSplitRows(rows)};
 
   if(files.length){
     const previews=document.getElementById("ergoPreviews");
@@ -1947,12 +1961,9 @@ function showErgoForm(files=[]){
       previews.appendChild(box);
     });
     runErgoOCRMulti(files);
-    const more=document.getElementById("ergoMorePhotos");
-    if(more) more.onchange=(e)=>{
-      const added=[...(e.target.files||[])];
-      if(added.length) showErgoForm(files.concat(added));
-    };
   }
+  const more=document.getElementById("ergoMorePhotos");
+  if(more) more.onchange=(e)=>{const added=[...(e.target.files||[])];if(added.length)showErgoForm(files.concat(added),v124ErgoDraft())};
 
   saveErgo.onclick=saveErgoResult;
 }
@@ -1983,22 +1994,28 @@ function v112C2PartialsHtml(result){
   return `<details class="c2Partials"><summary>Ver ${parts.length} parcial${parts.length===1?'':'es'}</summary>${parts.map((p,i)=>{const dist=Number(p.distance),seconds=p.time==null?null:Number(p.time)/10,pace=seconds&&dist?seconds*500/dist:null,hr=p.heart_rate?.average??p.heart_rate?.ending??p.heart_rate?.max??null;return `<div class="seaResultRow"><b>Parcial ${i+1}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>Tiempo</small>${v112C2TenthsText(p.time)}</div><div class="seaResultMetric"><small>Metros</small>${Number.isFinite(dist)?dist:'—'}</div><div class="seaResultMetric"><small>Ritmo /500</small>${fmtMetricSeconds(pace)}</div><div class="seaResultMetric"><small>PPM</small>${p.stroke_rate??p.spm??'—'}</div><div class="seaResultMetric"><small>FC</small>${hr??'—'}</div>${p.rest_time!=null?`<div class="seaResultMetric"><small>Descanso</small>${v112C2TenthsText(p.rest_time)}</div>`:''}</div></div>`}).join('')}</details>`;
 }
 
+function v124ErgoSplitsArray(result){if(Array.isArray(result?.splits))return result.splits;if(typeof result?.splits==='string'){try{const x=JSON.parse(result.splits);return Array.isArray(x)?x:[]}catch(e){return[]}}return[]}
+function v124ManualPartialsHtml(result){const parts=v124ErgoSplitsArray(result);if(!parts.length)return '';return `<details class="c2Partials ergoSavedPartialsV124"><summary>Ver ${parts.length} parcial${parts.length===1?'':'es'}</summary>${parts.map((p,i)=>`<div class="seaResultRow"><b>Parcial ${i+1}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>Tiempo</small>${p.time_seconds!=null?fmtMetricSeconds(Number(p.time_seconds)):'—'}</div><div class="seaResultMetric"><small>Metros</small>${p.distance_m??'—'}</div><div class="seaResultMetric"><small>Ritmo /500</small>${p.pace_500_seconds!=null?fmtMetricSeconds(Number(p.pace_500_seconds)):'—'}</div><div class="seaResultMetric"><small>PPM</small>${p.spm??'—'}</div><div class="seaResultMetric"><small>FC media</small>${p.avg_hr??'—'}</div><div class="seaResultMetric"><small>FC máxima</small>${p.max_hr??'—'}</div>${p.rest_seconds!=null?`<div class="seaResultMetric"><small>Descanso</small>${fmtMetricSeconds(Number(p.rest_seconds))}</div>`:''}</div></div>`).join('')}</details>`}
+function v124ErgoPhotosHtml(result){const urls=Array.isArray(result?._photo_urls)?result._photo_urls.filter(Boolean):[];if(!urls.length)return '';return `<details class="c2Partials"><summary>Ver ${urls.length} foto${urls.length===1?'':'s'} del ergómetro</summary><div class="ergoPhotoGalleryV124">${urls.map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(url)}" alt="Pantalla del ergómetro · foto ${i+1}" loading="lazy"><small>Abrir foto ${i+1}</small></a>`).join('')}</div></details>`}
+function v124ManualErgoHtml(e){return `<div class="last"><b>ERGO · Registro manual</b> · ${e.distance_m??'—'} m · ${e.time_seconds!=null?fmtMetricSeconds(Number(e.time_seconds)):'—'} · /500 ${e.pace_500_seconds!=null?fmtMetricSeconds(Number(e.pace_500_seconds)):'—'} · ${e.spm??'—'} ppm${e.avg_hr?` · FC media ${e.avg_hr}`:''}${e.max_hr?` · FC máxima ${e.max_hr}`:''}${e.rpe?` · RPE ${e.rpe}`:''}${e.notes?`<br><small>${esc(e.notes)}</small>`:''}${v124ManualPartialsHtml(e)}${v124ErgoPhotosHtml(e)}</div>`}
+async function v124HydrateErgoPhotos(rows){const all=[...new Set((rows||[]).flatMap(x=>Array.isArray(x.photo_paths)?x.photo_paths:[]).filter(Boolean))];if(!all.length)return rows||[];try{const q=await sb.storage.from('ergo-media').createSignedUrls(all,3600);if(q.error)throw q.error;const map=new Map((q.data||[]).map(x=>[x.path,x.signedUrl||x.signedURL]));(rows||[]).forEach(x=>{x._photo_urls=(Array.isArray(x.photo_paths)?x.photo_paths:[]).map(p=>map.get(p)).filter(Boolean)})}catch(e){console.warn('No se pudieron abrir las fotos ERGO',e)}return rows||[]}
+
+function v124OCRTimeSeconds(v){return timeTextToSeconds(String(v||'').replace(',','.'))}
+function v124OCRRows(text){const normalized=String(text||'').replace(/(:\d{2}),(\d)/g,'$1.$2').replace(/(\d),(\d{3})\b/g,'$1$2'),rows=[];normalized.split(/\n+/).forEach(line=>{const times=[...line.matchAll(/\b(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d)?\b/g)].map(x=>x[0]),withoutTimes=line.replace(/\b(?:\d{1,2}:)?\d{1,2}:\d{2}(?:\.\d)?\b/g,' '),nums=[...withoutTimes.matchAll(/\b\d{2,5}\b/g)].map(x=>Number(x[0])),distance=nums.find(n=>n>=100&&n<=50000),time=times[0],pace=times.slice(1).find(x=>{const s=v124OCRTimeSeconds(x);return s>=45&&s<=360})||'',spm=nums.find(n=>n>=12&&n<=60)||'',hrs=nums.filter(n=>n!==distance&&n>=70&&n<=230);if(distance&&time)rows.push({distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:hrs[0]||'',max_hr:hrs.length>1?Math.max(...hrs):'',rest_text:''})});return rows}
+function v124ApplyOCR(texts){let rows=texts.flatMap(v124OCRRows),seen=new Set();rows=rows.filter(x=>{const k=`${x.distance_m}|${x.time_text}|${x.pace_text}`;if(seen.has(k))return false;seen.add(k);return true});const score=x=>(timeTextToSeconds(x.time_text)||0)+(Number(x.distance_m)||0)/10,largest=rows.slice().sort((a,b)=>score(b)-score(a))[0],defaults=v124DefaultErgoSplits(),expected=defaults.length,expectedSeconds=defaults.reduce((a,x)=>a+(timeTextToSeconds(x.time_text)||0),0),looksLikeSummary=!!largest&&(!expected||rows.length>expected||(expectedSeconds&&(timeTextToSeconds(largest.time_text)||0)>=expectedSeconds*.75)),summary=looksLikeSummary?largest:null;let partials=rows.filter(x=>x!==summary);if(expected&&partials.length>expected)partials=partials.slice(0,expected);if(partials.length){v124RenderSplitRows(partials);v124UpdateErgoTotals()}if(summary){ergoDistance.value=summary.distance_m||ergoDistance.value;ergoTime.value=summary.time_text||ergoTime.value;ergoPace.value=summary.pace_text||ergoPace.value;ergoSpm.value=summary.spm||ergoSpm.value;ergoAvgHr.value=summary.avg_hr||ergoAvgHr.value;ergoMaxHr.value=summary.max_hr||ergoMaxHr.value}return {summary:!!summary,partials:partials.length}}
 async function runErgoOCRMulti(files){
   const status=document.getElementById("ocrStatus");
   const txt=document.getElementById("ocrText");
-  let combined=[];
+  const combined=[],raw=[];
   for(let i=0;i<files.length;i++){
     status.textContent=`Leyendo foto ${i+1} de ${files.length}…`;
     try{
       const {data}=await Tesseract.recognize(files[i],"eng");
-      combined.push(`--- FOTO ${i+1} ---\n${(data.text||"").trim()}`);
+      raw.push(data.text||'');combined.push(`--- FOTO ${i+1} ---\n${(data.text||"").trim()}`);
     }catch(e){ combined.push(`--- FOTO ${i+1}: no se pudo leer ---`); }
   }
   txt.value=combined.join("\n\n");
-  status.textContent=`Lectura terminada (${files.length} foto${files.length===1?"":"s"}). Revisa los datos antes de guardar.`;
-  // La extracción automática usa cada foto; los campos nunca se bloquean y pueden corregirse manualmente.
-  for(const f of files){ await runErgoOCR(f,true); }
-  txt.value=combined.join("\n\n");
+  const found=v124ApplyOCR(raw);status.className='ocrDetectedV124';status.textContent=`Lectura terminada: ${found.summary?'total detectado':'revisa el total'}${found.partials?` y ${found.partials} parcial${found.partials===1?'':'es'}`:''}. Comprueba los campos antes de guardar.`;
 }
 
 async function runErgoOCR(file,multiMode=false){
@@ -2016,21 +2033,22 @@ async function runErgoOCR(file,multiMode=false){
     txt.value=text.trim();
     if(!multiMode) status.textContent="Lectura terminada. Revisa los datos antes de guardar.";
 
-    // Heuristics: detect common erg screen values. Always leave user in control.
-    const compact=text.replace(/\s+/g," ");
-    const times=[...compact.matchAll(/\b(\d{1,2}:\d{2}(?:\.\d)?)\b/g)].map(m=>m[1]);
-    const nums=[...compact.matchAll(/\b(\d{3,5})\b/g)].map(m=>Number(m[1]));
-    if(times[0])ergoTime.value=times[0];
-    if(times[1])ergoPace.value=times[1];
-    const plausibleDistance=nums.find(n=>n>=100 && n<=50000);
-    if(plausibleDistance)ergoDistance.value=plausibleDistance;
+    v124ApplyOCR([text]);
   }catch(err){
     status.textContent="No se pudo leer automáticamente. Puedes introducir los datos manualmente.";
   }
 }
 
+function v124StoredSplits(){return v124ReadSplitRows().filter(x=>x.distance_m||x.time_text||x.pace_text||x.spm||x.avg_hr||x.max_hr||x.rest_text).map((x,i)=>{const distance=x.distance_m?Number(x.distance_m):null,time=timeTextToSeconds(x.time_text),pace=timeTextToSeconds(x.pace_text)||(time&&distance?time*500/distance:null);return {index:i+1,distance_m:distance,time_seconds:time,pace_500_seconds:pace,spm:x.spm?Number(x.spm):null,avg_hr:x.avg_hr?Number(x.avg_hr):null,max_hr:x.max_hr?Number(x.max_hr):null,rest_seconds:timeTextToSeconds(x.rest_text)}})}
+async function v124UploadErgoPhotos(files,resultId){const paths=[];for(let i=0;i<files.length;i++){const f=files[i],ext=(String(f.name||'').split('.').pop()||String(f.type||'image/jpeg').split('/').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg',path=`${currentUser.id}/${resultId}/${Date.now()}-${i+1}.${ext}`,up=await sb.storage.from('ergo-media').upload(path,f,{cacheControl:'3600',upsert:false});if(up.error)throw up.error;paths.push(path)}return paths}
+
 async function saveErgoResult(){
   if(!currentUser)return alert("Sesión no iniciada");
+  v124UpdateErgoTotals();
+  const splits=v124StoredSplits();
+  if(!ergoDistance.value&&!ergoTime.value&&!splits.length)return alert('Introduce el total o al menos un parcial.');
+  const schema=await sb.from('ergo_results').select('splits,photo_paths').limit(0);
+  if(schema.error)return alert('Falta ejecutar setup_v124.sql antes de guardar parciales y fotos.');
   const {data:workout,error:werr}=await sb.from("workout_logs").insert({
     user_id:currentUser.id,
     session_code:currentErgoPrescription?.code||"ERG-1",
@@ -2043,7 +2061,7 @@ async function saveErgoResult(){
   const timeSec=timeTextToSeconds(ergoTime.value);
   const paceSec=timeTextToSeconds(ergoPace.value);
 
-  const {error}=await sb.from("ergo_results").insert({
+  const {data:ergoRow,error}=await sb.from("ergo_results").insert({
     user_id:currentUser.id,
     workout_id:workout.id,
     test_name:currentErgoPrescription?.name||"ERGO",
@@ -2053,11 +2071,12 @@ async function saveErgoResult(){
     spm:ergoSpm.value?Number(ergoSpm.value):null,
     avg_hr:ergoAvgHr.value?Number(ergoAvgHr.value):null,
     max_hr:ergoMaxHr.value?Number(ergoMaxHr.value):null,
-    rpe:ergoRpe.value?Number(ergoRpe.value):null,
-    notes:ergoNotes.value||null
-  });
-  if(error)return alert(error.message);
-  alert("Resultado de ergómetro guardado");
+    rpe:ergoRpe.value?Number(ergoRpe.value):null,notes:ergoNotes.value||null,splits,photo_paths:[]
+  }).select('id').single();
+  if(error)return alert(/splits|photo_paths/i.test(error.message||'')?'Falta ejecutar setup_v124.sql antes de guardar parciales y fotos.':error.message);
+  let photoWarning='';if(currentErgoFilesV124.length){try{const paths=await v124UploadErgoPhotos(currentErgoFilesV124,ergoRow.id),q=await sb.from('ergo_results').update({photo_paths:paths}).eq('id',ergoRow.id);if(q.error)throw q.error}catch(e){photoWarning=' El resultado se guardó, pero las fotos no pudieron subirse: '+(e.message||e)}}
+  alert(`Resultado de ergómetro guardado${splits.length?` con ${splits.length} parciales`:''}.${photoWarning}`);
+  currentErgoFilesV124=[];
   tab="hist";draw();render();
 }
 
@@ -2175,14 +2194,16 @@ function gym(k,x=null){
 async function history(opts={}){
   // Historial abre primero los datos ya guardados y, en paralelo, busca nuevos resultados de Concept2.
   content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
-  const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3}] = await Promise.all([
+  const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3},{data:ergo,error:e4}] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,session_date,created_at,status").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
     sb.from("gym_exercise_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(300),
-    sb.from("concept2_results").select("*").eq("user_id",currentUser.id).order("workout_date",{ascending:false}).limit(100)
+    sb.from("concept2_results").select("*").eq("user_id",currentUser.id).order("workout_date",{ascending:false}).limit(100),
+    sb.from("ergo_results").select("*").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(100)
   ]);
   if(tab!=="hist") return; // evita que una carga antigua pise Perfil u otra pantalla
-  const err=e1||e2||e3;
+  const err=e1||e2||e3||e4;
   if(err){content.innerHTML=`<div class="card"><h2>Historial</h2><p>${err.message}</p></div>`;return}
+  await v124HydrateErgoPhotos(ergo||[]);
 
   const c2html=(c2||[]).length?`<div class="card"><h3>Concept2 / ErgData</h3>${c2.map(r=>{
     const pace=r.pace_500_seconds?secondsToTime(r.pace_500_seconds):"-";
@@ -2193,7 +2214,7 @@ async function history(opts={}){
 
   content.innerHTML='<div class="card"><h2>Historial</h2>'+
     c2html+
-    (workouts.length?workouts.map(w=>`<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${w.session_date?shortDateES(w.session_date):new Date(w.created_at).toLocaleString("es-ES")}</p>${(items||[]).filter(i=>i.workout_id===w.id).map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("") || '<p class="muted">Sin ejercicios asociados.</p>'}</div>`).join(""):'Sin registros.')+
+    (workouts.length?workouts.map(w=>{const gymItems=(items||[]).filter(i=>i.workout_id===w.id),ergoItems=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id));return `<div class="card"><b>${w.session_code||w.session_type||"Sesión"}</b><p class="muted">${w.session_date?shortDateES(w.session_date):new Date(w.created_at).toLocaleString("es-ES")}</p>${gymItems.map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("")}${ergoItems.map(v124ManualErgoHtml).join('')}${!gymItems.length&&!ergoItems.length?'<p class="muted">Sin resultados asociados.</p>':''}</div>`}).join(""):'Sin registros.')+
   '</div>';
 
   // No bloquea la pantalla: si llegan resultados nuevos, Historial se repinta una sola vez.
@@ -3323,7 +3344,7 @@ function v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2,plannedSessions=[],team=''
   const ws=(workouts||[]).filter(w=>w.user_id===p.user_id).sort((a,b)=>String(b.session_date||b.created_at).localeCompare(String(a.session_date||a.created_at)));
   const c2s=(c2||[]).filter(x=>x.user_id===p.user_id).slice().sort((a,b)=>String(b.workout_date).localeCompare(String(a.workout_date)));
   const pieces=[];
-  ws.forEach(w=>{const items=(gym||[]).filter(g=>String(g.workout_id)===String(w.id)),ers=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id));pieces.push({date:v79WorkoutDate(w)||'',html:`<div class="athleteHistoryItem"><div><b>${esc(w.session_code||w.session_type||'Sesión')}</b> <span class="tag">${v79WorkoutDate(w)?shortDateES(v79WorkoutDate(w)):new Date(w.created_at).toLocaleDateString('es-ES')}</span></div>${items.length?`<div class="exerciseTable">${items.map(i=>{const m=storedExerciseMeta(i);return `<div class="exerciseRow"><div><b>${esc(i.exercise_name||'Ejercicio')}</b>${m.assigned?`<br><small>Asignado: ${esc(m.assigned)}</small>`:''}</div><div>${i.weight_kg??'—'} kg</div><div>${i.perceived_difficulty==='easy'?'Fácil':i.perceived_difficulty==='hard'?'Duro':'Bien'}</div></div>`}).join('')}</div>`:''}${ers.map(e=>`<div class="last"><b>ERGO</b> · ${e.distance_m??'—'} m · ${e.time_seconds?secondsToTime(e.time_seconds):'—'} · /500 ${e.pace_500_seconds?secondsToTime(e.pace_500_seconds):'—'} · ${e.spm??'—'} ppm</div>`).join('')}${w.notes?`<p><b>Notas:</b> ${esc(w.notes)}</p>`:''}</div>`})});
+  ws.forEach(w=>{const items=(gym||[]).filter(g=>String(g.workout_id)===String(w.id)),ers=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id));pieces.push({date:v79WorkoutDate(w)||'',html:`<div class="athleteHistoryItem"><div><b>${esc(w.session_code||w.session_type||'Sesión')}</b> <span class="tag">${v79WorkoutDate(w)?shortDateES(v79WorkoutDate(w)):new Date(w.created_at).toLocaleDateString('es-ES')}</span></div>${items.length?`<div class="exerciseTable">${items.map(i=>{const m=storedExerciseMeta(i);return `<div class="exerciseRow"><div><b>${esc(i.exercise_name||'Ejercicio')}</b>${m.assigned?`<br><small>Asignado: ${esc(m.assigned)}</small>`:''}</div><div>${i.weight_kg??'—'} kg</div><div>${i.perceived_difficulty==='easy'?'Fácil':i.perceived_difficulty==='hard'?'Duro':'Bien'}</div></div>`}).join('')}</div>`:''}${ers.map(v124ManualErgoHtml).join('')}${w.notes?`<p><b>Notas:</b> ${esc(w.notes)}</p>`:''}</div>`})});
   c2s.forEach(x=>{const date=String(x.workout_date||'').slice(0,10),planned=(plannedSessions||[]).find(s=>s.team_code===team&&s.session_type==='ERG'&&s.session_date===date),plannedName=x.matched_session_code||(planned?.title||'');pieces.push({date,html:`<div class="athleteHistoryItem"><div><b>Concept2 / ErgData</b> <span class="tag">${shortDateES(date)}</span></div>${plannedName?`<div><b>Sesión planificada:</b> ${esc(plannedName)}</div>`:''}<div><b>Resultado realizado:</b> ${x.distance_m??'—'} m · ${x.time_formatted||'—'} · /500 ${x.pace_500_seconds?secondsToTime(x.pace_500_seconds):'—'} · ${x.spm??'—'} ppm</div>${v112C2PartialsHtml(x)}${planned?.content?`<details><summary>Ver ejercicio planificado</summary>${trainingContentHtml(planned.content)}</details>`:''}${!plannedName&&x.match_status?`<small class="muted">${x.match_status==='review'?'Pendiente de confirmar':'No asociado a una sesión planificada'}</small>`:''}</div>`})});
   pieces.sort((a,b)=>b.date.localeCompare(a.date)); return pieces.length?pieces.slice(0,40).map(x=>x.html).join(''):'<p class="muted">Aún no hay entrenamientos registrados.</p>';
 }
@@ -3349,6 +3370,7 @@ async function results(){
   ]);
   const err=pr.error||mt.error||wo.error||gy.error||er.error||c2.error||ss.error;if(err){content.innerHTML=`<div class="card"><h2>Análisis de remeros</h2><p>${esc(err.message)}</p></div>`;return}
   const profiles=pr.data||[],metrics=mt.data||[],workouts=wo.data||[],gym=gy.data||[],ergo=er.data||[],c2rows=c2.data||[],sessions=ss.data||[],memberships=rm.error?[]:(rm.data||[]),concept2Statuses=cx?.error?[]:(cx?.data||[]),concept2StatusMap=new Map(concept2Statuses.map(x=>[String(x.user_id),x]));
+  await v124HydrateErgoPhotos(ergo);
   let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete='';
   const latestMetric=(uid)=>metrics.find(x=>String(x.user_id)===String(uid))||null;
   const belongs=(p,t)=>memberships.some(m=>m.user_id===p.user_id&&m.team_code===t&&m.is_rower!==false)||(p.team_code===t&&!memberships.some(m=>m.user_id===p.user_id));
