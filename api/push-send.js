@@ -60,7 +60,8 @@ module.exports=async function handler(req,res){
       if(!membership?.length)return res.status(403).json({error:'rower_team_required'});
       let kind='',sessionName='',sessionDate='';
       if(sourceType==='workout'){
-        if(!/^\d+$/.test(sourceId))return res.status(400).json({error:'bad_source_id'});
+        // workout_logs.id puede ser bigint o UUID según la versión del esquema.
+        if(!/^[a-z0-9_-]{1,120}$/i.test(sourceId))return res.status(400).json({error:'bad_source_id'});
         const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date`,{key:serviceKey}),row=rows?.[0];
         kind=String(row?.session_type||'').toLowerCase();if(!row||!['gym','ergo'].includes(kind))return res.status(404).json({error:'workout_not_found'});
         sessionName=cut(row.session_code||(kind==='gym'?'GYM':'ERGO'),120);sessionDate=String(row.session_date||'').slice(0,10);
