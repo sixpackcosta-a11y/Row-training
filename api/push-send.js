@@ -56,14 +56,8 @@ module.exports=async function handler(req,res){
     if(audience.mode==='workout_coaches'){
       const teamCode=cut(audience.team_code,40),sourceType=cut(audience.source_type,30),sourceId=cut(audience.source_id,120);
       if(!/^[a-z0-9_-]{2,40}$/i.test(teamCode)||!sourceId)return res.status(400).json({error:'bad_workout_event'});
-      const [membership,profileRows]=await Promise.all([
-        rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey}),
-        rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${sender.id}&select=full_name,team_code`,{key:serviceKey})
-      ]);
-      // Las cuentas anteriores a la tabla multiequipo pueden seguir usando el
-      // equipo principal de profiles, igual que hace la app al iniciar sesión.
-      const senderProfile=profileRows?.[0]||null;
-      if(!membership?.length&&String(senderProfile?.team_code||'')!==teamCode)return res.status(403).json({error:'rower_team_required'});
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      if(!membership?.length)return res.status(403).json({error:'rower_team_required'});
       let kind='',sessionName='',sessionDate='';
       if(sourceType==='workout'){
         if(!/^\d+$/.test(sourceId))return res.status(400).json({error:'bad_source_id'});
@@ -79,7 +73,7 @@ module.exports=async function handler(req,res){
         rest(`${supabaseUrl}/rest/v1/user_roles?role=eq.coach&select=user_id`,{key:serviceKey})
       ]);
       const recipientIds=uniq([...(teamStaff||[]).map(x=>x.user_id),...(globalCoaches||[]).map(x=>x.user_id)]);
-      const athlete=cut(senderProfile?.full_name||sender.email||'Un remero',100),label=kind==='gym'?'GYM':'ERGO',dateText=sessionDate?sessionDate.split('-').reverse().join('/'):'hoy';
+      const athlete=cut(sender.user_metadata?.full_name||sender.user_metadata?.name||sender.email||'Un remero',100),label=kind==='gym'?'GYM':'ERGO',dateText=sessionDate?sessionDate.split('-').reverse().join('/'):'hoy';
       const title=`${label} registrado`;
       const body=`${athlete} ha registrado ${sessionName} · ${dateText}.`;
       const result=await deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url:`/?tab=result&view=rowers&team=${encodeURIComponent(teamCode)}&athlete=${encodeURIComponent(sender.id)}`,type:'workout_registered',sourceBase:`workout_registered:${sourceType}:${sourceId}:${teamCode}`});
