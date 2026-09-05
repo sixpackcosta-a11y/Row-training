@@ -10,6 +10,29 @@ function uniq(a){return [...new Set((a||[]).filter(Boolean).map(String))]}
 function validUuid(v){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''))}
 function cut(v,n){return String(v||'').trim().slice(0,n)}
 function teamInFilter(xs){return xs.map(x=>`"${String(x).replace(/"/g,'')}"`).join(',')}
+async function deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url,type,sourceBase}){
+  recipientIds=uniq(recipientIds).filter(validUuid);
+  if(!recipientIds.length)return {ok:true,recipients:0,push_found:0,push_sent:0,push_failed:0};
+  const prior=await rest(`${supabaseUrl}/rest/v1/app_notifications?source_key=like.${encodeURIComponent(sourceBase+':*')}&select=user_id,source_key`,{key:serviceKey})||[];
+  const already=new Set(prior.map(x=>String(x.user_id)));
+  const pending=recipientIds.filter(uid=>!already.has(uid));
+  if(!pending.length)return {ok:true,recipients:recipientIds.length,push_found:0,push_sent:0,push_failed:0,duplicate:true};
+  const notifications=pending.map(uid=>({user_id:uid,type,title,body,url,source_key:`${sourceBase}:${uid}`}));
+  await rest(`${supabaseUrl}/rest/v1/app_notifications`,{method:'POST',key:serviceKey,body:notifications,prefer:'return=minimal'});
+  let pushFound=0,pushSent=0,pushFailed=0;const errors=[];
+  const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
+  if(pub&&priv){
+    webpush.setVapidDetails('https://rowtraining.vercel.app',pub,priv);
+    const ids=pending.map(encodeURIComponent).join(',');
+    const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=in.(${ids})&select=id,user_id,endpoint,p256dh,auth`,{key:serviceKey})||[];
+    pushFound=subs.length;
+    for(const ps of subs){
+      try{await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title,body,url,tag:`rowtraining-${type}-${sourceBase}`}));pushSent++}
+      catch(e){pushFailed++;errors.push({user_id:ps.user_id,statusCode:e?.statusCode||null,message:String(e?.body||e?.message||e).slice(0,250)});if(e?.statusCode===404||e?.statusCode===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey})}catch(_){}}}
+    }
+  }
+  return {ok:true,recipients:recipientIds.length,push_found:pushFound,push_sent:pushSent,push_failed:pushFailed,errors:errors.slice(0,10)};
+}
 
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'method_not_allowed'});
@@ -24,6 +47,35 @@ module.exports=async function handler(req,res){
     if(!vr.ok)return res.status(401).json({error:'invalid_token'});
     const sender=await vr.json();
 
+    const audience=req.body?.audience||{};
+    if(audience.mode==='workout_coaches'){
+      const teamCode=cut(audience.team_code,40),sourceType=cut(audience.source_type,30),sourceId=cut(audience.source_id,120);
+      if(!/^[a-z0-9_-]{2,40}$/i.test(teamCode)||!sourceId)return res.status(400).json({error:'bad_workout_event'});
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      if(!membership?.length)return res.status(403).json({error:'rower_team_required'});
+      let kind='',sessionName='',sessionDate='';
+      if(sourceType==='workout'){
+        if(!/^\d+$/.test(sourceId))return res.status(400).json({error:'bad_source_id'});
+        const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date`,{key:serviceKey}),row=rows?.[0];
+        kind=String(row?.session_type||'').toLowerCase();if(!row||!['gym','ergo'].includes(kind))return res.status(404).json({error:'workout_not_found'});
+        sessionName=cut(row.session_code||(kind==='gym'?'GYM':'ERGO'),120);sessionDate=String(row.session_date||'').slice(0,10);
+      }else if(sourceType==='concept2'){
+        const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code`,{key:serviceKey}),row=rows?.[0];
+        if(!row)return res.status(404).json({error:'concept2_result_not_found'});kind='ergo';sessionName=cut(row.matched_session_code||'ERGO · ErgData',120);sessionDate=String(row.workout_date||'').slice(0,10);
+      }else return res.status(400).json({error:'bad_source_type'});
+      const [teamStaff,globalCoaches,profiles]=await Promise.all([
+        rest(`${supabaseUrl}/rest/v1/team_staff_roles?team_code=eq.${encodeURIComponent(teamCode)}&staff_role=eq.coach&select=user_id`,{key:serviceKey}),
+        rest(`${supabaseUrl}/rest/v1/user_roles?role=eq.coach&select=user_id`,{key:serviceKey}),
+        rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${sender.id}&select=full_name`,{key:serviceKey})
+      ]);
+      const recipientIds=uniq([...(teamStaff||[]).map(x=>x.user_id),...(globalCoaches||[]).map(x=>x.user_id)]);
+      const athlete=cut(profiles?.[0]?.full_name||sender.email||'Un remero',100),label=kind==='gym'?'GYM':'ERGO',dateText=sessionDate?sessionDate.split('-').reverse().join('/'):'hoy';
+      const title=`${label} registrado`;
+      const body=`${athlete} ha registrado ${sessionName} · ${dateText}.`;
+      const result=await deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url:`/?tab=result&view=rowers&team=${encodeURIComponent(teamCode)}&athlete=${encodeURIComponent(sender.id)}`,type:'workout_registered',sourceBase:`workout_registered:${sourceType}:${sourceId}:${teamCode}`});
+      return res.status(200).json(result);
+    }
+
     const [globalRows,staffRows]=await Promise.all([
       rest(`${supabaseUrl}/rest/v1/user_roles?user_id=eq.${sender.id}&role=eq.coach&select=user_id`,{key:serviceKey}),
       rest(`${supabaseUrl}/rest/v1/team_staff_roles?user_id=eq.${sender.id}&staff_role=eq.coach&select=team_code`,{key:serviceKey})
@@ -34,7 +86,7 @@ module.exports=async function handler(req,res){
 
     const title=cut(req.body?.title,120),body=cut(req.body?.body,500),url=cut(req.body?.url||'/',300)||'/',type=cut(req.body?.type||'coach_message',50)||'coach_message';
     if(!title||!body)return res.status(400).json({error:'title_and_body_required'});
-    const audience=req.body?.audience||{};const mode=audience.mode;
+    const mode=audience.mode;
     let requestedTeams=uniq(audience.team_codes).filter(x=>/^[a-z0-9_-]{2,40}$/i.test(x));
     if(!isGlobal)requestedTeams=requestedTeams.filter(x=>allowedTeams.includes(x));
     if((mode==='teams'||mode==='users')&&!requestedTeams.length&&!isGlobal)return res.status(403).json({error:'team_not_allowed'});
@@ -63,26 +115,7 @@ module.exports=async function handler(req,res){
     recipientIds=recipientIds.filter(uid=>uid!==sender.id);
     if(!recipientIds.length)return res.status(200).json({ok:true,recipients:0,push_found:0,push_sent:0,push_failed:0});
 
-    const stamp=Date.now();
-    const notifications=recipientIds.map(uid=>({user_id:uid,type,title,body,url,source_key:`${type}:${sender.id}:${stamp}:${uid}`}));
-    await rest(`${supabaseUrl}/rest/v1/app_notifications`,{method:'POST',key:serviceKey,body:notifications,prefer:'return=minimal'});
-
-    let pushFound=0,pushSent=0,pushFailed=0;const errors=[];
-    const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
-    if(pub&&priv){
-      webpush.setVapidDetails('https://rowtraining.vercel.app',pub,priv);
-      const ids=recipientIds.map(encodeURIComponent).join(',');
-      const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=in.(${ids})&select=id,user_id,endpoint,p256dh,auth`,{key:serviceKey})||[];
-      pushFound=subs.length;
-      for(const ps of subs){
-        try{
-          await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title,body,url,tag:`rowtraining-${type}-${stamp}`}));pushSent++;
-        }catch(e){
-          pushFailed++;errors.push({user_id:ps.user_id,statusCode:e?.statusCode||null,message:String(e?.body||e?.message||e).slice(0,250)});
-          if(e?.statusCode===404||e?.statusCode===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey});}catch(_){}}
-        }
-      }
-    }
-    return res.status(200).json({ok:true,recipients:recipientIds.length,push_found:pushFound,push_sent:pushSent,push_failed:pushFailed,errors:errors.slice(0,10)});
+    const result=await deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url,type,sourceBase:`${type}:${sender.id}:${Date.now()}`});
+    return res.status(200).json(result);
   }catch(e){return res.status(500).json({error:e?.message||String(e)});}
 };

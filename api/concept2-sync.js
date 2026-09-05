@@ -64,9 +64,9 @@ function scoreResult(result,intents){
     if(i.expected_workout_type&&String(result.workout_type||"").toLowerCase().includes(String(i.expected_workout_type).toLowerCase()))score+=15;
     if(!best||score>best.score)best={intent:i,score};
   }
-  if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null};
-  if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
-  return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id};
+  if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null,teamCode:null};
+  if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null};
+  return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null};
 }
 async function plannedErgoIntents(userId,results){
   const mr=await rest(`rower_team_memberships?user_id=eq.${encodeURIComponent(userId)}&is_rower=eq.true&select=team_code`);
@@ -78,7 +78,7 @@ async function plannedErgoIntents(userId,results){
   const sr=await rest(`training_sessions?team_code=in.(${teamFilter})&session_type=eq.ERG&session_date=gte.${encodeURIComponent(dates[0])}&session_date=lte.${encodeURIComponent(dates[dates.length-1])}&select=id,team_code,session_date,title,content`);
   if(!sr.ok)return [];
   return (await sr.json()).map(x=>({
-    id:null,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',
+    id:null,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',team_code:x.team_code,
     expected_distance_m:null,expected_duration_seconds:null,expected_spm:null,expected_workout_type:null,
     from_planning:true
   }));
@@ -107,6 +107,7 @@ module.exports=async function handler(req,res){
     if(req.method==="GET")return res.json({connected:!!c,username:c?.concept2_username||null,last_sync_at:c?.last_sync_at||null});
     if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
     if(!c)return res.status(409).json({error:"Primero conecta tu cuenta Concept2."});
+    const requestedTeam=/^[a-z0-9_-]{2,40}$/i.test(String(req.body?.team_code||''))?String(req.body.team_code):null;
 
     const token=await validToken(c);
     // 50 resultados siguen siendo manejables: el cambio clave es procesarlos en lote,
@@ -139,8 +140,8 @@ module.exports=async function handler(req,res){
     }
 
     const now=new Date().toISOString();
-    const rows=results.map(x=>{
-      const match=scoreResult(x,intents);
+    const matched=results.map(x=>({result:x,match:scoreResult(x,intents)}));
+    const rows=matched.map(({result:x,match})=>{
       return {
         user_id:me.id,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
         distance_m:x.distance==null?null:Number(x.distance),
@@ -165,7 +166,9 @@ module.exports=async function handler(req,res){
     });
     const imported=rows.filter(x=>!existing.has(String(x.concept2_result_id))).length;
     const updated=rows.length-imported;
-    return res.json({ok:true,imported,updated,total:rows.length});
+    const recentLimit=Date.now()-48*60*60*1000;
+    const notification_events=matched.filter(({result:x})=>!existing.has(String(x.id))&&new Date(x.date||x.date_utc||0).getTime()>=recentLimit).map(({result:x,match})=>({source_id:String(x.id),team_code:match.teamCode||requestedTeam})).filter(x=>x.team_code);
+    return res.json({ok:true,imported,updated,total:rows.length,notification_events});
   }catch(e){
     if(e.message==="AUTH")return res.status(401).json({error:"Sesión de Row Training no válida."});
     if(e?.name==="AbortError")return res.status(504).json({error:"La sincronización está tardando demasiado. Inténtalo de nuevo."});
