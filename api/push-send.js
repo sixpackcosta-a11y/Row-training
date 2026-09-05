@@ -1,7 +1,7 @@
 const webpush=require('web-push');
 
-async function rest(url,{method='GET',key,body,prefer}={}){
-  const r=await fetch(url,{method,headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json',...(prefer?{Prefer:prefer}:{})},body:body===undefined?undefined:JSON.stringify(body)});
+async function rest(url,{method='GET',key,authToken,body,prefer}={}){
+  const r=await fetch(url,{method,headers:{apikey:key,Authorization:`Bearer ${authToken||key}`,'Content-Type':'application/json',...(prefer?{Prefer:prefer}:{})},body:body===undefined?undefined:JSON.stringify(body)});
   const t=await r.text();
   if(!r.ok)throw new Error(`supabase_${r.status}_${t}`);
   return t?JSON.parse(t):null;
@@ -56,17 +56,17 @@ module.exports=async function handler(req,res){
     if(audience.mode==='workout_coaches'){
       const teamCode=cut(audience.team_code,40),sourceType=cut(audience.source_type,30),sourceId=cut(audience.source_id,120);
       if(!/^[a-z0-9_-]{2,40}$/i.test(teamCode)||!sourceId)return res.status(400).json({error:'bad_workout_event'});
-      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:anonKey,authToken:token});
       if(!membership?.length)return res.status(403).json({error:'rower_team_required'});
       let kind='',sessionName='',sessionDate='';
       if(sourceType==='workout'){
         // workout_logs.id puede ser bigint o UUID según la versión del esquema.
         if(!/^[a-z0-9_-]{1,120}$/i.test(sourceId))return res.status(400).json({error:'bad_source_id'});
-        const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date`,{key:serviceKey}),row=rows?.[0];
+        const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date`,{key:anonKey,authToken:token}),row=rows?.[0];
         kind=String(row?.session_type||'').toLowerCase();if(!row||!['gym','ergo'].includes(kind))return res.status(404).json({error:'workout_not_found'});
         sessionName=cut(row.session_code||(kind==='gym'?'GYM':'ERGO'),120);sessionDate=String(row.session_date||'').slice(0,10);
       }else if(sourceType==='concept2'){
-        const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code`,{key:serviceKey}),row=rows?.[0];
+        const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code`,{key:anonKey,authToken:token}),row=rows?.[0];
         if(!row)return res.status(404).json({error:'concept2_result_not_found'});kind='ergo';sessionName=cut(row.matched_session_code||'ERGO · ErgData',120);sessionDate=String(row.workout_date||'').slice(0,10);
       }else return res.status(400).json({error:'bad_source_type'});
       const [teamStaff,globalCoaches]=await Promise.all([
