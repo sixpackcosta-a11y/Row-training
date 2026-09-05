@@ -13,9 +13,14 @@ function teamInFilter(xs){return xs.map(x=>`"${String(x).replace(/"/g,'')}"`).jo
 async function deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url,type,sourceBase}){
   recipientIds=uniq(recipientIds).filter(validUuid);
   if(!recipientIds.length)return {ok:true,recipients:0,push_found:0,push_sent:0,push_failed:0};
-  const prior=await rest(`${supabaseUrl}/rest/v1/app_notifications?source_key=like.${encodeURIComponent(sourceBase+':*')}&select=user_id,source_key`,{key:serviceKey})||[];
-  const already=new Set(prior.map(x=>String(x.user_id)));
-  const pending=recipientIds.filter(uid=>!already.has(uid));
+  // Comprueba cada clave exacta. app_notifications usa un índice único parcial y
+  // no conviene depender ni de UPSERT ni de un filtro LIKE para desduplicar.
+  const checks=await Promise.all(recipientIds.map(async uid=>{
+    const sourceKey=`${sourceBase}:${uid}`;
+    const prior=await rest(`${supabaseUrl}/rest/v1/app_notifications?user_id=eq.${encodeURIComponent(uid)}&source_key=eq.${encodeURIComponent(sourceKey)}&select=id&limit=1`,{key:serviceKey})||[];
+    return prior.length?null:uid;
+  }));
+  const pending=checks.filter(Boolean);
   if(!pending.length)return {ok:true,recipients:recipientIds.length,push_found:0,push_sent:0,push_failed:0,duplicate:true};
   const notifications=pending.map(uid=>({user_id:uid,type,title,body,url,source_key:`${sourceBase}:${uid}`}));
   await rest(`${supabaseUrl}/rest/v1/app_notifications`,{method:'POST',key:serviceKey,body:notifications,prefer:'return=minimal'});

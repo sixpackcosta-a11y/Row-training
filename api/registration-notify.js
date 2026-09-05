@@ -75,7 +75,10 @@ module.exports = async function handler(req,res){
         const nTeam=teamLabelsV104[requestRow.requested_team]||'Sin equipo preseleccionado';
         const pushCoachIds=[];
         for(const uid of coachIds){
-          const inserted=await rest(`${supabaseUrl}/rest/v1/app_notifications?on_conflict=user_id,source_key`,{method:'POST',key:serviceKey,prefer:'resolution=ignore-duplicates,return=representation',body:{user_id:uid,type:'registration',title:'Nueva alta pendiente',body:`${nName} · ${nTeam}`,url:'/?tab=altas',source_key:`registration:${requestRow.id}`}});
+          const sourceKey=`registration:${requestRow.id}`;
+          const previous=await rest(`${supabaseUrl}/rest/v1/app_notifications?user_id=eq.${encodeURIComponent(uid)}&source_key=eq.${encodeURIComponent(sourceKey)}&select=id&limit=1`,{key:serviceKey})||[];
+          if(previous.length)continue;
+          const inserted=await rest(`${supabaseUrl}/rest/v1/app_notifications`,{method:'POST',key:serviceKey,prefer:'return=representation',body:{user_id:uid,type:'registration',title:'Nueva alta pendiente',body:`${nName} · ${nTeam}`,url:'/?tab=altas',source_key:sourceKey}});
           if(Array.isArray(inserted)&&inserted.length)pushCoachIds.push(uid);
         }
         const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
