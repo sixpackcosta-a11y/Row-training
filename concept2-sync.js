@@ -145,7 +145,7 @@ module.exports=async function handler(req,res){
     const idList=results.map(x=>String(x.id)).filter(Boolean);
     let existing=new Set(),existingRows=new Map();
     if(idList.length){
-      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_session_code,match_status,match_confidence,hidden`);
+      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_session_code,match_status,match_confidence,hidden,excluded_splits`);
       if(er.ok){const saved=await er.json();existing=new Set(saved.map(x=>String(x.concept2_result_id)));existingRows=new Map(saved.map(x=>[String(x.concept2_result_id),x]))}
     }
 
@@ -161,7 +161,7 @@ module.exports=async function handler(req,res){
         avg_hr:x.heart_rate?.average??null,max_hr:x.heart_rate?.max??null,
         workout_type:x.workout_type||null,source:x.source||null,
         matched_intent_id:match.intentId,matched_session_code:manual?previous.matched_session_code:match.code,training_session_id:manual?previous.training_session_id:match.trainingSessionId,
-        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,hidden:previous?.hidden===true,
+        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,hidden:previous?.hidden===true,excluded_splits:previous?.excluded_splits||[],
         raw_result:x,updated_at:now
       };
     });
