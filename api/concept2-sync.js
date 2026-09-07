@@ -64,9 +64,9 @@ function scoreResult(result,intents){
     if(i.expected_workout_type&&String(result.workout_type||"").toLowerCase().includes(String(i.expected_workout_type).toLowerCase()))score+=15;
     if(!best||score>best.score)best={intent:i,score};
   }
-  if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null,teamCode:null};
-  if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null};
-  return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null};
+  if(!best||best.score<60)return {status:"unplanned",confidence:Math.min(best?.score||0,100),code:null,intentId:null,teamCode:null,trainingSessionId:null};
+  if(best.score>=80)return {status:"matched",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null,trainingSessionId:best.intent.training_session_id||null};
+  return {status:"review",confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id,teamCode:best.intent.team_code||null,trainingSessionId:best.intent.training_session_id||null};
 }
 async function plannedErgoIntents(userId,results){
   const mr=await rest(`rower_team_memberships?user_id=eq.${encodeURIComponent(userId)}&is_rower=eq.true&select=team_code`);
@@ -78,7 +78,7 @@ async function plannedErgoIntents(userId,results){
   const sr=await rest(`training_sessions?team_code=in.(${teamFilter})&session_type=eq.ERG&session_date=gte.${encodeURIComponent(dates[0])}&session_date=lte.${encodeURIComponent(dates[dates.length-1])}&select=id,team_code,session_date,title,content`);
   if(!sr.ok)return [];
   return (await sr.json()).map(x=>({
-    id:null,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',team_code:x.team_code,
+    id:null,training_session_id:x.id,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',team_code:x.team_code,
     expected_distance_m:null,expected_duration_seconds:null,expected_spm:null,expected_workout_type:null,
     from_planning:true
   }));
@@ -133,15 +133,16 @@ module.exports=async function handler(req,res){
 
     // Una única consulta para saber cuáles ya existían.
     const idList=results.map(x=>String(x.id)).filter(Boolean);
-    let existing=new Set();
+    let existing=new Set(),existingRows=new Map();
     if(idList.length){
-      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id`);
-      if(er.ok) existing=new Set((await er.json()).map(x=>String(x.concept2_result_id)));
+      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_session_code,match_status,match_confidence`);
+      if(er.ok){const saved=await er.json();existing=new Set(saved.map(x=>String(x.concept2_result_id)));existingRows=new Map(saved.map(x=>[String(x.concept2_result_id),x]))}
     }
 
     const now=new Date().toISOString();
     const matched=results.map(x=>({result:x,match:scoreResult(x,intents)}));
     const rows=matched.map(({result:x,match})=>{
+      const previous=existingRows.get(String(x.id)),manual=previous?.training_session_id!=null;
       return {
         user_id:me.id,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
         distance_m:x.distance==null?null:Number(x.distance),
@@ -149,8 +150,8 @@ module.exports=async function handler(req,res){
         pace_500_seconds:pace500(x.time,x.distance),spm:x.stroke_rate==null?null:Number(x.stroke_rate),
         avg_hr:x.heart_rate?.average??null,max_hr:x.heart_rate?.max??null,
         workout_type:x.workout_type||null,source:x.source||null,
-        matched_intent_id:match.intentId,matched_session_code:match.code,
-        match_status:match.status,match_confidence:match.confidence,
+        matched_intent_id:match.intentId,matched_session_code:manual?previous.matched_session_code:match.code,training_session_id:manual?previous.training_session_id:match.trainingSessionId,
+        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,
         raw_result:x,updated_at:now
       };
     });
