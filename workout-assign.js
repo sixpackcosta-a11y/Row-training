@@ -74,7 +74,7 @@ module.exports=async function handler(req,res){
         const indexes=[...new Set((Array.isArray(req.body?.excluded_splits)?req.body.excluded_splits:[]).map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<100))].sort((a,b)=>a-b);
         await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{excluded_splits:indexes,updated_at:new Date().toISOString()}});
       }
-      else if(action==='unassign')await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:null,matched_session_code:null,matched_intent_id:null,match_status:'unplanned',match_confidence:0,updated_at:new Date().toISOString()}});
+      else if(action==='unassign')await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:null,matched_session_code:null,matched_intent_id:null,match_status:'manual_unassigned',match_confidence:0,updated_at:new Date().toISOString()}});
       else await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),matched_session_code:session.title,match_status:'matched',match_confidence:100,updated_at:new Date().toISOString()}});
     }else{
       const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}&select=id,session_type`,{key:serviceKey});
