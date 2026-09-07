@@ -152,7 +152,7 @@ module.exports=async function handler(req,res){
     const now=new Date().toISOString();
     const matched=results.map(x=>({result:x,match:scoreResult(x,intents)}));
     const rows=matched.map(({result:x,match})=>{
-      const previous=existingRows.get(String(x.id)),manual=previous?.training_session_id!=null,manualUnassigned=previous?.match_status==='manual_unassigned';
+      const previous=existingRows.get(String(x.id)),manual=previous?.training_session_id!=null;
       return {
         user_id:me.id,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
         distance_m:x.distance==null?null:Number(x.distance),
@@ -160,12 +160,8 @@ module.exports=async function handler(req,res){
         pace_500_seconds:pace500(x.time,x.distance),spm:x.stroke_rate==null?null:Number(x.stroke_rate),
         avg_hr:x.heart_rate?.average??null,max_hr:x.heart_rate?.max??null,
         workout_type:x.workout_type||null,source:x.source||null,
-        matched_intent_id:manualUnassigned?null:match.intentId,
-        matched_session_code:manualUnassigned?null:(manual?previous.matched_session_code:match.code),
-        training_session_id:manualUnassigned?null:(manual?previous.training_session_id:match.trainingSessionId),
-        match_status:manualUnassigned?'manual_unassigned':(manual?'matched':match.status),
-        match_confidence:manualUnassigned?0:(manual?100:match.confidence),
-        hidden:(previous?.hidden===true)||dateOnly(x.date||x.date_utc)<'2026-09-01',excluded_splits:previous?.excluded_splits||[],
+        matched_intent_id:match.intentId,matched_session_code:manual?previous.matched_session_code:match.code,training_session_id:manual?previous.training_session_id:match.trainingSessionId,
+        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,hidden:(previous?.hidden===true)||dateOnly(x.date||x.date_utc)<'2026-09-01',excluded_splits:previous?.excluded_splits||[],
         raw_result:x,updated_at:now
       };
     });
