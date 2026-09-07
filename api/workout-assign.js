@@ -4,7 +4,7 @@ async function rest(url,{method='GET',key,token,body,prefer}={}){
   if(!response.ok)throw new Error(`supabase_${response.status}_${text}`);
   return text?JSON.parse(text):null;
 }
-function validSourceId(v){return /^[a-z0-9-]{1,120}$/i.test(String(v||''))}
+function validSourceId(v){const s=String(v??'').trim();return s.length>0&&s.length<=180&&!/[\u0000-\u001f\u007f]/.test(s)}
 function validSessionId(v){return /^\d+$/.test(String(v||''))}
 function validUuid(v){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''))}
 
@@ -19,35 +19,87 @@ module.exports=async function handler(req,res){
     if(!token)return res.status(401).json({error:'missing_token'});
     const auth=await fetch(`${supabaseUrl}/auth/v1/user`,{headers:{apikey:anonKey,Authorization:`Bearer ${token}`}});
     if(!auth.ok)return res.status(401).json({error:'invalid_token'});
-    const user=await auth.json(),kind=String(req.body?.kind||''),sourceId=req.body?.source_id,sessionId=req.body?.training_session_id,targetUserId=req.body?.athlete_user_id||user.id;
-    if(!['concept2','workout'].includes(kind)||!validSourceId(sourceId)||!validSessionId(sessionId))return res.status(400).json({error:'bad_assignment'});
+    const user=await auth.json(),kind=String(req.body?.kind||''),sourceId=req.body?.source_id,sessionId=req.body?.training_session_id,targetUserId=req.body?.athlete_user_id||user.id,action=String(req.body?.action||'assign');
+    if(!['concept2','workout'].includes(kind)||!validSourceId(sourceId))return res.status(400).json({error:'bad_assignment'});
     if(!validUuid(targetUserId))return res.status(400).json({error:'bad_athlete'});
+    if(!['assign','unassign','hide','unhide','splits','edit_manual'].includes(action))return res.status(400).json({error:'bad_action'});
+    const selfNoSession=targetUserId===user.id&&['hide','unhide','edit_manual'].includes(action);
+    if(!selfNoSession&&!validSessionId(sessionId)&&action!=='edit_manual')return res.status(400).json({error:'bad_assignment'});
 
-    const sessions=await rest(`${supabaseUrl}/rest/v1/training_sessions?id=eq.${sessionId}&select=id,team_code,session_date,session_type,title`,{key:serviceKey});
-    const session=sessions?.[0];
-    if(!session||!['ERG','GYM'].includes(session.session_type))return res.status(404).json({error:'planned_session_not_found'});
-    if(targetUserId!==user.id){
-      const allowed=await rest(`${supabaseUrl}/rest/v1/rpc/can_edit_team_v72`,{method:'POST',key:anonKey,token,body:{p_team:session.team_code}});
-      if(allowed!==true)return res.status(403).json({error:'coach_team_required'});
+    let session=null;
+    if(validSessionId(sessionId)){
+      const sessions=await rest(`${supabaseUrl}/rest/v1/training_sessions?id=eq.${sessionId}&select=id,team_code,session_date,session_type,title`,{key:serviceKey});
+      session=sessions?.[0];
+      if(!session||!['ERG','GYM'].includes(session.session_type))return res.status(404).json({error:'planned_session_not_found'});
+      if(targetUserId!==user.id){
+        const allowed=await rest(`${supabaseUrl}/rest/v1/rpc/can_edit_team_v72`,{method:'POST',key:anonKey,token,body:{p_team:session.team_code}});
+        if(allowed!==true)return res.status(403).json({error:'coach_team_required'});
+      }
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(session.team_code)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      let belongs=!!membership?.length;
+      if(!belongs){const profile=await rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(session.team_code)}&select=user_id`,{key:serviceKey});belongs=!!profile?.length}
+      if(!belongs)return res.status(403).json({error:'rower_team_required'});
     }
-    const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(session.team_code)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
-    let belongs=!!membership?.length;
-    if(!belongs){const profile=await rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(session.team_code)}&select=user_id`,{key:serviceKey});belongs=!!profile?.length}
-    if(!belongs)return res.status(403).json({error:'rower_team_required'});
+
+    if(action==='edit_manual'&&targetUserId!==user.id&&!session){
+      const teamCode=String(req.body?.team_code||'');if(!/^[a-z0-9_-]{1,80}$/i.test(teamCode))return res.status(400).json({error:'team_required'});
+      const allowed=await rest(`${supabaseUrl}/rest/v1/rpc/can_edit_team_v72`,{method:'POST',key:anonKey,token,body:{p_team:teamCode}});if(allowed!==true)return res.status(403).json({error:'coach_team_required'});
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      if(!membership?.length){const profile=await rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(teamCode)}&select=user_id`,{key:serviceKey});if(!profile?.length)return res.status(403).json({error:'rower_team_required'})}
+    }
+
+    // V148 · segunda barrera contra dobles asignaciones del mismo remero.
+    // La interfaz ya bloquea estas sesiones, pero la API vuelve a comprobarlo para evitar errores por concurrencia o clientes antiguos.
+    if(action==='assign'&&session){
+      const duplicate=[];
+      const workoutRows=await rest(`${supabaseUrl}/rest/v1/workout_logs?user_id=eq.${targetUserId}&training_session_id=eq.${session.id}&select=id,session_type,hidden`,{key:serviceKey});
+      (workoutRows||[]).forEach(r=>{
+        const actualType=String(r.session_type||'').toUpperCase().replace('ERGO','ERG');
+        if(r.hidden===true||actualType!==session.session_type||(kind==='workout'&&String(r.id)===String(sourceId)))return;
+        duplicate.push('workout');
+      });
+      if(session.session_type==='ERG'){
+        const conceptRows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${targetUserId}&training_session_id=eq.${session.id}&select=id,hidden`,{key:serviceKey});
+        (conceptRows||[]).forEach(r=>{if(r.hidden!==true&&!(kind==='concept2'&&String(r.id)===String(sourceId)))duplicate.push('concept2')});
+      }
+      if(duplicate.length)return res.status(409).json({error:'Esta sesión ya tiene otro resultado asignado para este remero. Quita esa asociación u oculta el registro anterior antes de asignar uno nuevo.'});
+    }
 
     if(kind==='concept2'){
-      if(session.session_type!=='ERG')return res.status(400).json({error:'type_mismatch'});
-      const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${sourceId}&user_id=eq.${targetUserId}&select=id`,{key:serviceKey});
+      if(session&&session.session_type!=='ERG')return res.status(400).json({error:'type_mismatch'});
+      const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}&select=id,concept2_result_id`,{key:serviceKey});
       if(!rows?.length)return res.status(404).json({error:'result_not_found'});
-      await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),matched_session_code:session.title,match_status:'matched',match_confidence:100,updated_at:new Date().toISOString()}});
+      if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide',updated_at:new Date().toISOString()}});
+      else if(action==='splits'){
+        const indexes=[...new Set((Array.isArray(req.body?.excluded_splits)?req.body.excluded_splits:[]).map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<100))].sort((a,b)=>a-b);
+        await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{excluded_splits:indexes,updated_at:new Date().toISOString()}});
+      }
+      else if(action==='unassign'){
+        const changed=await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=representation',body:{training_session_id:null,matched_session_code:null,matched_intent_id:null,match_status:'manual_unassigned',match_confidence:0,updated_at:new Date().toISOString()}});
+        if(!changed?.length||changed[0].training_session_id!=null)return res.status(500).json({error:'unassign_not_persisted'});
+      }
+      else await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),matched_session_code:session.title,match_status:'matched',match_confidence:100,updated_at:new Date().toISOString()}});
     }else{
-      const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}&select=id,session_type`,{key:serviceKey});
+      const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}&select=id,session_type`,{key:serviceKey});
       const row=rows?.[0],actual=String(row?.session_type||'').toUpperCase().replace('ERGO','ERG');
       if(!row)return res.status(404).json({error:'result_not_found'});
-      if(actual!==session.session_type)return res.status(400).json({error:'type_mismatch'});
-      await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),session_code:session.title,session_date:session.session_date}});
+      if(session&&actual!==session.session_type)return res.status(400).json({error:'type_mismatch'});
+      if(action==='edit_manual'){
+        if(actual!=='ERG')return res.status(400).json({error:'manual_edit_only_ergo'});
+        const m=req.body?.manual||{},num=v=>v===null||v===undefined||v===''?null:Number(v),clean={distance_m:num(m.distance_m),time_seconds:num(m.time_seconds),pace_500_seconds:num(m.pace_500_seconds),spm:num(m.spm),avg_hr:num(m.avg_hr),max_hr:num(m.max_hr),notes:m.notes==null?null:String(m.notes).slice(0,2000),splits:Array.isArray(m.splits)?m.splits.slice(0,30):[]};
+        for(const k of ['distance_m','time_seconds','pace_500_seconds','spm','avg_hr','max_hr'])if(clean[k]!==null&&!Number.isFinite(clean[k]))return res.status(400).json({error:'bad_manual_value'});
+        const ergoRows=await rest(`${supabaseUrl}/rest/v1/ergo_results?workout_id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}&select=id`,{key:serviceKey});if(!ergoRows?.length)return res.status(404).json({error:'manual_ergo_not_found'});
+        await rest(`${supabaseUrl}/rest/v1/ergo_results?id=eq.${ergoRows[0].id}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:clean});
+        await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{notes:clean.notes}});
+      }
+      else if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide'}});
+      else if(action==='unassign'){
+        const changed=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=representation',body:{training_session_id:null}});
+        if(!changed?.length||changed[0].training_session_id!=null)return res.status(500).json({error:'unassign_not_persisted'});
+      }
+      else await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),session_code:session.title,session_date:session.session_date}});
     }
-    return res.status(200).json({ok:true,session});
+    return res.status(200).json({ok:true,session,action});
   }catch(error){
     console.error(error);return res.status(500).json({error:String(error?.message||error)});
   }
