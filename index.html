@@ -2367,26 +2367,38 @@ async function v140AssignResult(kind,sourceId,type,actualDate,athleteUserId=curr
   // V148 · no ofrecer como libres sesiones que este mismo remero ya tiene asociadas a otro resultado.
   const sessionIds=rows.map(s=>Number(s.id)).filter(Number.isFinite),occupied=new Map();
   const [wq,cq]=await Promise.all([
-    sb.from('workout_logs').select('id,training_session_id,session_type,hidden').eq('user_id',athleteUserId).in('training_session_id',sessionIds),
-    plannedType==='ERG'?sb.from('concept2_results').select('id,training_session_id,hidden').eq('user_id',athleteUserId).in('training_session_id',sessionIds):Promise.resolve({data:[],error:null})
+    sb.from('workout_logs').select('id,training_session_id,session_type,session_date,session_code,performed_at,created_at,hidden').eq('user_id',athleteUserId).in('training_session_id',sessionIds),
+    plannedType==='ERG'?sb.from('concept2_results').select('id,training_session_id,workout_date,time_formatted,distance_m,hidden').eq('user_id',athleteUserId).in('training_session_id',sessionIds):Promise.resolve({data:[],error:null})
   ]);
   if(wq.error)return alert('No se pudieron comprobar las asignaciones existentes: '+wq.error.message);
   if(cq.error)return alert('No se pudieron comprobar las asignaciones de ErgData: '+cq.error.message);
   (wq.data||[]).forEach(r=>{
     const actualType=String(r.session_type||'').toUpperCase().replace('ERGO','ERG');
     if(r.hidden===true||actualType!==plannedType||(kind==='workout'&&String(r.id)===String(sourceId)))return;
-    occupied.set(String(r.training_session_id),actualType==='ERG'?'otro registro manual de ERGO':'otro registro de GYM');
+    occupied.set(String(r.training_session_id),{kind:'workout',id:r.id,label:actualType==='ERG'?'Registro manual de ERGO':'Registro de GYM',date:String(r.session_date||r.performed_at||r.created_at||'').slice(0,10),detail:r.session_code||''});
   });
   (cq.data||[]).forEach(r=>{
     if(r.hidden===true||(kind==='concept2'&&String(r.id)===String(sourceId)))return;
-    occupied.set(String(r.training_session_id),'otro resultado de ErgData');
+    occupied.set(String(r.training_session_id),{kind:'concept2',id:r.id,label:'Resultado de ErgData',date:String(r.workout_date||'').slice(0,10),detail:[r.distance_m?`${r.distance_m} m`:'',r.time_formatted||''].filter(Boolean).join(' · ')});
   });
 
   const layer=document.createElement('div');layer.style.cssText='position:fixed;inset:0;background:rgba(7,22,47,.58);z-index:9999;display:grid;place-items:center;padding:18px';
   const rel=s=>{const d=dayDiff(s.session_date,actual);return d===0?'mismo día':d<0?`${Math.abs(d)} día${Math.abs(d)===1?'':'s'} antes`:`${d} día${d===1?'':'s'} después`};
-  layer.innerHTML=`<div class="card assignCardV151"><h2>Asignar a la planificación</h2><div class="info"><b>Resultado realizado:</b> ${shortDateES(actual)} · ${plannedType==='ERG'?'ERGO':'GYM'}<br><small>Elige la sesión que el remero estaba haciendo realmente. Las sesiones que ya tienen otro resultado de este remero quedan bloqueadas para evitar dobles asignaciones.</small></div><div id="v147AssignChoices">${rows.map((s,i)=>{const checked=String(s.id)===String(currentTrainingSessionId),used=occupied.has(String(s.id)),blocked=used&&!checked,near=i===0&&!currentTrainingSessionId,status=checked?' <span class="tag" style="background:#dff5e8;color:#12633f">Asignación actual</span>':blocked?' <span class="tag" style="background:#fff0d9;color:#8a5200">Ya asignada</span>':'';return `<div class="assignChoiceV151" style="${checked?'outline:2px solid #7ca9e8;background:#f3f9f5;':blocked?'opacity:.66;background:#f7f7f7;':''}"><label class="assignLabelV151" style="${blocked?'cursor:not-allowed':'cursor:pointer'}"><input type="radio" name="v147SessionChoice" value="${s.id}" ${checked?'checked':''} ${blocked?'disabled':''} style="margin-top:4px"><span><b>${shortDateES(s.session_date)} · ${esc(s.title||plannedType)}</b>${status}<br><small>${rel(s)}${near?' · más cercana por fecha':''}${blocked?` · ya vinculada a ${esc(occupied.get(String(s.id)))}`:''}</small></span></label>${s.content?`<details><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(s.content)}</div></details>`:''}</div>`}).join('')}</div><div class="staffActions"><button id="v140CancelAssign" type="button">Cancelar</button>${currentTrainingSessionId?'<button id="v142Unassign" type="button">Quitar asociación</button>':''}<button id="v140SaveAssign" class="primary" type="button" ${currentTrainingSessionId?'':'disabled'}>Asignar sesión</button></div></div>`;
+  layer.innerHTML=`<div class="card assignCardV151"><h2>Asignar a la planificación</h2><div class="info"><b>Resultado realizado:</b> ${shortDateES(actual)} · ${plannedType==='ERG'?'ERGO':'GYM'}<br><small>Elige la sesión que el remero estaba haciendo realmente. Las sesiones que ya tienen otro resultado de este remero quedan bloqueadas para evitar dobles asignaciones.</small></div><div id="v147AssignChoices">${rows.map((s,i)=>{const checked=String(s.id)===String(currentTrainingSessionId),occ=occupied.get(String(s.id)),used=!!occ,blocked=used&&!checked,near=i===0&&!currentTrainingSessionId,status=checked?' <span class="tag" style="background:#dff5e8;color:#12633f">Asignación actual</span>':blocked?' <span class="tag" style="background:#fff0d9;color:#8a5200">Ya asignada</span>':'';const occupiedHtml=blocked&&occ?`<div class="info" style="margin-top:8px;background:#fffaf0"><b>${esc(occ.label)}</b>${occ.date?` · ${shortDateES(occ.date)}`:''}${occ.detail?`<br><small>${esc(occ.detail)}</small>`:''}<div class="staffActions" style="margin-top:6px"><button type="button" class="v152ReleaseOccupied" data-kind="${occ.kind}" data-id="${occ.id}" data-session="${s.id}">Quitar esta asignación</button></div></div>`:'';return `<div class="assignChoiceV151" style="${checked?'outline:2px solid #7ca9e8;background:#f3f9f5;':blocked?'opacity:.82;background:#f7f7f7;':''}"><label class="assignLabelV151" style="${blocked?'cursor:not-allowed':'cursor:pointer'}"><input type="radio" name="v147SessionChoice" value="${s.id}" ${checked?'checked':''} ${blocked?'disabled':''} style="margin-top:4px"><span><b>${shortDateES(s.session_date)} · ${esc(s.title||plannedType)}</b>${status}<br><small>${rel(s)}${near?' · más cercana por fecha':''}${blocked?' · ya vinculada a otro resultado':''}</small></span></label>${occupiedHtml}${s.content?`<details><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(s.content)}</div></details>`:''}</div>`}).join('')}</div><div class="staffActions"><button id="v140CancelAssign" type="button">Cancelar</button>${currentTrainingSessionId?'<button id="v142Unassign" type="button">Quitar asociación</button>':''}<button id="v140SaveAssign" class="primary" type="button" ${currentTrainingSessionId?'':'disabled'}>Asignar sesión</button></div></div>`;
   document.body.appendChild(layer);layer.querySelector('#v140CancelAssign').onclick=()=>layer.remove();layer.onclick=e=>{if(e.target===layer)layer.remove()};
   const save=layer.querySelector('#v140SaveAssign');layer.querySelectorAll('input[name="v147SessionChoice"]:not(:disabled)').forEach(r=>r.onchange=()=>save.disabled=false);
+  layer.querySelectorAll('.v152ReleaseOccupied').forEach(btn=>btn.onclick=async()=>{
+    if(!confirm('¿Quitar la asignación que ocupa esta sesión?\n\nEl resultado seguirá guardado en el historial, pero quedará sin asignar.'))return;
+    btn.disabled=true;btn.textContent='Quitando…';
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      const response=await fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({kind:btn.dataset.kind,source_id:btn.dataset.id,training_session_id:btn.dataset.session,athlete_user_id:athleteUserId,action:'unassign'})});
+      const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'No se pudo quitar la asignación.');
+      layer.remove();
+      // Reabrimos la ventana para que esa sesión aparezca ya libre y pueda elegirse.
+      v140AssignResult(kind,sourceId,type,actualDate,athleteUserId,teamCode,onDone,currentTrainingSessionId);
+    }catch(e){alert(e.message||String(e));btn.disabled=false;btn.textContent='Quitar esta asignación'}
+  });
   save.onclick=async()=>{const chosen=layer.querySelector('input[name="v147SessionChoice"]:checked');if(!chosen)return;save.disabled=true;save.textContent='Guardando…';try{const {data:{session}}=await sb.auth.getSession(),response=await fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({kind,source_id:sourceId,training_session_id:chosen.value,athlete_user_id:athleteUserId})}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'No se pudo asociar el resultado.');layer.remove();alert('Resultado asociado a '+data.session.title+'. Ya cuenta como completado.');if(typeof onDone==='function')onDone(data.session);else history({skipAuto:true})}catch(e){alert(e.message||String(e));save.disabled=false;save.textContent='Asignar sesión'}};
   const unassign=layer.querySelector('#v142Unassign');if(unassign)unassign.onclick=async()=>{if(!confirm('¿Quitar la asociación con la sesión planificada?\n\nEl resultado seguirá en el historial, pero dejará de estar vinculado a esa sesión.'))return;unassign.disabled=true;try{const {data:{session}}=await sb.auth.getSession(),response=await fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({kind,source_id:sourceId,training_session_id:currentTrainingSessionId,athlete_user_id:athleteUserId,action:'unassign'})}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'No se pudo quitar la asociación.');layer.remove();if(typeof onDone==='function')onDone(null);else history({skipAuto:true})}catch(e){alert(e.message||String(e));unassign.disabled=false}};
 }
@@ -3445,10 +3457,14 @@ function v79ComplianceForAthlete(userId,sessions,workouts,gymRows,c2Rows,start,e
       // V149 · un GYM solo cuenta como cumplido si está asociado expresamente a esta sesión planificada.
       // V150 · los pendientes de asignar se avisan dentro de la app, sin push.
       // Coincidir únicamente por fecha provocaba falsos positivos: el historial podía decir “Sin asignar” y el cumplimiento mostrar ✓.
-      hit=ws.find(w=>!usedWorkouts.has(String(w.id))&&String(w.session_type||'').toLowerCase()==='gym'&&String(w.status||'completed').toLowerCase()==='completed'&&String(w.training_session_id||'')===String(s.id));
+      // V152 · el mismo criterio que usa la pantalla de asignación: si existe un registro GYM visible
+      // vinculado expresamente a esta sesión, cuenta como realizado. No exigimos un status adicional,
+      // porque la propia asociación es la fuente de verdad y así evitamos "Ya asignada" + "—".
+      hit=ws.find(w=>!usedWorkouts.has(String(w.id))&&String(w.session_type||'').toLowerCase()==='gym'&&String(w.training_session_id||'')===String(s.id));
       if(hit){usedWorkouts.add(String(hit.id));done=true}
     }else{
-      hit=ws.find(w=>!usedWorkouts.has(String(w.id))&&['ergo','erg'].includes(String(w.session_type||'').toLowerCase())&&String(w.status||'completed').toLowerCase()==='completed'&&String(w.training_session_id||'')===String(s.id));
+      // V152 · igual que en GYM: una asociación explícita y visible basta para marcar cumplimiento.
+      hit=ws.find(w=>!usedWorkouts.has(String(w.id))&&['ergo','erg'].includes(String(w.session_type||'').toLowerCase())&&String(w.training_session_id||'')===String(s.id));
       if(hit){usedWorkouts.add(String(hit.id));done=true}
       if(!done){const c2hit=c2.find(x=>!usedConcept2.has(String(x.id))&&String(x.training_session_id||'')===String(s.id));if(c2hit){usedConcept2.add(String(c2hit.id));done=true}}
     }
