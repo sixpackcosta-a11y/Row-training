@@ -17,9 +17,9 @@ module.exports=async function handler(req,res){
     const auth=await fetch(`${supabaseUrl}/auth/v1/user`,{headers:{apikey:anonKey,Authorization:`Bearer ${token}`}});
     if(!auth.ok)return res.status(401).json({error:'invalid_token'});
     const user=await auth.json();
-    const workoutId=String(req.body?.workout_id??'').trim();
+    const ergoResultId=String(req.body?.ergo_result_id??'').trim();
     const targetUserId=String(req.body?.athlete_user_id||user.id);
-    if(!workoutId||workoutId.length>180)return res.status(400).json({error:'bad_workout_id'});
+    if(!ergoResultId||ergoResultId.length>180)return res.status(400).json({error:'bad_ergo_result_id'});
     if(!validUuid(targetUserId))return res.status(400).json({error:'bad_athlete'});
     if(targetUserId!==user.id){
       const teamCode=String(req.body?.team_code||'');
@@ -27,18 +27,14 @@ module.exports=async function handler(req,res){
       const allowed=await rest(`${supabaseUrl}/rest/v1/rpc/can_edit_team_v72`,{method:'POST',key:anonKey,token,body:{p_team:teamCode}});
       if(allowed!==true)return res.status(403).json({error:'coach_team_required'});
     }
-    const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(workoutId)}&user_id=eq.${targetUserId}&select=id,session_type`,{key:serviceKey});
+    const rows=await rest(`${supabaseUrl}/rest/v1/ergo_results?id=eq.${encodeURIComponent(ergoResultId)}&user_id=eq.${encodeURIComponent(targetUserId)}&select=id,workout_id`,{key:serviceKey});
     const row=rows?.[0];
-    if(!row)return res.status(404).json({error:'workout_not_found'});
-    const actual=String(row.session_type||'').toUpperCase().replace('ERGO','ERG');
-    if(actual!=='ERG')return res.status(400).json({error:'manual_edit_only_ergo'});
+    if(!row)return res.status(404).json({error:'manual_ergo_not_found'});
     const m=req.body?.manual||{},num=v=>v===null||v===undefined||v===''?null:Number(v);
     const clean={distance_m:num(m.distance_m),time_seconds:num(m.time_seconds),pace_500_seconds:num(m.pace_500_seconds),spm:num(m.spm),avg_hr:num(m.avg_hr),max_hr:num(m.max_hr),notes:m.notes==null?null:String(m.notes).slice(0,2000),splits:Array.isArray(m.splits)?m.splits.slice(0,30):[]};
     for(const k of ['distance_m','time_seconds','pace_500_seconds','spm','avg_hr','max_hr'])if(clean[k]!==null&&!Number.isFinite(clean[k]))return res.status(400).json({error:'bad_manual_value',field:k});
-    const ergoRows=await rest(`${supabaseUrl}/rest/v1/ergo_results?workout_id=eq.${encodeURIComponent(workoutId)}&user_id=eq.${targetUserId}&select=id`,{key:serviceKey});
-    if(!ergoRows?.length)return res.status(404).json({error:'manual_ergo_not_found'});
-    await rest(`${supabaseUrl}/rest/v1/ergo_results?id=eq.${encodeURIComponent(ergoRows[0].id)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:clean});
-    await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(workoutId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{notes:clean.notes}});
-    return res.status(200).json({ok:true,workout_id:workoutId});
-  }catch(e){return res.status(500).json({error:'manual_edit_failed',detail:String(e?.message||e).slice(0,700)})}
+    await rest(`${supabaseUrl}/rest/v1/ergo_results?id=eq.${encodeURIComponent(ergoResultId)}&user_id=eq.${encodeURIComponent(targetUserId)}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:clean});
+    if(row.workout_id){try{await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(row.workout_id)}&user_id=eq.${encodeURIComponent(targetUserId)}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{notes:clean.notes}})}catch(_){} }
+    return res.status(200).json({ok:true,ergo_result_id:ergoResultId,workout_id:row.workout_id||null});
+  }catch(e){return res.status(500).json({error:'manual_edit_failed',detail:String(e?.message||e).slice(0,1200)})}
 };
