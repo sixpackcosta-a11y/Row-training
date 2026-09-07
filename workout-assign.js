@@ -4,7 +4,7 @@ async function rest(url,{method='GET',key,token,body,prefer}={}){
   if(!response.ok)throw new Error(`supabase_${response.status}_${text}`);
   return text?JSON.parse(text):null;
 }
-function validSourceId(v){const s=String(v??'').trim();return s.length>0&&s.length<=180&&/^[a-z0-9_:\-]+$/i.test(s)}
+function validSourceId(v){const s=String(v??'').trim();return s.length>0&&s.length<=180&&!/[\u0000-\u001f\u007f]/.test(s)}
 function validSessionId(v){return /^\d+$/.test(String(v||''))}
 function validUuid(v){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''))}
 
