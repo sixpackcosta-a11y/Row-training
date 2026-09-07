@@ -41,6 +41,23 @@ module.exports=async function handler(req,res){
       if(!belongs)return res.status(403).json({error:'rower_team_required'});
     }
 
+    // V148 · segunda barrera contra dobles asignaciones del mismo remero.
+    // La interfaz ya bloquea estas sesiones, pero la API vuelve a comprobarlo para evitar errores por concurrencia o clientes antiguos.
+    if(action==='assign'&&session){
+      const duplicate=[];
+      const workoutRows=await rest(`${supabaseUrl}/rest/v1/workout_logs?user_id=eq.${targetUserId}&training_session_id=eq.${session.id}&select=id,session_type,hidden`,{key:serviceKey});
+      (workoutRows||[]).forEach(r=>{
+        const actualType=String(r.session_type||'').toUpperCase().replace('ERGO','ERG');
+        if(r.hidden===true||actualType!==session.session_type||(kind==='workout'&&String(r.id)===String(sourceId)))return;
+        duplicate.push('workout');
+      });
+      if(session.session_type==='ERG'){
+        const conceptRows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${targetUserId}&training_session_id=eq.${session.id}&select=id,hidden`,{key:serviceKey});
+        (conceptRows||[]).forEach(r=>{if(r.hidden!==true&&!(kind==='concept2'&&String(r.id)===String(sourceId)))duplicate.push('concept2')});
+      }
+      if(duplicate.length)return res.status(409).json({error:'Esta sesión ya tiene otro resultado asignado para este remero. Quita esa asociación u oculta el registro anterior antes de asignar uno nuevo.'});
+    }
+
     if(kind==='concept2'){
       if(session&&session.session_type!=='ERG')return res.status(400).json({error:'type_mismatch'});
       const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${sourceId}&user_id=eq.${targetUserId}&select=id,concept2_result_id`,{key:serviceKey});
