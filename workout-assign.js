@@ -22,9 +22,9 @@ module.exports=async function handler(req,res){
     const user=await auth.json(),kind=String(req.body?.kind||''),sourceId=req.body?.source_id,sessionId=req.body?.training_session_id,targetUserId=req.body?.athlete_user_id||user.id,action=String(req.body?.action||'assign');
     if(!['concept2','workout'].includes(kind)||!validSourceId(sourceId))return res.status(400).json({error:'bad_assignment'});
     if(!validUuid(targetUserId))return res.status(400).json({error:'bad_athlete'});
-    if(!['assign','unassign','hide','unhide','splits'].includes(action))return res.status(400).json({error:'bad_action'});
-    const selfVisibility=targetUserId===user.id&&(action==='hide'||action==='unhide');
-    if(!selfVisibility&&!validSessionId(sessionId))return res.status(400).json({error:'bad_assignment'});
+    if(!['assign','unassign','hide','unhide','splits','edit_manual'].includes(action))return res.status(400).json({error:'bad_action'});
+    const selfNoSession=targetUserId===user.id&&['hide','unhide','edit_manual'].includes(action);
+    if(!selfNoSession&&!validSessionId(sessionId)&&action!=='edit_manual')return res.status(400).json({error:'bad_assignment'});
 
     let session=null;
     if(validSessionId(sessionId)){
@@ -39,6 +39,13 @@ module.exports=async function handler(req,res){
       let belongs=!!membership?.length;
       if(!belongs){const profile=await rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(session.team_code)}&select=user_id`,{key:serviceKey});belongs=!!profile?.length}
       if(!belongs)return res.status(403).json({error:'rower_team_required'});
+    }
+
+    if(action==='edit_manual'&&targetUserId!==user.id&&!session){
+      const teamCode=String(req.body?.team_code||'');if(!/^[a-z0-9_-]{1,80}$/i.test(teamCode))return res.status(400).json({error:'team_required'});
+      const allowed=await rest(`${supabaseUrl}/rest/v1/rpc/can_edit_team_v72`,{method:'POST',key:anonKey,token,body:{p_team:teamCode}});if(allowed!==true)return res.status(403).json({error:'coach_team_required'});
+      const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:serviceKey});
+      if(!membership?.length){const profile=await rest(`${supabaseUrl}/rest/v1/profiles?user_id=eq.${targetUserId}&team_code=eq.${encodeURIComponent(teamCode)}&select=user_id`,{key:serviceKey});if(!profile?.length)return res.status(403).json({error:'rower_team_required'})}
     }
 
     // V148 · segunda barrera contra dobles asignaciones del mismo remero.
@@ -74,7 +81,15 @@ module.exports=async function handler(req,res){
       const row=rows?.[0],actual=String(row?.session_type||'').toUpperCase().replace('ERGO','ERG');
       if(!row)return res.status(404).json({error:'result_not_found'});
       if(session&&actual!==session.session_type)return res.status(400).json({error:'type_mismatch'});
-      if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide'}});
+      if(action==='edit_manual'){
+        if(actual!=='ERG')return res.status(400).json({error:'manual_edit_only_ergo'});
+        const m=req.body?.manual||{},num=v=>v===null||v===undefined||v===''?null:Number(v),clean={distance_m:num(m.distance_m),time_seconds:num(m.time_seconds),pace_500_seconds:num(m.pace_500_seconds),spm:num(m.spm),avg_hr:num(m.avg_hr),max_hr:num(m.max_hr),notes:m.notes==null?null:String(m.notes).slice(0,2000),splits:Array.isArray(m.splits)?m.splits.slice(0,30):[]};
+        for(const k of ['distance_m','time_seconds','pace_500_seconds','spm','avg_hr','max_hr'])if(clean[k]!==null&&!Number.isFinite(clean[k]))return res.status(400).json({error:'bad_manual_value'});
+        const ergoRows=await rest(`${supabaseUrl}/rest/v1/ergo_results?workout_id=eq.${sourceId}&user_id=eq.${targetUserId}&select=id`,{key:serviceKey});if(!ergoRows?.length)return res.status(404).json({error:'manual_ergo_not_found'});
+        await rest(`${supabaseUrl}/rest/v1/ergo_results?id=eq.${ergoRows[0].id}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:clean});
+        await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{notes:clean.notes}});
+      }
+      else if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide'}});
       else if(action==='unassign')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:null}});
       else await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${sourceId}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),session_code:session.title,session_date:session.session_date}});
     }
