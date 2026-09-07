@@ -161,7 +161,7 @@ module.exports=async function handler(req,res){
         avg_hr:x.heart_rate?.average??null,max_hr:x.heart_rate?.max??null,
         workout_type:x.workout_type||null,source:x.source||null,
         matched_intent_id:match.intentId,matched_session_code:manual?previous.matched_session_code:match.code,training_session_id:manual?previous.training_session_id:match.trainingSessionId,
-        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,hidden:previous?.hidden===true,excluded_splits:previous?.excluded_splits||[],
+        match_status:manual?'matched':match.status,match_confidence:manual?100:match.confidence,hidden:previous?previous.hidden===true:dateOnly(x.date||x.date_utc)<'2026-09-01',excluded_splits:previous?.excluded_splits||[],
         raw_result:x,updated_at:now
       };
     });
