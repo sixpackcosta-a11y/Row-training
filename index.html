@@ -292,7 +292,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .pullRefreshV159{position:fixed;z-index:9999;top:10px;left:50%;transform:translate(-50%,-70px);background:#07162f;color:white;border-radius:999px;padding:8px 14px;font-weight:700;box-shadow:0 4px 16px #0003;transition:transform .18s ease}.pullRefreshV159.show{transform:translate(-50%,0)}
 .v154EditGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v154EditGrid label{display:block}.v154EditGrid input,.v154EditGrid textarea{width:100%;box-sizing:border-box}.v154EditSplit{border-top:1px solid #dbe5ef;padding-top:10px;margin-top:10px}.v154EditActions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:#fff;padding-top:10px}.v154EditModal{max-width:760px!important}@media(max-width:640px){.v154EditGrid{grid-template-columns:1fr}.v154EditModal{width:calc(100vw - 20px)!important;max-width:none!important;max-height:92vh!important;padding:14px!important}}
 </style>
-</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V171</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
+</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V172</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
 <div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
@@ -1397,7 +1397,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="171";
+const APP_VERSION="172";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -3253,7 +3253,11 @@ async function exportSeasonExcelV170(){
     d.codes.forEach(code=>{const rows=d.sessions.filter(x=>x.team_code===code).map(seasonExportRowV170);const ws=XLSX.utils.json_to_sheet(rows);autoWidthSheetV170(ws,rows);XLSX.utils.book_append_sheet(wb,ws,teamLabel(code).slice(0,31));});
     const cr=d.competitions.map(x=>({ID:x.id??'',Fecha:x.competition_date||'',Competicion:x.name||'',Prioridad:x.priority||'',Equipos:Array.isArray(x.team_codes)?x.team_codes.map(teamLabel).join(', '):'',Notas:x.notes||''}));
     const wc=XLSX.utils.json_to_sheet(cr);autoWidthSheetV170(wc,cr);XLSX.utils.book_append_sheet(wb,wc,'Competiciones');
-    XLSX.writeFile(wb,'Row-Training-Planificacion-2026-27.xlsx');
+    const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='Row-Training-Planificacion-2026-27.xlsx';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
   }catch(e){alert('No se pudo exportar: '+(e?.message||e))}
   finally{if(b){b.disabled=false;b.textContent='Exportar Excel'}}
 }
@@ -3262,7 +3266,15 @@ function printableSeasonHtmlV170(d){
   return `<!doctype html><html><head><meta charset="utf-8"><title>Planificación Row Training 2026-27</title><style>body{font-family:Arial,sans-serif;color:#111;margin:24px}h1{font-size:22px}h2{margin-top:28px;font-size:18px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin:8px 0 24px;font-size:10px}th,td{border:1px solid #bbb;padding:5px;vertical-align:top}th{background:#eee}@page{size:A4 landscape;margin:10mm}tr{page-break-inside:avoid}</style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
-  try{const d=await loadSeasonExportDataV170(),w=window.open('','_blank');if(!w)return alert('El navegador ha bloqueado la ventana de impresión. Permite ventanas emergentes para Row Training.');w.document.write(printableSeasonHtmlV170(d));w.document.close();setTimeout(()=>w.print(),350)}catch(e){alert('No se pudo preparar el PDF: '+(e?.message||e))}
+  const w=window.open('','_blank');
+  if(!w)return alert('El navegador ha bloqueado la ventana de impresión. Permite ventanas emergentes para Row Training.');
+  try{
+    w.document.write('<!doctype html><html><body style="font-family:Arial;padding:24px"><h3>Preparando planificación…</h3></body></html>');
+    w.document.close();
+    const d=await loadSeasonExportDataV170();
+    w.document.open();w.document.write(printableSeasonHtmlV170(d));w.document.close();
+    setTimeout(()=>w.print(),500);
+  }catch(e){try{w.close()}catch(_){ } alert('No se pudo preparar el PDF: '+(e?.message||e))}
 }
 async function importSeasonExcelV170(file){
   if(!file||typeof XLSX==='undefined')return;
@@ -3285,7 +3297,16 @@ async function importSeasonExcelV170(file){
 async function coachSeasonView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   content.innerHTML=`<div class="card"><h2>Temporada 2026–27</h2><div class="plannerGrid"><label>Equipo<select id="seasonTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><div><button id="loadSeason" class="primary">Actualizar</button></div></div><div class="coachTools"><button id="exportSeasonExcelV170">Exportar Excel</button><button id="exportSeasonPdfV170">Exportar PDF</button><label class="btn" style="display:inline-flex;align-items:center;cursor:pointer">Importar Excel<input id="importSeasonExcelV170" type="file" accept=".xlsx,.xls" hidden></label></div><div class="info"><b>Excel bidireccional:</b> exporta la planificación real de Veteranas y Senior, edítala y vuelve a importarla. Para eliminar una sesión escribe <b>ELIMINAR</b> en la columna Acción. Las filas nuevas sin ID se crean como sesiones nuevas.</div><div id="seasonArea"></div></div>`;
-  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) seasonTeam.value=coachSelectedTeam; seasonTeam.onchange=renderCoachSeason; loadSeason.onclick=renderCoachSeason; exportSeasonExcelV170.onclick=exportSeasonExcelV170;exportSeasonPdfV170.onclick=exportSeasonPdfV170;importSeasonExcelV170.onchange=e=>{const f=e.target.files?.[0];if(f)importSeasonExcelV170(f);e.target.value=''};await renderCoachSeason();
+  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) seasonTeam.value=coachSelectedTeam;
+  seasonTeam.onchange=renderCoachSeason;
+  loadSeason.onclick=renderCoachSeason;
+  const exportExcelBtn=document.getElementById('exportSeasonExcelV170');
+  const exportPdfBtn=document.getElementById('exportSeasonPdfV170');
+  const importExcelInput=document.getElementById('importSeasonExcelV170');
+  if(exportExcelBtn) exportExcelBtn.addEventListener('click',()=>exportSeasonExcelV170());
+  if(exportPdfBtn) exportPdfBtn.addEventListener('click',()=>exportSeasonPdfV170());
+  if(importExcelInput) importExcelInput.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importSeasonExcelV170(f);e.target.value=''});
+  await renderCoachSeason();
 }
 async function renderCoachSeason(){
   const team=seasonTeam.value; coachSelectedTeam=team; const ss=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date','2026-09-01').lte('session_date','2027-05-31'); const cc=await sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[team]); const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
