@@ -321,13 +321,13 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V180 · ficha de equipo compacta + temporada integrada en planificación */
 .rosterBioV180{display:block;margin-top:3px}.seasonInlineV180{margin-top:16px}.seasonInlineV180 .tableWrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.seasonInlineV180 table{width:100%;min-width:620px}.seasonInfoV180{overflow-wrap:anywhere}
 @media(max-width:760px){.seasonInlineV180{max-width:100%;overflow:hidden}.seasonInlineV180 .accordionBody{min-width:0;overflow:hidden}.seasonInlineV180 .tableWrap{width:100%;max-width:100%;overflow-x:auto!important}.seasonInlineV180 table{font-size:.82rem}.seasonInfoV180{font-size:.9rem;line-height:1.35}.rosterBioV180{font-size:.82rem!important}.rosterPersonName .rosterErgV103{display:block;margin-top:4px}}
-/* V183 · plantillas compactas y descanso real por días sin sesión */
+/* V185 · martes MAR 60 min + registro MAR aditivo y visible */
 @media(max-width:760px){
 .teamRosterCard{padding:8px!important}.rosterList{gap:5px!important}.rosterPerson{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"person status" "bio actions"!important;column-gap:8px!important;row-gap:2px!important;padding:8px 9px!important;align-items:center!important}.rosterPersonName{display:contents!important}.rosterPersonName>b{grid-area:person;white-space:normal;overflow-wrap:anywhere;line-height:1.15}.rosterBioV180{grid-area:bio!important;margin:0!important;line-height:1.15}.rosterErgV103{grid-area:status!important;margin:0!important;white-space:nowrap!important;align-self:start}.rosterRoles{grid-area:actions!important;width:auto!important;justify-content:flex-end!important;gap:4px!important;flex-wrap:wrap!important}.rosterRole{padding:3px 6px!important;font-size:.68rem!important}.editPersonTeamsV167{padding:6px 9px!important;font-size:.78rem!important}.teamRosterStats{margin:6px 0 8px!important;gap:5px!important}.rosterStat{padding:5px 7px!important}.teamRosterHead{margin-bottom:5px!important}
 }
 @media(max-width:390px){.rosterPerson{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"person" "bio" "status" "actions"!important}.rosterRoles{justify-content:flex-start!important}}
 
-/* V183 · resumen semanal móvil compacto y a todo el ancho */
+/* V185 · conserva ajustes móviles de V184 */
 @media(max-width:700px){
   .complianceSubV176{margin-left:-8px!important;margin-right:-8px!important;border-radius:12px!important}
   .complianceSubBodyV176{padding:8px 6px 10px!important}
@@ -342,7 +342,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .teamComplianceCardV100 .openAthlete{grid-area:action!important;width:auto!important;min-width:92px!important;margin:0!important;padding:8px 12px!important;justify-self:end!important}
 }
 </style>
-</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V183</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
+</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V185</small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
 <div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
 <div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
@@ -1447,7 +1447,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="181";
+const APP_VERSION="185";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -1889,6 +1889,8 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const sq=await sb.from('training_sessions').select('id,title,content').eq('id',sessionId).maybeSingle();
   if(sq.error){alert('No se pudo cargar la sesión MAR: '+sq.error.message);return}
   const session=sq.data||{id:sessionId,title:'Sesión MAR',content:''};
+  const existingQ=await sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,photo_paths').eq('training_session_id',Number(sessionId)).order('id');
+  const existingResults=existingQ.error?[]:(existingQ.data||[]);
   let blocks=seaResultBlocksFromContent(session.content).map(b=>({...b,prescription:seaPrescription(b.value)}));
   const blockHtml=blocks.map((b,bi)=>{
     const p=b.prescription;
@@ -1899,7 +1901,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   }).join('');
   const imported=Array.isArray(importedSeries)?importedSeries:[];
   let seaPhotoFilesV137=[];
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Una fila por cada serie realizada.</b><br>Puedes añadir todas las series necesarias. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>📷 Capturas de Rowing Coach</h3><p class="muted">Selecciona una captura por serie. El OCR rellena tiempo, metros y PPM; revisa siempre los datos antes de guardarlos.</p><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section>${blocks.length?`<div id="v77SeaBlocks">${blockHtml}</div>`:'<div class="info">Esta sesión no contiene bloques de trabajo registrables.</div>'}<label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label>${blocks.length?'<button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button>':''}</div>`;
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(x.exercise_name||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados no se sustituyen ni se borran. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>📷 Capturas de Rowing Coach</h3><p class="muted">Selecciona una captura por serie. El OCR rellena tiempo, metros y PPM; revisa siempre los datos antes de guardarlos.</p><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section>${blocks.length?`<div id="v77SeaBlocks">${blockHtml}</div>`:'<div class="info">Esta sesión no contiene bloques de trabajo registrables.</div>'}<label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label>${blocks.length?'<button id="v77SaveSeaAll" class="primary">Añadir resultados MAR</button>':''}</div>`;
   document.querySelectorAll('.seaSeriesInputRowV137').forEach(bindSeaSeriesRowV137);
   document.querySelectorAll('.addSeaSeriesV137').forEach(b=>b.onclick=()=>addSeaSeriesRowV137(Number(b.dataset.blockIndex)));
   const photoInput=document.getElementById('seaRowingCoachPhotosV137'),photoStatus=document.getElementById('seaPhotoStatusV137'),photoPreview=document.getElementById('seaPhotoPreviewV137');
@@ -1917,11 +1919,11 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
     v77SaveSeaAll.disabled=true;v77SaveSeaAll.textContent='Guardando…';
     const rows=[],notes=document.getElementById('v85SeaObservations').value.trim();
     document.querySelectorAll('.seaSeriesInputRowV137').forEach(row=>{const bi=Number(row.dataset.blockIndex),b=blocks[bi],timeEl=row.querySelector('.seaTimeV137'),metersEl=row.querySelector('.seaMetersV137'),spmEl=row.querySelector('.seaSpmV137'),paceEl=row.querySelector('.seaPaceV137'),label=row.dataset.seriesLabel||'Serie';if(!b||!timeEl||!metersEl||!spmEl||!paceEl)return;if(!seaRowHasEnteredDataV137(timeEl,metersEl,spmEl))return;const blockRows=document.querySelectorAll(`.seaSeriesBodyV137[data-block-index="${bi}"] .seaSeriesInputRowV137`).length;rows.push({training_session_id:Number(sessionId),exercise_name:blockRows>1?`${b.line} · ${label}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value?Number(spmEl.value):null,rpe:null,notes:notes||null})});
-    if(!rows.length){alert('Introduce al menos un resultado antes de guardar.');v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
+    if(!rows.length){alert('Introduce al menos un resultado antes de guardar.');v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Añadir resultados MAR';return}
     const q=await sb.from('sea_results').insert(rows).select('id');
-    if(q.error){alert(q.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
+    if(q.error){alert(q.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Añadir resultados MAR';return}
     let photoWarning='';if(seaPhotoFilesV137.length&&q.data?.[0]?.id){try{const paths=await uploadSeaPhotosV137(seaPhotoFilesV137,sessionId,team),u=await sb.from('sea_results').update({photo_paths:paths}).eq('id',q.data[0].id);if(u.error)throw u.error}catch(e){photoWarning=' Los resultados se guardaron, pero las capturas no pudieron subirse: '+(e.message||e)}}
-    alert(`${rows.length} resultado${rows.length===1?'':'s'} MAR guardado${rows.length===1?'':'s'}.${photoWarning}`);goBack();
+    alert(`${rows.length} resultado${rows.length===1?'':'s'} MAR añadido${rows.length===1?'':'s'}. Los resultados anteriores se han conservado.${photoWarning}`);goBack();
   };
 }
 async function systemView(){
@@ -3523,7 +3525,7 @@ function sessionEditor(x=null){
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
- const refresh=()=>{renderEditorLibrary(sessType.value,x);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?'<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.</div>':sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ const refresh=()=>{renderEditorLibrary(sessType.value,x);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())sessContent.value=marDefaultSessionContent();else if(sessType.value!=='MAR'&&skeleton)sessContent.value='';refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    let contentValue=sessContent.value.trim();
@@ -3535,6 +3537,9 @@ function sessionEditor(x=null){
      const cMin=document.getElementById('gymCardioMinutes')?.value?.trim()||'';
      const cardioLine=cType!=='Ninguno'&&cMin?`\nCARDIO FINAL · ${cMin} min · ${cType} · RPE 3–4/10 · ritmo conversacional`:'';
      contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}${cardioLine}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
+   }
+   if(sessType.value==='MAR'&&new Date(date+'T12:00:00').getDay()===2){
+     contentValue=contentValue.replace(/(DURACI[ÓO]N\s+OBJETIVO\s*[·:\-]?\s*)90\s*min/ig,'$160 min');
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error){alert(q.error.message);return}
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
@@ -3766,6 +3771,9 @@ function v153ResultDate(x){return String(x?.session_date||x?.performed_at||x?.cr
 function v153C2Date(x){return String(x?.workout_date||x?.created_at||'').slice(0,10)}
 function v153LegacyCandidateForPlan(plan,allPlans,ws,c2,usedWorkouts=new Set(),usedConcept2=new Set()){
   const type=plan?.session_type==='GYM'?'GYM':'ERG',date=String(plan?.session_date||'');
+  // V184: desde el inicio de la temporada 2026-27 solo cuenta una asignación explícita.
+  // Evita falsos "Hecha · antigua" por coincidencia de fecha/tipo.
+  if(date>='2026-09-01')return null;
   const samePlans=(allPlans||[]).filter(s=>String(s.session_date||'')===date&&(s.session_type==='GYM'?'GYM':'ERG')===type);
   if(samePlans.length!==1)return null;
   const manual=(ws||[]).filter(w=>!w.hidden&&!w.training_session_id&&!usedWorkouts.has(String(w.id))&&v153ResultType(w)===type&&v153ResultDate(w)===date);
@@ -3776,6 +3784,8 @@ function v153LegacyCandidateForPlan(plan,allPlans,ws,c2,usedWorkouts=new Set(),u
 function v153IsLegacyResolvedResult(row,kind,allPlans,ws,c2){
   if(!row||row.hidden||row.training_session_id)return false;
   const type=kind==='concept2'?'ERG':v153ResultType(row),date=kind==='concept2'?v153C2Date(row):v153ResultDate(row);
+  // V184: resultados sin asignación desde 1/9/2026 vuelven a ser pendientes, no "legacy resueltos".
+  if(date>='2026-09-01')return false;
   if(!type||!date)return false;
   const plan=(allPlans||[]).filter(s=>String(s.session_date||'')===date&&(s.session_type==='GYM'?'GYM':'ERG')===type);
   if(plan.length!==1)return false;
