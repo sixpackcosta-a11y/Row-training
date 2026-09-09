@@ -205,6 +205,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 .v201Uses{margin-top:16px}.v201Uses summary{cursor:pointer}.v201UseList{margin-top:10px;display:grid;gap:7px}.v201UseRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #dbe3ee}.v201UseRow:first-child{border-top:0}.v201UseRow button{white-space:nowrap}@media(max-width:600px){.v201UseRow{align-items:flex-start}.v201UseRow button{padding:7px 9px}}
 .v202UseSummary{margin-top:10px;padding:9px 10px;border:1px solid #d9e7f6;background:#f4f9ff;border-radius:10px;font-size:.82rem}.v202UseSummary.isEmpty{background:#f8fafc;border-color:#e5eaf0;color:#64748b}.v202UseTitle{font-weight:850;margin-bottom:5px}.v202UseDates{display:flex;gap:6px;flex-wrap:wrap}.v202UseChip{padding:5px 7px!important;font-size:.74rem!important;background:#fff!important;color:#17324d!important;border:1px solid #cddff1!important}.v202UseMore{font-size:.74rem;color:#52657a;align-self:center}.v202UsePending{color:#64748b}.libraryCard .v202UseSummary{margin-bottom:8px}.v206UseHead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.v206UseTeam{max-width:220px;padding:5px 8px!important;font-size:.78rem!important;background:#fff}.v201UseRow[data-team]{transition:.15s}
+
+.v208GlobalUseBar{display:flex;justify-content:flex-end;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #e4ebf4}.v208GlobalUseFilter{display:flex;align-items:center;gap:10px;margin:0;font-weight:700}.v208GlobalUseFilter span{font-size:13px}.v208GlobalUseFilter select{min-width:180px}@media(max-width:700px){.v208GlobalUseBar{justify-content:stretch}.v208GlobalUseFilter{width:100%;align-items:flex-start;flex-direction:column}.v208GlobalUseFilter select{width:100%}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -707,10 +709,19 @@ async function ergoLibrary(){
  if(!coach)document.querySelectorAll(".extraErgo").forEach(a=>a.onclick=async()=>{const x=rows.find(z=>z.code===a.dataset.code);try{await sb.from("ergo_intents").upsert({user_id:currentUser.id,scheduled_date:localISODate(),session_code:"EXTRA-"+x.code,session_name:x.name,ergdata_url:x.url,status:"additional"},{onConflict:"user_id,scheduled_date,session_code"});}catch(e){}});
 }
 
-function libraryNavHtml(){
-  return `<div class="card"><div class="librarySectionHead"><div><h2 style="margin:0">Biblioteca de entrenamientos</h2><p class="muted" style="margin:5px 0 0">Prepara y edita contenidos sin asignarlos todavía a ningún día.</p></div><div class="libraryTop"><button data-libsec="ERGO" class="${coachLibrarySection==='ERGO'?'active':''}">ERGO</button><button data-libsec="MAR" class="${coachLibrarySection==='MAR'?'active':''}">MAR</button><button data-libsec="GYM" class="${coachLibrarySection==='GYM'?'active':''}">GYM</button><button data-libsec="MIX" class="${coachLibrarySection==='MIX'?'active':''}">COMBINADOS</button></div></div></div>`;
+let v208GlobalUseTeam="";
+function v208LibraryUseGlobalFilterHtml(){
+  const teams=archiveScopeTeamsV89();
+  return `<label class="v208GlobalUseFilter"><span>Mostrar uso en planificación</span><select id="v208GlobalUseTeam"><option value="">Todos los equipos</option>${teams.map(t=>`<option value="${esc(t)}" ${v208GlobalUseTeam===t?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label>`;
 }
-function wireLibraryNav(){document.querySelectorAll('[data-libsec]').forEach(b=>b.onclick=()=>{coachLibrarySection=b.dataset.libsec;coachLibraryView()})}
+function v208ApplyGlobalUseTeam(team){
+  v208GlobalUseTeam=team||'';
+  document.querySelectorAll('.v201ErgoUses,.v202CardUses,#v201GymUses,#v202GymSessionUses,#v201MarUses,#v202MarSessionUses').forEach(h=>{if(typeof h._v208Render==='function')h._v208Render(v208GlobalUseTeam)});
+}
+function libraryNavHtml(){
+  return `<div class="card"><div class="librarySectionHead"><div><h2 style="margin:0">Biblioteca de entrenamientos</h2><p class="muted" style="margin:5px 0 0">Prepara y edita contenidos sin asignarlos todavía a ningún día.</p></div><div class="libraryTop"><button data-libsec="ERGO" class="${coachLibrarySection==='ERGO'?'active':''}">ERGO</button><button data-libsec="MAR" class="${coachLibrarySection==='MAR'?'active':''}">MAR</button><button data-libsec="GYM" class="${coachLibrarySection==='GYM'?'active':''}">GYM</button><button data-libsec="MIX" class="${coachLibrarySection==='MIX'?'active':''}">COMBINADOS</button></div></div><div class="v208GlobalUseBar">${v208LibraryUseGlobalFilterHtml()}</div></div>`;
+}
+function wireLibraryNav(){document.querySelectorAll('[data-libsec]').forEach(b=>b.onclick=()=>{coachLibrarySection=b.dataset.libsec;coachLibraryView()});const g=document.getElementById('v208GlobalUseTeam');if(g)g.onchange=()=>v208ApplyGlobalUseTeam(g.value)}
 function stripLibraryPrefix(name){return String(name||'').replace(/^(SESIÓN|SESION|CALENTAMIENTO|RECUPERACIÓN|RECUPERACION|VUELTA A LA CALMA|TRABAJO|EJERCICIO)\s*·\s*/i,'').trim()}
 function marCategoryFromName(name){const n=String(name||'');if(/^SESIÓN\s*·/i.test(n)||/^SESION\s*·/i.test(n))return 'session';if(/^CALENTAMIENTO\s*·/i.test(n))return 'warmup';if(/^RECUPERACI[ÓO]N\s*·/i.test(n))return 'recovery';if(/^VUELTA A LA CALMA\s*·/i.test(n))return 'cooldown';return 'work'}
 function marCategoryLabel(cat){return ({warmup:'Calentamiento',work:'Trabajo',recovery:'Recuperación',cooldown:'Vuelta a la calma',session:'Sesión completa'})[cat]||'Trabajo'}
@@ -1216,7 +1227,7 @@ async function libraryUsesV202(item,sessionType){
  }catch(e){console.warn('V204 usos biblioteca',e);return[]}
 }
 function v206UseTeams(rows){return [...new Set((rows||[]).map(x=>x.team_code).filter(Boolean))].sort((a,b)=>teamLabel(a).localeCompare(teamLabel(b),'es'))}
-function v206UseTeamSelect(rows,selected=''){const teams=v206UseTeams(rows);if(teams.length<2)return '';return `<select class="v206UseTeam"><option value="">Todos los equipos</option>${teams.map(t=>`<option value="${esc(t)}" ${selected===t?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select>`}
+function v206UseTeamSelect(rows,selected=''){let teams=v206UseTeams(rows);if(selected&&!teams.includes(selected))teams=[selected,...teams];if(teams.length<2&&!selected)return '';return `<select class="v206UseTeam"><option value="">Todos los equipos</option>${teams.map(t=>`<option value="${esc(t)}" ${selected===t?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select>`}
 function libraryUsesHtmlV202(rows,selected=''){
  const filtered=selected?rows.filter(x=>x.team_code===selected):rows;
  const today=localISODate(),future=filtered.filter(x=>x.session_date>=today),past=filtered.filter(x=>x.session_date<today);
@@ -1235,7 +1246,8 @@ async function fillLibraryUsesV202(holder,item,type,compact=false){
  if(!holder)return;holder.innerHTML='<div class="v202UseSummary"><span class="v202UsePending">Buscando en la planificación…</span></div>';
  const rows=await libraryUsesV202(item,type);
  const render=(selected='')=>{holder.innerHTML=compact?libraryUseSummaryHtmlV202(rows,selected):libraryUsesHtmlV202(rows,selected);wireLibraryUsesV202(holder);const sel=holder.querySelector('.v206UseTeam');if(sel)sel.onchange=e=>render(e.target.value)};
- render('');
+ holder._v208Render=render;
+ render(v208GlobalUseTeam);
 }
 async function hydrateLibraryCardUsesV202(root,items,type){const map=new Map(items.map(x=>[String(x.id),x]));root.querySelectorAll('.v202CardUses[data-id]').forEach(h=>{const x=map.get(String(h.dataset.id));if(x)fillLibraryUsesV202(h,x,type,true)})}
 async function archiveLibraryItemV88(id,item=null){if(!isGlobalCoach){alert('Solo el administrador puede archivar elementos de la biblioteca.');return false}const uses=await plannedLibraryUsesV89(item||{});let msg='¿Archivar este elemento? No se borrará y podrás recuperarlo desde Archivadas.';if(uses.length){msg+='\n\nEstá usado en planificación futura de tus equipos:\n'+uses.map(x=>`• ${teamLabel(x.team_code)} · ${shortDateES(x.session_date)} · ${x.title}`).join('\n')+'\n\nArchivar no modifica esas sesiones ya planificadas.'}if(!confirm(msg))return false;const q=await sb.from('training_library').update({archived_at:new Date().toISOString(),archived_by:currentUser.id,is_active:false,updated_at:new Date().toISOString()}).eq('id',id);if(q.error){alert(q.error.message);return false}return true}
@@ -1727,7 +1739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="207";
+const APP_VERSION="208";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
