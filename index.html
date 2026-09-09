@@ -1503,7 +1503,16 @@ function urlBase64ToUint8ArrayV104(base64String){const padding='='.repeat((4-bas
 async function registerServiceWorkerV104(){if(!('serviceWorker' in navigator))return null;try{return await navigator.serviceWorker.register('/sw.js')}catch(e){console.warn('SW',e);return null}}
 async function loadNotificationsV104(){
   if(!currentUser)return;
-  try{const q=await sb.from('app_notifications').select('id,type,title,body,url,is_read,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(30);if(!q.error)appNotificationsV104=q.data||[];}catch(e){}
+  try{const q=await sb.from('app_notifications').select('id,type,title,body,url,is_read,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(60);if(!q.error){
+    const raw=q.data||[],seen=new Map(),clean=[];
+    for(const n of raw){
+      const minute=String(n.created_at||'').slice(0,16);
+      const key=[n.type||'',n.title||'',n.body||'',n.url||'',minute].join('¦');
+      if(seen.has(key)){const kept=seen.get(key);if(kept&&kept.is_read&&!n.is_read)kept.is_read=false;continue;}
+      seen.set(key,n);clean.push(n);
+    }
+    appNotificationsV104=clean.slice(0,30);
+  }}catch(e){}
   const bell=document.getElementById('notifyBellV104'),badge=document.getElementById('notifyBadgeV104');if(bell)bell.classList.remove('hidden');const n=appNotificationsV104.filter(x=>!x.is_read).length;if(badge){badge.textContent=n>9?'9+':String(n);badge.classList.toggle('hidden',!n)}
 }
 async function enablePushV104(){
@@ -1573,10 +1582,24 @@ async function sendNotificationV110(payload){
   if(!r.ok)throw new Error(j.error||`Error ${r.status}`);
   return j;
 }
+const workoutNotifyInFlightV210=new Map();
+function workoutNotifyKeyV210(sourceType,sourceId,teamCode){return [String(sourceType||''),String(sourceId||''),String(teamCode||'')].join('|')}
 async function notifyWorkoutCoachesV129(sourceType,sourceId,teamCode=currentTeamCode){
   if(!sourceId||!teamCode)return {ok:false,error:'Falta el equipo o el resultado guardado'};
-  try{return await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:sourceType,source_id:String(sourceId)}})}
-  catch(e){console.warn('No se pudo avisar a los entrenadores',e);return {ok:false,error:e?.message||String(e)}}
+  const key=workoutNotifyKeyV210(sourceType,sourceId,teamCode),storageKey='rowtraining_notified_v210_'+key;
+  const recent=Number(localStorage.getItem(storageKey)||0);
+  if(recent&&Date.now()-recent<24*60*60*1000)return {ok:true,deduped:true,recipients:0,push_sent:0};
+  if(workoutNotifyInFlightV210.has(key))return workoutNotifyInFlightV210.get(key);
+  const task=(async()=>{
+    try{
+      const result=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:sourceType,source_id:String(sourceId)}});
+      if(result?.ok!==false)localStorage.setItem(storageKey,String(Date.now()));
+      return result;
+    }catch(e){console.warn('No se pudo avisar a los entrenadores',e);return {ok:false,error:e?.message||String(e)}}
+    finally{workoutNotifyInFlightV210.delete(key)}
+  })();
+  workoutNotifyInFlightV210.set(key,task);
+  return task;
 }
 function workoutNoticeTextV130(result){
   if(!result?.ok)return `\n\nEl entrenamiento se ha guardado, pero no se pudo crear el aviso para los entrenadores.\n\nDetalle: ${result?.error||'error desconocido'}`;
@@ -1741,7 +1764,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="209";
+const APP_VERSION="210";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -3268,7 +3291,10 @@ async function syncConcept2(showAlert=true){
       });
       const data=await r.json().catch(()=>({}));
       if(!r.ok){if(showAlert)alert(data.error||"No se pudo sincronizar Concept2.");return data;}
-      if(Array.isArray(data.notification_events)&&data.notification_events.length)await Promise.allSettled(data.notification_events.map(x=>notifyWorkoutCoachesV129('concept2',x.source_id,x.team_code)));
+      if(Array.isArray(data.notification_events)&&data.notification_events.length){
+        const uniqueEvents=[...new Map(data.notification_events.filter(x=>x?.source_id&&x?.team_code).map(x=>[workoutNotifyKeyV210('concept2',x.source_id,x.team_code),x])).values()];
+        await Promise.allSettled(uniqueEvents.map(x=>notifyWorkoutCoachesV129('concept2',x.source_id,x.team_code)));
+      }
       if(showAlert)alert(`Concept2 sincronizado: ${data.imported||0} nuevos · ${data.updated||0} actualizados.`);
       return data;
     }catch(e){
