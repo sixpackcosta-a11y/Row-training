@@ -1447,7 +1447,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="196";
+const APP_VERSION="197";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -3643,6 +3643,18 @@ function sessionEditor(x=null){
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
+ function normalizeTuesdayMar60V197(content){
+  let x=String(content||'');
+  x=x.replace(/(DURACI[ÓO]N(?:\s+OBJETIVO)?\s*[·:\-]?\s*)(?:\d+\s*[–-]\s*\d+|\d+)\s*min/ig,'$155–60 min');
+  x=x.replace(/(CALENTAMIENTO\s*[·:\-]?\s*)(?:12\s*[–-]\s*15|10\s*[–-]\s*12|8\s*[–-]\s*10)\s*min/ig,'$18 min');
+  x=x.replace(/3\s*[×x]\s*6\s*min/ig,'2×6 min');
+  x=x.replace(/3\s*[×x]\s*10\s*min/ig,'2×10 min');
+  x=x.replace(/(VIRADAS?[^\n]*?)6\s+repeticiones/ig,'$14 repeticiones');
+  x=x.replace(/(FINAL[^\n]*?)4\s*[×x]\s*20\s+paladas/ig,'$13×20 paladas');
+  x=x.replace(/(VUELTA\s+A\s+LA\s+CALMA\s*[·:\-]?\s*)8\s*min/ig,'$15 min');
+  return x;
+}
+
  const refresh=()=>{renderEditorLibrary(sessType.value,x);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())sessContent.value=marDefaultSessionContent();else if(sessType.value!=='MAR'&&skeleton)sessContent.value='';refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
@@ -3657,7 +3669,7 @@ function sessionEditor(x=null){
      contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}${cardioLine}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
    }
    if(sessType.value==='MAR'&&new Date(date+'T12:00:00').getDay()===2){
-     contentValue=contentValue.replace(/(DURACI[ÓO]N\s+OBJETIVO\s*[·:\-]?\s*)90\s*min/ig,'$160 min');
+     contentValue=normalizeTuesdayMar60V197(contentValue);
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error){alert(q.error.message);return}
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
