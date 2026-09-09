@@ -720,15 +720,111 @@ const MAR_BLOCK_DEFAULTS=[
  {key:'tech-8',category:'work',name:'Técnica continua 8 min',content:'TÉCNICA · 8 min a 15–18 ppm · coordinación, entrada limpia y salida de brazos'},
  {key:'tech-3x4',category:'work',name:'Técnica 3×4 min',content:'TÉCNICA · 3×4 min a 15–18 ppm · rec 1 min · entrada, salida de brazos, core y secuencia'},
  {key:'tech-4x5',category:'work',name:'Técnica 4×5 min',content:'TÉCNICA · 4×5 min a 16–20 ppm · rec 1 min · un foco técnico por bloque'},
- {key:'tech-attack-clean',category:'work',name:'Corrección · ataque limpio',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×3 min a 15–18 ppm · rec 1 min · entrada de pala limpia, sin golpear el agua; brazos extendidos y apoyo antes de aplicar fuerza'},
- {key:'tech-catch-before-force',category:'work',name:'Corrección · apoyo antes de fuerza',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×3 min a 15–18 ppm · rec 1 min · pala completamente apoyada antes de iniciar la pasada; evitar tirar antes de entrar'},
- {key:'tech-no-early-arms',category:'work',name:'Corrección · brazos demasiado pronto',content:'TÉCNICA CORRECTIVA · PASADA · 3×4 min a 16–18 ppm · rec 1 min · remar sin flexionar brazos al inicio; pierna y tronco transmiten primero, brazos al final'},
- {key:'tech-blade-depth',category:'work',name:'Corrección · profundidad de pala',content:'TÉCNICA CORRECTIVA · PASADA · 3×4 min a 16–18 ppm · rec 1 min · mantener la pala tapada a profundidad constante mediante control de altura de manos'},
- {key:'tech-finish-accel',category:'work',name:'Corrección · aceleración final',content:'TÉCNICA CORRECTIVA · SALIDA · 3×3 min a 18–20 ppm · rec 1 min · mantener presión hasta la sacada y acelerar el final sin perder apoyo'},
- {key:'tech-extraction',category:'work',name:'Corrección · sacada limpia',content:'TÉCNICA CORRECTIVA · SALIDA · 3×3 min a 16–18 ppm · rec 1 min · sacada rápida de manos, pala fuera antes del repaleo; evitar arrastrar agua'},
- {key:'tech-recovery-sequence',category:'work',name:'Corrección · recuperación y secuencia',content:'TÉCNICA CORRECTIVA · RECUPERACIÓN · 3×4 min a 16–18 ppm · rec 1 min · brazos→tronco→pierna, sin rebote ni precipitación hacia el ataque'},
- {key:'tech-amplitude',category:'work',name:'Corrección · amplitud de ataque',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×4 min a 16–18 ppm · rec 1 min · limitar búsqueda excesiva y mantener espalda alineada y posición de ataque estable'},
- {key:'tech-sync',category:'work',name:'Corrección · sincronización de bancada',content:'TÉCNICA CORRECTIVA · COORDINACIÓN · 4×3 min a 16–20 ppm · rec 1 min · entradas y salidas simultáneas siguiendo estrictamente al remero de delante'},
+ {key:'tech-attack-clean',category:'work',name:'Corrección · ataque limpio',content:`TÉCNICA CORRECTIVA · ATAQUE
+ERROR QUE CORRIGE · Golpear el agua, entrada tardía o poco limpia y pérdida de colocación antes de la pasada.
+OBJETIVO · Conseguir una entrada rápida y limpia con la pala bien colocada antes de aplicar fuerza.
+CÓMO HACERLO · Llegar al ataque con brazos extendidos y cuerpo estable. Introducir la pala con decisión, sin golpear el agua, y comenzar la pasada solo cuando la pala esté apoyada. Empezar muy lento y aumentar gradualmente la continuidad.
+QUÉ OBSERVAR · Salpicadura excesiva, pala que entra tarde, manos que cambian de altura y cuerpo que se precipita hacia delante.
+DOSIS · 2–3 bloques de 10–15 paladas técnicas o 3×3 min a 15–18 ppm · rec 1 min.
+PROGRESIÓN · Ataque aislado → ataque + inicio corto de pasada → remada completa manteniendo la misma limpieza.`},
+ {key:'tech-catch-before-force',category:'work',name:'Corrección · apoyo antes de fuerza',content:`TÉCNICA CORRECTIVA · ATAQUE / INICIO DE PASADA
+ERROR QUE CORRIGE · Empezar a tirar antes de que la pala esté completamente apoyada en el agua.
+OBJETIVO · Notar apoyo sólido de la pala antes de transmitir fuerza con piernas y tronco.
+CÓMO HACERLO · Desde el ataque, introducir la pala y hacer una pausa mínima de control. Iniciar después una pasada corta, con brazos todavía extendidos, sintiendo presión sobre la pala desde el primer momento.
+QUÉ OBSERVAR · Pala que resbala, hueco sin presión al inicio, tirón de brazos prematuro o entrada incompleta.
+DOSIS · 3×3 min a 15–18 ppm · rec 1 min, o 10 ataques + inicios de pasada seguidos de 10 paladas completas.
+PROGRESIÓN · Pausa visible → pausa casi imperceptible → remada normal conservando el apoyo previo a la fuerza.`},
+ {key:'tech-no-early-arms',category:'work',name:'Corrección · brazos demasiado pronto',content:`TÉCNICA CORRECTIVA · PASADA
+ERROR QUE CORRIGE · Flexionar los brazos al principio de la pasada y perder transmisión de piernas y tronco.
+OBJETIVO · Mantener los brazos largos al inicio para transmitir primero la fuerza de pierna y tronco, dejando los brazos para el final.
+CÓMO HACERLO · Remar varias paladas sin flexionar los codos durante la primera parte de la pasada. Pensar en colgarse de la pala con brazos largos y cerrar los brazos solo cuando el tronco ya ha avanzado en la transmisión.
+QUÉ OBSERVAR · Codos que se doblan al atacar, hombros encogidos, pérdida de longitud o final débil.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min; también 10–15 paladas sin brazos + 10–15 paladas completas.
+PROGRESIÓN · Sin brazos → añadir brazos solo al final → palada completa a ritmo normal.`},
+ {key:'tech-blade-depth',category:'work',name:'Corrección · profundidad de pala',content:`TÉCNICA CORRECTIVA · PASADA
+ERROR QUE CORRIGE · Pala demasiado profunda o que sube y sale parcialmente durante la pasada.
+OBJETIVO · Mantener la pala tapada a una profundidad estable durante toda la fase propulsiva.
+CÓMO HACERLO · Remar despacio observando la relación entre altura de manos y profundidad de pala. Mantener las manos en una trayectoria estable y evitar empujar hacia abajo o levantar de forma brusca.
+QUÉ OBSERVAR · Variaciones grandes de altura de manos, pala que se hunde, pala que ventila o presión irregular.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min, con control visual cuando sea posible.
+PROGRESIÓN · Remada lenta controlada → ritmo medio → mantener profundidad con mayor presión.`},
+ {key:'tech-finish-accel',category:'work',name:'Corrección · aceleración final',content:`TÉCNICA CORRECTIVA · FINAL DE PASADA
+ERROR QUE CORRIGE · Perder presión al final de la pasada o llegar a la sacada sin aceleración.
+OBJETIVO · Mantener apoyo y acelerar la pala hasta justo antes de la extracción.
+CÓMO HACERLO · Trabajar desde una posición de tronco ya abierta y concentrarse en terminar la pasada con los brazos, aumentando la velocidad de las manos sin tirar de forma brusca. Después integrarlo en palada completa.
+QUÉ OBSERVAR · Pala que pierde presión antes de salir, manos que se frenan, final corto o tirón excesivo de brazos.
+DOSIS · 3×3 min a 18–20 ppm · rec 1 min, o 2×12–15 paladas centradas solo en el final.
+PROGRESIÓN · Final parcial → media palada → palada completa manteniendo aceleración hasta la sacada.`},
+ {key:'tech-extraction',category:'work',name:'Corrección · sacada limpia',content:`TÉCNICA CORRECTIVA · SALIDA
+ERROR QUE CORRIGE · Sacada lenta, arrastrar agua o empezar el repaleo antes de que la pala haya salido.
+OBJETIVO · Extraer la pala con rapidez y limpieza, separando claramente sacada y repaleo.
+CÓMO HACERLO · Al terminar la pasada, bajar/dirigir las manos lo necesario para liberar la pala, sacarla completamente y solo después iniciar el giro de la pala. Mantener el cuerpo estable durante la acción.
+QUÉ OBSERVAR · Agua arrastrada hacia popa, pala que gira aún sumergida, manos lentas o cuerpo que empieza a recuperar demasiado pronto.
+DOSIS · 3×3 min a 16–18 ppm · rec 1 min, o series de 10 sacadas muy conscientes intercaladas con remada suave.
+PROGRESIÓN · Sacada aislada → sacada + salida de manos → palada completa.`},
+ {key:'tech-recovery-sequence',category:'work',name:'Corrección · recuperación y secuencia',content:`TÉCNICA CORRECTIVA · RECUPERACIÓN
+ERROR QUE CORRIGE · Recuperar de forma desordenada, levantarse con el cuerpo demasiado pronto o precipitarse hacia el ataque.
+OBJETIVO · Automatizar la secuencia brazo → tronco → pierna durante la recuperación y llegar equilibrado al ataque.
+CÓMO HACERLO · Tras la sacada, extender primero los brazos, después llevar el tronco hacia delante y por último cerrar la pierna. Hacerlo deliberadamente lento al principio, sin rebotes ni tirones.
+QUÉ OBSERVAR · Rodillas/cadera que avanzan antes de sacar brazos, tronco que rebota, aceleración brusca hacia el ataque y cabeceo del barco.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min, con pausas cortas al final si hace falta para fijar la secuencia.
+PROGRESIÓN · Recuperación por fases con pausa → recuperación continua lenta → ritmo normal.`},
+ {key:'tech-amplitude',category:'work',name:'Corrección · amplitud de ataque',content:`TÉCNICA CORRECTIVA · ATAQUE / POSICIÓN
+ERROR QUE CORRIGE · Buscar demasiado hacia proa, colapsar la espalda o perder una posición fuerte de ataque.
+OBJETIVO · Encontrar una amplitud útil sin sacrificar alineación, estabilidad ni capacidad de aplicar fuerza.
+CÓMO HACERLO · Limitar conscientemente el alcance durante varias paladas y comparar sensaciones. Mantener espalda larga, hombros relajados y brazos extendidos, evitando forzar centímetros extra de recorrido.
+QUÉ OBSERVAR · Espalda redondeada, hombros proyectados, pelvis que pierde posición o caída de presión inmediatamente después del ataque.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min; alternar 10 paladas de amplitud controlada con 10 paladas normales.
+PROGRESIÓN · Amplitud reducida y estable → ampliar poco a poco solo mientras se mantiene la posición.`},
+ {key:'tech-sync',category:'work',name:'Corrección · sincronización de bancada',content:`TÉCNICA CORRECTIVA · COORDINACIÓN DE EQUIPO
+ERROR QUE CORRIGE · Entradas, finales o recuperaciones a distinto tiempo entre remeros.
+OBJETIVO · Unificar el ciclo de palada y reducir movimientos que frenan o desequilibran el barco.
+CÓMO HACERLO · Remar a baja frecuencia siguiendo estrictamente al remero de delante. Priorizar coincidencia de entrada, final y velocidad de recuperación antes que la fuerza. Puede alternarse palada suave/fuerte manteniendo exactamente el mismo timing.
+QUÉ OBSERVAR · Palas que entran o salen desfasadas, remeros que llegan antes al ataque y aceleraciones distintas en recuperación.
+DOSIS · 4×3 min a 16–20 ppm · rec 1 min; también secuencias 1 suave/1 fuerte, 2/2 o 3/3 sin perder sincronía.
+PROGRESIÓN · Baja frecuencia → cambios de intensidad → subir frecuencia manteniendo entradas y salidas simultáneas.`},
+ {key:'tech-repaleo-water',category:'work',name:'Corrección · repaleo dentro del agua',content:`TÉCNICA CORRECTIVA · SALIDA
+ERROR QUE CORRIGE · Girar la pala mientras todavía está sumergida.
+OBJETIVO · Separar con claridad la extracción de la pala y el repaleo.
+CÓMO HACERLO · Terminar la pasada, extraer primero la pala verticalmente/limpia y comprobar que está fuera del agua antes de iniciar el giro. Practicar varias sacadas lentas y muy conscientes.
+QUÉ OBSERVAR · Remolino o frenazo al final, pala que se engancha y giro iniciado bajo el agua.
+DOSIS · 2–3×10–15 paladas técnicas · rec 1 min.
+PROGRESIÓN · Sacada aislada → sacada + repaleo → palada completa.`},
+ {key:'tech-back-alignment',category:'work',name:'Corrección · espalda flexionada',content:`TÉCNICA CORRECTIVA · POSICIÓN / PASADA
+ERROR QUE CORRIGE · Flexionar o colapsar la espalda durante el ataque o la transmisión de fuerza.
+OBJETIVO · Mantener una estructura de tronco firme que transmita la fuerza sin pérdidas.
+CÓMO HACERLO · Trabajar a baja intensidad buscando espalda larga y estable. Reducir amplitud si es necesario y mantener la sensación de tronco sólido mientras piernas y brazos realizan su secuencia.
+QUÉ OBSERVAR · Redondeo lumbar/dorsal, hombros hundidos y cambios de postura cuando aumenta la presión.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min.
+PROGRESIÓN · Baja presión → presión media → mantener la postura al aumentar el ritmo.`},
+ {key:'tech-slow-recovery',category:'work',name:'Corrección · recuperación brusca',content:`TÉCNICA CORRECTIVA · RECUPERACIÓN
+ERROR QUE CORRIGE · Lanzarse hacia el ataque y provocar frenadas o cabeceo del barco.
+OBJETIVO · Conseguir una recuperación fluida y progresiva, más lenta que la pasada.
+CÓMO HACERLO · Remar deliberadamente lento en la vuelta, controlando brazos, tronco y pierna. Buscar continuidad sin parones pero evitando acelerar el cuerpo hacia proa.
+QUÉ OBSERVAR · Golpes del cuerpo contra el banco, llegada precipitada al ataque, barco que cabecea o pérdida de sincronización.
+DOSIS · 3×4 min a 15–18 ppm · rec 1 min.
+PROGRESIÓN · Recuperación exageradamente lenta → relación pasada/recuperación natural → mantenerla a mayor frecuencia.`},
+ {key:'tech-blade-support',category:'work',name:'Corrección · pérdida de apoyo en pasada',content:`TÉCNICA CORRECTIVA · PASADA
+ERROR QUE CORRIGE · La pala pierde presión o sale parcialmente del agua durante la fase propulsiva.
+OBJETIVO · Mantener presión continua sobre la pala desde el ataque hasta el final.
+CÓMO HACERLO · Remar lento concentrándose en sentir una carga uniforme en la pala. Mantener altura de manos estable y evitar cambios bruscos de dirección.
+QUÉ OBSERVAR · Pala que ventila, zonas de la pasada sin resistencia y aceleraciones/desaceleraciones de las manos.
+DOSIS · 3×4 min a 16–18 ppm · rec 1 min.
+PROGRESIÓN · Baja presión controlada → presión media → mantener apoyo con cambios de ritmo.`},
+ {key:'tech-finish-pause',category:'work',name:'Corrección · pausa al final',content:`TÉCNICA CORRECTIVA · SALIDA / RECUPERACIÓN
+ERROR QUE CORRIGE · Rebotar con el cuerpo o comenzar la recuperación antes de terminar correctamente la salida.
+OBJETIVO · Separar final de pasada, sacada, salida de brazos y comienzo del movimiento de tronco.
+CÓMO HACERLO · Hacer una pausa breve tras el final. Comprobar: pala fuera → brazos salen → después empieza el tronco. Mantener la pausa pequeña para no convertirla en hábito permanente.
+QUÉ OBSERVAR · Tronco que se incorpora antes de sacar los brazos, sacada desordenada o prisas al recuperar.
+DOSIS · 2–3×10–15 paladas con pausa corta · rec 1 min.
+PROGRESIÓN · Pausa marcada → pausa mínima → secuencia continua sin perder orden.`},
+ {key:'tech-arms-finish',category:'work',name:'Corrección · solo brazos para el final',content:`TÉCNICA CORRECTIVA · FINAL DE PASADA
+ERROR QUE CORRIGE · Final débil, corto o sin aceleración.
+OBJETIVO · Mejorar la acción final de brazos y la velocidad de manos manteniendo apoyo de pala.
+CÓMO HACERLO · Desde posición de tronco abierta y estable, trabajar solo el cierre de brazos y la sacada. Mantener hombros relajados y acelerar las manos hacia el final sin tirón brusco.
+QUÉ OBSERVAR · Codos demasiado bajos/altos, hombros encogidos, pala que pierde apoyo o sacada lenta.
+DOSIS · 2–3×12–15 paladas · rec 1 min, alternadas con remada completa suave.
+PROGRESIÓN · Solo brazos → brazos + tronco → palada completa.`},
  {key:'start-6x15',category:'work',name:'Salidas 6×15 paladas',content:'SALIDAS · 6×15 paladas · recuperación 45–60 s · salida propia del equipo'},
  {key:'start-8x20',category:'work',name:'Salidas 8×20 paladas',content:'SALIDAS · 8×20 paladas · recuperación 60–75 s · calidad antes que fatiga'},
  {key:'turn-6',category:'work',name:'Virada-Ciaboga 6 rep',content:'VIRADA-CIABOGA · 6 repeticiones · recuperación 60 s · máxima calidad técnica'},
@@ -1494,7 +1590,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="199";
+const APP_VERSION="200";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
