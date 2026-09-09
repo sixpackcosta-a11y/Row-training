@@ -1447,7 +1447,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="191";
+const APP_VERSION="192";
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
@@ -2456,8 +2456,13 @@ async function runErgoOCR(file,multiMode=false){
 function v124StoredSplits(){return v124ReadSplitRows().filter(x=>x.distance_m||x.time_text||x.pace_text||x.spm||x.avg_hr||x.max_hr||x.rest_text).map((x,i)=>{const distance=x.distance_m?Number(x.distance_m):null,time=timeTextToSeconds(x.time_text),pace=timeTextToSeconds(x.pace_text)||(time&&distance?time*500/distance:null);return {index:i+1,distance_m:distance,time_seconds:time,pace_500_seconds:pace,spm:x.spm?Number(x.spm):null,avg_hr:x.avg_hr?Number(x.avg_hr):null,max_hr:x.max_hr?Number(x.max_hr):null,rest_seconds:timeTextToSeconds(x.rest_text)}})}
 async function v124UploadErgoPhotos(files,resultId){const paths=[];for(let i=0;i<files.length;i++){const f=files[i],ext=(String(f.name||'').split('.').pop()||String(f.type||'image/jpeg').split('/').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg',path=`${currentUser.id}/${resultId}/${Date.now()}-${i+1}.${ext}`,up=await sb.storage.from('ergo-media').upload(path,f,{cacheControl:'3600',upsert:false});if(up.error)throw up.error;paths.push(path)}return paths}
 
+let ergoSaveInFlightV192=false;
 async function saveErgoResult(){
   if(!currentUser)return alert("Sesión no iniciada");
+  if(ergoSaveInFlightV192)return;
+  const saveBtn=document.getElementById('saveErgo');
+  ergoSaveInFlightV192=true;if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Guardando…'}
+  try{
   v124UpdateErgoTotals();
   const splits=v124StoredSplits();
   if(!ergoDistance.value&&!ergoTime.value&&!splits.length)return alert('Introduce el total o al menos un parcial.');
@@ -2476,12 +2481,23 @@ async function saveErgoResult(){
 
   const timeSec=timeTextToSeconds(ergoTime.value);
   const paceSec=timeTextToSeconds(ergoPace.value);
+  const distance=ergoDistance.value?Number(ergoDistance.value):null;
+  const sessionDate=currentErgoPrescription?.scheduledDate||localISODate();
+  const sessionCode=currentErgoPrescription?.code||"ERG-1";
+  const trainingId=currentErgoPrescription?.trainingSessionId||null;
+  const {data:recentWorkouts}=await sb.from('workout_logs').select('id,session_code,session_date,training_session_id').eq('user_id',currentUser.id).eq('session_type','ergo').eq('session_date',sessionDate).order('performed_at',{ascending:false}).limit(20);
+  const candidateIds=(recentWorkouts||[]).filter(w=>String(w.session_code||'')===String(sessionCode)&&String(w.training_session_id||'')===String(trainingId||'')).map(w=>w.id);
+  if(candidateIds.length){
+    const {data:existingErgos}=await sb.from('ergo_results').select('id,workout_id,distance_m,time_seconds,pace_500_seconds,spm').in('workout_id',candidateIds);
+    const same=(existingErgos||[]).some(e=>Number(e.distance_m??-1)===Number(distance??-1)&&Number(e.time_seconds??-1)===Number(timeSec??-1)&&Number(e.pace_500_seconds??-1)===Number(paceSec??-1)&&Number(e.spm??-1)===Number(ergoSpm.value?Number(ergoSpm.value):-1));
+    if(same){alert('Este resultado ERGO ya está guardado. No se ha creado otro duplicado.');return;}
+  }
 
   const {data:ergoRow,error}=await sb.from("ergo_results").insert({
     user_id:currentUser.id,
     workout_id:workout.id,
     test_name:currentErgoPrescription?.name||"ERGO",
-    distance_m:ergoDistance.value?Number(ergoDistance.value):null,
+    distance_m:distance,
     time_seconds:timeSec,
     pace_500_seconds:paceSec,
     spm:ergoSpm.value?Number(ergoSpm.value):null,
@@ -2495,6 +2511,7 @@ async function saveErgoResult(){
   alert(`Resultado de ergómetro guardado${splits.length?` con ${splits.length} parciales`:''}.${photoWarning}${workoutNoticeTextV130(workoutNotice)}`);
   currentErgoFilesV124=[];
   tab="hist";draw();render();
+  } finally {ergoSaveInFlightV192=false;if(saveBtn&&document.body.contains(saveBtn)){saveBtn.disabled=false;saveBtn.textContent='Guardar resultado'}}
 }
 
 function weekly(){
