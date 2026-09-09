@@ -1108,29 +1108,38 @@ function libraryItemActionsV88(x,type,indexOrId){const custom=x?.source==='custo
 function libraryCardMetaV88(x){const d=libraryDateV89(x),archived=x.archived_at?`<span class="archivedBadge" title="${esc(new Date(x.archived_at).toLocaleString('es-ES'))}">Archivada</span>`:'';return `<div class="libraryOwner"><small>${esc(libraryAuthorV88(x))}${d?` · ${esc(d)}`:''} ${archived}</small><span>${x._pref?.is_favorite?'★':''}${x._pref?.is_hidden?' · Oculta para mí':''}</span></div>`}
 function archiveScopeTeamsV89(){const own=(staffRoles||[]).filter(x=>x.staff_role==='coach').map(x=>x.team_code);return own.length?[...new Set(own)]:(isGlobalCoach?TEAM_OPTIONS.map(x=>x[0]):editableTeamCodes())}
 async function plannedLibraryUsesV89(item){try{const teams=archiveScopeTeamsV89();if(!teams.length)return[];const q=await sb.from('training_sessions').select('id,team_code,session_date,title,content').in('team_code',teams).gte('session_date',localISODate()).order('session_date');if(q.error)return[];const needle=stripLibraryPrefix(item?.name||'').toLowerCase();const signature=String(item?.content||'').split(/\n+/).map(z=>z.trim().toLowerCase()).filter(z=>z&&!/^(objetivo|carga|duraci[oó]n|calentamiento|recuperaci[oó]n|vuelta a la calma)/.test(z)).slice(0,3);return (q.data||[]).filter(x=>{const hay=(String(x.title||'')+' '+String(x.content||'')).toLowerCase();if(needle&&hay.includes(needle))return true;const hits=signature.filter(z=>hay.includes(z)).length;return signature.length>0&&hits>=Math.min(2,signature.length)}).slice(0,12)}catch(e){return[]}}
-// V202 · Dónde está incluido cada elemento de biblioteca
+// V204 · Dónde está incluido cada elemento de biblioteca (normalización robusta ERGO/MAR/GYM)
 function v202Norm(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[×x]/g,' x ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function v202Tokens(t){return v202Norm(t).split(' ').filter(x=>x.length>1&&!['min','ppm','rec','sesion','mar','ergo','erg','gym','trabajo','objetivo','carga'].includes(x))}
 function v202LineScore(a,b){const A=[...new Set(v202Tokens(a))],B=new Set(v202Tokens(b));if(!A.length)return 0;const hit=A.filter(x=>B.has(x)).length;return hit/A.length}
 function v202MeaningfulLines(t){return String(t||'').split(/\n+/).map(z=>z.trim()).filter(Boolean).filter(z=>!/^(OBJETIVO|CARGA|DURACI[ÓO]N ESTIMADA|REFERENCIA)\b/i.test(z))}
 function v203FirstNumberAfter(label,text){const m=String(text||'').match(new RegExp(label+'\\s*[·:–-]?\\s*(\\d+(?:[.,]\\d+)?)','i'));return m?Number(String(m[1]).replace(',','.')):null}
-function v203WarmupMinutes(text){const m=String(text||'').match(/CALENTAMIENTO\s*[·:]\s*(\d+(?:[.,]\d+)?)\s*min/i);return m?Number(String(m[1]).replace(',','.')):null}
-function v203BlockDoseSignature(text){
- const t=String(text||'');
- const m=t.match(/(\d+)\s*[×x]\s*(\d+(?:[.,]\d+)?)\s*(min|m\b|'')/i);
+function v204WarmupRange(text){
+ const t=String(text||'').replace(/[–—]/g,'-');
+ let m=t.match(/CALENTAMIENTO\s*[·:]?\s*(\d+(?:[.,]\d+)?)(?:\s*-\s*(\d+(?:[.,]\d+)?))?\s*min/i);
+ if(!m)m=t.match(/(\d+(?:[.,]\d+)?)(?:\s*-\s*(\d+(?:[.,]\d+)?))?\s*min[^\n]{0,25}CALENTAMIENTO/i);
  if(!m)return null;
- let unit=String(m[3]||'').toLowerCase(); if(unit==="'")unit='min';
+ const a=Number(String(m[1]).replace(',','.')),b=m[2]?Number(String(m[2]).replace(',','.')):a;
+ return {min:Math.min(a,b),max:Math.max(a,b)};
+}
+function v204DoseSignature(text){
+ const t=String(text||'').replace(/[’′]/g,"'");
+ const m=t.match(/(\d+)\s*[×x]\s*(\d+(?:[.,]\d+)?)\s*(min(?:uto)?s?|m(?:etro)?s?|')/i);
+ if(!m)return null;
+ let unit=String(m[3]||'').toLowerCase();
+ if(unit==="'"||unit.startsWith('min'))unit='min';
+ else if(unit.startsWith('m'))unit='m';
  return {sets:Number(m[1]),amount:Number(String(m[2]).replace(',','.')),unit};
 }
-function v203ErgoSignature(text){
- const t=String(text||''); const dose=v203BlockDoseSignature(t);
- const rate=(t.match(/@\s*(\d{2})\b/i)||[])[1];
+function v204ErgoSignature(text){
+ const t=String(text||'').replace(/[’′]/g,"'"); const dose=v204DoseSignature(t);
+ const rate=((t.match(/@\s*(\d{2})\b/i)||t.match(/\b(\d{2})\s*ppm\b/i))||[])[1];
  const zone=(t.match(/\b(UT2|UT1|AT|TR|AN)\b/i)||[])[1];
- const rec=(t.match(/rec(?:uperaci[oó]n)?\s*[·:]?\s*(\d+(?:[.,]\d+)?)\s*min/i)||[])[1];
+ const rec=((t.match(/rec(?:uperaci[oó]n)?\s*[·:]?\s*(\d+(?:[.,]\d+)?)\s*(?:min(?:uto)?s?|')/i)||[]) [1]) || null;
  return {dose,rate:rate?Number(rate):null,zone:zone?zone.toUpperCase():null,rec:rec?Number(String(rec).replace(',','.')):null};
 }
 function v203ErgoMatches(item,x){
- const a=v203ErgoSignature(item?.name||''), b=v203ErgoSignature((x.title||'')+'\n'+(x.content||''));
+ const a=v204ErgoSignature(item?.name||''), b=v204ErgoSignature((x.title||'')+'\n'+(x.content||''));
  if(!a.dose||!b.dose)return false;
  if(a.dose.sets!==b.dose.sets||a.dose.amount!==b.dose.amount)return false;
  // Si ambos expresan unidad, debe coincidir. Si una falta, la dosis+zona+cadencia siguen siendo suficientes.
@@ -1143,16 +1152,18 @@ function v203ErgoMatches(item,x){
 function v203MarBlockMatches(item,x){
  const cat=item?.category||marCategoryFromName(item?.name||''); const body=String(x.content||'');
  if(cat==='warmup'){
-   const want=v203WarmupMinutes(item?.content||item?.name), got=v203WarmupMinutes(body);
-   return want!=null&&got!=null&&want===got;
+   const want=v204WarmupRange(item?.content||item?.name), got=v204WarmupRange(body);
+   if(!want||!got)return false;
+   // Una ficha de 10 min también cuenta cuando la planificación prescribe un rango que incluye 10 (p. ej. 8–10 min).
+   return want.min>=got.min&&want.max<=got.max || got.min>=want.min&&got.max<=want.max;
  }
  const name=v202Norm(stripLibraryPrefix(item?.name||'')), hay=v202Norm((x.title||'')+'\n'+body);
  if(name&&name.length>=6&&hay.includes(name))return true;
  const itemLines=v202MeaningfulLines(item?.content||''); if(!itemLines.length)return false;
  if(itemLines.length===1){
-   const a=itemLines[0], sigA=v203BlockDoseSignature(a), lines=v202MeaningfulLines(body);
+   const a=itemLines[0], sigA=v204DoseSignature(a), lines=v202MeaningfulLines(body);
    for(const b of lines){
-     const sigB=v203BlockDoseSignature(b);
+     const sigB=v204DoseSignature(b);
      if(sigA&&sigB&&sigA.sets===sigB.sets&&sigA.amount===sigB.amount){
        const la=v202Norm(a.split('·')[0]),lb=v202Norm(b.split('·')[0]);
        if(!la||!lb||la===lb||v202LineScore(a,b)>=.55)return true;
@@ -1186,14 +1197,23 @@ function v202ItemMatchesSession(item,x,type){
  if(type==='MAR')return v203MarBlockMatches(item,x);
  return false;
 }
+function v204SessionTypeMatches(x,want){
+ const raw=String(x?.session_type||'').toUpperCase().trim(),title=String(x?.title||'').toUpperCase(),body=String(x?.content||'').toUpperCase();
+ const type=raw==='ERGO'?'ERG':raw;
+ if(want==='ERG')return type==='ERG'||type==='MIX'||/\bERGO\b/.test(title)||(/\bERGO\b/.test(body)&&type!=='MAR');
+ if(want==='GYM')return type==='GYM'||type==='MIX'||/\bGYM\b/.test(title);
+ if(want==='MAR')return type==='MAR'||/\bMAR\b/.test(title)&&type!=='ERG'&&type!=='GYM';
+ return !want||type===want;
+}
 async function libraryUsesV202(item,sessionType){
  try{
-  const teams=archiveScopeTeamsV89();if(!teams.length)return[];
-  let q=sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').in('team_code',teams).order('session_date');
-  if(sessionType==='GYM')q=q.in('session_type',['GYM','MIX']);else if(sessionType==='ERG')q=q.in('session_type',['ERG','MIX']);else if(sessionType)q=q.eq('session_type',sessionType);
-  const res=await q;if(res.error){console.warn('V203 usos biblioteca',res.error);return[]}
-  return (res.data||[]).filter(x=>v202ItemMatchesSession(item,x,sessionType));
- }catch(e){console.warn('V203 usos biblioteca',e);return[]}
+  const teams=archiveScopeTeamsV89();
+  let q=sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').order('session_date');
+  // El administrador debe poder inspeccionar todos los equipos, también los creados dinámicamente.
+  if(!isGlobalCoach){if(!teams.length)return[];q=q.in('team_code',teams)}
+  const res=await q;if(res.error){console.warn('V204 usos biblioteca',res.error);return[]}
+  return (res.data||[]).filter(x=>v204SessionTypeMatches(x,sessionType)&&v202ItemMatchesSession(item,x,sessionType));
+ }catch(e){console.warn('V204 usos biblioteca',e);return[]}
 }
 function libraryUsesHtmlV202(rows){
  const today=localISODate(),future=rows.filter(x=>x.session_date>=today),past=rows.filter(x=>x.session_date<today);
@@ -1697,7 +1717,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="203";
+const APP_VERSION="204";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
