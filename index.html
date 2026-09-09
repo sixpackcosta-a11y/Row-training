@@ -1764,7 +1764,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="212";
+const APP_VERSION="213";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -3704,7 +3704,7 @@ async function renderEditorLibrary(kind,currentSession=null){
     const preview=()=>{const x=rows.find(z=>z.code===libPick.value);ergoPreview.innerHTML=x?`<b>${x.name}</b>${x.url?` · ErgData disponible`:''}`:''};
     libPick.onchange=preview; preview();
     openErgLib.onclick=()=>{coachLibrarySection='ERGO';tab='biblioteca';draw();render()};
-    loadLib.onclick=()=>{const x=rows.find(z=>z.code===libPick.value);if(!x)return;sessTitle.value=`ERGO · ${x.name}`;sessContent.value=`CALENTAMIENTO · 10 min\nTRABAJO · ${x.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${x.url?`\nErgData: ${x.url}`:''}`;};
+    loadLib.onclick=()=>{const x=rows.find(z=>z.code===libPick.value);if(!x)return;sessTitle.value=`ERGO · ${x.name}`;setSessionContentV213(`CALENTAMIENTO · 10 min\nTRABAJO · ${x.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${x.url?`\nErgData: ${x.url}`:''}`);};
     return;
   }
   if(kind==='GYM'){
@@ -3727,8 +3727,8 @@ async function renderEditorLibrary(kind,currentSession=null){
   if(kind==='MAR'){
     const data=await loadMarLibraryData();
     box.innerHTML=`<div class="info"><b>MAR:</b> puedes cargar una sesión completa o construirla con bloques. Calentamiento, recuperación y vuelta a la calma vienen con tiempos por defecto y se pueden editar.</div><label>Sesiones MAR completas<select id="marFullPick"><option value="">— Elegir sesión completa —</option>${data.sessions.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></label><div class="coachTools"><button id="loadMarFull">Cargar sesión completa</button><button id="openMarLib">Abrir Biblioteca MAR</button></div><label>Añadir bloque<select id="libPick"><option value="">— Elegir bloque —</option>${data.blocks.map(x=>`<option value="${x.id}">${marCategoryLabel(x.category)} · ${esc(x.name)}</option>`).join('')}</select></label><div class="coachTools"><button id="loadLib">Añadir bloque</button><button id="newLibItem">+ Crear bloque MAR</button></div>`;
-    loadMarFull.onclick=()=>{const x=data.sessions.find(z=>z.id===marFullPick.value);if(!x)return;sessTitle.value=`MAR · ${x.name}`;sessContent.value=x.content};
-    loadLib.onclick=()=>{const x=data.blocks.find(z=>z.id===libPick.value);if(!x)return;sessContent.value=marInsertBeforeAux(sessContent.value,x.content)};
+    loadMarFull.onclick=()=>{const x=data.sessions.find(z=>z.id===marFullPick.value);if(!x)return;sessTitle.value=`MAR · ${x.name}`;setSessionContentV213(x.content)};
+    loadLib.onclick=()=>{const x=data.blocks.find(z=>z.id===libPick.value);if(!x)return;setSessionContentV213(marInsertBeforeAux(sessContent.value,x.content))};
     newLibItem.onclick=()=>{coachLibrarySection='MAR';marBlockLibraryForm(null)};
     openMarLib.onclick=()=>{coachLibrarySection='MAR';tab='biblioteca';draw();coachLibraryView()}; return;
   }
@@ -4059,12 +4059,32 @@ function sessionEditor(x=null){
  const team=planTeam.value,date=planDate.value;const initial=x?.content||marDefaultSessionContent();
  planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Técnica + cambios de ritmo"></label></div>
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
- <label>Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea>
+ <div id="visualSessionEditorV213"></div>
+ <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea></details>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <label class="notifyToggleV110"><input id="notifyRowerChangeV110" type="checkbox"><span><b>Enviar notificación a los remeros</b><br>Márcalo solo si quieres avisar de este alta o cambio. Los retoques internos pueden guardarse sin avisar.</span></label>
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
+ let visualRowsV213=[];
+ const parseVisualRowsV213=(txt)=>String(txt||'').split(/\n+/).map(z=>z.trim()).filter(Boolean).map((line,i)=>{const m=line.match(/^([^·:]+?)\s*[·:]\s*(.*)$/);return {id:`v213-${Date.now()}-${i}-${Math.random()}`,label:(m?m[1]:i===0?'BLOQUE':'INDICACIÓN').trim(),detail:(m?m[2]:line).trim()}});
+ const rowsToTextV213=()=>visualRowsV213.map(r=>`${String(r.label||'BLOQUE').trim()} · ${String(r.detail||'').trim()}`).join('\n');
+ const syncVisualToTextV213=()=>{if(document.getElementById('sessContent'))sessContent.value=rowsToTextV213()};
+ function drawVisualEditorV213(fromText=false){
+   const host=document.getElementById('visualSessionEditorV213');if(!host)return;
+   const kind=sessType.value;
+   if(kind==='GYM'){host.innerHTML='<div class="info"><b>Editor visual GYM:</b> selecciona y ajusta ejercicios, dosis y descansos en el bloque de biblioteca de arriba. El texto queda solo como edición avanzada.</div>';return}
+   if(kind==='DESC'){host.innerHTML='<div class="info"><b>Descanso:</b> no necesita bloques de entrenamiento.</div>';return}
+   if(fromText||!visualRowsV213.length)visualRowsV213=parseVisualRowsV213(sessContent.value);
+   host.innerHTML=`<div class="info"><b>Editor visual ${kind==='ERG'?'ERGO':'MAR'}:</b> modifica cada bloque sin editar el texto completo. Puedes añadir, borrar y cambiar el orden.</div><div id="visualRowsListV213">${visualRowsV213.map((r,i)=>`<div class="ex" data-vrow="${i}" style="margin:8px 0"><div class="plannerGrid"><label>Bloque<input class="v213Label" data-i="${i}" value="${esc(r.label)}"></label><label>Contenido / dosis<input class="v213Detail" data-i="${i}" value="${esc(r.detail)}"></label></div><div class="coachTools"><button type="button" class="v213Up" data-i="${i}" ${i===0?'disabled':''}>↑</button><button type="button" class="v213Down" data-i="${i}" ${i===visualRowsV213.length-1?'disabled':''}>↓</button><button type="button" class="v213Del" data-i="${i}">Eliminar</button></div></div>`).join('')}</div><button type="button" id="v213AddRow">+ Añadir bloque</button>`;
+   host.querySelectorAll('.v213Label,.v213Detail').forEach(el=>el.oninput=()=>{const i=Number(el.dataset.i);visualRowsV213[i][el.classList.contains('v213Label')?'label':'detail']=el.value;syncVisualToTextV213()});
+   host.querySelectorAll('.v213Del').forEach(b=>b.onclick=()=>{visualRowsV213.splice(Number(b.dataset.i),1);syncVisualToTextV213();drawVisualEditorV213(false)});
+   host.querySelectorAll('.v213Up').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i);[visualRowsV213[i-1],visualRowsV213[i]]=[visualRowsV213[i],visualRowsV213[i-1]];syncVisualToTextV213();drawVisualEditorV213(false)});
+   host.querySelectorAll('.v213Down').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i);[visualRowsV213[i+1],visualRowsV213[i]]=[visualRowsV213[i],visualRowsV213[i+1]];syncVisualToTextV213();drawVisualEditorV213(false)});
+   document.getElementById('v213AddRow').onclick=()=>{visualRowsV213.push({id:`v213-${Date.now()}`,label:kind==='ERG'?'TRABAJO':'BLOQUE',detail:''});syncVisualToTextV213();drawVisualEditorV213(false)};
+ }
+ function setSessionContentV213(txt){sessContent.value=txt||'';visualRowsV213=parseVisualRowsV213(sessContent.value);drawVisualEditorV213(false)}
+ sessContent.addEventListener('input',()=>{if(document.getElementById('advancedSessionTextV213')?.open){visualRowsV213=parseVisualRowsV213(sessContent.value);drawVisualEditorV213(false)}});
  function normalizeTuesdayMar60V198(content){
   let x=String(content||'');
   x=x.replace(/(DURACI[ÓO]N(?:\s+OBJETIVO)?\s*[·:\-]?\s*)(?:\d+\s*[–-]\s*\d+|\d+)\s*min/ig,'$155–60 min');
@@ -4077,9 +4097,10 @@ function sessionEditor(x=null){
   return x;
 }
 
- const refresh=()=>{renderEditorLibrary(sessType.value,x);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
- sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())sessContent.value=marDefaultSessionContent();else if(sessType.value!=='MAR'&&skeleton)sessContent.value='';refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
+ const refresh=()=>{renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())setSessionContentV213(marDefaultSessionContent());else if(sessType.value!=='MAR'&&skeleton)setSessionContentV213('');refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
+   if(['ERG','MAR'].includes(sessType.value))syncVisualToTextV213();
    let contentValue=sessContent.value.trim();
    if(sessType.value==='GYM'){
      const ex=gymEditorRows.length?gymEditorRows:allGymExercises(); const selected=[];
