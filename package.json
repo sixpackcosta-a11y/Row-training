@@ -1,7 +1,7 @@
 {
   "name": "row-training",
   "private": true,
-  "version": "1.0.200",
+  "version": "1.0.201",
   "description": "Row Training · Club de Remo Pedregalejo",
   "dependencies": {
     "adm-zip": "^0.5.16",
