@@ -1235,13 +1235,13 @@ function libraryUsesHtmlV202(rows,selected=''){
  const today=localISODate(),future=filtered.filter(x=>x.session_date>=today),past=filtered.filter(x=>x.session_date<today);
  const line=x=>`<div class="v201UseRow" data-team="${esc(x.team_code)}"><div><b>${shortDateES(x.session_date)}</b> · ${esc(teamLabel(x.team_code))}<br><span>${esc(x.title||x.session_type)}</span> <span class="miniBadge">${x.session_date>=today?'Próxima':'Pasada'}</span></div><button class="v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}">Ir al día</button></div>`;
  const body=filtered.length?`<div class="v201UseList">${future.concat(past.slice().reverse()).map(line).join('')}</div>`:`<p class="muted">No aparece incluido en ninguna sesión planificada${selected?' para este equipo':''}.</p>`;
- return `<details class="info v201Uses" open><summary><div class="v206UseHead"><b>Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</b>${v206UseTeamSelect(rows,selected)}</div></summary>${body}</details>`;
+ return `<details class="info v201Uses"><summary><b>Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</b></summary><div class="v206UseHead" style="margin-top:10px">${v206UseTeamSelect(rows,selected)}</div>${body}</details>`;
 }
 function libraryUseSummaryHtmlV202(rows,selected=''){
  const filtered=selected?rows.filter(x=>x.team_code===selected):rows;
  const today=localISODate(),ordered=filtered.slice().sort((a,b)=>a.session_date.localeCompare(b.session_date)),future=ordered.filter(x=>x.session_date>=today),shown=(future.length?future:ordered.slice().reverse()).slice(0,4);
- if(!filtered.length)return `<div class="v202UseSummary isEmpty"><div class="v206UseHead"><div class="v202UseTitle">Incluido en planificación · 0</div>${v206UseTeamSelect(rows,selected)}</div><span>No localizado en sesiones planificadas${selected?' para este equipo':''}.</span></div>`;
- return `<div class="v202UseSummary"><div class="v206UseHead"><div class="v202UseTitle">Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</div>${v206UseTeamSelect(rows,selected)}</div><div class="v202UseDates">${shown.map(x=>`<button class="v202UseChip v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}" title="${esc(x.title||x.session_type)}">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</button>`).join('')}${filtered.length>shown.length?`<span class="v202UseMore">+${filtered.length-shown.length} más</span>`:''}</div></div>`;
+ if(!filtered.length)return `<details class="v202UseSummary isEmpty"><summary><span class="v202UseTitle">Incluido en planificación · 0</span></summary><div class="v206UseHead" style="margin-top:10px">${v206UseTeamSelect(rows,selected)}</div><span>No localizado en sesiones planificadas${selected?' para este equipo':''}.</span></details>`;
+ return `<details class="v202UseSummary"><summary><span class="v202UseTitle">Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</span></summary><div class="v206UseHead" style="margin-top:10px">${v206UseTeamSelect(rows,selected)}</div><div class="v202UseDates">${shown.map(x=>`<button class="v202UseChip v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}" title="${esc(x.title||x.session_type)}">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</button>`).join('')}${filtered.length>shown.length?`<span class="v202UseMore">+${filtered.length-shown.length} más</span>`:''}</div></details>`;
 }
 function wireLibraryUsesV202(root=document){root.querySelectorAll('.v201GoUse').forEach(b=>b.onclick=async()=>{plannerJumpTeam=b.dataset.team;plannerJumpDate=b.dataset.date;plannerAutoEdit=false;coachSelectedTeam=b.dataset.team;await coachPlanner()})}
 async function fillLibraryUsesV202(holder,item,type,compact=false){
@@ -1764,7 +1764,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="210";
+const APP_VERSION="211";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
