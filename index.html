@@ -1717,7 +1717,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="204";
+const APP_VERSION="205";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2476,12 +2476,23 @@ function todayView(){
   showSessionIn("todaySession",x);
 }
 
+function v205MixErgoForDate(date){
+  const d=new Date(`${date}T12:00:00`),seasonStart=new Date('2026-09-01T12:00:00'),week=Math.max(0,Math.floor((d-seasonStart)/604800000)),variants=[
+    {code:'ERG-MIX-2X10',libraryCode:'UT2-2X10-20',name:'UT2 · 2×10 min @20 ppm · rec 3 min',work:'2×10 min @20 ppm',duration:1200,spm:20,warmup:'4 min',block:'25–28 min'},
+    {code:'ERG-MIX-2X12',libraryCode:'UT2-2X12-20',name:'UT2 · 2×12 min @20 ppm · rec 3 min',work:'2×12 min @20 ppm',duration:1440,spm:20,warmup:'3 min',block:'≈30 min'},
+    {code:'ERG-MIX-2X1000',libraryCode:'UT1-2X1000-24',name:'UT1 · 2×1000 m @24 ppm · rec 3 min',work:'2×1000 m @24 ppm',duration:null,spm:24,warmup:'6 min',block:'25–30 min'},
+    {code:'ERG-MIX-5X500',libraryCode:'UT1-5X500-24',name:'UT1 · 5×500 m @24 ppm · rec 2 min',work:'5×500 m @24 ppm',duration:null,spm:24,warmup:'5 min',block:'25–30 min'},
+    {code:'ERG-MIX-2X12-22',libraryCode:'UT1-2X12-22',name:'UT1 · 2×12 min @22 ppm · rec 3 min',work:'2×12 min @22 ppm',duration:1440,spm:22,warmup:'3 min',block:'≈30 min'},
+    {code:'ERG-MIX-PROG28',libraryCode:'UT1AT-PROG28',name:'UT1-AT · 28 min progresivo · 20→28 ppm',work:'28 min progresivo · 20→28 ppm',duration:1680,spm:null,warmup:'',block:'28 min'}
+  ];
+  return variants[week%variants.length];
+}
 function showSessionIn(targetId,x){
   const el=document.getElementById(targetId);
   if(x[2]==="MIX"){
-    const mixDate=scheduledDateFor(x);
-    const mixErgo=[x[0],x[1],"ERG","MIX","UT2 · 2×10 min @20 ppm · rec 3 min"];
-    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60–65 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian. Al terminar ambos grupos hacen juntos el cardio final.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 22–25 min</b><br>Prensa 3×10 · Remo sentado 3×10 · Hip thrust 3×10 · Pallof 2×10/lado.</div><div class="info"><b>Bloque ERGO · 25–28 min</b><br>4 min calentamiento + 2×10 min @20 ppm · rec 3 min.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button><button id="mixErgoManual">Registrar ERGO manualmente</button><label class="btn">📷 Foto / Galería<input id="mixErgoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
+    const mixDate=scheduledDateFor(x),mp=v205MixErgoForDate(mixDate);
+    const mixErgo=[x[0],x[1],"ERG","MIX",mp.name];
+    el.innerHTML=`<div class="session"><span class="tag">GYM + ERGO · grupos</span><h3>Martes conjunto · aprox. 60 min</h3><p><b>Organización:</b> mitad del equipo empieza en GYM y mitad en ERGO. Tras el primer bloque, se intercambian.</p><div class="mixGrid"><div class="info"><b>Bloque GYM · 28–30 min</b><br>Fuerza compacta adaptada a la fase de temporada.</div><div class="info"><b>Bloque ERGO · ${esc(mp.block)}</b><br>${esc(mp.name)}.</div></div>${cardioBlockHTML(mixDate,true)}<div class="coachTools"><button id="openMixGym" class="primary">Abrir bloque GYM</button><button id="openMixErgo">Abrir ERGO en ErgData</button><button id="mixErgoManual">Registrar ERGO manualmente</button><label class="btn">📷 Foto / Galería<input id="mixErgoPhotos" type="file" accept="image/*" multiple hidden></label></div><div id="ergoFormWrap" class="hidden"></div></div>`;
     openMixGym.onclick=()=>gym("M",x);
     openMixErgo.onclick=()=>openErgDataFor(mixErgo);
     mixErgoManual.onclick=()=>{const pr=ergoPrescription(mixErgo);currentErgoPrescription={...pr,scheduledDate:mixDate};showErgoForm();};
@@ -2509,7 +2520,7 @@ function scheduledDateFor(x){
 let currentErgoPrescription=null;
 function ergoPrescription(x){
   const label=String(x?.[4]||"");
-  if(x?.[3]==="MIX") return {code:"ERG-MIX-2X10",libraryCode:"UT2-2X10-20",name:"UT2 · 2×10 min @20 ppm · rec 3 min",work:"2×10 min @20 ppm",duration:1200,spm:20,workoutType:"VariableInterval",warmup:"4 min",cooldown:"",block:"25–28 min"};
+  if(x?.[3]==="MIX"){const mp=v205MixErgoForDate(scheduledDateFor(x));return {...mp,workoutType:"VariableInterval",cooldown:""};}
   if(label.includes("3×12")) return {code:"ERG-UT2-3X12",libraryCode:"UT2-3X12-20",name:"UT2 · 3×12 min @20 ppm · rec 3 min",work:"3×12 min @20 ppm",duration:2160,spm:20,workoutType:"VariableInterval",warmup:"8 min",cooldown:"6 min",block:"≈56 min"};
   return {code:"ERG-UT2-3X10",libraryCode:"UT2-3X10-20",name:label||"UT2 · 3×10 min @20 ppm · rec 3 min",work:"3×10 min @20 ppm",duration:1800,spm:20,workoutType:"VariableInterval",warmup:"10 min",cooldown:"8 min",block:"≈54 min"};
 }
@@ -2571,12 +2582,47 @@ async function v133PrefillPreviousErgo(wrap){
     const save=document.getElementById('saveErgo');if(save)save.textContent='Guardar otro registro';
   }catch(e){console.warn('No se pudo cargar el registro ERGO anterior',e)}
 }
+function v205ErgoSamePrescription(a,b){
+  const sa=v204ErgoSignature(a||''),sb=v204ErgoSignature(b||'');
+  if(sa&&sb)return sa===sb;
+  const na=v201NormUsageText(a||''),nb=v201NormUsageText(b||'');
+  return !!na&&!!nb&&(na.includes(nb)||nb.includes(na));
+}
+function v205PreviousC2Parts(row){
+  const raw=row?.raw_result||{},workout=raw.workout||{};
+  return workout.intervals||workout.splits||raw.intervals||raw.splits||[];
+}
+function v205PreviousErgoInfoHtml(hit){
+  if(!hit)return '';
+  const x=hit.row||{},date=hit.date||'',source=hit.source||'ERGO';
+  if(hit.source==='ErgData'){
+    const parts=v205PreviousC2Parts(x),dist=x.work_distance_m??x.distance_m??x.original_distance_m??'—',time=x.work_time_seconds!=null?fmtMetricSeconds(Number(x.work_time_seconds)):(x.time_seconds!=null?fmtMetricSeconds(Number(x.time_seconds)):'—'),pace=x.work_pace_500_seconds!=null?fmtMetricSeconds(Number(x.work_pace_500_seconds)):(x.pace_500_seconds!=null?fmtMetricSeconds(Number(x.pace_500_seconds)):'—');
+    return `<div class="info"><b>Referencia · última vez que hiciste esta misma sesión</b><br><span class="muted">${esc(shortDateES(date))} · ${esc(source)}</span><div style="margin-top:7px"><b>${esc(String(dist))} m · ${esc(time)} · /500 ${esc(pace)}</b></div>${parts.length?`<div class="seaResultMetrics" style="margin-top:9px">${parts.map((p,i)=>{const d=Number(p.distance),sec=p.time==null?null:Number(p.time)/10,pc=sec&&d?sec*500/d:null;return `<div class="seaResultMetric"><small>Parcial ${i+1}</small>${Number.isFinite(d)?d:'—'} m · ${v112C2TenthsText(p.time)} · /500 ${fmtMetricSeconds(pc)} · ${p.stroke_rate??p.spm??'—'} ppm</div>`}).join('')}</div>`:''}<div class="muted" style="margin-top:7px">Solo como referencia: intenta mejorar únicamente si corresponde a la fase y puedes mantener la técnica y el objetivo de la sesión.</div></div>`;
+  }
+  const parts=v124ErgoSplitsArray(x),dist=x.distance_m??'—',time=x.time_seconds!=null?fmtMetricSeconds(Number(x.time_seconds)):'—',pace=x.pace_500_seconds!=null?fmtMetricSeconds(Number(x.pace_500_seconds)):'—';
+  return `<div class="info"><b>Referencia · última vez que hiciste esta misma sesión</b><br><span class="muted">${esc(shortDateES(date))} · Manual</span><div style="margin-top:7px"><b>${esc(String(dist))} m · ${esc(time)} · /500 ${esc(pace)}</b></div>${parts.length?`<div class="seaResultMetrics" style="margin-top:9px">${parts.map((p,i)=>`<div class="seaResultMetric"><small>Parcial ${i+1}</small>${p.distance_m??'—'} m · ${p.time_seconds!=null?fmtMetricSeconds(Number(p.time_seconds)):'—'} · /500 ${p.pace_500_seconds!=null?fmtMetricSeconds(Number(p.pace_500_seconds)):'—'} · ${p.spm??'—'} ppm</div>`).join('')}</div>`:''}<div class="muted" style="margin-top:7px">Solo como referencia; no es un objetivo automático a batir.</div></div>`;
+}
+async function v205LoadPreviousSameErgo(wrap){
+  if(!currentUser||!currentErgoPrescription||!wrap)return;
+  const date=currentErgoPrescription.scheduledDate||localISODate(),target=`${currentErgoPrescription.name||''} ${currentErgoPrescription.work||''}`;
+  try{
+    const [cq,wq]=await Promise.all([
+      sb.from('concept2_results').select('*').eq('user_id',currentUser.id).lt('workout_date',date).order('workout_date',{ascending:false}).limit(60),
+      sb.from('workout_logs').select('id,session_code,session_date,created_at').eq('user_id',currentUser.id).in('session_type',['ergo','erg']).lt('session_date',date).order('session_date',{ascending:false}).limit(60)
+    ]);
+    let hits=[];
+    (cq.data||[]).forEach(r=>{const label=`${r.matched_session_code||''} ${r.workout_name||''} ${r.name||''}`;if(v205ErgoSamePrescription(target,label))hits.push({source:'ErgData',date:r.workout_date,row:r})});
+    const logs=wq.data||[],ids=logs.map(x=>x.id);if(ids.length){const rq=await sb.from('ergo_results').select('*').in('workout_id',ids);const byLog=new Map(logs.map(x=>[String(x.id),x]));(rq.data||[]).forEach(r=>{const w=byLog.get(String(r.workout_id));if(!w)return;const label=`${w.session_code||''} ${r.test_name||''}`;if(v205ErgoSamePrescription(target,label))hits.push({source:'Manual',date:w.session_date,row:r})})}
+    hits.sort((a,b)=>String(b.date).localeCompare(String(a.date)));const hit=hits[0],box=document.getElementById('previousSameErgoV205');if(box&&document.body.contains(wrap)){box.innerHTML=hit?v205PreviousErgoInfoHtml(hit):'<div class="muted">No hay una realización anterior de esta misma sesión para usar como referencia.</div>'}
+  }catch(e){const box=document.getElementById('previousSameErgoV205');if(box)box.innerHTML='<div class="muted">No se pudo cargar la referencia anterior.</div>';console.warn('Referencia ERGO anterior',e)}
+}
 function showErgoForm(files=[],draft=null){
   if(files && !Array.isArray(files)) files=[files];currentErgoFilesV124=files;
   const wrap=document.getElementById("ergoFormWrap");
   wrap.classList.remove("hidden");
   wrap.innerHTML=`<div class="ergoForm">
     <div id="previousErgoNoticeV133" class="info hidden"></div>
+    <div id="previousSameErgoV205" class="last"><b>Última sesión igual</b><div class="muted">Buscando referencia anterior…</div></div>
     ${files.length?`<div id="ergoPreviews"></div>`:''}
     ${files.length?'<div class="ocrBox"><b>OCR</b><p id="ocrStatus">Preparando lectura…</p><textarea id="ocrText" rows="4" placeholder="Texto detectado"></textarea></div>':''}
     <label class="btn" style="display:inline-block;margin:8px 0">${files.length?'➕ Añadir más fotos':'📷 Añadir fotos'}<input id="ergoMorePhotos" type="file" accept="image/*" multiple hidden></label>
@@ -2594,7 +2640,7 @@ function showErgoForm(files=[],draft=null){
     <button id="saveErgo" class="primary">Guardar resultado</button>
   </div>`;
 
-  v124RenderSplitRows(draft?.splits||v124DefaultErgoSplits());v124RestoreErgoDraft(draft);v131BindErgoTimeInput(document.getElementById('ergoTime'));v131BindErgoTimeInput(document.getElementById('ergoPace'));wrap.dataset.userTouchedV133='0';wrap.addEventListener('input',()=>{wrap.dataset.userTouchedV133='1'},{once:true});if(!draft&&!files.length)v133PrefillPreviousErgo(wrap);
+  v124RenderSplitRows(draft?.splits||v124DefaultErgoSplits());v124RestoreErgoDraft(draft);v131BindErgoTimeInput(document.getElementById('ergoTime'));v131BindErgoTimeInput(document.getElementById('ergoPace'));wrap.dataset.userTouchedV133='0';wrap.addEventListener('input',()=>{wrap.dataset.userTouchedV133='1'},{once:true});if(!draft&&!files.length)v133PrefillPreviousErgo(wrap);v205LoadPreviousSameErgo(wrap);
   ergoAddSplitV124.onclick=()=>{const rows=v124ReadSplitRows();rows.push({distance_m:'',time_text:'',pace_text:'',spm:'',avg_hr:'',max_hr:'',rest_text:''});v124RenderSplitRows(rows)};
 
   if(files.length){
@@ -4734,14 +4780,26 @@ function athleteGymLibraryMatchV116(name,rows){
   const partial=pool.filter(x=>{const n=v79Norm(x.name);return n.length>=5&&(n.includes(key)||key.includes(n))}).sort((a,b)=>Math.abs(v79Norm(a.name).length-key.length)-Math.abs(v79Norm(b.name).length-key.length));
   return partial[0]||null;
 }
+function v205GymLoadAdvice(row,date){
+  if(!row||row.weight_kg==null)return '';
+  const m=Number(String(date||'').slice(5,7)),feel=String(row.perceived_difficulty||'good'),kg=Number(row.weight_kg),easy=feel==='easy',hard=feel==='hard';
+  let advice='Mantén el peso si la técnica y las repeticiones previstas son correctas.';
+  if(m>=9&&m<=10)advice=hard?'Mantén o baja ligeramente: estamos construyendo base y priorizamos técnica.':easy?'Puedes subir ligeramente (≈2–5%) si completas todas las repeticiones con técnica limpia.':'Repite el peso y consolida la ejecución antes de subir.';
+  else if(m===11||m===12||m===1)advice=hard?'No subas todavía; repite o ajusta para completar con calidad.':easy?'Si completas el rango con margen, sube ligeramente (≈2–5%).':'Mantén y busca completar mejor el rango antes de subir.';
+  else if(m===2||m===3)advice=hard?'Reduce si compromete velocidad o técnica.':easy?'Solo sube si no genera fatiga que perjudique el trabajo específico.':'Prioriza calidad y mantén salvo que resulte claramente fácil.';
+  else advice='En fase competitiva no buscamos subir carga por sistema: mantén o reduce según fatiga y cercanía de regata.';
+  return `<div class="last"><b>Última vez:</b> ${kg} kg${row._date?` · ${shortDateES(row._date)}`:''}${feel?` · ${feel==='easy'?'fácil':feel==='hard'?'duro':'bien'}`:''}<br><span class="muted">${esc(advice)}</span></div>`;
+}
 async function athleteGymFormV113(s,back){
   const exercises=gymExercisesFromContent(s.content),library=await loadGymLibraryData('active'),libraryRows=library?.exercises||allGymExercises();
   const planned=exercises.map(e=>{const ref=athleteGymLibraryMatchV116(e.name,libraryRows);return {...e,ref,alternatives:athleteGymAlternativesV118(e.name,ref)}}),selections={};
   const previousWorkout=await sb.from('workout_logs').select('id,notes,created_at').eq('user_id',currentUser.id).eq('session_code',s.title||'GYM').eq('session_type','gym').eq('session_date',s.session_date).order('created_at',{ascending:false}).limit(1).maybeSingle();
   let previousRows=[];if(previousWorkout.data){const q=await sb.from('gym_exercise_results').select('exercise_name,weight_kg,perceived_difficulty,note,created_at').eq('workout_id',previousWorkout.data.id).order('created_at');if(!q.error)previousRows=q.data||[]}
+  let historicalRows=[];try{const hq=await sb.from('workout_logs').select('id,session_date').eq('user_id',currentUser.id).eq('session_type','gym').lt('session_date',s.session_date).order('session_date',{ascending:false}).limit(50);const hs=hq.data||[],ids=hs.map(x=>x.id),dateById=new Map(hs.map(x=>[String(x.id),x.session_date]));if(ids.length){const hr=await sb.from('gym_exercise_results').select('workout_id,exercise_name,weight_kg,perceived_difficulty,note,created_at').in('workout_id',ids);historicalRows=(hr.data||[]).map(x=>({...x,_date:dateById.get(String(x.workout_id))||''})).sort((a,b)=>String(b._date).localeCompare(String(a._date)))}}catch(e){console.warn('Histórico GYM anterior',e)}
   const previousFor=planned.map((e,i)=>previousRows.find(x=>v79Norm(storedExerciseMeta(x).assigned||x.exercise_name)===v79Norm(e.name))||previousRows[i]||null);
+  const historyFor=planned.map(e=>historicalRows.find(x=>v79Norm(storedExerciseMeta(x).assigned||x.exercise_name)===v79Norm(e.name))||null);
   planned.forEach((e,i)=>{const old=previousFor[i],oldName=old?.exercise_name;if(oldName&&v79Norm(oldName)!==v79Norm(e.name))selections[i]=oldName;const saved=athleteGymSelectionsV117[athleteGymSelectionKeyV117(s.id,i)];if(saved)selections[i]=saved});
-  content.innerHTML=`<div class="card"><button id="athGymBackV113">← Volver</button><h2>${esc(s.title||'GYM')}</h2><p class="muted">${shortDateES(s.session_date)}</p>${previousWorkout.data?'<div class="info"><b>Esta sesión ya estaba registrada.</b><br>Se han cargado los datos del último registro. Puedes corregirlos y guardar otro; el anterior no se borrará.</div>':''}${planned.map((e,i)=>{const old=previousFor[i],meta=storedExerciseMeta(old),feel=old?.perceived_difficulty||'good';return `<div class="ex"><div class="big">${esc(e.name)}</div><div class="dose">${esc(e.dose)}</div>${athleteGymMainGuideV125(e.ref)}${e.alternatives.length?`<details class="alternatives"><summary>🔁 Alternativas si no tienes máquina o no puedes hacer este ejercicio</summary><div id="athGymVariantStatusV116_${i}" class="variantStatus">Se registrará: <b>${esc(e.name)}</b></div><button type="button" class="mainChoose athGymMainV116" data-main="${i}">Usar ejercicio principal</button><div class="altGrid">${e.alternatives.map(a=>altExerciseCard(a,i)).join('')}</div></details>`:''}<div class="plannerGrid"><label>Peso (kg)<input id="athGymWeightV113_${i}" type="number" step=".5" inputmode="decimal" value="${esc(old?.weight_kg??'')}"></label><label>Sensación<select id="athGymFeelV113_${i}"><option value="easy" ${feel==='easy'?'selected':''}>Fácil</option><option value="good" ${feel==='good'?'selected':''}>Bien</option><option value="hard" ${feel==='hard'?'selected':''}>Duro</option></select></label></div><label>Nota del ejercicio (opcional)<textarea id="athGymExerciseNoteV116_${i}" rows="2">${esc(meta.userNote||'')}</textarea></label></div>`}).join('')}<label>Nota de la sesión<textarea id="athGymNoteV113" rows="3">${esc(previousWorkout.data?.notes||'')}</textarea></label><button id="athGymSaveV113" class="primary">${previousWorkout.data?'Guardar otro registro':'Guardar GYM'}</button></div>`;
+  content.innerHTML=`<div class="card"><button id="athGymBackV113">← Volver</button><h2>${esc(s.title||'GYM')}</h2><p class="muted">${shortDateES(s.session_date)}</p>${previousWorkout.data?'<div class="info"><b>Esta sesión ya estaba registrada.</b><br>Se han cargado los datos del último registro. Puedes corregirlos y guardar otro; el anterior no se borrará.</div>':''}${planned.map((e,i)=>{const old=previousFor[i],hist=historyFor[i],meta=storedExerciseMeta(old),feel=old?.perceived_difficulty||'good';return `<div class="ex"><div class="big">${esc(e.name)}</div><div class="dose">${esc(e.dose)}</div>${v205GymLoadAdvice(hist,s.session_date)}${athleteGymMainGuideV125(e.ref)}${e.alternatives.length?`<details class="alternatives"><summary>🔁 Alternativas si no tienes máquina o no puedes hacer este ejercicio</summary><div id="athGymVariantStatusV116_${i}" class="variantStatus">Se registrará: <b>${esc(e.name)}</b></div><button type="button" class="mainChoose athGymMainV116" data-main="${i}">Usar ejercicio principal</button><div class="altGrid">${e.alternatives.map(a=>altExerciseCard(a,i)).join('')}</div></details>`:''}<div class="plannerGrid"><label>Peso (kg)<input id="athGymWeightV113_${i}" type="number" step=".5" inputmode="decimal" value="${esc(old?.weight_kg??'')}"></label><label>Sensación<select id="athGymFeelV113_${i}"><option value="easy" ${feel==='easy'?'selected':''}>Fácil</option><option value="good" ${feel==='good'?'selected':''}>Bien</option><option value="hard" ${feel==='hard'?'selected':''}>Duro</option></select></label></div><label>Nota del ejercicio (opcional)<textarea id="athGymExerciseNoteV116_${i}" rows="2">${esc(meta.userNote||'')}</textarea></label></div>`}).join('')}<label>Nota de la sesión<textarea id="athGymNoteV113" rows="3">${esc(previousWorkout.data?.notes||'')}</textarea></label><button id="athGymSaveV113" class="primary">${previousWorkout.data?'Guardar otro registro':'Guardar GYM'}</button></div>`;
   athGymBackV113.onclick=back;
   planned.forEach((e,i)=>{const selected=selections[i];if(!selected)return;const st=document.getElementById(`athGymVariantStatusV116_${i}`);if(st)st.innerHTML=`Se registrará como alternativa: <b>${esc(selected)}</b>`;content.querySelectorAll(`.altChoose[data-ex="${i}"]`).forEach(x=>{if(decodeURIComponent(x.dataset.alt)===selected)x.classList.add('selected')})});
   content.querySelectorAll('.altChoose').forEach(btn=>btn.onclick=()=>{const i=Number(btn.dataset.ex),chosen=decodeURIComponent(btn.dataset.alt);selections[i]=chosen;athleteGymSelectionsV117[athleteGymSelectionKeyV117(s.id,i)]=chosen;const st=document.getElementById(`athGymVariantStatusV116_${i}`);if(st)st.innerHTML=`Se registrará como alternativa: <b>${esc(chosen)}</b>`;content.querySelectorAll(`.altChoose[data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'));btn.classList.add('selected')});
