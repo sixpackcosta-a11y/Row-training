@@ -204,7 +204,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .ergStatusV103{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:800;white-space:nowrap}.ergDotV103{width:10px;height:10px;border-radius:50%;display:inline-block;background:#a8b3c1;box-shadow:0 0 0 2px #fff,0 0 0 3px #d8e0e8}.ergStatusV103.connected .ergDotV103{background:#1687ff;box-shadow:0 0 0 2px #fff,0 0 0 3px #9ccaff}.ergStatusV103.connected{color:#0b5ed7}.ergStatusV103.offline{color:#718096}.athleteErgStatusV103{margin-top:5px}.rosterErgV103{margin-left:6px}.profileCompareTableV103 .ergColV103{min-width:110px}
 
 .v201Uses{margin-top:16px}.v201Uses summary{cursor:pointer}.v201UseList{margin-top:10px;display:grid;gap:7px}.v201UseRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #dbe3ee}.v201UseRow:first-child{border-top:0}.v201UseRow button{white-space:nowrap}@media(max-width:600px){.v201UseRow{align-items:flex-start}.v201UseRow button{padding:7px 9px}}
-.v202UseSummary{margin-top:10px;padding:9px 10px;border:1px solid #d9e7f6;background:#f4f9ff;border-radius:10px;font-size:.82rem}.v202UseSummary.isEmpty{background:#f8fafc;border-color:#e5eaf0;color:#64748b}.v202UseTitle{font-weight:850;margin-bottom:5px}.v202UseDates{display:flex;gap:6px;flex-wrap:wrap}.v202UseChip{padding:5px 7px!important;font-size:.74rem!important;background:#fff!important;color:#17324d!important;border:1px solid #cddff1!important}.v202UseMore{font-size:.74rem;color:#52657a;align-self:center}.v202UsePending{color:#64748b}.libraryCard .v202UseSummary{margin-bottom:8px}
+.v202UseSummary{margin-top:10px;padding:9px 10px;border:1px solid #d9e7f6;background:#f4f9ff;border-radius:10px;font-size:.82rem}.v202UseSummary.isEmpty{background:#f8fafc;border-color:#e5eaf0;color:#64748b}.v202UseTitle{font-weight:850;margin-bottom:5px}.v202UseDates{display:flex;gap:6px;flex-wrap:wrap}.v202UseChip{padding:5px 7px!important;font-size:.74rem!important;background:#fff!important;color:#17324d!important;border:1px solid #cddff1!important}.v202UseMore{font-size:.74rem;color:#52657a;align-self:center}.v202UsePending{color:#64748b}.libraryCard .v202UseSummary{margin-bottom:8px}.v206UseHead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.v206UseTeam{max-width:220px;padding:5px 8px!important;font-size:.78rem!important;background:#fff}.v201UseRow[data-team]{transition:.15s}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -1215,18 +1215,28 @@ async function libraryUsesV202(item,sessionType){
   return (res.data||[]).filter(x=>v204SessionTypeMatches(x,sessionType)&&v202ItemMatchesSession(item,x,sessionType));
  }catch(e){console.warn('V204 usos biblioteca',e);return[]}
 }
-function libraryUsesHtmlV202(rows){
- const today=localISODate(),future=rows.filter(x=>x.session_date>=today),past=rows.filter(x=>x.session_date<today);
- const line=x=>`<div class="v201UseRow"><div><b>${shortDateES(x.session_date)}</b> · ${esc(teamLabel(x.team_code))}<br><span>${esc(x.title||x.session_type)}</span> <span class="miniBadge">${x.session_date>=today?'Próxima':'Pasada'}</span></div><button class="v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}">Ir al día</button></div>`;
- return `<details class="info v201Uses" open><summary><b>Incluido en planificación · ${rows.length}</b>${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</summary>${rows.length?`<div class="v201UseList">${future.concat(past.slice().reverse()).map(line).join('')}</div>`:'<p class="muted">No aparece incluido en ninguna sesión planificada.</p>'}</details>`;
+function v206UseTeams(rows){return [...new Set((rows||[]).map(x=>x.team_code).filter(Boolean))].sort((a,b)=>teamLabel(a).localeCompare(teamLabel(b),'es'))}
+function v206UseTeamSelect(rows,selected=''){const teams=v206UseTeams(rows);if(teams.length<2)return '';return `<select class="v206UseTeam"><option value="">Todos los equipos</option>${teams.map(t=>`<option value="${esc(t)}" ${selected===t?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select>`}
+function libraryUsesHtmlV202(rows,selected=''){
+ const filtered=selected?rows.filter(x=>x.team_code===selected):rows;
+ const today=localISODate(),future=filtered.filter(x=>x.session_date>=today),past=filtered.filter(x=>x.session_date<today);
+ const line=x=>`<div class="v201UseRow" data-team="${esc(x.team_code)}"><div><b>${shortDateES(x.session_date)}</b> · ${esc(teamLabel(x.team_code))}<br><span>${esc(x.title||x.session_type)}</span> <span class="miniBadge">${x.session_date>=today?'Próxima':'Pasada'}</span></div><button class="v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}">Ir al día</button></div>`;
+ const body=filtered.length?`<div class="v201UseList">${future.concat(past.slice().reverse()).map(line).join('')}</div>`:`<p class="muted">No aparece incluido en ninguna sesión planificada${selected?' para este equipo':''}.</p>`;
+ return `<details class="info v201Uses" open><summary><div class="v206UseHead"><b>Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</b>${v206UseTeamSelect(rows,selected)}</div></summary>${body}</details>`;
 }
-function libraryUseSummaryHtmlV202(rows){
- const today=localISODate(),ordered=rows.slice().sort((a,b)=>a.session_date.localeCompare(b.session_date)),future=ordered.filter(x=>x.session_date>=today),shown=(future.length?future:ordered.slice().reverse()).slice(0,4);
- if(!rows.length)return `<div class="v202UseSummary isEmpty"><div class="v202UseTitle">Incluido en planificación · 0</div><span>No localizado en sesiones planificadas.</span></div>`;
- return `<div class="v202UseSummary"><div class="v202UseTitle">Incluido en planificación · ${rows.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</div><div class="v202UseDates">${shown.map(x=>`<button class="v202UseChip v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}" title="${esc(x.title||x.session_type)}">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</button>`).join('')}${rows.length>shown.length?`<span class="v202UseMore">+${rows.length-shown.length} más</span>`:''}</div></div>`;
+function libraryUseSummaryHtmlV202(rows,selected=''){
+ const filtered=selected?rows.filter(x=>x.team_code===selected):rows;
+ const today=localISODate(),ordered=filtered.slice().sort((a,b)=>a.session_date.localeCompare(b.session_date)),future=ordered.filter(x=>x.session_date>=today),shown=(future.length?future:ordered.slice().reverse()).slice(0,4);
+ if(!filtered.length)return `<div class="v202UseSummary isEmpty"><div class="v206UseHead"><div class="v202UseTitle">Incluido en planificación · 0</div>${v206UseTeamSelect(rows,selected)}</div><span>No localizado en sesiones planificadas${selected?' para este equipo':''}.</span></div>`;
+ return `<div class="v202UseSummary"><div class="v206UseHead"><div class="v202UseTitle">Incluido en planificación · ${filtered.length}${future.length?` · ${future.length} próxima${future.length===1?'':'s'}`:''}</div>${v206UseTeamSelect(rows,selected)}</div><div class="v202UseDates">${shown.map(x=>`<button class="v202UseChip v201GoUse" data-team="${esc(x.team_code)}" data-date="${esc(x.session_date)}" title="${esc(x.title||x.session_type)}">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</button>`).join('')}${filtered.length>shown.length?`<span class="v202UseMore">+${filtered.length-shown.length} más</span>`:''}</div></div>`;
 }
 function wireLibraryUsesV202(root=document){root.querySelectorAll('.v201GoUse').forEach(b=>b.onclick=async()=>{plannerJumpTeam=b.dataset.team;plannerJumpDate=b.dataset.date;plannerAutoEdit=false;coachSelectedTeam=b.dataset.team;await coachPlanner()})}
-async function fillLibraryUsesV202(holder,item,type,compact=false){if(!holder)return;holder.innerHTML='<div class="v202UseSummary"><span class="v202UsePending">Buscando en la planificación…</span></div>';const rows=await libraryUsesV202(item,type);holder.innerHTML=compact?libraryUseSummaryHtmlV202(rows):libraryUsesHtmlV202(rows);wireLibraryUsesV202(holder)}
+async function fillLibraryUsesV202(holder,item,type,compact=false){
+ if(!holder)return;holder.innerHTML='<div class="v202UseSummary"><span class="v202UsePending">Buscando en la planificación…</span></div>';
+ const rows=await libraryUsesV202(item,type);
+ const render=(selected='')=>{holder.innerHTML=compact?libraryUseSummaryHtmlV202(rows,selected):libraryUsesHtmlV202(rows,selected);wireLibraryUsesV202(holder);const sel=holder.querySelector('.v206UseTeam');if(sel)sel.onchange=e=>render(e.target.value)};
+ render('');
+}
 async function hydrateLibraryCardUsesV202(root,items,type){const map=new Map(items.map(x=>[String(x.id),x]));root.querySelectorAll('.v202CardUses[data-id]').forEach(h=>{const x=map.get(String(h.dataset.id));if(x)fillLibraryUsesV202(h,x,type,true)})}
 async function archiveLibraryItemV88(id,item=null){if(!isGlobalCoach){alert('Solo el administrador puede archivar elementos de la biblioteca.');return false}const uses=await plannedLibraryUsesV89(item||{});let msg='¿Archivar este elemento? No se borrará y podrás recuperarlo desde Archivadas.';if(uses.length){msg+='\n\nEstá usado en planificación futura de tus equipos:\n'+uses.map(x=>`• ${teamLabel(x.team_code)} · ${shortDateES(x.session_date)} · ${x.title}`).join('\n')+'\n\nArchivar no modifica esas sesiones ya planificadas.'}if(!confirm(msg))return false;const q=await sb.from('training_library').update({archived_at:new Date().toISOString(),archived_by:currentUser.id,is_active:false,updated_at:new Date().toISOString()}).eq('id',id);if(q.error){alert(q.error.message);return false}return true}
 async function unarchiveLibraryItemV88(id){if(!isGlobalCoach){alert('Solo el administrador puede desarchivar elementos.');return false}const q=await sb.from('training_library').update({archived_at:null,archived_by:null,is_active:true,updated_at:new Date().toISOString()}).eq('id',id);if(q.error){alert(q.error.message);return false}return true}
@@ -1717,7 +1727,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="205";
+const APP_VERSION="206";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
