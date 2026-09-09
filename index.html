@@ -720,6 +720,15 @@ const MAR_BLOCK_DEFAULTS=[
  {key:'tech-8',category:'work',name:'Técnica continua 8 min',content:'TÉCNICA · 8 min a 15–18 ppm · coordinación, entrada limpia y salida de brazos'},
  {key:'tech-3x4',category:'work',name:'Técnica 3×4 min',content:'TÉCNICA · 3×4 min a 15–18 ppm · rec 1 min · entrada, salida de brazos, core y secuencia'},
  {key:'tech-4x5',category:'work',name:'Técnica 4×5 min',content:'TÉCNICA · 4×5 min a 16–20 ppm · rec 1 min · un foco técnico por bloque'},
+ {key:'tech-attack-clean',category:'work',name:'Corrección · ataque limpio',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×3 min a 15–18 ppm · rec 1 min · entrada de pala limpia, sin golpear el agua; brazos extendidos y apoyo antes de aplicar fuerza'},
+ {key:'tech-catch-before-force',category:'work',name:'Corrección · apoyo antes de fuerza',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×3 min a 15–18 ppm · rec 1 min · pala completamente apoyada antes de iniciar la pasada; evitar tirar antes de entrar'},
+ {key:'tech-no-early-arms',category:'work',name:'Corrección · brazos demasiado pronto',content:'TÉCNICA CORRECTIVA · PASADA · 3×4 min a 16–18 ppm · rec 1 min · remar sin flexionar brazos al inicio; pierna y tronco transmiten primero, brazos al final'},
+ {key:'tech-blade-depth',category:'work',name:'Corrección · profundidad de pala',content:'TÉCNICA CORRECTIVA · PASADA · 3×4 min a 16–18 ppm · rec 1 min · mantener la pala tapada a profundidad constante mediante control de altura de manos'},
+ {key:'tech-finish-accel',category:'work',name:'Corrección · aceleración final',content:'TÉCNICA CORRECTIVA · SALIDA · 3×3 min a 18–20 ppm · rec 1 min · mantener presión hasta la sacada y acelerar el final sin perder apoyo'},
+ {key:'tech-extraction',category:'work',name:'Corrección · sacada limpia',content:'TÉCNICA CORRECTIVA · SALIDA · 3×3 min a 16–18 ppm · rec 1 min · sacada rápida de manos, pala fuera antes del repaleo; evitar arrastrar agua'},
+ {key:'tech-recovery-sequence',category:'work',name:'Corrección · recuperación y secuencia',content:'TÉCNICA CORRECTIVA · RECUPERACIÓN · 3×4 min a 16–18 ppm · rec 1 min · brazos→tronco→pierna, sin rebote ni precipitación hacia el ataque'},
+ {key:'tech-amplitude',category:'work',name:'Corrección · amplitud de ataque',content:'TÉCNICA CORRECTIVA · ATAQUE · 3×4 min a 16–18 ppm · rec 1 min · limitar búsqueda excesiva y mantener espalda alineada y posición de ataque estable'},
+ {key:'tech-sync',category:'work',name:'Corrección · sincronización de bancada',content:'TÉCNICA CORRECTIVA · COORDINACIÓN · 4×3 min a 16–20 ppm · rec 1 min · entradas y salidas simultáneas siguiendo estrictamente al remero de delante'},
  {key:'start-6x15',category:'work',name:'Salidas 6×15 paladas',content:'SALIDAS · 6×15 paladas · recuperación 45–60 s · salida propia del equipo'},
  {key:'start-8x20',category:'work',name:'Salidas 8×20 paladas',content:'SALIDAS · 8×20 paladas · recuperación 60–75 s · calidad antes que fatiga'},
  {key:'turn-6',category:'work',name:'Virada-Ciaboga 6 rep',content:'VIRADA-CIABOGA · 6 repeticiones · recuperación 60 s · máxima calidad técnica'},
@@ -822,6 +831,44 @@ VUELTA A LA CALMA · 10 min · muy suave`},
 SERIES · 6×4 min @24–28 ppm · rec 2 min
 RECUPERACIÓN · 3 min · suave
 VUELTA A LA CALMA · 10 min · muy suave`},
+ {key:'sess-tue-tech-time',name:'Martes 60 · técnica + tiempo',objective:'Técnica / base',load:'Suave-media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · 16–20 ppm progresivo
+TÉCNICA CORRECTIVA · 3×5 min a 16–18 ppm · rec 1 min · un foco técnico distinto por serie
+BASE · 2×10 min a 18–20 ppm · rec 2 min · presión uniforme
+SALIDAS · 4×20 paladas · recuperación 60 s
+VUELTA A LA CALMA · 5 min · muy suave`},
+ {key:'sess-tue-meters',name:'Martes 60 · series por metros',objective:'Series por metros',load:'Media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · progresivo
+TÉCNICA · 8 min a 16–18 ppm · entrada limpia y coordinación
+SERIES · 4×500 m · ritmo controlado y homogéneo · rec 2 min
+VIRADA-CIABOGA · 4 repeticiones · máxima calidad
+BASE · 10 min a 18–20 ppm · soltar sin perder técnica
+VUELTA A LA CALMA · 5 min · muy suave`},
+ {key:'sess-tue-strokes',name:'Martes 60 · paladas y potencia técnica',objective:'Ritmo / técnica',load:'Media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · progresivo
+TÉCNICA CORRECTIVA · 2×6 min a 16–18 ppm · rec 2 min · secuencia pierna–tronco–brazo
+PALADAS · 6×30 paladas @26–28 ppm · rec 60 s · potencia sin perder longitud
+BASE · 15 min a 18–20 ppm · ritmo estable
+VIRADA-CIABOGA · 4 repeticiones · entrada y salida limpia
+VUELTA A LA CALMA · 5 min · muy suave`},
+ {key:'sess-tue-rhythm',name:'Martes 60 · cambios de ritmo',objective:'Cambios de ritmo',load:'Media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · progresivo
+BASE · 3×8 min a 18–20 ppm · rec 2 min · técnica larga
+CAMBIOS · 6×1 min @24–28 ppm intercalados con 1 min suave
+SALIDAS · 4×15 paladas · recuperación 60 s
+VUELTA A LA CALMA · 5 min · muy suave`},
+ {key:'sess-tue-distance-tech',name:'Martes 60 · distancia + corrección',objective:'Series por metros / técnica',load:'Media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · progresivo
+SERIES · 3×700 m · ritmo sostenido · rec 2–3 min
+TÉCNICA CORRECTIVA · 10 min a 16–18 ppm · corregir el error predominante del equipo
+BASE · 12 min a 18–20 ppm · presión uniforme
+VUELTA A LA CALMA · 5 min · muy suave`},
+ {key:'sess-tue-continuous',name:'Martes 60 · continuo con cambios',objective:'Base / ritmo',load:'Suave-media',content:`DURACIÓN OBJETIVO · 55–60 min
+CALENTAMIENTO · 8 min · progresivo
+BASE CONTINUA · 30 min a 18–20 ppm · incluir 5×1 min @24–26 ppm cada 5 min sin parar
+TÉCNICA CORRECTIVA · 8 min a 16–18 ppm · salida de brazos y recuperación controlada
+VIRADA-CIABOGA · 4 repeticiones · máxima calidad
+VUELTA A LA CALMA · 5 min · muy suave`},
  {key:'sess-mixed-75',name:'Mixta completa 70–80 min',objective:'Mixta',load:'Media-alta',content:`CALENTAMIENTO · 15 min · progresivo
 TÉCNICA · 3×4 min a 16–18 ppm · rec 1 min
 BASE · 2×15 min a 18–20 ppm · rec 3 min
@@ -950,7 +997,7 @@ async function coachLibraryView(){
   if(coachLibrarySection==='MIX')return coachCombinedLibraryView();
   return coachGymLibraryView();
 }
-function marWorkGroupV88(x){const n=(x.name+' '+x.content).toLowerCase();if(/virada|ciaboga/.test(n))return 'Viradas / ciaboga';if(/salida/.test(n))return 'Salidas';if(/serie|ritmo|pirámide|piramide|cambio|\d+×\d+\s*m/.test(n))return 'Series / ritmos';if(/base/.test(n))return 'Base aeróbica';if(/técnica|tecnica/.test(n))return 'Técnica';return 'Otros trabajos'}
+function marWorkGroupV88(x){const n=(x.name+' '+x.content).toLowerCase();if(/correcci[oó]n|t[eé]cnica correctiva|error/.test(n))return 'Corrección técnica';if(/virada|ciaboga/.test(n))return 'Viradas / ciaboga';if(/salida/.test(n))return 'Salidas';if(/serie|ritmo|pirámide|piramide|cambio|paladas|\d+×\d+\s*m/.test(n))return 'Series / ritmos';if(/base/.test(n))return 'Base aeróbica';if(/técnica|tecnica/.test(n))return 'Técnica';return 'Otros trabajos'}
 function sessionDurationV88(x,kind){if(kind==='MAR')return v86MarEstimateMinutes(x.content,'2:15');const m=String(x.content||'').match(/DURACI[ÓO]N ESTIMADA\s*·\s*(\d+)/i);return m?Number(m[1]):null}
 function matchLibraryFilterV88(x,state,kind){const hay=(x.name+' '+(x.objective||'')+' '+(x.load||'')+' '+(x.content||'')).toLowerCase();if(state.search&&!hay.includes(state.search.toLowerCase()))return false;if(state.objective&&!(x.objective||'').toLowerCase().includes(state.objective.toLowerCase()))return false;if(state.load&&!(x.load||'').toLowerCase().includes(state.load.toLowerCase()))return false;if(state.duration){const d=sessionDurationV88(x,kind);const [a,b]=state.duration.split('-').map(Number);if(!d||d<a||d>b)return false}if(!state.showHidden&&x._pref?.is_hidden)return false;return true}
 function canEditLibraryItemV88(x){return !!(isGlobalCoach||(x?.source==='custom'&&!x?.is_system&&x?.created_by===currentUser?.id))}
@@ -964,7 +1011,7 @@ async function archiveLibraryItemV88(id,item=null){if(!isGlobalCoach){alert('Sol
 async function unarchiveLibraryItemV88(id){if(!isGlobalCoach){alert('Solo el administrador puede desarchivar elementos.');return false}const q=await sb.from('training_library').update({archived_at:null,archived_by:null,is_active:true,updated_at:new Date().toISOString()}).eq('id',id);if(q.error){alert(q.error.message);return false}return true}
 async function coachMarLibraryView(){
   const data=await loadMarLibraryData();const state={search:'',objective:'',load:'',duration:'',showHidden:libraryShowHidden,mode:libraryViewMode};
-  content.innerHTML=`${libraryNavHtml()}<div class="card"><div class="librarySectionHead"><div><h2>Biblioteca MAR</h2><p class="muted">Sesiones y bloques compartidos. Usa Activas / Archivadas para recuperar cualquier elemento archivado.</p></div><div class="actions"><button id="newMarSession" class="primary">+ Sesión MAR completa</button><button id="newMarBlock">+ Bloque MAR</button></div></div><div class="libraryToolbar"><input id="marLibSearch" placeholder="Buscar técnica, 4×500, salidas…"><select id="marLibObjective"><option value="">Todos los objetivos</option>${['Técnica','Base','Ritmo','Salidas','Viradas','Mixta'].map(x=>`<option>${x}</option>`).join('')}</select><select id="marLibLoad"><option value="">Todas las cargas</option><option>Suave</option><option>Media</option><option>Alta</option></select><select id="marLibDuration"><option value="">Cualquier duración</option><option value="0-50">≤ 50 min</option><option value="51-65">51–65 min</option><option value="66-80">66–80 min</option><option value="81-999">80+ min</option></select><select id="marLibStatus"><option value="active">Activas</option><option value="archived">Archivadas</option></select><select id="marLibMode"><option value="compact">Vista compacta</option><option value="detail">Vista detallada</option></select><label class="toolbarCheck"><input id="marFavOnly" type="checkbox"> Solo favoritas</label><label class="toolbarCheck"><input id="marShowHidden" type="checkbox"> Mostrar ocultos</label></div><div id="marLibraryBody"></div></div>`;
+  content.innerHTML=`${libraryNavHtml()}<div class="card"><div class="librarySectionHead"><div><h2>Biblioteca MAR</h2><p class="muted">Sesiones y bloques compartidos. Usa Activas / Archivadas para recuperar cualquier elemento archivado.</p></div><div class="actions"><button id="newMarSession" class="primary">+ Sesión MAR completa</button><button id="newMarBlock">+ Bloque MAR</button></div></div><div class="libraryToolbar"><input id="marLibSearch" placeholder="Buscar error técnico, ataque, 4×500, salidas…"><select id="marLibObjective"><option value="">Todos los objetivos</option>${['Técnica','Corrección técnica','Base','Ritmo','Salidas','Viradas','Mixta'].map(x=>`<option>${x}</option>`).join('')}</select><select id="marLibLoad"><option value="">Todas las cargas</option><option>Suave</option><option>Media</option><option>Alta</option></select><select id="marLibDuration"><option value="">Cualquier duración</option><option value="0-50">≤ 50 min</option><option value="51-65">51–65 min</option><option value="66-80">66–80 min</option><option value="81-999">80+ min</option></select><select id="marLibStatus"><option value="active">Activas</option><option value="archived">Archivadas</option></select><select id="marLibMode"><option value="compact">Vista compacta</option><option value="detail">Vista detallada</option></select><label class="toolbarCheck"><input id="marFavOnly" type="checkbox"> Solo favoritas</label><label class="toolbarCheck"><input id="marShowHidden" type="checkbox"> Mostrar ocultos</label></div><div id="marLibraryBody"></div></div>`;
   wireLibraryNav();newMarSession.onclick=()=>marSessionLibraryForm(null);newMarBlock.onclick=()=>marBlockLibraryForm(null);marLibStatus.value=libraryArchiveMode;marLibStatus.onchange=()=>{libraryArchiveMode=marLibStatus.value;coachMarLibraryView()};marLibMode.value=state.mode;marShowHidden.checked=state.showHidden;marFavOnly.checked=libraryFavoritesOnly;
   const itemActions=(x,type)=>{const a=libraryItemActionsV88(x);return `<div class="actions">${a.edit?`<button class="${type==='session'?'editMarSession':'editMarBlock'}" data-id="${x.id}">Editar</button>`:''}${type==='session'?`<button class="dupMarSession" data-id="${x.id}">Duplicar</button>`:''}${a.fav}${a.hide}${a.archive}</div>`};
   const card=(x,type)=>`<article class="libraryCard ${x._pref?.is_hidden?'isHidden':''} ${x.archived_at?'isArchived':''}"><span class="libraryBadge ${type==='session'?'session':x.category==='work'?'':'aux'}">${type==='session'?'SESIÓN COMPLETA':esc(marCategoryLabel(x.category).toUpperCase())}</span><h3>${esc(x.name)}</h3>${type==='session'?`<div class="sessionMeta">${x.objective?`<span class="miniBadge">${esc(x.objective)}</span>`:''}${x.load?`<span class="miniBadge load">${esc(x.load)}</span>`:''}<span class="miniBadge">≈ ${sessionDurationV88(x,'MAR')||'—'} min</span></div>`:''}${libraryCardMetaV88(x)}${state.mode==='detail'?trainingContentHtml(x.content,true):''}${itemActions(x,type)}</article>`;
@@ -973,7 +1020,7 @@ async function coachMarLibraryView(){
     state.mode=marLibMode.value;state.showHidden=marShowHidden.checked;libraryFavoritesOnly=marFavOnly.checked;libraryViewMode=state.mode;libraryShowHidden=state.showHidden;state.search=marLibSearch.value.trim();state.objective=marLibObjective.value;state.load=marLibLoad.value;state.duration=marLibDuration.value;
     const sess=data.sessions.filter(x=>matchLibraryFilterV88(x,state,'MAR')&&(!libraryFavoritesOnly||x._pref?.is_favorite));
     const blocks=data.blocks.filter(x=>{if(!state.showHidden&&x._pref?.is_hidden)return false;if(libraryFavoritesOnly&&!x._pref?.is_favorite)return false;const hay=(x.name+' '+x.content).toLowerCase();return !state.search||hay.includes(state.search.toLowerCase())});
-    const work=blocks.filter(x=>x.category==='work');const groups=['Técnica','Base aeróbica','Series / ritmos','Salidas','Viradas / ciaboga','Otros trabajos'];
+    const work=blocks.filter(x=>x.category==='work');const groups=['Corrección técnica','Técnica','Base aeróbica','Series / ritmos','Salidas','Viradas / ciaboga','Otros trabajos'];
     marLibraryBody.innerHTML=accordion('Sesiones completas',sess,'session')+accordion('Calentamientos',blocks.filter(x=>x.category==='warmup'),'block')+groups.map(g=>accordion(g,work.filter(x=>marWorkGroupV88(x)===g),'block')).join('')+accordion('Recuperaciones',blocks.filter(x=>x.category==='recovery'),'block')+accordion('Vuelta a la calma',blocks.filter(x=>x.category==='cooldown'),'block');
     marLibraryBody.querySelectorAll('.editMarSession').forEach(b=>b.onclick=()=>marSessionLibraryForm(data.sessions.find(x=>x.id===b.dataset.id)));
     marLibraryBody.querySelectorAll('.editMarBlock').forEach(b=>b.onclick=()=>marBlockLibraryForm(data.blocks.find(x=>x.id===b.dataset.id)));
@@ -1447,7 +1494,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="197";
+const APP_VERSION="199";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -3643,7 +3690,7 @@ function sessionEditor(x=null){
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
- function normalizeTuesdayMar60V197(content){
+ function normalizeTuesdayMar60V198(content){
   let x=String(content||'');
   x=x.replace(/(DURACI[ÓO]N(?:\s+OBJETIVO)?\s*[·:\-]?\s*)(?:\d+\s*[–-]\s*\d+|\d+)\s*min/ig,'$155–60 min');
   x=x.replace(/(CALENTAMIENTO\s*[·:\-]?\s*)(?:12\s*[–-]\s*15|10\s*[–-]\s*12|8\s*[–-]\s*10)\s*min/ig,'$18 min');
@@ -3669,7 +3716,7 @@ function sessionEditor(x=null){
      contentValue=`DURACIÓN OBJETIVO · 55–60 min\nCALENTAMIENTO · 8–10 min\n${selected.join('\n')}${cardioLine}\nVUELTA A LA CALMA · 5 min\nCarga: completar todas las repeticiones prescritas con buena técnica; si no se llega, bajar el peso.`;
    }
    if(sessType.value==='MAR'&&new Date(date+'T12:00:00').getDay()===2){
-     contentValue=normalizeTuesdayMar60V197(contentValue);
+     contentValue=normalizeTuesdayMar60V198(contentValue);
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()}; let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error){alert(q.error.message);return}
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
