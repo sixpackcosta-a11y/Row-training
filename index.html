@@ -1778,7 +1778,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="219";
+const APP_VERSION="220";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2525,12 +2525,29 @@ async function coachWeekView(){
     }
   }
   const nameFor=uid=>profiles.find(p=>String(p.user_id)===String(uid))?.full_name||'Remero';
-  const resultRowsForSessionV219=s=>{
+  /* V220 · asociación SOLO para la vista Semana.
+     No escribe ni reasigna nada en Supabase. Además de la asociación explícita y de la
+     recuperación fuerte por título, permite mostrar un resultado por fecha/tipo cuando
+     ese equipo tiene UNA sola sesión de ese tipo ese día. Esto evita que varios ErgData
+     del mismo entrenamiento aparezcan como "1 resultado" simplemente porque algunos
+     todavía no tienen training_session_id/matched_session_code. */
+  const weekPlanForResultV220=(row,kind)=>{
+    if(!row||row.hidden)return null;
+    const explicit=row.training_session_id?String(row.training_session_id):'';
+    if(explicit){const p=sessions.find(s=>String(s.id)===explicit);if(p)return p}
+    const strong=v191StrongPlanForResult(row,kind,sessions);if(strong)return strong;
+    const type=kind==='concept2'?'ERG':v153ResultType(row);
+    const date=kind==='concept2'?v153C2Date(row):v153ResultDate(row);
+    if(!type||!date)return null;
+    const same=(sessions||[]).filter(s=>String(s.session_date||'')===date&&(s.session_type==='GYM'?'GYM':'ERG')===type);
+    return same.length===1?same[0]:null;
+  };
+  const resultRowsForSessionV220=s=>{
     const sid=String(s.id);
     if(s.session_type==='MAR')return {sea:seaRows.filter(r=>String(r.training_session_id)===sid),logs:[],c2:[]};
     const type=s.session_type==='GYM'?'GYM':'ERG';
-    const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&(String(w.training_session_id||'')===sid||(!w.training_session_id&&String(v191StrongPlanForResult(w,'workout',sessions)?.id||'')===sid)));
-    const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&(String(r.training_session_id||'')===sid||(!r.training_session_id&&String(v191StrongPlanForResult(r,'concept2',sessions)?.id||'')===sid))):[];
+    const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&String(weekPlanForResultV220(w,'workout')?.id||'')===sid);
+    const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&String(weekPlanForResultV220(r,'concept2')?.id||'')===sid):[];
     /* Un remero cuenta una sola vez. Si existen manual + ErgData para el mismo remero,
        se conserva ErgData para la vista porque contiene los parciales más completos. */
     const byUser=new Map();
@@ -2538,11 +2555,11 @@ async function coachWeekView(){
     c2.forEach(r=>byUser.set(String(r.user_id),{kind:'concept2',row:r}));
     return {sea:[],logs:[...byUser.values()].filter(x=>x.kind==='workout').map(x=>x.row),c2:[...byUser.values()].filter(x=>x.kind==='concept2').map(x=>x.row)};
   };
-  const resultCountFor=s=>{const rows=resultRowsForSessionV219(s);return s.session_type==='MAR'?rows.sea.length:rows.logs.length+rows.c2.length};
+  const resultCountFor=s=>{const rows=resultRowsForSessionV220(s);return s.session_type==='MAR'?rows.sea.length:rows.logs.length+rows.c2.length};
   const compact=x=>{const lines=String(x.content||'').split(/\n+/).map(z=>z.trim()).filter(Boolean);const dur=(lines.find(z=>/DURACI[ÓO]N (OBJETIVO|ESTIMADA)/i.test(z))||'').replace(/^.*?·\s*/,'');const obj=(lines.find(z=>/^OBJETIVO/i.test(z))||'').replace(/^.*?·\s*/,'');const load=(lines.find(z=>/^CARGA/i.test(z))||'').replace(/^.*?·\s*/,'');const work=lines.filter(z=>!/^(CALENTAMIENTO|RECUPERACI[ÓO]N|VUELTA A LA CALMA|OBJETIVO|CARGA|DURACI[ÓO]N)/i.test(z)).slice(0,2);return `<div class="weekMeta">${dur?`<span>⏱ ${esc(dur)}</span>`:''}${obj?`<span>🎯 ${esc(obj)}</span>`:''}${load?`<span>⚙ ${esc(load)}</span>`:''}</div>${work.length?`<div class="weekKey">${work.map(z=>esc(z)).join('<br>')}</div>`:''}`};
   coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds),races=comps.filter(x=>x.competition_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${races.map(c=>`<div class="miniSess race">🏁 ${esc(c.name)}</div>`).join('')}${xs.length?xs.map(x=>{const rc=resultCountFor(x),has=rc>0;return `<div class="weekSess ${x.session_type==='MAR'?'seaCard':''} ${has?'weekHasResultsV209':''}"><div class="weekSessTitle"><span class="tag">${x.session_type}</span><b>${esc(x.title)}</b>${has?`<span class="tag" style="background:#e8f7ed;color:#17633a">✓ ${rc} resultado${rc===1?'':'s'}</span>`:''}</div>${compact(x)}<div class="actions"><button class="weekDetailSession" data-id="${x.id}">Ver detalle</button>${has?`<button class="weekViewResultsV209 primary" data-id="${x.id}">Ver resultados</button>`:''}${canEdit?`<button class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button><button class="weekMoveSession" data-id="${x.id}" data-date="${ds}">Mover</button><button class="weekDupSession" data-id="${x.id}" data-date="${ds}">Duplicar</button>`:''}${x.session_type==='MAR'?`<button class="weekSeaResult ${has?'':'primary'}" data-id="${x.id}" data-date="${ds}">${has?'Editar resultados MAR':'Registrar MAR'}</button>`:''}</div></div>`}).join(''):'<p class="muted weekEmpty">Sin sesión</p>'}${canEdit?`<button type="button" class="weekEdit" data-date="${ds}">+ Añadir sesión</button>`:''}</section>`}).join('')}</div>`;
   const showDetail=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>${esc(x.title)}</h2><button class="closeWeekDetail">Cerrar</button></div>${trainingContentHtml(x.content)}<div class="actions"><button class="closeWeekDetail primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekDetail').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()}};
-  const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV219(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
+  const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV220(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
     if(x.session_type==='MAR'){
       body=sea.length?`<div class="info"><b>${sea.length} registro${sea.length===1?'':'s'} MAR</b></div>${sea.map((r,i)=>`<div class="last"><b>${esc(r.exercise_name||`Serie ${i+1}`)}</b><br>${r.distance_m!=null?`${r.distance_m} m · `:''}${r.time_text?`${esc(r.time_text)} · `:''}${r.pace_500_text?`/500 ${esc(r.pace_500_text)} · `:''}${r.spm!=null?`${r.spm} ppm`:''}${r.notes?`<br><small>${esc(r.notes)}</small>`:''}</div>`).join('')}`:'<p class="muted">No hay resultados MAR registrados.</p>';
     }else{
