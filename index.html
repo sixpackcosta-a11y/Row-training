@@ -1772,7 +1772,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="216";
+const APP_VERSION="217";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -3261,9 +3261,9 @@ function karvonenZones(maxHr, restHr){
   });
 
   return {
-    ut2:z(0.55,0.65),
-    ut1:z(0.65,0.75),
-    at:z(0.75,0.85),
+    ut2:z(0.55,0.70),
+    ut1:z(0.70,0.80),
+    at:z(0.80,0.85),
     tr:z(0.85,0.95),
     an:z(0.95,1.00)
   };
