@@ -217,6 +217,12 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .ergoZoneV214.bad{background:#fff0ed;border-color:#e29b8f}
 .ergoZoneV214.info{background:#eef5ff;border-color:#afc9e8}
 .ergoZoneV214 b{font-weight:800}
+
+/* V218 · recuperar comparativa de perfiles legible en móvil */
+@media(max-width:760px){
+  .profileCompareDesktopV103.tableWrap{display:none!important}
+  .profileMetricCardsV103{display:grid!important}
+}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -1772,7 +1778,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="217";
+const APP_VERSION="219";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2118,7 +2124,7 @@ async function rowingCoachReviewV135(log,team,backFn){
 }
 async function staffAthletesForTeam(team){const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);const q=await sb.from('profiles').select('user_id,full_name').in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}const q=await sb.from('profiles').select('user_id,full_name').eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
 function gymExercisesFromContent(content){
-  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>readableLabel(line)).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio/i.test(label)).map(([label,value])=>({name:label,dose:value}));
+  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>readableLabel(line)).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(label)).map(([label,value])=>({name:label,dose:value}));
 }
 async function staffGymResultForm(session,team,date,backFn){
   const athletes=await staffAthletesForTeam(team);if(!athletes.length)return alert('No hay remeros asignados a este equipo.');const exercises=gymExercisesFromContent(session?.content);
@@ -2495,13 +2501,20 @@ async function coachWeekView(){
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]),days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],sessionIds=sessions.map(x=>Number(x.id)).filter(Number.isFinite);
   let seaRows=[],workoutRows=[],gymRows=[],manualErgoRows=[],c2Rows=[],profiles=[];
   if(sessionIds.length){
-    const [seaQ,workQ,c2Q,profQ]=await Promise.all([
+    /* V219: la semana del entrenador necesita también resultados todavía sin training_session_id.
+       Se cargan por fecha y después se limitan a los remeros del equipo. Así el contador y
+       "Ver resultados" usan exactamente la misma asociación segura que cumplimiento/historial. */
+    const [seaQ,workQ,c2Q,profQ,memberQ]=await Promise.all([
       sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,created_at').in('training_session_id',sessionIds).order('created_at'),
-      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').in('training_session_id',sessionIds).order('created_at'),
-      sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,distance_m,time_formatted,pace_500_seconds,spm,match_status,hidden,raw_data,excluded_splits').in('training_session_id',sessionIds).order('workout_date'),
-      sb.from('profiles').select('user_id,full_name')
+      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).order('created_at'),
+      sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,distance_m,time_formatted,pace_500_seconds,spm,match_status,matched_session_code,hidden,raw_data,excluded_splits').gte('workout_date',start).lte('workout_date',end).order('workout_date'),
+      sb.from('profiles').select('user_id,full_name,team_code'),
+      sb.from('rower_team_memberships').select('user_id,team_code').eq('team_code',team)
     ]);
-    seaRows=seaQ.error?[]:(seaQ.data||[]);workoutRows=workQ.error?[]:(workQ.data||[]);c2Rows=c2Q.error?[]:(c2Q.data||[]);profiles=profQ.error?[]:(profQ.data||[]);
+    seaRows=seaQ.error?[]:(seaQ.data||[]);profiles=profQ.error?[]:(profQ.data||[]);
+    const teamUsers=new Set([...(memberQ.error?[]:(memberQ.data||[])).map(x=>String(x.user_id)),...profiles.filter(p=>String(p.team_code||'')===String(team)).map(p=>String(p.user_id))]);
+    workoutRows=(workQ.error?[]:(workQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
+    c2Rows=(c2Q.error?[]:(c2Q.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
     const workoutIds=workoutRows.map(x=>Number(x.id)).filter(Number.isFinite);
     if(workoutIds.length){
       const [gq,eq]=await Promise.all([
@@ -2512,15 +2525,24 @@ async function coachWeekView(){
     }
   }
   const nameFor=uid=>profiles.find(p=>String(p.user_id)===String(uid))?.full_name||'Remero';
-  const resultCountFor=s=>{
-    const id=String(s.id),sea=seaRows.filter(x=>String(x.training_session_id)===id).length,logs=workoutRows.filter(x=>String(x.training_session_id)===id&&!x.hidden).length,c2=c2Rows.filter(x=>String(x.training_session_id)===id&&!x.hidden).length;
-    if(s.session_type==='MAR')return sea;
-    return logs+c2;
+  const resultRowsForSessionV219=s=>{
+    const sid=String(s.id);
+    if(s.session_type==='MAR')return {sea:seaRows.filter(r=>String(r.training_session_id)===sid),logs:[],c2:[]};
+    const type=s.session_type==='GYM'?'GYM':'ERG';
+    const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&(String(w.training_session_id||'')===sid||(!w.training_session_id&&String(v191StrongPlanForResult(w,'workout',sessions)?.id||'')===sid)));
+    const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&(String(r.training_session_id||'')===sid||(!r.training_session_id&&String(v191StrongPlanForResult(r,'concept2',sessions)?.id||'')===sid))):[];
+    /* Un remero cuenta una sola vez. Si existen manual + ErgData para el mismo remero,
+       se conserva ErgData para la vista porque contiene los parciales más completos. */
+    const byUser=new Map();
+    logs.forEach(r=>byUser.set(String(r.user_id),{kind:'workout',row:r}));
+    c2.forEach(r=>byUser.set(String(r.user_id),{kind:'concept2',row:r}));
+    return {sea:[],logs:[...byUser.values()].filter(x=>x.kind==='workout').map(x=>x.row),c2:[...byUser.values()].filter(x=>x.kind==='concept2').map(x=>x.row)};
   };
+  const resultCountFor=s=>{const rows=resultRowsForSessionV219(s);return s.session_type==='MAR'?rows.sea.length:rows.logs.length+rows.c2.length};
   const compact=x=>{const lines=String(x.content||'').split(/\n+/).map(z=>z.trim()).filter(Boolean);const dur=(lines.find(z=>/DURACI[ÓO]N (OBJETIVO|ESTIMADA)/i.test(z))||'').replace(/^.*?·\s*/,'');const obj=(lines.find(z=>/^OBJETIVO/i.test(z))||'').replace(/^.*?·\s*/,'');const load=(lines.find(z=>/^CARGA/i.test(z))||'').replace(/^.*?·\s*/,'');const work=lines.filter(z=>!/^(CALENTAMIENTO|RECUPERACI[ÓO]N|VUELTA A LA CALMA|OBJETIVO|CARGA|DURACI[ÓO]N)/i.test(z)).slice(0,2);return `<div class="weekMeta">${dur?`<span>⏱ ${esc(dur)}</span>`:''}${obj?`<span>🎯 ${esc(obj)}</span>`:''}${load?`<span>⚙ ${esc(load)}</span>`:''}</div>${work.length?`<div class="weekKey">${work.map(z=>esc(z)).join('<br>')}</div>`:''}`};
   coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds),races=comps.filter(x=>x.competition_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${races.map(c=>`<div class="miniSess race">🏁 ${esc(c.name)}</div>`).join('')}${xs.length?xs.map(x=>{const rc=resultCountFor(x),has=rc>0;return `<div class="weekSess ${x.session_type==='MAR'?'seaCard':''} ${has?'weekHasResultsV209':''}"><div class="weekSessTitle"><span class="tag">${x.session_type}</span><b>${esc(x.title)}</b>${has?`<span class="tag" style="background:#e8f7ed;color:#17633a">✓ ${rc} resultado${rc===1?'':'s'}</span>`:''}</div>${compact(x)}<div class="actions"><button class="weekDetailSession" data-id="${x.id}">Ver detalle</button>${has?`<button class="weekViewResultsV209 primary" data-id="${x.id}">Ver resultados</button>`:''}${canEdit?`<button class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button><button class="weekMoveSession" data-id="${x.id}" data-date="${ds}">Mover</button><button class="weekDupSession" data-id="${x.id}" data-date="${ds}">Duplicar</button>`:''}${x.session_type==='MAR'?`<button class="weekSeaResult ${has?'':'primary'}" data-id="${x.id}" data-date="${ds}">${has?'Editar resultados MAR':'Registrar MAR'}</button>`:''}</div></div>`}).join(''):'<p class="muted weekEmpty">Sin sesión</p>'}${canEdit?`<button type="button" class="weekEdit" data-date="${ds}">+ Añadir sesión</button>`:''}</section>`}).join('')}</div>`;
   const showDetail=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>${esc(x.title)}</h2><button class="closeWeekDetail">Cerrar</button></div>${trainingContentHtml(x.content)}<div class="actions"><button class="closeWeekDetail primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekDetail').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()}};
-  const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const sid=String(x.id),sea=seaRows.filter(r=>String(r.training_session_id)===sid),logs=workoutRows.filter(r=>String(r.training_session_id)===sid&&!r.hidden),c2=c2Rows.filter(r=>String(r.training_session_id)===sid&&!r.hidden);let body='';
+  const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV219(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
     if(x.session_type==='MAR'){
       body=sea.length?`<div class="info"><b>${sea.length} registro${sea.length===1?'':'s'} MAR</b></div>${sea.map((r,i)=>`<div class="last"><b>${esc(r.exercise_name||`Serie ${i+1}`)}</b><br>${r.distance_m!=null?`${r.distance_m} m · `:''}${r.time_text?`${esc(r.time_text)} · `:''}${r.pace_500_text?`/500 ${esc(r.pace_500_text)} · `:''}${r.spm!=null?`${r.spm} ppm`:''}${r.notes?`<br><small>${esc(r.notes)}</small>`:''}</div>`).join('')}`:'<p class="muted">No hay resultados MAR registrados.</p>';
     }else{
@@ -4962,11 +4984,11 @@ function athleteGymLibraryMatchV116(name,rows){
 function v205GymLoadAdvice(row,date){
   if(!row||row.weight_kg==null)return '';
   const m=Number(String(date||'').slice(5,7)),feel=String(row.perceived_difficulty||'good'),kg=Number(row.weight_kg),easy=feel==='easy',hard=feel==='hard';
-  let advice='Mantén el peso si la técnica y las repeticiones previstas son correctas.';
-  if(m>=9&&m<=10)advice=hard?'Mantén o baja ligeramente: estamos construyendo base y priorizamos técnica.':easy?'Puedes subir ligeramente (≈2–5%) si completas todas las repeticiones con técnica limpia.':'Repite el peso y consolida la ejecución antes de subir.';
-  else if(m===11||m===12||m===1)advice=hard?'No subas todavía; repite o ajusta para completar con calidad.':easy?'Si completas el rango con margen, sube ligeramente (≈2–5%).':'Mantén y busca completar mejor el rango antes de subir.';
-  else if(m===2||m===3)advice=hard?'Reduce si compromete velocidad o técnica.':easy?'Solo sube si no genera fatiga que perjudique el trabajo específico.':'Prioriza calidad y mantén salvo que resulte claramente fácil.';
-  else advice='En fase competitiva no buscamos subir carga por sistema: mantén o reduce según fatiga y cercanía de regata.';
+  let advice='Mantén el peso y completa las repeticiones previstas con técnica limpia, sin llegar al fallo.';
+  if(m>=9&&m<=10)advice=hard?'Base: baja ligeramente si hace falta para completar todas las repeticiones con técnica limpia.':easy?'Base: mantén este peso y progresa primero en repeticiones dentro de lo prescrito; no hace falta subir kilos todavía.':'Base: repite este peso y consolida las repeticiones y la técnica.';
+  else if(m===11||m===12||m===1)advice=hard?'Fuerza: no subas todavía; repite o ajusta la carga para completar con calidad.':easy?'Fuerza: si completaste todas las series con margen y buena técnica, prueba una subida pequeña de carga (≈2–5%).':'Fuerza: mantén la carga hasta completar con solvencia lo prescrito antes de subir.';
+  else if(m===2||m===3)advice=hard?'Específica: reduce si la carga compromete velocidad, técnica o el trabajo de remo.':easy?'Específica: mantén salvo que resulte claramente ligera; no buscamos aumentar kilos por sistema.':'Específica: prioriza calidad y velocidad de ejecución; mantén la carga.';
+  else advice='Competición: no buscamos aumentar carga por sistema; mantén o reduce según fatiga y cercanía de regata.';
   return `<div class="last"><b>Última vez:</b> ${kg} kg${row._date?` · ${shortDateES(row._date)}`:''}${feel?` · ${feel==='easy'?'fácil':feel==='hard'?'duro':'bien'}`:''}<br><span class="muted">${esc(advice)}</span></div>`;
 }
 async function athleteGymFormV113(s,back){
