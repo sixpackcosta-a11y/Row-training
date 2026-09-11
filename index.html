@@ -1778,7 +1778,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="221";
+const APP_VERSION="222";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2534,10 +2534,14 @@ async function coachWeekView(){
      ese equipo tiene UNA sola sesión de ese tipo ese día. Esto evita que varios ErgData
      del mismo entrenamiento aparezcan como "1 resultado" simplemente porque algunos
      todavía no tienen training_session_id/matched_session_code. */
-  const weekPlanForResultV220=(row,kind)=>{
+  const weekPlanForResultV222=(row,kind)=>{
     if(!row||row.hidden)return null;
     const explicit=row.training_session_id?String(row.training_session_id):'';
-    if(explicit){const p=sessions.find(s=>String(s.id)===explicit);if(p)return p}
+    /* V222: una asociación explícita MANDA siempre. Si apunta a otra semana/sesión,
+       este resultado no puede volver a entrar por la fecha real del ErgData. */
+    if(explicit)return sessions.find(s=>String(s.id)===explicit)||null;
+    /* Una desasignación manual también debe prevalecer sobre cualquier inferencia automática. */
+    if(kind==='concept2'&&String(row.match_status||'').toLowerCase()==='unplanned')return null;
     const strong=v191StrongPlanForResult(row,kind,sessions);if(strong)return strong;
     const type=kind==='concept2'?'ERG':v153ResultType(row);
     const date=kind==='concept2'?v153C2Date(row):v153ResultDate(row);
@@ -2549,8 +2553,8 @@ async function coachWeekView(){
     const sid=String(s.id);
     if(s.session_type==='MAR')return {sea:seaRows.filter(r=>String(r.training_session_id)===sid),logs:[],c2:[]};
     const type=s.session_type==='GYM'?'GYM':'ERG';
-    const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&String(weekPlanForResultV220(w,'workout')?.id||'')===sid);
-    const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&String(weekPlanForResultV220(r,'concept2')?.id||'')===sid):[];
+    const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&String(weekPlanForResultV222(w,'workout')?.id||'')===sid);
+    const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&String(weekPlanForResultV222(r,'concept2')?.id||'')===sid):[];
     /* Un remero cuenta una sola vez. Si existen manual + ErgData para el mismo remero,
        se conserva ErgData para la vista porque contiene los parciales más completos. */
     const byUser=new Map();
@@ -2570,7 +2574,16 @@ async function coachWeekView(){
       const c2Html=c2.map(r=>`<section class="last"><b>${esc(nameFor(r.user_id))}</b> · Concept2 / ErgData<br>${r.distance_m??'—'} m · ${r.time_formatted||'—'} · /500 ${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'} · ${r.spm??'—'} ppm${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}</section>`).join('');
       body=(manualHtml||c2Html)?`${manualHtml}${c2Html}`:'<p class="muted">No hay resultados registrados para esta sesión.</p>';
     }
-    const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard" style="max-width:900px"><div class="modalTitle"><div><h2 style="margin-bottom:4px">Resultados · ${esc(x.title)}</h2><div class="muted">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</div></div><button class="closeWeekResultsV209">Cerrar</button></div>${body}<div class="actions"><button class="closeWeekResultsV209 primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekResultsV209').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()};
+    const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard" style="max-width:900px"><div class="modalTitle"><div><h2 style="margin-bottom:4px">Resultados · ${esc(x.title)}</h2><div class="muted">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</div></div><button class="closeWeekResultsV209">Cerrar</button></div>${body}<div class="actions"><button class="closeWeekResultsV209 primary">Cerrar</button></div></div>`;document.body.appendChild(d);
+    d.querySelectorAll('.closeWeekResultsV209').forEach(b=>b.onclick=()=>d.remove());
+    /* V222: los botones de parciales dentro del modal Semana antes se dibujaban pero no tenían evento. */
+    d.querySelectorAll('.v143ToggleSplit').forEach(button=>button.onclick=()=>{
+      const row=c2.find(r=>String(r.id)===String(button.dataset.result));
+      if(!row)return;
+      const authSessionId=row.training_session_id||x.id;
+      v143ToggleSplit(row,row.user_id,authSessionId,Number(button.dataset.index),()=>{d.remove();showResultsV209(id)});
+    });
+    d.onclick=e=>{if(e.target===d)d.remove()};
   };
   coachWeekTeam.onchange=()=>{coachSelectedTeam=coachWeekTeam.value;coachWeekView()};coachWeekPrev.onclick=()=>{coachWeekStart=addDaysISO(start,-7);coachWeekView()};coachWeekNext.onclick=()=>{coachWeekStart=addDaysISO(start,7);coachWeekView()};
   coachWeekArea.querySelectorAll('.weekDetailSession').forEach(b=>b.onclick=()=>showDetail(b.dataset.id));coachWeekArea.querySelectorAll('.weekViewResultsV209').forEach(b=>b.onclick=()=>showResultsV209(b.dataset.id));coachWeekArea.querySelectorAll('.weekEditSession').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date,Number(b.dataset.id)));coachWeekArea.querySelectorAll('.weekEdit').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
