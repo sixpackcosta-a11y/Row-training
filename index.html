@@ -1815,7 +1815,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="230";
+const APP_VERSION="231";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2673,14 +2673,27 @@ async function coachWeekView(){
   const compact=x=>{const lines=String(x.content||'').split(/\n+/).map(z=>z.trim()).filter(Boolean);const dur=(lines.find(z=>/DURACI[ÓO]N (OBJETIVO|ESTIMADA)/i.test(z))||'').replace(/^.*?·\s*/,'');const obj=(lines.find(z=>/^OBJETIVO/i.test(z))||'').replace(/^.*?·\s*/,'');const load=(lines.find(z=>/^CARGA/i.test(z))||'').replace(/^.*?·\s*/,'');const work=lines.filter(z=>!/^(CALENTAMIENTO|RECUPERACI[ÓO]N|VUELTA A LA CALMA|OBJETIVO|CARGA|DURACI[ÓO]N)/i.test(z)).slice(0,2);return `<div class="weekMeta">${dur?`<span>⏱ ${esc(dur)}</span>`:''}${obj?`<span>🎯 ${esc(obj)}</span>`:''}${load?`<span>⚙ ${esc(load)}</span>`:''}</div>${work.length?`<div class="weekKey">${work.map(z=>esc(z)).join('<br>')}</div>`:''}`};
   const auditBox=document.getElementById('coachWeekAuditV228');
   let auditFilter='attention';
+  // V231 · para ocultar un ErgData sin asignación desde esta revisión, el backend necesita
+  // una sesión ERGO del mismo equipo únicamente para verificar permisos del entrenador.
+  // No se asigna el resultado a esa sesión: se usa solo como autorización.
+  const auditAuthSessionIdV231=(r,a)=>{
+    if(r?.training_session_id)return String(r.training_session_id);
+    if(a?.plan?.id)return String(a.plan.id);
+    const rd=String(r?.workout_date||'').slice(0,10);
+    const candidates=(auditPlans||[]).filter(x=>x.session_type==='ERG'&&String(x.team_code||'')===String(team));
+    if(!candidates.length)return '';
+    const day=n=>{const d=new Date(String(n)+'T12:00:00');return Number.isNaN(d.getTime())?0:d.getTime()};
+    candidates.sort((x,y)=>Math.abs(day(x.session_date)-day(rd))-Math.abs(day(y.session_date)-day(rd)));
+    return String(candidates[0]?.id||'');
+  };
   const auditResultDetailHtml=(r,a)=>{
     const date=String(r.workout_date||'').slice(0,10),parts=v228ResultParts(r),activeParts=parts.filter((_,i)=>!(r.excluded_splits||[]).map(Number).includes(i));
     const totalTime=r.time_formatted||((r.time_tenths!=null&&typeof v112C2TenthsText==='function')?v112C2TenthsText(r.time_tenths):'—');
-    return `<div class="v229AuditMetrics"><div class="v229AuditMetric"><small>Distancia</small>${r.distance_m??'—'} m</div><div class="v229AuditMetric"><small>Tiempo</small>${esc(totalTime||'—')}</div><div class="v229AuditMetric"><small>Ritmo /500</small>${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'}</div><div class="v229AuditMetric"><small>PPM</small>${r.spm??'—'}</div></div>${activeParts.length?`<div><b>Parciales:</b> ${activeParts.length}</div>${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}`:'<div class="muted"><small>Sin parciales utilizables para verificar la estructura.</small></div>'}${a.plan?.content?`<details><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(a.plan.content)}</div></details>`:''}<div class="staffActions"><button type="button" class="v229AuditAssign" data-id="${r.id}" data-athlete="${r.user_id}" data-date="${date}" data-session="${r.training_session_id||''}">${r.training_session_id?'Cambiar asignación':'Asignar a una sesión'}</button>${r.training_session_id?`<button type="button" class="v229AuditUnassign" data-id="${r.id}" data-athlete="${r.user_id}" data-session="${r.training_session_id}">Desasignar</button>`:''}</div>`;
+    return `<div class="v229AuditMetrics"><div class="v229AuditMetric"><small>Distancia</small>${r.distance_m??'—'} m</div><div class="v229AuditMetric"><small>Tiempo</small>${esc(totalTime||'—')}</div><div class="v229AuditMetric"><small>Ritmo /500</small>${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'}</div><div class="v229AuditMetric"><small>PPM</small>${r.spm??'—'}</div></div>${activeParts.length?`<div><b>Parciales:</b> ${activeParts.length}</div>${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}`:'<div class="muted"><small>Sin parciales utilizables para verificar la estructura.</small></div>'}${a.plan?.content?`<details><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(a.plan.content)}</div></details>`:''}<div class="staffActions"><button type="button" class="v229AuditAssign" data-id="${r.id}" data-athlete="${r.user_id}" data-date="${date}" data-session="${r.training_session_id||''}">${r.training_session_id?'Cambiar asignación':'Asignar a una sesión'}</button>${r.training_session_id?`<button type="button" class="v229AuditUnassign" data-id="${r.id}" data-athlete="${r.user_id}" data-session="${r.training_session_id}">Desasignar</button>`:''}<button type="button" class="v231AuditHide" data-id="${r.id}" data-athlete="${r.user_id}" data-auth-session="${auditAuthSessionIdV231(r,a)}">Ocultar</button></div>`;
   };
   const renderAudit=()=>{
     if(!auditBox)return;
-    const auditRows=c2Rows.map(r=>{const a=v228AuditOne(r,auditPlans);return a?{r,a}:null}).filter(Boolean);
+    const auditRows=c2Rows.filter(r=>!v161Concept2EffectiveHidden(r)).map(r=>{const a=v228AuditOne(r,auditPlans);return a?{r,a}:null}).filter(Boolean);
     // V230 · si un mismo remero tiene más de un ErgData asociado a la MISMA sesión,
     // ninguno se etiqueta como correcto automáticamente. Es el patrón típico calentamiento + trabajo.
     const assignedGroups=new Map();
@@ -2692,6 +2705,7 @@ async function coachWeekView(){
     auditBox.querySelectorAll('[data-af]').forEach(b=>b.onclick=e=>{e.preventDefault();auditFilter=b.dataset.af;renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true});
     auditBox.querySelectorAll('.v229AuditAssign').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();const row=c2Rows.find(x=>String(x.id)===String(button.dataset.id));if(!row)return;v140AssignResult('concept2',row.id,'ERG',button.dataset.date,row.user_id,team,session=>{row.training_session_id=session?.id||null;row.matched_session_code=session?.title||null;row.match_status=session?'matched':'unplanned';row.match_confidence=session?100:0;renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true},button.dataset.session)});
     auditBox.querySelectorAll('.v229AuditUnassign').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();const row=c2Rows.find(x=>String(x.id)===String(button.dataset.id));if(!row)return;v162UnassignResult('concept2',row.id,row.user_id,button.dataset.session,()=>{row.training_session_id=null;row.matched_session_code=null;row.match_status='unplanned';row.match_confidence=0;renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true})});
+    auditBox.querySelectorAll('.v231AuditHide').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();const row=c2Rows.find(x=>String(x.id)===String(button.dataset.id));if(!row)return;const authSessionId=button.dataset.authSession||'';v142ToggleConcept2Hidden(row.id,row.user_id,authSessionId,false,hidden=>{row.hidden=hidden;renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true})});
     auditBox.querySelectorAll('.v143ToggleSplit').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();const row=c2Rows.find(r=>String(r.id)===String(button.dataset.result));if(!row)return;const authSessionId=row.training_session_id||'';v143ToggleSplit(row,row.user_id,authSessionId,Number(button.dataset.index),()=>{renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true})});
   };
   renderAudit();
