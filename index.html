@@ -1815,7 +1815,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="231";
+const APP_VERSION="232";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2596,10 +2596,10 @@ async function coachWeekView(){
        (p. ej. realizado el 10/9 pero asignado al entrenamiento planificado del 1/9). */
     const [seaQ,workDateQ,workAssignedQ,c2DateQ,c2AssignedQ,profQ,memberQ]=await Promise.all([
       sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,created_at').in('training_session_id',sessionIds).order('created_at'),
-      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).order('created_at'),
-      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').in('training_session_id',sessionIds).order('created_at'),
-      sb.from('concept2_results').select('*').gte('workout_date',start).lte('workout_date',end).order('workout_date'),
-      sb.from('concept2_results').select('*').in('training_session_id',sessionIds).order('workout_date'),
+      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).or('hidden.is.false,hidden.is.null').order('created_at'),
+      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').in('training_session_id',sessionIds).or('hidden.is.false,hidden.is.null').order('created_at'),
+      sb.from('concept2_results').select('*').gte('workout_date',start).lte('workout_date',end).or('hidden.is.false,hidden.is.null').order('workout_date'),
+      sb.from('concept2_results').select('*').in('training_session_id',sessionIds).or('hidden.is.false,hidden.is.null').order('workout_date'),
       sb.from('profiles').select('user_id,full_name,team_code'),
       sb.from('rower_team_memberships').select('user_id,team_code').eq('team_code',team)
     ]);
@@ -4831,7 +4831,7 @@ function v214ErgoZoneHtml(result,plan,metric,connected,kind='manual'){
   if(connected===false)out+=`<div class="ergoZoneV214 info">🔗 <b>ErgData no está conectado.</b> Conecta tu cuenta de ErgData/Concept2 para sincronizar automáticamente los resultados${!hr?' y utiliza también la banda cardíaca.':'.'}</div>`;
   return out;
 }
-function v161Concept2EffectiveHidden(x){const d=String(x?.workout_date||x?.date||x?.created_at||'').slice(0,10);return x?.hidden===true|| (!!d&&d<'2026-09-01')}
+function v161Concept2EffectiveHidden(x){const d=String(x?.workout_date||x?.date||x?.created_at||'').slice(0,10),h=x?.hidden;return h===true||h===1||String(h).toLowerCase()==='true'||String(h)==='1'|| (!!d&&d<'2026-09-01')}
 function v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2,plannedSessions=[],team='',metric=null,ergConnected=null){
   const ws=(workouts||[]).filter(w=>w.user_id===p.user_id).sort((a,b)=>String(b.session_date||b.created_at).localeCompare(String(a.session_date||a.created_at)));
   const c2s=(c2||[]).filter(x=>x.user_id===p.user_id).map(v144C2ForDisplay).sort((a,b)=>String(b.workout_date).localeCompare(String(a.workout_date)));
