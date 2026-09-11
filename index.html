@@ -1778,7 +1778,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="222";
+const APP_VERSION="223";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2504,17 +2504,25 @@ async function coachWeekView(){
     /* V219: la semana del entrenador necesita también resultados todavía sin training_session_id.
        Se cargan por fecha y después se limitan a los remeros del equipo. Así el contador y
        "Ver resultados" usan exactamente la misma asociación segura que cumplimiento/historial. */
-    const [seaQ,workQ,c2Q,profQ,memberQ]=await Promise.all([
+    /* V223: cargar DOS conjuntos para GYM/ERGO:
+       1) resultados realizados dentro de las fechas de la semana, para recuperar los aún no asignados;
+       2) resultados con training_session_id de una sesión de ESTA semana, aunque se realizaran otro día.
+       La segunda consulta es imprescindible cuando el entrenador mueve manualmente un ErgData
+       (p. ej. realizado el 10/9 pero asignado al entrenamiento planificado del 1/9). */
+    const [seaQ,workDateQ,workAssignedQ,c2DateQ,c2AssignedQ,profQ,memberQ]=await Promise.all([
       sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,created_at').in('training_session_id',sessionIds).order('created_at'),
       sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).order('created_at'),
+      sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').in('training_session_id',sessionIds).order('created_at'),
       sb.from('concept2_results').select('*').gte('workout_date',start).lte('workout_date',end).order('workout_date'),
+      sb.from('concept2_results').select('*').in('training_session_id',sessionIds).order('workout_date'),
       sb.from('profiles').select('user_id,full_name,team_code'),
       sb.from('rower_team_memberships').select('user_id,team_code').eq('team_code',team)
     ]);
     seaRows=seaQ.error?[]:(seaQ.data||[]);profiles=profQ.error?[]:(profQ.data||[]);
+    const mergeById=(...lists)=>{const m=new Map();lists.flat().forEach(x=>{if(x&&x.id!=null)m.set(String(x.id),x)});return [...m.values()]};
     const teamUsers=new Set([...(memberQ.error?[]:(memberQ.data||[])).map(x=>String(x.user_id)),...profiles.filter(p=>String(p.team_code||'')===String(team)).map(p=>String(p.user_id))]);
-    workoutRows=(workQ.error?[]:(workQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
-    c2Rows=(c2Q.error?[]:(c2Q.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
+    workoutRows=mergeById(workDateQ.error?[]:(workDateQ.data||[]),workAssignedQ.error?[]:(workAssignedQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
+    c2Rows=mergeById(c2DateQ.error?[]:(c2DateQ.data||[]),c2AssignedQ.error?[]:(c2AssignedQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
     const workoutIds=workoutRows.map(x=>Number(x.id)).filter(Number.isFinite);
     if(workoutIds.length){
       const [gq,eq]=await Promise.all([
