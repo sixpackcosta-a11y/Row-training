@@ -1778,7 +1778,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="220";
+const APP_VERSION="221";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -2507,7 +2507,7 @@ async function coachWeekView(){
     const [seaQ,workQ,c2Q,profQ,memberQ]=await Promise.all([
       sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,created_at').in('training_session_id',sessionIds).order('created_at'),
       sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).order('created_at'),
-      sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,distance_m,time_formatted,pace_500_seconds,spm,match_status,matched_session_code,hidden,raw_data,excluded_splits').gte('workout_date',start).lte('workout_date',end).order('workout_date'),
+      sb.from('concept2_results').select('*').gte('workout_date',start).lte('workout_date',end).order('workout_date'),
       sb.from('profiles').select('user_id,full_name,team_code'),
       sb.from('rower_team_memberships').select('user_id,team_code').eq('team_code',team)
     ]);
@@ -2525,7 +2525,10 @@ async function coachWeekView(){
     }
   }
   const nameFor=uid=>profiles.find(p=>String(p.user_id)===String(uid))?.full_name||'Remero';
-  /* V220 · asociación SOLO para la vista Semana.
+  /* V221 · corrige la carga de Concept2 en Semana: V220 pedía la columna inexistente raw_data,
+     por lo que Supabase devolvía error y c2Rows quedaba vacío. Se usa select(*) para incluir raw_result
+     y mantener parciales/FC sin romper el contador.
+     V220 · asociación SOLO para la vista Semana.
      No escribe ni reasigna nada en Supabase. Además de la asociación explícita y de la
      recuperación fuerte por título, permite mostrar un resultado por fecha/tipo cuando
      ese equipo tiene UNA sola sesión de ese tipo ese día. Esto evita que varios ErgData
