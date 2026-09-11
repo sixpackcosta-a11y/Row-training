@@ -1814,7 +1814,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="225";
+const APP_VERSION="226";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5134,7 +5134,41 @@ async function todayView(){
   v225BindPendingFilters(document.getElementById('v225RowerPendingList'));
 }
 
+
+/* V226 · restaura helpers de Semana del remero y evita carga infinita */
+function athleteWeekRangeV123(start,end){return `${shortDateES(start)} – ${shortDateES(end)}`}
+function athleteWeekSessionV123(s){
+  const type=String(s?.session_type||'').toUpperCase();
+  const isMar=type==='MAR',isGym=type==='GYM',isErg=type==='ERG',isTest=/test/i.test(String(s?.title||''));
+  const title=isMar?'Sesión de mar':(s?.title||type||'Entrenamiento');
+  const detail=isMar?'<div class="athleteWeekSeaV123">🚣 Sesión de mar</div>':isGym?athleteGymPreviewV117(s):trainingContentHtml(s?.content||'');
+  const actions=isMar?'':isGym?`<button class="athleteLogGymV113 primary" data-id="${s.id}">Registrar GYM</button>`:isErg?`<button class="athleteOpenErgoV113 primary" data-id="${s.id}">Abrir en ErgData</button><button class="athleteManualErgoV113" data-id="${s.id}">Registrar manualmente</button>`:'';
+  return `<details class="athleteWeekSessionV123" data-id="${s.id}" data-date="${esc(s.session_date||'')}" data-type="${esc(type)}"><summary><div class="athleteWeekSessionMainV123"><div class="athleteWeekSessionTopV123"><span class="athleteWeekTypeV123 ${isMar?'mar':''} ${isTest?'test':''}">${isTest?'TEST':esc(type||'SES')}</span><span class="athleteWeekSessionTitleV123">${esc(title)}</span></div><div class="athleteWeekSessionBottomV123"><span>${isMar?'Contenido reservado para entrenador':'Toca para ver detalle'}</span><span class="athleteWeekStatusV123">Pendiente</span></div></div><span class="athleteWeekChevronV123">⌄</span></summary><div class="athleteWeekDetailV123">${detail}${actions?`<div class="staffActions">${actions}</div>`:''}</div></details>`
+}
 async function loadRowerWeekComplianceV123(start,end,sessions){const box=document.getElementById('rowerWeekComplianceV123');if(!box||!currentUser)return;try{const [ww,gg,cc]=await Promise.all([sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,created_at,hidden').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100),sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,note,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(500),sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(100)]),err=ww.error||gg.error||cc.error;if(err)throw err;const c=v79ComplianceForAthlete(currentUser.id,sessions,ww.data||[],gg.data||[],cc.data||[],start,end),pct=Math.max(0,Math.min(100,c.percent||0));if(!document.getElementById('rowerWeekComplianceV123'))return;box.innerHTML=c.expected?`<div class="athleteWeekProgressTopV123"><b>${c.completed}/${c.expected} sesiones completadas</b><span>${pct}%</span></div><div class="athleteWeekProgressBarV123" aria-label="Progreso semanal ${pct}%"><span style="width:${pct}%"></span></div>`:'<div class="athleteWeekProgressTopV123"><b>Sin sesiones GYM/ERGO</b><span>—</span></div>';const queues={};c.details.forEach(x=>{const key=`${x.date}|${x.type==='ERGO'?'ERG':'GYM'}`;(queues[key]||(queues[key]=[])).push(x)});content.querySelectorAll('.athleteWeekSessionV123[data-type="GYM"],.athleteWeekSessionV123[data-type="ERG"]').forEach(row=>{const x=(queues[`${row.dataset.date}|${row.dataset.type}`]||[]).shift(),status=row.querySelector('.athleteWeekStatusV123');if(x?.done){row.classList.add('is-done');if(status)status.textContent='Completada ✓'}else if(status)status.textContent='Pendiente'})}catch(e){box.innerHTML='<span class="muted">No se pudo calcular el cumplimiento semanal.</span>'}}
-async function weekly(){const start=athleteWeekStartV113,end=addDaysISO(start,6);content.innerHTML='<div class="card athleteWeekV123"><div class="athleteWeekLoadV123">Cargando semana…</div></div>';const [ss,cc]=await Promise.all([loadAthleteSessionsV139(currentTeamCode,start,end),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])]);if(tab!=='semana'||currentMode!=='athlete')return;const sessions=ss.data||[],comps=cc.error?[]:(cc.data||[]),days=Array.from({length:7},(_,i)=>addDaysISO(start,i)),names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],today=localISODate();content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekNavV123"><button id="rowerPrevWeek" type="button" aria-label="Semana anterior">‹</button><div class="athleteWeekTitleV123"><h2>${athleteWeekRangeV123(start,end)}</h2><small>${esc(teamLabel(currentTeamCode))}</small></div><button id="rowerNextWeek" type="button" aria-label="Semana siguiente">›</button></div><div id="rowerWeekComplianceV123" class="athleteWeekProgressV123"><span class="muted">Calculando cumplimiento…</span></div><div class="athleteWeekDaysV123">${days.map((d,i)=>{const xs=sessions.filter(x=>x.session_date===d),cs=comps.filter(x=>x.competition_date===d),items=`${cs.map(c=>`<div class="athleteWeekRaceV123">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${xs.map(athleteWeekSessionV123).join('')}`;return `<section class="athleteWeekDayV123 ${d===today?'is-today':''}"><div class="athleteWeekDateV123"><b>${names[i]}</b><strong>${Number(d.slice(-2))}</strong>${d===today?'<em>HOY</em>':''}</div><div class="athleteWeekItemsV123">${items||'<div class="athleteWeekRestV123">Descanso · sin sesión planificada</div>'}</div></section>`}).join('')}</div></div>`;rowerPrevWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,-7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};rowerNextWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};content.querySelectorAll('.athleteWeekSessionV123').forEach(row=>row.addEventListener('toggle',()=>{if(!row.open)return;athleteSelectedDateV113=row.dataset.date;content.querySelectorAll('.athleteWeekSessionV123[open]').forEach(other=>{if(other!==row)other.open=false})}));bindAthletePlannedActionsV113(content,sessions,weekly);loadRowerWeekComplianceV123(start,end,sessions)}
+async function weekly(){
+  const start=athleteWeekStartV113,end=addDaysISO(start,6);
+  content.innerHTML='<div class="card athleteWeekV123"><div class="athleteWeekLoadV123">Cargando semana…</div></div>';
+  try{
+    const [ss,cc]=await Promise.all([
+      loadAthleteSessionsV139(currentTeamCode,start,end),
+      sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
+    ]);
+    if(tab!=='semana'||currentMode!=='athlete')return;
+    if(ss?.error)console.warn('Semana remero: sesiones MAR/planificación',ss.error);
+    const sessions=ss?.data||[],comps=cc?.error?[]:(cc?.data||[]),days=Array.from({length:7},(_,i)=>addDaysISO(start,i)),names=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],today=localISODate();
+    content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekNavV123"><button id="rowerPrevWeek" type="button" aria-label="Semana anterior">‹</button><div class="athleteWeekTitleV123"><h2>${athleteWeekRangeV123(start,end)}</h2><small>${esc(teamLabel(currentTeamCode))}</small></div><button id="rowerNextWeek" type="button" aria-label="Semana siguiente">›</button></div><div id="rowerWeekComplianceV123" class="athleteWeekProgressV123"><span class="muted">Calculando cumplimiento…</span></div><div class="athleteWeekDaysV123">${days.map((d,i)=>{const xs=sessions.filter(x=>x.session_date===d),cs=comps.filter(x=>x.competition_date===d),items=`${cs.map(c=>`<div class="athleteWeekRaceV123">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${xs.map(athleteWeekSessionV123).join('')}`;return `<section class="athleteWeekDayV123 ${d===today?'is-today':''}"><div class="athleteWeekDateV123"><b>${names[i]}</b><strong>${Number(d.slice(-2))}</strong>${d===today?'<em>HOY</em>':''}</div><div class="athleteWeekItemsV123">${items||'<div class="athleteWeekRestV123">Descanso · sin sesión planificada</div>'}</div></section>`}).join('')}</div></div>`;
+    rowerPrevWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,-7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};
+    rowerNextWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};
+    content.querySelectorAll('.athleteWeekSessionV123').forEach(row=>row.addEventListener('toggle',()=>{if(!row.open)return;athleteSelectedDateV113=row.dataset.date;content.querySelectorAll('.athleteWeekSessionV123[open]').forEach(other=>{if(other!==row)other.open=false})}));
+    bindAthletePlannedActionsV113(content,sessions,weekly);
+    loadRowerWeekComplianceV123(start,end,sessions);
+  }catch(e){
+    console.error('Semana remero V226',e);
+    if(tab==='semana'&&currentMode==='athlete')content.innerHTML=`<div class="card"><h2>Semana</h2><div class="warn">No se pudo cargar la semana.</div><p class="muted">${esc(e?.message||'Error de carga')}</p><button id="retryRowerWeekV226" class="primary">Reintentar</button></div>`;
+    const retry=document.getElementById('retryRowerWeekV226');if(retry)retry.onclick=weekly;
+  }
+}
+
 </script>
 </body></html>
