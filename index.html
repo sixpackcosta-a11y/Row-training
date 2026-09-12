@@ -294,6 +294,21 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .complianceCalendarScrollV151 .complianceCellBtnV237{min-width:48px!important;min-height:42px!important;padding:6px 10px!important}
   .complianceCalendarScrollV151 .tag{min-width:48px!important;padding:6px 10px!important;text-align:center!important}
 }
+
+/* V240 · cumplimiento móvil: sin corte horizontal y subapartados plegados */
+@media(max-width:700px){
+  #complianceSectionV123 .coachAnalysisSectionBodyV123{padding-left:8px!important;padding-right:8px!important;overflow:visible!important}
+  #teamCompliance,.complianceSubV176,.complianceSubBodyV176{max-width:100%!important;min-width:0!important}
+  .complianceSubV176{margin-left:0!important;margin-right:0!important;overflow:hidden!important}
+  .complianceSubBodyV176{padding:10px 8px!important}
+  .complianceCalendarScrollV151{width:100%!important;max-width:100%!important;overflow-x:hidden!important;margin:0!important;padding:0!important}
+  .complianceCalendarScrollV151 .complianceTableV100{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;font-size:.72rem!important}
+  .complianceCalendarScrollV151 .complianceTableV100 th:first-child,.complianceCalendarScrollV151 .complianceTableV100 td:first-child{position:static!important;width:34%!important;min-width:0!important;max-width:none!important;padding:6px 4px!important;white-space:normal!important;overflow-wrap:anywhere!important}
+  .complianceCalendarScrollV151 .complianceTableV100 th:not(:first-child),.complianceCalendarScrollV151 .complianceTableV100 td:not(:first-child){width:auto!important;min-width:0!important;max-width:none!important;padding:5px 1px!important;text-align:center!important}
+  .complianceCalendarScrollV151 .complianceCellBtnV237,.complianceCalendarScrollV151 .tag{min-width:0!important;width:88%!important;max-width:46px!important;min-height:38px!important;padding:5px 2px!important}
+  .complianceCalendarScrollV151 th{font-size:.7rem!important;line-height:1.15!important}
+}
+.v240ReviewBanner{background:#fff8e8;border:1px solid #edc36b;border-radius:12px;padding:10px 12px;margin:8px 0 12px}.v240ReviewBanner .staffActions{margin-top:8px}.v240ReviewBanner button{font-size:.82rem;padding:8px 10px}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -1885,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="239";
+const APP_VERSION="240";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5092,8 +5107,12 @@ async function results(){
     renderCoachPendingV150(ats);
     renderComparison();
     const teamSessions=sessions.filter(s=>s.team_code===team),rows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,weekStart,end)}));
+    const v240ReviewErgos=[];
     if(complianceMode==='week'){
-      teamBox.innerHTML=`<details class="complianceSubV176" open><summary><b>Resumen semanal</b><span>Porcentajes y sesiones completadas</span></summary><div class="complianceSubBodyV176"><p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. MAR queda fuera.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} semana · ${c.dueExpected?`${c.dueCompleted}/${c.dueExpected} al día`:'sin vencidas'}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} de la semana`:'Sin sesiones'}${c.dueExpected?` · ${c.dueCompleted}/${c.dueExpected} al día`:''}</b></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
+      const weekErgos=teamSessions.filter(s=>s.session_type==='ERG'&&s.session_date>=weekStart&&s.session_date<=end);
+      rows.forEach(({a,c})=>weekErgos.forEach(plan=>{const d=c.details.find(x=>String(x.id)===String(plan.id));if(d?.done&&complianceCellStateV237(a.user_id,plan)?.state==='review')v240ReviewErgos.push({a,plan})}));
+      const v240ReviewHtml=v240ReviewErgos.length?`<div class="v240ReviewBanner"><b>⚠️ ${v240ReviewErgos.length} ERGO${v240ReviewErgos.length===1?'':'s'} por resolver esta semana</b><div class="muted"><small>Son los mismos resultados que aparecen en ámbar en el calendario.</small></div><div class="staffActions">${v240ReviewErgos.map(({a,plan})=>`<button type="button" class="v240OpenReview" data-user="${esc(a.user_id)}" data-session="${esc(plan.id)}">${esc(a.full_name||'Remero')} · ${shortDateES(plan.session_date)}</button>`).join('')}</div></div>`:'';
+      teamBox.innerHTML=`<details class="complianceSubV176"><summary><b>Resumen semanal</b><span>Porcentajes y sesiones completadas</span></summary><div class="complianceSubBodyV176">${v240ReviewHtml}<p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. MAR queda fuera.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} semana · ${c.dueExpected?`${c.dueCompleted}/${c.dueExpected} al día`:'sin vencidas'}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} de la semana`:'Sin sesiones'}${c.dueExpected?` · ${c.dueCompleted}/${c.dueExpected} al día`:''}</b></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
       teamBox.insertAdjacentHTML('beforeend','</div></details><details class="complianceSubV176"><summary><b>Calendario de cumplimiento</b><span>Detalle por sesión planificada</span></summary><div class="complianceSubBodyV176">'+v143TeamCalendarHtml(rows,teamSessions,weekStart,end,complianceCellStateV237)+'</div></details>');
     }else{
       const mEnd=monthEndV151(monthStart),mRows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,monthStart,mEnd)}));
@@ -5101,7 +5120,7 @@ async function results(){
       const plannedMonth=teamSessions.filter(s=>s.session_date>=monthStart&&s.session_date<=mEnd&&['GYM','ERG'].includes(s.session_type)).length;
       teamBox.innerHTML=`<h3>Cumplimiento mensual · ${esc(monthLabelV151(monthStart))}</h3><p class="muted">Resumen mensual. “2 de 4 · 50 %” significa 2 sesiones realizadas de 4 planificadas/computables. Pulsa en el nombre de un remero para abrir su análisis individual.</p><div class="monthSummaryV151"><div><small>Sesiones planificadas</small><b>${plannedMonth}</b></div><div><small>Remeros al día</small><b>${upToDate}/${dueEligible.length||ats.length}</b></div><div><small>Mes completo</small><b>${fullMonth}/${ats.length}</b></div></div><div class="monthRowerListV151">${mRows.map(({a,c})=>{const pct=c.percent==null?0:c.percent,up=c.dueExpected&&c.dueCompleted===c.dueExpected;return `<div class="monthRowerV151"><button type="button" class="openAthlete monthAthleteLinkV170" data-user="${a.user_id}" title="Abrir análisis individual">${esc(a.full_name||'Sin nombre')}</button><span class="monthPctV151 ${pct===100?'ok':''}">${c.expected?`${c.completed} de ${c.expected} · ${pct}%`:'—'}</span><span class="monthDueV151 ${up?'ok':'pending'}">${c.dueExpected?(up?'✓ Al día':`${c.dueCompleted}/${c.dueExpected} vencidas`):'Sin sesiones vencidas'}</span></div>`}).join('')}</div>`;
     }
-    teamBox.querySelectorAll('.complianceCellBtnV237').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));teamBox.querySelectorAll('.complianceCalendarScrollV151').forEach(sc=>{sc.scrollLeft=0});
+    teamBox.querySelectorAll('.complianceCellBtnV237').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));teamBox.querySelectorAll('.v240OpenReview').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));teamBox.querySelectorAll('.complianceCalendarScrollV151').forEach(sc=>{sc.scrollLeft=0});
     teamBox.querySelectorAll('.openAthlete').forEach(b=>b.onclick=()=>{selectedAthlete=b.dataset.user;athSel.value=selectedAthlete;athleteSection.open=true;renderAthlete();athleteSection.scrollIntoView({behavior:'smooth',block:'start'})});
     renderAthlete();
   }
