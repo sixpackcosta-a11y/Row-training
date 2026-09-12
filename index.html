@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="241";
+const APP_VERSION="242";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5035,15 +5035,19 @@ async function results(){
     compare.innerHTML=`<section class="profileCompareWrapV103"><div class="profileCompareToolbarV103"><div><h3 style="margin:0">Comparar perfiles · ${esc(teamLabel(team))}</h3><div class="muted">Edad, talla, peso y zonas de frecuencia cardiaca. “Pendiente” indica que falta completar el dato.</div></div><span class="sectionCount">${rows.length}</span></div>${rows.length?`<div class="profileCompareDesktopV103 tableWrap"><table class="profileCompareTableV103"><thead><tr><th>Remero</th><th class="ergColV103">ErgData</th><th>Edad</th><th>Altura</th><th>Peso</th><th>FC rep.</th><th>FC máx.</th><th>UT2</th><th>UT1</th><th>AT</th><th>TR</th><th>AN</th><th></th></tr></thead><tbody>${rows.map(({p,m,age})=>`<tr><td><b>${esc(p.full_name||'Sin nombre')}</b></td><td>${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,true)}</td><td>${metricValueV103(age,' años')}</td><td>${metricValueV103(p.height_cm,' cm')}</td><td>${metricValueV103(m?.weight_kg,' kg')}</td><td>${metricValueV103(m?.resting_hr)}</td><td>${metricValueV103(m?.max_hr)}</td>${['ut2','ut1','at','tr','an'].map(z=>`<td>${m&&(m[z+'_min']||m[z+'_max'])?`${m[z+'_min']??'—'}–${m[z+'_max']??'—'}`:'<span class="profilePendingV103">Pendiente</span>'}</td>`).join('')}<td><button class="profileEditBtnV103 editAthleteV103" data-user="${p.user_id}">Editar</button></td></tr>`).join('')}</tbody></table></div><div class="profileMetricCardsV103">${rows.map(({p,m,age})=>`<article class="profileMetricCardV103"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>${esc(p.full_name||'Sin nombre')}</b><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,true)}</div></div><button class="editAthleteV103" data-user="${p.user_id}">Editar</button></div><div class="profileMetricGridV103"><span><b>Edad</b>${metricValueV103(age,' años')}</span><span><b>Altura</b>${metricValueV103(p.height_cm,' cm')}</span><span><b>Peso</b>${metricValueV103(m?.weight_kg,' kg')}</span><span><b>FC reposo / máx</b>${m?`${m.resting_hr??'—'} / ${m.max_hr??'—'}`:'Pendiente'}</span></div><div class="muted" style="margin-top:9px;font-size:.82rem">${esc(zonesCompactV103(m))}</div></article>`).join('')}</div>`:'<div class="info">No hay remeros en este equipo.</div>'}</section>`;
     compare.querySelectorAll('.editAthleteV103').forEach(b=>b.onclick=()=>{const uid=b.dataset.user;openUnifiedPersonEditorV168(uid,{onSaved:({profile,metric})=>{const pp=profiles.find(x=>x.user_id===uid);if(pp)Object.assign(pp,profile||{});if(metric)metrics.unshift(metric);selectedAthlete=uid;renderClient();athleteSection.open=true},onDeleted:async()=>{selectedAthlete='';await results()}})});
   }
+  function v242UniqueResultsById(rows){
+    const seen=new Set();
+    return (rows||[]).filter(r=>{const k=String(r?.id??'');if(!k)return true;if(seen.has(k))return false;seen.add(k);return true});
+  }
   function complianceResultCandidatesV237(uid,plan){
-    const activeWorkouts=workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&String(w.training_session_id||'')===String(plan.id));
-    const activeC2=plan.session_type==='ERG'?c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&String(x.training_session_id||'')===String(plan.id)):[];
+    const activeWorkouts=v242UniqueResultsById(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&String(w.training_session_id||'')===String(plan.id)));
+    const activeC2=plan.session_type==='ERG'?v242UniqueResultsById(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&String(x.training_session_id||'')===String(plan.id))):[];
     if(activeWorkouts.length||activeC2.length)return {workouts:activeWorkouts,c2:activeC2,recovered:false};
     // Compatibilidad con asociaciones seguras antiguas que cuentan para cumplimiento sin escritura en BD.
-    const uw=workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&!w.training_session_id);
-    const uc=plan.session_type==='ERG'?c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&!x.training_session_id):[];
-    const rw=uw.filter(w=>String(v191StrongPlanForResult(w,'workout',[plan])?.id||'')===String(plan.id));
-    const rc=uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',[plan])?.id||'')===String(plan.id));
+    const uw=v242UniqueResultsById(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&!w.training_session_id));
+    const uc=plan.session_type==='ERG'?v242UniqueResultsById(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&!x.training_session_id)):[];
+    const rw=v242UniqueResultsById(uw.filter(w=>String(v191StrongPlanForResult(w,'workout',[plan])?.id||'')===String(plan.id)));
+    const rc=v242UniqueResultsById(uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',[plan])?.id||'')===String(plan.id)));
     return {workouts:rw,c2:rc,recovered:!!(rw.length||rc.length)};
   }
   function v241ResultPerformedDate(kind,row){
