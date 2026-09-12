@@ -33,6 +33,34 @@ async function connection(userId){
   if(!r.ok)throw new Error("No se pudo leer la conexión Concept2.");
   const a=await r.json(); return a[0]||null;
 }
+async function one(path){
+  const r=await rest(path);
+  if(!r.ok)throw new Error((await r.text().catch(()=>''))||'No se pudieron leer los datos.');
+  const a=await r.json(); return a[0]||null;
+}
+async function canCoach(userId,team){
+  const ur=await one(`user_roles?user_id=eq.${encodeURIComponent(userId)}&select=role`);
+  if(ur?.role==='coach')return true;
+  const tr=await one(`team_staff_roles?user_id=eq.${encodeURIComponent(userId)}&team_code=eq.${encodeURIComponent(team)}&staff_role=eq.coach&select=user_id`);
+  return !!tr;
+}
+async function handleReviewAction(me,body,res){
+  const action=String(body?.action||'');
+  if(!['validate','unvalidate'].includes(action))return false;
+  const resultId=String(body.result_id||''),athlete=String(body.athlete_user_id||''),sessionId=String(body.training_session_id||'');
+  if(!resultId||!athlete||!sessionId){res.status(400).json({error:'Faltan datos de la validación.'});return true;}
+  const result=await one(`concept2_results?id=eq.${encodeURIComponent(resultId)}&user_id=eq.${encodeURIComponent(athlete)}&select=id,user_id,training_session_id,match_status`);
+  if(!result){res.status(404).json({error:'No se encontró el resultado de ErgData.'});return true;}
+  if(String(result.training_session_id||'')!==sessionId){res.status(409).json({error:'La asignación ha cambiado. Recarga la semana antes de validar.'});return true;}
+  const plan=await one(`training_sessions?id=eq.${encodeURIComponent(sessionId)}&select=id,team_code,title`);
+  if(!plan){res.status(404).json({error:'No se encontró la sesión planificada.'});return true;}
+  if(!(await canCoach(me.id,plan.team_code))){res.status(403).json({error:'No tienes permiso para validar resultados de este equipo.'});return true;}
+  const patch=action==='validate'?{match_status:'validated',match_confidence:100,updated_at:new Date().toISOString()}:{match_status:'matched',match_confidence:100,updated_at:new Date().toISOString()};
+  const up=await rest(`concept2_results?id=eq.${encodeURIComponent(resultId)}&user_id=eq.${encodeURIComponent(athlete)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(patch)});
+  if(!up.ok)throw new Error((await up.text().catch(()=>''))||'No se pudo guardar la validación.');
+  res.json({ok:true,validated:action==='validate'});
+  return true;
+}
 async function validToken(c){
   if(new Date(c.expires_at).getTime()>Date.now()+60000)return c.access_token;
   const secret=process.env.CONCEPT2_CLIENT_SECRET;
@@ -178,9 +206,13 @@ async function enrichIntervalDetails(results,token){
 module.exports=async function handler(req,res){
   try{
     const me=await authUser(req);
+    if(req.method!=="GET"&&req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
+    if(req.method==="POST"&&req.body?.action){
+      if(await handleReviewAction(me,req.body,res))return;
+      return res.status(400).json({error:"Acción no válida."});
+    }
     const c=await connection(me.id);
     if(req.method==="GET")return res.json({connected:!!c,username:c?.concept2_username||null,last_sync_at:c?.last_sync_at||null});
-    if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
     if(!c)return res.status(409).json({error:"Primero conecta tu cuenta Concept2."});
 
     const token=await validToken(c);
