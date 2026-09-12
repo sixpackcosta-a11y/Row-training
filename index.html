@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="242";
+const APP_VERSION="243";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5039,15 +5039,41 @@ async function results(){
     const seen=new Set();
     return (rows||[]).filter(r=>{const k=String(r?.id??'');if(!k)return true;if(seen.has(k))return false;seen.add(k);return true});
   }
+  // V243 · una fila duplicada en BD no puede convertirse en un conflicto falso.
+  // Para manuales usamos la huella real del ERGO (métricas, parciales y fotos), no solo workout_logs.id.
+  function v243StableJson(v){try{return JSON.stringify(v??null)}catch(e){return String(v??'')}}
+  function v243ManualFingerprint(w){
+    const rows=ergo.filter(e=>String(e.workout_id)===String(w.id));
+    if(!rows.length)return `manual|${String(w.session_type||'')}|${String(w.session_code||'')}|${v241ResultPerformedDate('workout',w)}|${String(w.notes||'')}`;
+    const parts=rows.map(e=>{
+      const photos=(Array.isArray(e.photo_paths)?e.photo_paths:[]).filter(Boolean).slice().sort();
+      const splits=v124ErgoSplitsArray(e).map(x=>({distance_m:x.distance_m??null,time_seconds:x.time_seconds??null,pace_500_seconds:x.pace_500_seconds??null,spm:x.spm??null,avg_hr:x.avg_hr??null,max_hr:x.max_hr??null,rest_seconds:x.rest_seconds??null}));
+      return {distance_m:e.distance_m??null,time_seconds:e.time_seconds??null,pace_500_seconds:e.pace_500_seconds??null,spm:e.spm??null,avg_hr:e.avg_hr??null,max_hr:e.max_hr??null,rpe:e.rpe??null,notes:e.notes??'',photos,splits};
+    }).sort((a,b)=>v243StableJson(a).localeCompare(v243StableJson(b)));
+    return `manual|${v241ResultPerformedDate('workout',w)}|${v243StableJson(parts)}`;
+  }
+  function v243C2Fingerprint(x){
+    const splits=(Array.isArray(x?.splits)?x.splits:(()=>{try{return typeof x?.splits==='string'?JSON.parse(x.splits):[]}catch(e){return[]}})()).map(p=>({distance_m:p.distance_m??null,time_seconds:p.time_seconds??null,pace_500_seconds:p.pace_500_seconds??null,spm:p.spm??null,avg_hr:p.avg_hr??null,max_hr:p.max_hr??null,rest_seconds:p.rest_seconds??null}));
+    return `c2|${v241ResultPerformedDate('concept2',x)}|${x.distance_m??''}|${x.time_tenths??x.time_seconds??x.time_formatted??''}|${x.pace_500_seconds??''}|${x.spm??''}|${x.avg_hr??''}|${x.max_hr??''}|${v243StableJson(splits)}`;
+  }
+  function v243UniqueSemantic(rows,kind){
+    const byId=v242UniqueResultsById(rows),seen=new Set(),out=[];
+    for(const r of byId){
+      const key=kind==='concept2'?v243C2Fingerprint(r):v243ManualFingerprint(r);
+      if(seen.has(key))continue;
+      seen.add(key);out.push(r);
+    }
+    return out;
+  }
   function complianceResultCandidatesV237(uid,plan){
-    const activeWorkouts=v242UniqueResultsById(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&String(w.training_session_id||'')===String(plan.id)));
-    const activeC2=plan.session_type==='ERG'?v242UniqueResultsById(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&String(x.training_session_id||'')===String(plan.id))):[];
+    const activeWorkouts=v243UniqueSemantic(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&String(w.training_session_id||'')===String(plan.id)),'workout');
+    const activeC2=plan.session_type==='ERG'?v243UniqueSemantic(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&String(x.training_session_id||'')===String(plan.id)),'concept2'):[];
     if(activeWorkouts.length||activeC2.length)return {workouts:activeWorkouts,c2:activeC2,recovered:false};
     // Compatibilidad con asociaciones seguras antiguas que cuentan para cumplimiento sin escritura en BD.
-    const uw=v242UniqueResultsById(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&!w.training_session_id));
-    const uc=plan.session_type==='ERG'?v242UniqueResultsById(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&!x.training_session_id)):[];
-    const rw=v242UniqueResultsById(uw.filter(w=>String(v191StrongPlanForResult(w,'workout',[plan])?.id||'')===String(plan.id)));
-    const rc=v242UniqueResultsById(uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',[plan])?.id||'')===String(plan.id)));
+    const uw=v243UniqueSemantic(workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&!w.training_session_id),'workout');
+    const uc=plan.session_type==='ERG'?v243UniqueSemantic(c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&!x.training_session_id),'concept2'):[];
+    const rw=v243UniqueSemantic(uw.filter(w=>String(v191StrongPlanForResult(w,'workout',sessions)?.id||'')===String(plan.id)),'workout');
+    const rc=v243UniqueSemantic(uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',sessions)?.id||'')===String(plan.id)),'concept2');
     return {workouts:rw,c2:rc,recovered:!!(rw.length||rc.length)};
   }
   function v241ResultPerformedDate(kind,row){
