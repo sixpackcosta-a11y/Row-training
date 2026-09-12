@@ -2,6 +2,10 @@ const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_ANON="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
 const C2_CLIENT_ID="bx8m9j1Qj8GZnN3ni8Wz5QEb15SHB9amysaSgelu";
 const C2_SCOPE="user:read,results:read";
+const REVIEW_MARK=' [[RT_VALIDADO]]';
+function stripReviewMark(v){return String(v||'').replace(/\s*\[\[RT_VALIDADO\]\]\s*$/,'').trim()}
+function withReviewMark(v){const base=stripReviewMark(v);return `${base}${REVIEW_MARK}`.trim()}
+
 
 async function fetchTimed(url,opts={},ms=15000){
   const controller=new AbortController();
@@ -49,16 +53,19 @@ async function handleReviewAction(me,body,res){
   if(!['validate','unvalidate'].includes(action))return false;
   const resultId=String(body.result_id||''),athlete=String(body.athlete_user_id||''),sessionId=String(body.training_session_id||'');
   if(!resultId||!athlete||!sessionId){res.status(400).json({error:'Faltan datos de la validación.'});return true;}
-  const result=await one(`concept2_results?id=eq.${encodeURIComponent(resultId)}&user_id=eq.${encodeURIComponent(athlete)}&select=id,user_id,training_session_id,match_status`);
+  const result=await one(`concept2_results?id=eq.${encodeURIComponent(resultId)}&user_id=eq.${encodeURIComponent(athlete)}&select=id,user_id,training_session_id,match_status,matched_session_code`);
   if(!result){res.status(404).json({error:'No se encontró el resultado de ErgData.'});return true;}
   if(String(result.training_session_id||'')!==sessionId){res.status(409).json({error:'La asignación ha cambiado. Recarga la semana antes de validar.'});return true;}
   const plan=await one(`training_sessions?id=eq.${encodeURIComponent(sessionId)}&select=id,team_code,title`);
   if(!plan){res.status(404).json({error:'No se encontró la sesión planificada.'});return true;}
   if(!(await canCoach(me.id,plan.team_code))){res.status(403).json({error:'No tienes permiso para validar resultados de este equipo.'});return true;}
-  const patch=action==='validate'?{match_status:'validated',match_confidence:100,updated_at:new Date().toISOString()}:{match_status:'matched',match_confidence:100,updated_at:new Date().toISOString()};
+  const cleanCode=stripReviewMark(result.matched_session_code||plan.title||'');
+  const patch=action==='validate'
+    ?{match_status:'matched',matched_session_code:withReviewMark(cleanCode),match_confidence:100,updated_at:new Date().toISOString()}
+    :{match_status:'matched',matched_session_code:cleanCode||null,match_confidence:100,updated_at:new Date().toISOString()};
   const up=await rest(`concept2_results?id=eq.${encodeURIComponent(resultId)}&user_id=eq.${encodeURIComponent(athlete)}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(patch)});
   if(!up.ok)throw new Error((await up.text().catch(()=>''))||'No se pudo guardar la validación.');
-  res.json({ok:true,validated:action==='validate'});
+  res.json({ok:true,validated:action==='validate',matched_session_code:patch.matched_session_code});
   return true;
 }
 async function validToken(c){
