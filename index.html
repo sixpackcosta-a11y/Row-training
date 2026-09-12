@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="243";
+const APP_VERSION="244";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5042,13 +5042,19 @@ async function results(){
   // V243 · una fila duplicada en BD no puede convertirse en un conflicto falso.
   // Para manuales usamos la huella real del ERGO (métricas, parciales y fotos), no solo workout_logs.id.
   function v243StableJson(v){try{return JSON.stringify(v??null)}catch(e){return String(v??'')}}
+  // V244 · huella estable: no usar URLs firmadas de fotos ni metadatos volátiles.
+  // Dos workout_logs distintos que representan exactamente el mismo registro manual deben colapsar.
+  function v244StablePhotoPath(v){
+    const s=String(v||'').trim(); if(!s)return '';
+    try{const u=new URL(s,location.origin);return decodeURIComponent(u.pathname||'')}catch(e){return s.split('?')[0].split('#')[0]}
+  }
   function v243ManualFingerprint(w){
     const rows=ergo.filter(e=>String(e.workout_id)===String(w.id));
-    if(!rows.length)return `manual|${String(w.session_type||'')}|${String(w.session_code||'')}|${v241ResultPerformedDate('workout',w)}|${String(w.notes||'')}`;
+    if(!rows.length)return `manual|${v241ResultPerformedDate('workout',w)}|${String(w.session_type||'').toLowerCase()}|${String(w.notes||'').trim()}`;
     const parts=rows.map(e=>{
-      const photos=(Array.isArray(e.photo_paths)?e.photo_paths:[]).filter(Boolean).slice().sort();
+      const photos=(Array.isArray(e.photo_paths)?e.photo_paths:[]).filter(Boolean).map(v244StablePhotoPath).filter(Boolean).sort();
       const splits=v124ErgoSplitsArray(e).map(x=>({distance_m:x.distance_m??null,time_seconds:x.time_seconds??null,pace_500_seconds:x.pace_500_seconds??null,spm:x.spm??null,avg_hr:x.avg_hr??null,max_hr:x.max_hr??null,rest_seconds:x.rest_seconds??null}));
-      return {distance_m:e.distance_m??null,time_seconds:e.time_seconds??null,pace_500_seconds:e.pace_500_seconds??null,spm:e.spm??null,avg_hr:e.avg_hr??null,max_hr:e.max_hr??null,rpe:e.rpe??null,notes:e.notes??'',photos,splits};
+      return {distance_m:e.distance_m??null,time_seconds:e.time_seconds??null,pace_500_seconds:e.pace_500_seconds??null,spm:e.spm??null,avg_hr:e.avg_hr??null,max_hr:e.max_hr??null,rpe:e.rpe??null,notes:String(e.notes||'').trim(),photo_count:photos.length,photos,splits};
     }).sort((a,b)=>v243StableJson(a).localeCompare(v243StableJson(b)));
     return `manual|${v241ResultPerformedDate('workout',w)}|${v243StableJson(parts)}`;
   }
