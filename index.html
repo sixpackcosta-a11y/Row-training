@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="240";
+const APP_VERSION="241";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5046,10 +5046,64 @@ async function results(){
     const rc=uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',[plan])?.id||'')===String(plan.id));
     return {workouts:rw,c2:rc,recovered:!!(rw.length||rc.length)};
   }
+  function v241ResultPerformedDate(kind,row){
+    return String(kind==='concept2'?(row?.workout_date||''):(row?.performed_at||row?.created_at||row?.session_date||'')).slice(0,10);
+  }
+  function v241NormPlanText(v){
+    return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function v241PlanLooksEquivalent(a,b){
+    if(!a||!b||a.session_type!==b.session_type)return false;
+    const ta=v241NormPlanText(a.title),tb=v241NormPlanText(b.title);
+    if(ta&&tb&&ta===tb)return true;
+    const ca=v241NormPlanText(a.content).replace(/\b\d{1,2}\s*[-–]\s*\d{1,2}\s*min\b/g,'').trim();
+    const cb=v241NormPlanText(b.content).replace(/\b\d{1,2}\s*[-–]\s*\d{1,2}\s*min\b/g,'').trim();
+    return !!(ca&&cb&&ca===cb);
+  }
+  function v241MisassignedCandidates(uid,plan,found){
+    if(plan.session_type!=='ERG')return [];
+    const out=[];
+    const all=[...found.workouts.map(row=>({kind:'workout',row})),...found.c2.map(row=>({kind:'concept2',row}))];
+    const exactCurrent=all.filter(x=>v241ResultPerformedDate(x.kind,x.row)===String(plan.session_date));
+    if(!exactCurrent.length)return [];
+    all.forEach(x=>{
+      const performed=v241ResultPerformedDate(x.kind,x.row);
+      if(!performed||performed===String(plan.session_date))return;
+      const targets=sessions.filter(s=>String(s.team_code)===String(plan.team_code)&&s.session_type==='ERG'&&String(s.id)!==String(plan.id)&&String(s.session_date)===performed&&v241PlanLooksEquivalent(plan,s));
+      if(targets.length!==1)return;
+      const target=targets[0];
+      const occupied=complianceResultCandidatesV237(uid,target);
+      if((occupied.workouts.length+occupied.c2.length)>0)return;
+      out.push({kind:x.kind,row:x.row,target,performed});
+    });
+    return out;
+  }
+  async function v241MoveExactResult(uid,plan,item,layer,button){
+    if(!confirm(`Este resultado se realizó el ${shortDateES(item.performed)} y existe otra sesión equivalente planificada exactamente ese día (${shortDateES(item.target.session_date)}).\n\n¿Mover este resultado a esa sesión?\n\nNo se oculta ni se borra nada.`))return;
+    const old=button.textContent;button.disabled=true;button.textContent='Corrigiendo…';
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      const response=await fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({kind:item.kind,source_id:item.row.id,training_session_id:item.target.id,athlete_user_id:uid})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||'No se pudo corregir la asignación.');
+      item.row.training_session_id=item.target.id;
+      if(item.kind==='concept2'){
+        item.row.matched_session_code=item.target.title||null;
+        item.row.match_status='matched';
+        item.row.match_confidence=100;
+      }else{
+        item.row.session_code=item.target.title||item.row.session_code;
+        item.row.session_date=item.target.session_date||item.row.session_date;
+      }
+      layer.remove();renderClient();
+    }catch(e){alert(e.message||String(e));button.disabled=false;button.textContent=old}
+  }
   function complianceCellStateV237(uid,plan){
     const found=complianceResultCandidatesV237(uid,plan),count=found.workouts.length+found.c2.length;
     if(plan.session_type!=='ERG')return {state:'ok',title:'Ver resultado GYM'};
     const questionable=found.c2.some(x=>!v236ManualValidated(x)&&String(x.match_status||'').toLowerCase()==='review');
+    const misassigned=v241MisassignedCandidates(uid,plan,found);
+    if(misassigned.length)return {state:'review',title:'Realizado · posible asignación a otra sesión'};
     if(count>1)return {state:'review',title:'Realizado · hay más de un resultado asociado'};
     if(questionable)return {state:'review',title:'Realizado · asignación ERGO pendiente de revisar'};
     return {state:'ok',title:found.recovered?'Ver resultado · asociación recuperada':'Ver resultado ERGO'};
@@ -5089,10 +5143,12 @@ async function results(){
   }
   function showComplianceResultV237(uid,sessionId){
     const plan=sessions.find(s=>String(s.id)===String(sessionId));const athlete=profiles.find(p=>String(p.user_id)===String(uid));if(!plan||!athlete)return;
-    const found=complianceResultCandidatesV237(uid,plan),count=found.workouts.length+found.c2.length,state=complianceCellStateV237(uid,plan),manual=found.workouts.length===1?found.workouts[0]:null,c2one=found.c2.length===1?found.c2[0]:null,dualConflict=plan.session_type==='ERG'&&manual&&c2one&&count===2;
+    const found=complianceResultCandidatesV237(uid,plan),count=found.workouts.length+found.c2.length,state=complianceCellStateV237(uid,plan),manual=found.workouts.length===1?found.workouts[0]:null,c2one=found.c2.length===1?found.c2[0]:null,misassigned=v241MisassignedCandidates(uid,plan,found),dualConflict=plan.session_type==='ERG'&&manual&&c2one&&count===2&&!misassigned.length;
     const body=[...found.workouts.map(w=>plan.session_type==='GYM'?complianceGymHtmlV237(w):complianceManualErgoHtmlV237(w)),...found.c2.map(complianceC2HtmlV237)].join('');
+    const correctionActions=misassigned.length?`<div class="info" style="background:#eef7ff;border-color:#9bc6ea"><b>🔎 Parece una asignación incorrecta, no un duplicado.</b><br><small>Hay un resultado realizado en la fecha exacta de otra sesión ERGO equivalente y esa otra sesión está libre. No ocultes ningún resultado: corrige la asignación.</small><div class="staffActions" style="margin-top:10px">${misassigned.map((m,i)=>`<button type="button" class="primary v241MoveExact" data-i="${i}">Mover ${m.kind==='concept2'?'ErgData':'ERGO manual'} del ${shortDateES(m.performed)} a la sesión del ${shortDateES(m.target.session_date)}</button>`).join('')}</div></div>`:'';
     const conflictActions=dualConflict?`<div class="complianceConflictActionsV239"><button type="button" class="primary v239UseC2">Usar ErgData y ocultar manual</button><button type="button" class="v239UseManual">Mantener manual y ocultar ErgData</button><small class="muted">El resultado oculto no se borra: seguirá disponible en el historial usando el filtro de ocultos.</small></div>`:'';
-    const layer=document.createElement('div');layer.className='modalBack';layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(athlete.full_name||'Remero')}</h2><div class="muted">${shortDateES(plan.session_date)} · ${plan.session_type==='ERG'?'ERGO':'GYM'} · ${esc(plan.title||'Sesión')}</div></div><button type="button" class="v237CloseResult">Cerrar</button></div>${state.state==='review'?`<div class="info" style="background:#fff8e8;border-color:#edc36b"><b>⚠️ Resultado realizado, pero requiere revisión.</b><br><small>${count>1?'Hay más de un resultado activo asociado a esta sesión. Elige cuál debe contar o cambia la asignación del que pertenezca a otra sesión.':'La asignación automática del ERGO está marcada para revisar.'}</small></div>`:''}${conflictActions}${found.recovered?'<div class="info"><b>Asignación recuperada</b><br><small>Este resultado cuenta por una coincidencia histórica segura, aunque no tenga la asociación escrita actualmente.</small></div>':''}${body||'<div class="info">La sesión figura como realizada, pero no he podido localizar el detalle del resultado activo.</div>'}${plan.content?`<details style="margin-top:12px"><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(plan.content)}</div></details>`:''}<div class="actions"><button type="button" class="v237CloseResult primary">Cerrar</button></div></div>`;document.body.appendChild(layer);layer.querySelectorAll('.v237CloseResult').forEach(b=>b.onclick=()=>layer.remove());layer.onclick=e=>{if(e.target===layer)layer.remove()};
+    const layer=document.createElement('div');layer.className='modalBack';layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(athlete.full_name||'Remero')}</h2><div class="muted">${shortDateES(plan.session_date)} · ${plan.session_type==='ERG'?'ERGO':'GYM'} · ${esc(plan.title||'Sesión')}</div></div><button type="button" class="v237CloseResult">Cerrar</button></div>${state.state==='review'?`<div class="info" style="background:#fff8e8;border-color:#edc36b"><b>⚠️ Resultado realizado, pero requiere revisión.</b><br><small>${misassigned.length?'La app ha detectado que al menos un resultado encaja de forma determinista con otra sesión ERGO equivalente planificada en su fecha real.':'Hay más de un resultado activo asociado a esta sesión. Elige cuál debe contar o cambia la asignación del que pertenezca a otra sesión.'}</small></div>`:''}${correctionActions}${conflictActions}${found.recovered?'<div class="info"><b>Asignación recuperada</b><br><small>Este resultado cuenta por una coincidencia histórica segura, aunque no tenga la asociación escrita actualmente.</small></div>':''}${body||'<div class="info">La sesión figura como realizada, pero no he podido localizar el detalle del resultado activo.</div>'}${plan.content?`<details style="margin-top:12px"><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(plan.content)}</div></details>`:''}<div class="actions"><button type="button" class="v237CloseResult primary">Cerrar</button></div></div>`;document.body.appendChild(layer);layer.querySelectorAll('.v237CloseResult').forEach(b=>b.onclick=()=>layer.remove());layer.onclick=e=>{if(e.target===layer)layer.remove()};
+    layer.querySelectorAll('.v241MoveExact').forEach(b=>{const item=misassigned[Number(b.dataset.i)];if(item)b.onclick=()=>v241MoveExactResult(uid,plan,item,layer,b)});
     const useC2=layer.querySelector('.v239UseC2');if(useC2)useC2.onclick=()=>v239ResolveComplianceConflict(uid,plan,'concept2',c2one.id,'workout',manual.id,layer,useC2);
     const useManual=layer.querySelector('.v239UseManual');if(useManual)useManual.onclick=()=>v239ResolveComplianceConflict(uid,plan,'workout',manual.id,'concept2',c2one.id,layer,useManual);
     layer.querySelectorAll('.v239AssignInline').forEach(b=>b.onclick=()=>{const kind=b.dataset.kind,id=b.dataset.id,date=b.dataset.date||plan.session_date;v140AssignResult(kind,id,'ERG',date,uid,team,()=>{layer.remove();renderClient()},plan.id)});
