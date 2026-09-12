@@ -224,6 +224,27 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .profileCompareDesktopV103.tableWrap{display:none!important}
   .profileMetricCardsV103{display:grid!important}
 }
+
+/* V237 · calendario de cumplimiento interactivo y móvil */
+.complianceCellBtnV237{appearance:none;-webkit-appearance:none;border:0;min-width:42px;min-height:38px;border-radius:999px;padding:6px 10px;font:inherit;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.complianceCellBtnV237.complianceDoneV151{background:#dff5e8!important;color:#12633f!important}
+.complianceCellBtnV237.complianceReviewV237{background:#fff1cf!important;color:#946200!important;border:1px solid #efd68b!important}
+.complianceCellBtnV237:focus-visible{outline:3px solid #7ca9e8;outline-offset:2px}
+.complianceCalendarHintV237{font-size:.82rem;color:#64748b;margin:6px 0 10px}
+.complianceResultHeadV237{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.complianceResultBlockV237{border:1px solid #dbe5ef;border-radius:14px;padding:12px;margin:10px 0;background:#f8fafc}
+.complianceResultGridV237{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:8px;margin:10px 0}
+.complianceResultMetricV237{background:#fff;border:1px solid #dbe5ef;border-radius:10px;padding:9px}
+.complianceResultMetricV237 small{display:block;color:#64748b;font-weight:800;margin-bottom:2px}
+@media(max-width:700px){
+  .complianceCalendarScrollV151{display:block!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch!important;padding-bottom:6px!important}
+  .complianceCalendarScrollV151 .complianceTableV100{width:max-content!important;min-width:100%!important;table-layout:auto!important}
+  .complianceCalendarScrollV151 .complianceTableV100 th:first-child,.complianceCalendarScrollV151 .complianceTableV100 td:first-child{width:105px!important;min-width:105px!important;max-width:105px!important;box-sizing:border-box!important}
+  .complianceCalendarScrollV151 .complianceTableV100 th:not(:first-child),.complianceCalendarScrollV151 .complianceTableV100 td:not(:first-child){width:58px!important;min-width:58px!important;max-width:58px!important;box-sizing:border-box!important}
+  .complianceSubBodyV176{min-width:0!important;overflow:hidden!important}
+  .complianceResultGridV237{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modalCard.complianceResultModalV237{padding:16px!important;max-height:92vh!important}
+}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
@@ -1815,7 +1836,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="236";
+const APP_VERSION="237";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -4740,10 +4761,10 @@ function v143AthleteCalendarHtml(comp){
   const rows=comp?.details||[];if(!rows.length)return '<p class="muted">Sin sesiones GYM/ERGO en esta semana.</p>';
   return `<div class="v143AthleteCalendar">${rows.map(x=>`<div class="last" style="display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:center"><b>${shortDateES(x.date)}</b><span><b>${esc(x.type)}</b> · ${esc(x.title||'Sesión')}</span><span class="tag ${x.done?'complianceDoneV151':'compliancePendingV151'}">${x.done?(x.legacy?'✓ Hecha · recuperada':'✓ Hecha'):'Pendiente'}</span></div>`).join('')}</div>`;
 }
-function v143TeamCalendarHtml(rows,teamSessions,start,end){
+function v143TeamCalendarHtml(rows,teamSessions,start,end,cellStateFn=null){
   const plans=(teamSessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&['GYM','ERG'].includes(s.session_type)).sort((a,b)=>a.session_date.localeCompare(b.session_date)||Number(a.id)-Number(b.id));
   if(!plans.length)return '<div class="info">No hay sesiones GYM/ERGO planificadas esta semana.</div>';
-  return `<h3>Calendario de cumplimiento</h3><p class="muted">Cada columna es una sesión de la planificación, aunque el remero la haya realizado otro día.</p><div class="tableWrap complianceCalendarScrollV151"><table class="complianceTableV100"><thead><tr><th>Remero</th>${plans.map(s=>`<th title="${esc(s.title||'')}">${shortDateES(s.session_date)}<br>${esc(s.session_type==='ERG'?'ERGO':'GYM')}</th>`).join('')}</tr></thead><tbody>${rows.map(({a,c})=>`<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td>${plans.map(s=>{const d=c.details.find(x=>String(x.id)===String(s.id));return `<td><span class="tag ${d?.done?'complianceDoneV151':'compliancePendingV151'}" title="${esc(s.title||'')}">${d?.done?'✓':'—'}</span></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<h3>Calendario de cumplimiento</h3><p class="muted">Cada columna es una sesión de la planificación, aunque el remero la haya realizado otro día.</p><div class="complianceCalendarHintV237">Pulsa sobre un ✓ para ver el resultado. <b>Verde</b> = resultado claro · <b>ámbar</b> = realizado, pero conviene revisar la asignación.</div><div class="tableWrap complianceCalendarScrollV151"><table class="complianceTableV100"><thead><tr><th>Remero</th>${plans.map(s=>`<th title="${esc(s.title||'')}">${shortDateES(s.session_date)}<br>${esc(s.session_type==='ERG'?'ERGO':'GYM')}</th>`).join('')}</tr></thead><tbody>${rows.map(({a,c})=>`<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td>${plans.map(s=>{const d=c.details.find(x=>String(x.id)===String(s.id));if(!d?.done)return `<td><span class="tag compliancePendingV151" title="${esc(s.title||'')}">—</span></td>`;const st=typeof cellStateFn==='function'?cellStateFn(a.user_id,s):{state:'ok',title:'Resultado realizado'};return `<td><button type="button" class="complianceCellBtnV237 ${st?.state==='review'?'complianceReviewV237':'complianceDoneV151'}" data-user="${esc(a.user_id)}" data-session="${esc(s.id)}" title="${esc(st?.title||s.title||'Ver resultado')}">✓</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 async function loadRowerWeekCompliance(start,end){
   const box=document.getElementById('rowerWeekCompliance'); if(!box||!currentUser||!currentTeamCode)return;
@@ -4950,6 +4971,45 @@ async function results(){
     compare.innerHTML=`<section class="profileCompareWrapV103"><div class="profileCompareToolbarV103"><div><h3 style="margin:0">Comparar perfiles · ${esc(teamLabel(team))}</h3><div class="muted">Edad, talla, peso y zonas de frecuencia cardiaca. “Pendiente” indica que falta completar el dato.</div></div><span class="sectionCount">${rows.length}</span></div>${rows.length?`<div class="profileCompareDesktopV103 tableWrap"><table class="profileCompareTableV103"><thead><tr><th>Remero</th><th class="ergColV103">ErgData</th><th>Edad</th><th>Altura</th><th>Peso</th><th>FC rep.</th><th>FC máx.</th><th>UT2</th><th>UT1</th><th>AT</th><th>TR</th><th>AN</th><th></th></tr></thead><tbody>${rows.map(({p,m,age})=>`<tr><td><b>${esc(p.full_name||'Sin nombre')}</b></td><td>${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,true)}</td><td>${metricValueV103(age,' años')}</td><td>${metricValueV103(p.height_cm,' cm')}</td><td>${metricValueV103(m?.weight_kg,' kg')}</td><td>${metricValueV103(m?.resting_hr)}</td><td>${metricValueV103(m?.max_hr)}</td>${['ut2','ut1','at','tr','an'].map(z=>`<td>${m&&(m[z+'_min']||m[z+'_max'])?`${m[z+'_min']??'—'}–${m[z+'_max']??'—'}`:'<span class="profilePendingV103">Pendiente</span>'}</td>`).join('')}<td><button class="profileEditBtnV103 editAthleteV103" data-user="${p.user_id}">Editar</button></td></tr>`).join('')}</tbody></table></div><div class="profileMetricCardsV103">${rows.map(({p,m,age})=>`<article class="profileMetricCardV103"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><b>${esc(p.full_name||'Sin nombre')}</b><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,true)}</div></div><button class="editAthleteV103" data-user="${p.user_id}">Editar</button></div><div class="profileMetricGridV103"><span><b>Edad</b>${metricValueV103(age,' años')}</span><span><b>Altura</b>${metricValueV103(p.height_cm,' cm')}</span><span><b>Peso</b>${metricValueV103(m?.weight_kg,' kg')}</span><span><b>FC reposo / máx</b>${m?`${m.resting_hr??'—'} / ${m.max_hr??'—'}`:'Pendiente'}</span></div><div class="muted" style="margin-top:9px;font-size:.82rem">${esc(zonesCompactV103(m))}</div></article>`).join('')}</div>`:'<div class="info">No hay remeros en este equipo.</div>'}</section>`;
     compare.querySelectorAll('.editAthleteV103').forEach(b=>b.onclick=()=>{const uid=b.dataset.user;openUnifiedPersonEditorV168(uid,{onSaved:({profile,metric})=>{const pp=profiles.find(x=>x.user_id===uid);if(pp)Object.assign(pp,profile||{});if(metric)metrics.unshift(metric);selectedAthlete=uid;renderClient();athleteSection.open=true},onDeleted:async()=>{selectedAthlete='';await results()}})});
   }
+  function complianceResultCandidatesV237(uid,plan){
+    const activeWorkouts=workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&String(w.training_session_id||'')===String(plan.id));
+    const activeC2=plan.session_type==='ERG'?c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&String(x.training_session_id||'')===String(plan.id)):[];
+    if(activeWorkouts.length||activeC2.length)return {workouts:activeWorkouts,c2:activeC2,recovered:false};
+    // Compatibilidad con asociaciones seguras antiguas que cuentan para cumplimiento sin escritura en BD.
+    const uw=workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden&&!w.training_session_id);
+    const uc=plan.session_type==='ERG'?c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x)&&!x.training_session_id):[];
+    const rw=uw.filter(w=>String(v191StrongPlanForResult(w,'workout',[plan])?.id||'')===String(plan.id));
+    const rc=uc.filter(x=>String(v191StrongPlanForResult(x,'concept2',[plan])?.id||'')===String(plan.id));
+    return {workouts:rw,c2:rc,recovered:!!(rw.length||rc.length)};
+  }
+  function complianceCellStateV237(uid,plan){
+    const found=complianceResultCandidatesV237(uid,plan),count=found.workouts.length+found.c2.length;
+    if(plan.session_type!=='ERG')return {state:'ok',title:'Ver resultado GYM'};
+    const questionable=found.c2.some(x=>!v236ManualValidated(x)&&String(x.match_status||'').toLowerCase()==='review');
+    if(count>1)return {state:'review',title:'Realizado · hay más de un resultado asociado'};
+    if(questionable)return {state:'review',title:'Realizado · asignación ERGO pendiente de revisar'};
+    return {state:'ok',title:found.recovered?'Ver resultado · asociación recuperada':'Ver resultado ERGO'};
+  }
+  function complianceGymHtmlV237(w){
+    const items=gym.filter(g=>String(g.workout_id)===String(w.id));
+    const performed=String(w.performed_at||w.created_at||w.session_date||'').slice(0,10);
+    return `<div class="complianceResultBlockV237"><div><b>GYM realizado</b>${performed?` · ${shortDateES(performed)}`:''}</div>${items.length?`<div class="exerciseTable" style="margin-top:8px">${items.map(i=>{const m=storedExerciseMeta(i);const diff=i.perceived_difficulty==='easy'?'Fácil':i.perceived_difficulty==='hard'?'Duro':'Bien';return `<div class="exerciseRow"><div><b>${esc(i.exercise_name||'Ejercicio')}</b>${m.assigned?`<br><small>Alternativa de: ${esc(m.assigned)}</small>`:''}${m.userNote?`<br><small>${esc(m.userNote)}</small>`:''}</div><div>${i.weight_kg??'—'} kg${i.reps!=null?` · ${i.reps} rep`:''}</div><div>${diff}</div></div>`}).join('')}</div>`:'<p class="muted">No hay detalle de ejercicios guardado.</p>'}${w.notes?`<p><b>Notas:</b> ${esc(w.notes)}</p>`:''}</div>`;
+  }
+  function complianceManualErgoHtmlV237(w){
+    const rows=ergo.filter(e=>String(e.workout_id)===String(w.id));
+    const performed=String(w.performed_at||w.created_at||w.session_date||'').slice(0,10);
+    return `<div class="complianceResultBlockV237"><div><b>ERGO manual</b>${performed?` · ${shortDateES(performed)}`:''}</div>${rows.length?rows.map(e=>v124ManualErgoHtml(e)).join(''):'<p class="muted">Sin detalle de ERGO manual.</p>'}${w.notes?`<p><b>Notas:</b> ${esc(w.notes)}</p>`:''}</div>`;
+  }
+  function complianceC2HtmlV237(x){
+    const date=String(x.workout_date||'').slice(0,10),valid=v236ManualValidated(x),state=valid?'Validado por entrenador':String(x.match_status||'matched')==='review'?'Revisar asignación':'Asignado';
+    return `<div class="complianceResultBlockV237"><div><b>Concept2 / ErgData</b> · ${date?shortDateES(date):'—'} <span class="tag">${esc(state)}</span></div><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Metros</small>${x.distance_m??'—'}</div><div class="complianceResultMetricV237"><small>Tiempo</small>${esc(x.time_formatted||v112C2TenthsText(x.time_tenths)||'—')}</div><div class="complianceResultMetricV237"><small>Ritmo /500</small>${x.pace_500_seconds!=null?fmtMetricSeconds(Number(x.pace_500_seconds)):'—'}</div><div class="complianceResultMetricV237"><small>PPM</small>${x.spm??'—'}</div><div class="complianceResultMetricV237"><small>FC media</small>${x.avg_hr??'—'}</div><div class="complianceResultMetricV237"><small>FC máxima</small>${x.max_hr??'—'}</div></div>${v112C2PartialsHtml(x)}</div>`;
+  }
+  function showComplianceResultV237(uid,sessionId){
+    const plan=sessions.find(s=>String(s.id)===String(sessionId));const athlete=profiles.find(p=>String(p.user_id)===String(uid));if(!plan||!athlete)return;
+    const found=complianceResultCandidatesV237(uid,plan),count=found.workouts.length+found.c2.length,state=complianceCellStateV237(uid,plan);
+    const body=[...found.workouts.map(w=>plan.session_type==='GYM'?complianceGymHtmlV237(w):complianceManualErgoHtmlV237(w)),...found.c2.map(complianceC2HtmlV237)].join('');
+    const layer=document.createElement('div');layer.className='modalBack';layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(athlete.full_name||'Remero')}</h2><div class="muted">${shortDateES(plan.session_date)} · ${plan.session_type==='ERG'?'ERGO':'GYM'} · ${esc(plan.title||'Sesión')}</div></div><button type="button" class="v237CloseResult">Cerrar</button></div>${state.state==='review'?`<div class="info" style="background:#fff8e8;border-color:#edc36b"><b>⚠️ Resultado realizado, pero requiere revisión.</b><br><small>${count>1?'Hay más de un resultado activo asociado a esta sesión.':'La asignación automática del ERGO está marcada para revisar.'}</small></div>`:''}${found.recovered?'<div class="info"><b>Asignación recuperada</b><br><small>Este resultado cuenta por una coincidencia histórica segura, aunque no tenga la asociación escrita actualmente.</small></div>':''}${body||'<div class="info">La sesión figura como realizada, pero no he podido localizar el detalle del resultado activo.</div>'}${plan.content?`<details style="margin-top:12px"><summary>Ver entrenamiento planificado</summary><div class="info" style="margin-top:8px">${trainingContentHtml(plan.content)}</div></details>`:''}<div class="actions"><button type="button" class="v237CloseResult primary">Cerrar</button></div></div>`;document.body.appendChild(layer);layer.querySelectorAll('.v237CloseResult').forEach(b=>b.onclick=()=>layer.remove());layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  }
   function renderClient(){
     coachSelectedTeam=team;const end=addDaysISO(weekStart,6),ats=teamAthletes();
     const weekBtn=document.getElementById('analysisModeWeekV151'),monthBtn=document.getElementById('analysisModeMonthV151');
@@ -4962,13 +5022,14 @@ async function results(){
     const teamSessions=sessions.filter(s=>s.team_code===team),rows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,weekStart,end)}));
     if(complianceMode==='week'){
       teamBox.innerHTML=`<details class="complianceSubV176" open><summary><b>Resumen semanal</b><span>Porcentajes y sesiones completadas</span></summary><div class="complianceSubBodyV176"><p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. MAR queda fuera.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} semana · ${c.dueExpected?`${c.dueCompleted}/${c.dueExpected} al día`:'sin vencidas'}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} de la semana`:'Sin sesiones'}${c.dueExpected?` · ${c.dueCompleted}/${c.dueExpected} al día`:''}</b></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
-      teamBox.insertAdjacentHTML('beforeend','</div></details><details class="complianceSubV176"><summary><b>Calendario de cumplimiento</b><span>Detalle por sesión planificada</span></summary><div class="complianceSubBodyV176">'+v143TeamCalendarHtml(rows,teamSessions,weekStart,end)+'</div></details>');
+      teamBox.insertAdjacentHTML('beforeend','</div></details><details class="complianceSubV176"><summary><b>Calendario de cumplimiento</b><span>Detalle por sesión planificada</span></summary><div class="complianceSubBodyV176">'+v143TeamCalendarHtml(rows,teamSessions,weekStart,end,complianceCellStateV237)+'</div></details>');
     }else{
       const mEnd=monthEndV151(monthStart),mRows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,monthStart,mEnd)}));
       const dueEligible=mRows.filter(x=>x.c.dueExpected>0),upToDate=dueEligible.filter(x=>x.c.dueCompleted===x.c.dueExpected).length,fullMonth=mRows.filter(x=>x.c.expected>0&&x.c.completed===x.c.expected).length;
       const plannedMonth=teamSessions.filter(s=>s.session_date>=monthStart&&s.session_date<=mEnd&&['GYM','ERG'].includes(s.session_type)).length;
       teamBox.innerHTML=`<h3>Cumplimiento mensual · ${esc(monthLabelV151(monthStart))}</h3><p class="muted">Resumen mensual. “2 de 4 · 50 %” significa 2 sesiones realizadas de 4 planificadas/computables. Pulsa en el nombre de un remero para abrir su análisis individual.</p><div class="monthSummaryV151"><div><small>Sesiones planificadas</small><b>${plannedMonth}</b></div><div><small>Remeros al día</small><b>${upToDate}/${dueEligible.length||ats.length}</b></div><div><small>Mes completo</small><b>${fullMonth}/${ats.length}</b></div></div><div class="monthRowerListV151">${mRows.map(({a,c})=>{const pct=c.percent==null?0:c.percent,up=c.dueExpected&&c.dueCompleted===c.dueExpected;return `<div class="monthRowerV151"><button type="button" class="openAthlete monthAthleteLinkV170" data-user="${a.user_id}" title="Abrir análisis individual">${esc(a.full_name||'Sin nombre')}</button><span class="monthPctV151 ${pct===100?'ok':''}">${c.expected?`${c.completed} de ${c.expected} · ${pct}%`:'—'}</span><span class="monthDueV151 ${up?'ok':'pending'}">${c.dueExpected?(up?'✓ Al día':`${c.dueCompleted}/${c.dueExpected} vencidas`):'Sin sesiones vencidas'}</span></div>`}).join('')}</div>`;
     }
+    teamBox.querySelectorAll('.complianceCellBtnV237').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));
     teamBox.querySelectorAll('.openAthlete').forEach(b=>b.onclick=()=>{selectedAthlete=b.dataset.user;athSel.value=selectedAthlete;athleteSection.open=true;renderAthlete();athleteSection.scrollIntoView({behavior:'smooth',block:'start'})});
     renderAthlete();
   }
