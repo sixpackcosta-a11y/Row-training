@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="244";
+const APP_VERSION="245";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5048,15 +5048,33 @@ async function results(){
     const s=String(v||'').trim(); if(!s)return '';
     try{const u=new URL(s,location.origin);return decodeURIComponent(u.pathname||'')}catch(e){return s.split('?')[0].split('#')[0]}
   }
+  // V245 · deduplicación de Cumplimiento por resultado visible/semántico.
+  // Si dos filas distintas representan exactamente el mismo ERGO que ve el entrenador,
+  // cuentan como un único resultado. No usamos ids, URLs, notas internas ni metadatos volátiles.
+  function v245NormMetric(v){
+    if(v===null||v===undefined||v==='')return '';
+    const n=Number(v);return Number.isFinite(n)?String(Math.round(n*1000)/1000):String(v).trim();
+  }
   function v243ManualFingerprint(w){
     const rows=ergo.filter(e=>String(e.workout_id)===String(w.id));
-    if(!rows.length)return `manual|${v241ResultPerformedDate('workout',w)}|${String(w.session_type||'').toLowerCase()}|${String(w.notes||'').trim()}`;
+    const performed=v241ResultPerformedDate('workout',w);
+    if(!rows.length)return `manual|${performed}|${String(w.session_type||'').toLowerCase()}`;
     const parts=rows.map(e=>{
-      const photos=(Array.isArray(e.photo_paths)?e.photo_paths:[]).filter(Boolean).map(v244StablePhotoPath).filter(Boolean).sort();
-      const splits=v124ErgoSplitsArray(e).map(x=>({distance_m:x.distance_m??null,time_seconds:x.time_seconds??null,pace_500_seconds:x.pace_500_seconds??null,spm:x.spm??null,avg_hr:x.avg_hr??null,max_hr:x.max_hr??null,rest_seconds:x.rest_seconds??null}));
-      return {distance_m:e.distance_m??null,time_seconds:e.time_seconds??null,pace_500_seconds:e.pace_500_seconds??null,spm:e.spm??null,avg_hr:e.avg_hr??null,max_hr:e.max_hr??null,rpe:e.rpe??null,notes:String(e.notes||'').trim(),photo_count:photos.length,photos,splits};
-    }).sort((a,b)=>v243StableJson(a).localeCompare(v243StableJson(b)));
-    return `manual|${v241ResultPerformedDate('workout',w)}|${v243StableJson(parts)}`;
+      const splits=v124ErgoSplitsArray(e);
+      const photos=(Array.isArray(e.photo_paths)?e.photo_paths:[]).filter(Boolean);
+      return [
+        v245NormMetric(e.distance_m),
+        v245NormMetric(e.time_seconds),
+        v245NormMetric(e.pace_500_seconds),
+        v245NormMetric(e.spm),
+        v245NormMetric(e.avg_hr),
+        v245NormMetric(e.max_hr),
+        v245NormMetric(e.rpe),
+        String(splits.length),
+        String(photos.length)
+      ].join('|');
+    }).sort();
+    return `manual|${performed}|${parts.join('||')}`;
   }
   function v243C2Fingerprint(x){
     const splits=(Array.isArray(x?.splits)?x.splits:(()=>{try{return typeof x?.splits==='string'?JSON.parse(x.splits):[]}catch(e){return[]}})()).map(p=>({distance_m:p.distance_m??null,time_seconds:p.time_seconds??null,pace_500_seconds:p.pace_500_seconds??null,spm:p.spm??null,avg_hr:p.avg_hr??null,max_hr:p.max_hr??null,rest_seconds:p.rest_seconds??null}));
