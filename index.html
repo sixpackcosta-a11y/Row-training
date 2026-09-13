@@ -1900,7 +1900,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="245";
+const APP_VERSION="246";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias veces a la app
 let lastAppUpdateCheck=0;
@@ -5205,7 +5205,7 @@ async function results(){
     layer.querySelectorAll('.v241MoveExact').forEach(b=>{const item=misassigned[Number(b.dataset.i)];if(item)b.onclick=()=>v241MoveExactResult(uid,plan,item,layer,b)});
     const useC2=layer.querySelector('.v239UseC2');if(useC2)useC2.onclick=()=>v239ResolveComplianceConflict(uid,plan,'concept2',c2one.id,'workout',manual.id,layer,useC2);
     const useManual=layer.querySelector('.v239UseManual');if(useManual)useManual.onclick=()=>v239ResolveComplianceConflict(uid,plan,'workout',manual.id,'concept2',c2one.id,layer,useManual);
-    layer.querySelectorAll('.v239AssignInline').forEach(b=>b.onclick=()=>{const kind=b.dataset.kind,id=b.dataset.id,date=b.dataset.date||plan.session_date;v140AssignResult(kind,id,'ERG',date,uid,team,()=>{layer.remove();renderClient()},plan.id)});
+    layer.querySelectorAll('.v239AssignInline').forEach(b=>b.onclick=()=>{const kind=b.dataset.kind,id=b.dataset.id,date=b.dataset.date||plan.session_date;v140AssignResult(kind,id,'ERG',date,uid,team,session=>{if(kind==='concept2'){const row=c2rows.find(x=>String(x.id)===String(id));if(row){row.training_session_id=session?.id||null;row.matched_session_code=session?.title||null;row.match_status=session?'matched':'unplanned';row.match_confidence=session?100:0}}else{const row=workouts.find(x=>String(x.id)===String(id));if(row){row.training_session_id=session?.id||null;if(session){row.session_code=session.title;row.session_date=session.session_date}}}layer.remove();renderClient()},plan.id)});
   }
   function renderClient(){
     coachSelectedTeam=team;const end=addDaysISO(weekStart,6),ats=teamAthletes();
