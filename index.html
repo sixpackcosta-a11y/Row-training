@@ -2557,7 +2557,7 @@ async function loadPushRosterStatusV248(){
   try{
     const {data:{session}}=await sb.auth.getSession();
     if(!session?.access_token)return {ok:false,reason:'Sesión no disponible',users:new Map()};
-    const r=await fetch('/api/push-status',{headers:{Authorization:`Bearer ${session.access_token}`}});
+    const r=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({action:'status'})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok)return {ok:false,reason:j.error||`Error ${r.status}`,users:new Map()};
     const users=new Map((j.users||[]).map(x=>[String(x.user_id),Number(x.devices)||0]));

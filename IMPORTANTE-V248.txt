@@ -1,0 +1,15 @@
+ROW TRAINING V248 · CORRECCIÓN LÍMITE VERCEL HOBBY
+
+Esta versión NO crea una función Serverless adicional.
+El estado de notificaciones se consulta mediante api/push-subscribe.js.
+
+El archivo .vercelignore hace que Vercel ignore api/push-status.js si quedó
+en GitHub después del despliegue fallido anterior.
+
+Sube/reemplaza TODOS los archivos incluidos en este ZIP, incluido:
+- index.html
+- version.json
+- api/push-subscribe.js
+- .vercelignore
+
+No hace falta SQL nuevo.
