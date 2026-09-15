@@ -1,3 +1,11 @@
+## Arquitectura — leer antes de tocar código
+
+**Toda la lógica de servidor vive en `/api/`.** Cada archivo de esa carpeta es una función serverless de Vercel y es lo único que se ejecuta en producción (no hay `vercel.json` que diga lo contrario, así que aplica la convención por defecto).
+
+Las carpetas `lib/` (`lib/mail.js`, `lib/rowingcoach.js`) contienen helpers compartidos que sí se importan desde `/api/`.
+
+**Regla:** no crear ni editar archivos `.js` sueltos en la raíz del proyecto con nombres de funciones (tipo `workout-assign.js`, `concept2-sync.js`, etc.). Antes había copias duplicadas ahí que quedaron desincronizadas con las de `/api/` durante varias versiones (V142–V163) sin que nadie lo notase, porque el navegador solo llama a `/api/...`. Se eliminaron en la limpieza posterior a V112. Si necesitas tocar esa lógica, el archivo correcto está siempre dentro de `/api/`.
+
 # Row Training V112
 
 ## Novedades
