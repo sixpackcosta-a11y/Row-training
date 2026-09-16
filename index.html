@@ -3653,16 +3653,29 @@ function v300ExerciseAnalysisHtml(data,title,metric){
     hrChip={icon:'❤️',tone:'steady',label:'Frecuencia cardíaca',text:`${mLast.avg_hr} ppm en el último resultado.`};
   }
 
-  // 3) Palada frente al objetivo de la sesion -- siempre se comenta.
+  // 3) Palada frente al objetivo de la sesion -- comparando cada parcial entre sí, no solo la media.
+  const spmSplits=splits.map(s=>s.spm).filter(v=>v!=null);
   let paladaChip;
-  if(!mLast.spm){
-    paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:'No hay palada registrada en el último resultado.'};
-  }else if(targetPpm){
-    const dev=mLast.spm-targetPpm;
-    if(Math.abs(dev)<=2)paladaChip={icon:'🚣',tone:'good',label:'Palada',text:`${mLast.spm} ppm · ¡en el objetivo (${targetPpm})!`};
-    else paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`${mLast.spm} ppm · objetivo ${targetPpm}, ¡ya casi!`};
+  if(spmSplits.length>=2){
+    const minS=Math.min(...spmSplits),maxS=Math.max(...spmSplits),avgS=Math.round(spmSplits.reduce((a,b)=>a+b,0)/spmSplits.length),devS=maxS-minS,listTxt=spmSplits.join(' → ');
+    if(targetPpm){
+      if(devS<=1&&Math.abs(avgS-targetPpm)<=1)paladaChip={icon:'🚣',tone:'good',label:'Palada',text:`Muy regular entre parciales (${listTxt} ppm) y ajustada al objetivo (${targetPpm}).`};
+      else if(devS<=1)paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`Regular entre parciales (${listTxt} ppm), pero se aleja del objetivo (${targetPpm}). Ajusta la palada la próxima vez.`};
+      else paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`Ha variado entre parciales (${listTxt} ppm frente al objetivo ${targetPpm}). Aunque la media pueda cuadrar, el objetivo es mantener cada parcial cerca de esa cifra, no solo el promedio.`};
+    }else{
+      if(devS<=1)paladaChip={icon:'🚣',tone:'good',label:'Palada',text:`Muy regular entre parciales (${listTxt} ppm).`};
+      else paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`Ha variado entre parciales (${listTxt} ppm). Busca mantenerla más constante en la próxima sesión.`};
+    }
+  }else if(mLast.spm){
+    if(targetPpm){
+      const dev=mLast.spm-targetPpm;
+      if(Math.abs(dev)<=2)paladaChip={icon:'🚣',tone:'good',label:'Palada',text:`${mLast.spm} ppm · ¡en el objetivo (${targetPpm})!`};
+      else paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`${mLast.spm} ppm · objetivo ${targetPpm}, ¡ya casi!`};
+    }else{
+      paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:`${mLast.spm} ppm en el último resultado (esta sesión no tiene un objetivo de palada definido en el título).`};
+    }
   }else{
-    paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:`${mLast.spm} ppm en el último resultado (esta sesión no tiene un objetivo de palada definido en el título).`};
+    paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:'No hay palada registrada en el último resultado.'};
   }
 
   const chipHtml=[splitsChip,hrChip,paladaChip].map(v300Chip).join('');
