@@ -3737,7 +3737,8 @@ function v300TitleMapFromSessions(sessionsArr){
 }
 function v300NormalizeExerciseKey(title){
   // Normaliza el título del entrenamiento para reconocer el mismo ejercicio aunque cambien
-  // detalles cosméticos: acentos, × vs x, 12' vs 12 min, mayúsculas, o la nota de descanso/recuperación.
+  // detalles cosméticos: acentos, × vs x, 12' vs 12 min, mayúsculas, la nota de descanso/recuperación,
+  // o palabras de "envoltorio" (ERGO, MIX, corto...) que describen la categoría de la sesión, no el ejercicio en sí.
   let t=String(title||'').toLowerCase();
   try{t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
   t=t.replace(/[×xX]/g,'x');
@@ -3747,6 +3748,7 @@ function v300NormalizeExerciseKey(title){
   t=t.replace(/\bspm\b/g,'');
   t=t.replace(/\brec\.?\s*\d+.*$/,'');
   t=t.replace(/\bdescanso\b.*$/,'');
+  t=t.replace(/\b(ergo|mix|corto|largo|serie|series|sesion|test)\b/g,'');
   t=t.replace(/\s*x\s*/g,'x');
   t=t.replace(/[^a-z0-9x@]+/g,' ');
   t=t.replace(/\s+/g,' ').trim();
