@@ -3548,7 +3548,7 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
 
 function v300FmtPace(s){s=Number(s);if(!s&&s!==0)return'—';const m=Math.floor(s/60),ss=(s%60).toFixed(1).padStart(4,'0');return m+':'+ss}
 function v300PaceEvolutionSvg(rows,opts={}){
-  const limit=opts.limit||20;
+  const limit=opts.limit||20,chartId=opts.chartId||0,groupIndex=opts.groupIndex||0;
   const data=(rows||[]).filter(r=>r&&r.pace_500_seconds&&r.workout_date).sort((a,b)=>new Date(a.workout_date)-new Date(b.workout_date)).slice(-limit);
   if(data.length<2)return'<p class="muted">Necesitas al menos 2 resultados de Concept2 con ritmo registrado para ver la evolución.</p>';
   const W=600,H=220,padL=48,padR=16,padT=16,padB=34;
@@ -3556,9 +3556,9 @@ function v300PaceEvolutionSvg(rows,opts={}){
   const minP=Math.min(...paces),maxP=Math.max(...paces),span=(maxP-minP)||1;
   const xAt=i=>padL+(W-padL-padR)*(data.length===1?0:i/(data.length-1));
   const yAt=v=>padT+(H-padT-padB)*((v-minP)/span);
-  const pts=data.map((d,i)=>({x:xAt(i),y:yAt(Number(d.pace_500_seconds)),d}));
+  const pts=data.map((d,i)=>({x:xAt(i),y:yAt(Number(d.pace_500_seconds)),d,originalIndex:d._pointIndex}));
   const path=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
-  const circles=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#2563eb"><title>${esc(shortDateES(String(p.d.workout_date).slice(0,10)))} · ${v300FmtPace(p.d.pace_500_seconds)}/500m${p.d.distance_m?' · '+p.d.distance_m+' m':''}</title></circle>`).join('');
+  const circles=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="#2563eb" style="cursor:pointer" onclick="v300ShowPoint(${chartId},${groupIndex},${p.originalIndex})"><title>${esc(shortDateES(String(p.d.workout_date).slice(0,10)))} · ${v300FmtPace(p.d.pace_500_seconds)}/500m${p.d.distance_m?' · '+p.d.distance_m+' m':''} · toca para ver el detalle</title></circle>`).join('');
   const firstLabel=esc(shortDateES(String(data[0].workout_date).slice(0,10))),lastLabel=esc(shortDateES(String(data[data.length-1].workout_date).slice(0,10)));
   return `<div class="v300ChartWrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit">
     <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#c8d4e2"/>
@@ -3569,17 +3569,35 @@ function v300PaceEvolutionSvg(rows,opts={}){
     ${circles}
     <text x="${padL}" y="${H-8}" font-size="11" fill="#64748b">${firstLabel}</text>
     <text x="${W-padR}" y="${H-8}" font-size="11" fill="#64748b" text-anchor="end">${lastLabel}</text>
-  </svg><p class="muted"><small>Ritmo /500m en cada resultado de Concept2 (más abajo en la gráfica = más rápido). Toca un punto para ver la fecha exacta.</small></p></div>`;
+  </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p></div>`;
+}
+function v300ShowPoint(chartId,groupIndex,pointIndex){
+  const entries=v300PendingCharts[chartId];if(!entries)return;
+  const group=entries[groupIndex];if(!group)return;
+  const point=group[1][pointIndex];if(!point)return;
+  let body='';
+  if(point._kind==='concept2'){
+    const d=v144C2ForDisplay(point._raw);
+    body=`<div class="complianceResultBlockV237"><div><b>Concept2 / ErgData</b></div><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Metros</small>${d.distance_m??'—'}</div><div class="complianceResultMetricV237"><small>Tiempo</small>${esc(d.time_formatted||'—')}</div><div class="complianceResultMetricV237"><small>Ritmo /500</small>${d.pace_500_seconds!=null?fmtMetricSeconds(Number(d.pace_500_seconds)):'—'}</div><div class="complianceResultMetricV237"><small>PPM</small>${d.spm??'—'}</div><div class="complianceResultMetricV237"><small>FC media</small>${d.avg_hr??'—'}</div><div class="complianceResultMetricV237"><small>FC máxima</small>${d.max_hr??'—'}</div></div>${v112C2PartialsHtml(d)}</div>`;
+  }else{
+    body=`<div class="complianceResultBlockV237"><div><b>ERGO · Registro manual</b></div>${v124ManualErgoHtml(point._raw)}</div>`;
+  }
+  const layer=document.createElement('div');layer.className='modalBack';
+  layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(group[0])}</h2><div class="muted">${esc(shortDateES(String(point.workout_date||'').slice(0,10)))}</div></div><button type="button" class="v300CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
+  document.body.appendChild(layer);
+  layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};
 }
 
 let v300ChartCounter=0;const v300PendingCharts={};
 function v300BuildPaceRows(c2Rows,ergoRows,workoutsForUser){
   const workoutsById=new Map((workoutsForUser||[]).map(w=>[String(w.id),w]));
+  const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
   const manual=(ergoRows||[]).map(e=>{
     const w=workoutsById.get(String(e.workout_id));if(!w)return null;
-    return{pace_500_seconds:e.pace_500_seconds,distance_m:e.distance_m,workout_date:w.performed_at||w.created_at||w.session_date||null,training_session_id:w.training_session_id||null,hidden:!!w.hidden,user_id:w.user_id,_manual:true};
+    return{pace_500_seconds:e.pace_500_seconds,distance_m:e.distance_m,workout_date:w.performed_at||w.created_at||w.session_date||null,training_session_id:w.training_session_id||null,hidden:!!w.hidden,user_id:w.user_id,_manual:true,_kind:'manual',_raw:e};
   }).filter(x=>x&&x.workout_date&&x.pace_500_seconds);
-  const all=[...(c2Rows||[]),...manual];
+  const all=[...c2tagged,...manual];
   const bySession=new Map(),loose=[];
   all.forEach(r=>{
     if(!r.training_session_id){loose.push(r);return}
@@ -3624,6 +3642,7 @@ function v300GroupExercises(rows,titleMap){
   });
   const entries=Object.values(groups).map(g=>{
     g.rows.sort((a,b)=>new Date(a.workout_date)-new Date(b.workout_date));
+    g.rows.forEach((r,i)=>{r._pointIndex=i});
     const label=Object.entries(g.titleCounts).sort((a,b)=>b[1]-a[1])[0][0];
     return[label,g.rows];
   });
@@ -3639,13 +3658,13 @@ function v300EvolutionCardHtml(rows,titleMap){
   const chartId=++v300ChartCounter;
   v300PendingCharts[chartId]=entries;
   const options=entries.map(([title,arr],i)=>`<option value="${i}">${esc(title)} (${arr.length})</option>`).join('');
-  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1])}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
+  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
 }
 function v300WireCharts(root){
   if(!root)return;
   root.querySelectorAll('select[data-v300]').forEach(sel=>{
     const chartId=sel.dataset.v300,entries=v300PendingCharts[chartId];if(!entries)return;
-    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1])};
+    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value)})};
   });
 }
 
@@ -4547,6 +4566,7 @@ async function planBPicker(){
 function sessionEditor(x=null){
  const team=planTeam.value,date=planDate.value;const initial=x?.content||marDefaultSessionContent();
  planArea.innerHTML=`<div class="card"><h3>${x?'Editar':'Nuevo'} entrenamiento</h3><div class="plannerGrid"><label>Tipo<select id="sessType"><option>GYM</option><option>ERG</option><option>MAR</option><option>DESC</option></select></label><label>Título<input id="sessTitle" value="${x?.title||''}" placeholder="Ej. MAR · Técnica + cambios de ritmo"></label></div>
+ <details id="v300ErgoTitleBuilder" style="margin:10px 0"><summary><b>🛠️ Generador de título ERGO (opcional)</b></summary><div class="plannerGrid" style="margin-top:10px"><label>Zona<select id="v300Zona"><option>UT2</option><option>UT1</option><option>AT</option><option>TR</option><option>AN</option><option>TEST</option></select></label><label>Repeticiones<input id="v300Reps" type="number" min="1" placeholder="Ej. 3"></label><label>Duración<input id="v300Dur" type="number" min="1" placeholder="Ej. 12"></label><label>Unidad<select id="v300Unit"><option value="min">minutos</option><option value="m">metros</option></select></label><label>PPM objetivo<input id="v300Ppm" type="number" min="1" placeholder="Ej. 20"></label><label>Descanso<input id="v300Rest" type="number" min="0" placeholder="Ej. 3"></label><label>Unidad descanso<select id="v300RestUnit"><option value="min">min</option><option value="seg">seg</option></select></label></div><div class="actions" style="margin-top:8px"><button type="button" id="v300FillTitle">Usar este título</button></div><p class="muted"><small>Genera siempre el mismo formato (ERGO · ZONA · REPS×DURACIÓN @PPMppm · rec DESCANSO), para que las gráficas de evolución reconozcan bien el mismo ejercicio en fechas distintas.</small></p></details>
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
  <div id="visualSessionEditorV213"></div>
  <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea></details>
@@ -4555,6 +4575,15 @@ function sessionEditor(x=null){
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
+ document.getElementById('v300FillTitle').onclick=()=>{
+   const zona=document.getElementById('v300Zona').value,reps=Number(document.getElementById('v300Reps').value)||0,dur=Number(document.getElementById('v300Dur').value)||0,unit=document.getElementById('v300Unit').value,ppm=document.getElementById('v300Ppm').value.trim(),rest=document.getElementById('v300Rest').value.trim(),restUnit=document.getElementById('v300RestUnit').value;
+   const parts=['ERGO',zona];
+   if(dur){const unitLabel=unit==='min'?'min':'m';parts.push(reps>1?`${reps}×${dur}${unitLabel}`:`${dur}${unitLabel}`)}
+   let title=parts.join(' · ');
+   if(ppm)title+=` @${ppm}ppm`;
+   if(rest)title+=` · rec ${rest}${restUnit}`;
+   sessTitle.value=title;
+ };
  let visualRowsV213=[];
  const parseVisualRowsV213=(txt)=>String(txt||'').split(/\n+/).map(z=>z.trim()).filter(Boolean).map((line,i)=>{const m=line.match(/^([^·:]+?)\s*[·:]\s*(.*)$/);return {id:`v213-${Date.now()}-${i}-${Math.random()}`,label:(m?m[1]:i===0?'BLOQUE':'INDICACIÓN').trim(),detail:(m?m[2]:line).trim()}});
  const rowsToTextV213=()=>visualRowsV213.map(r=>`${String(r.label||'BLOQUE').trim()} · ${String(r.detail||'').trim()}`).join('\n');
@@ -4586,7 +4615,7 @@ function sessionEditor(x=null){
   return x;
 }
 
- const refresh=()=>{renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ const refresh=()=>{renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())setSessionContentV213(marDefaultSessionContent());else if(sessType.value!=='MAR'&&skeleton)setSessionContentV213('');refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    if(['ERG','MAR'].includes(sessType.value))syncVisualToTextV213();
