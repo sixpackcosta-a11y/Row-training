@@ -3574,6 +3574,21 @@ function v300ResultMetrics(row){
   const e=row._raw||{};return{spm:e.spm,avg_hr:e.avg_hr,max_hr:e.max_hr};
 }
 function v300ExtractTargetPpm(title){const m=String(title||'').match(/@\s*(\d+)/);return m?Number(m[1]):null}
+function v300ExtractZone(title){const m=String(title||'').toUpperCase().match(/\b(UT2|UT1|AT|TR|AN)\b/);return m?m[1]:null}
+function v300GetSplits(row){
+  if(!row||!row._raw)return[];
+  if(row._kind==='concept2'){
+    const raw=row._raw.raw_result||{},workout=raw.workout||{};
+    const parts=workout.intervals||workout.splits||raw.intervals||raw.splits||[];
+    if(!Array.isArray(parts))return[];
+    return parts.map(p=>{
+      const dist=Number(p.distance),seconds=p.time==null?null:Number(p.time)/10,pace=seconds&&dist?seconds*500/dist:null;
+      const spm=p.stroke_rate??p.spm??null,hr=p.heart_rate?.average??p.heart_rate?.ending??p.heart_rate?.max??null;
+      return{pace_500_seconds:pace,spm:spm!=null?Number(spm):null,avg_hr:hr!=null?Number(hr):null};
+    }).filter(x=>x.pace_500_seconds);
+  }
+  return v124ErgoSplitsArray(row._raw).map(p=>({pace_500_seconds:p.pace_500_seconds!=null?Number(p.pace_500_seconds):null,spm:p.spm!=null?Number(p.spm):null,avg_hr:p.avg_hr!=null?Number(p.avg_hr):null})).filter(x=>x.pace_500_seconds);
+}
 function v300ToneStyle(tone){
   const map={
     good:{bg:'#e9f7ee',border:'#8fd4a8',color:'#166534'},
@@ -3582,16 +3597,17 @@ function v300ToneStyle(tone){
   };
   return map[tone]||map.steady;
 }
-function v300ExerciseAnalysisHtml(data,title){
+function v300Chip(c){const cs=v300ToneStyle(c.tone);return `<div style="background:${cs.bg};border:1px solid ${cs.border};border-radius:10px;padding:8px 12px;flex:1;min-width:150px"><div style="font-size:12px;color:${cs.color};font-weight:700">${c.icon} ${esc(c.label)}</div><div style="font-size:13px;color:#334155;margin-top:2px">${c.text}</div></div>`}
+function v300ExerciseAnalysisHtml(data,title,metric){
   if(!data||data.length<2)return'';
   const first=data[0],last=data[data.length-1];
   const firstPace=Number(first.pace_500_seconds),lastPace=Number(last.pace_500_seconds);
   const paceDeltaPct=((firstPace-lastPace)/firstPace*100); // positivo = más rápido
   const mFirst=v300ResultMetrics(first),mLast=v300ResultMetrics(last);
-  const targetPpm=v300ExtractTargetPpm(title);
+  const targetPpm=v300ExtractTargetPpm(title),zone=v300ExtractZone(title);
   const dateFirst=esc(shortDateES(String(first.workout_date).slice(0,10))),dateLast=esc(shortDateES(String(last.workout_date).slice(0,10)));
 
-  // Veredicto principal: siempre en positivo, incluso cuando el ritmo baja.
+  // Veredicto principal: siempre en positivo, pero honesto -- si hay que apretar mas, se dice.
   let verdict;
   if(paceDeltaPct>0.3){
     verdict={tone:'good',icon:'💪',headline:'¡Mejora de ritmo!',detail:`${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m · ${paceDeltaPct.toFixed(1)}% más rápido<br><small>${dateFirst} → ${dateLast}</small>`};
@@ -3602,24 +3618,54 @@ function v300ExerciseAnalysisHtml(data,title){
   }
   const vs=v300ToneStyle(verdict.tone);
 
-  // Chips secundarios (FC y palada), siempre en tono constructivo, nunca alarmista.
-  const chips=[];
-  if(mFirst.avg_hr&&mLast.avg_hr){
+  // 1) Parciales / regularidad del ultimo resultado -- siempre se comenta.
+  const splits=v300GetSplits(last);
+  let splitsChip;
+  if(splits.length<2){
+    splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:'No hay parciales guardados en el último resultado para valorar la regularidad.'};
+  }else{
+    const paces=splits.map(s=>s.pace_500_seconds),sFirst=paces[0],sLast=paces[paces.length-1],avg=paces.reduce((a,b)=>a+b,0)/paces.length,devPct=avg?((Math.max(...paces)-Math.min(...paces))/avg*100):0,deltaPct=((sLast-sFirst)/sFirst*100);
+    if(devPct<=1.5)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Muy regulares entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). Justo la regularidad que se busca en este tipo de series.`};
+    else if(deltaPct>3)splitsChip={icon:'📋',tone:'encourage',label:'Parciales',text:`Se han ido enlenteciendo (1º: ${v300FmtPace(sFirst)} → último: ${v300FmtPace(sLast)}/500m). Repartir mejor el esfuerzo ayudará a aguantar el ritmo hasta el final.`};
+    else if(deltaPct<-3)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Negative split: los últimos parciales más rápidos que los primeros (${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). ¡Muy buen reparto del esfuerzo!`};
+    else splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:`Bastante parejos entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m).`};
+  }
+
+  // 2) Frecuencia cardiaca frente a la zona objetivo de la sesion (si la conocemos) -- siempre se comenta.
+  const zoneMin=zone&&metric?Number(metric[zone.toLowerCase()+'_min']):null,zoneMax=zone&&metric?Number(metric[zone.toLowerCase()+'_max']):null;
+  let hrChip;
+  if(!mLast.avg_hr){
+    hrChip={icon:'❤️',tone:'steady',label:'Frecuencia cardíaca',text:'No hay FC registrada en el último resultado. Usar la banda te ayudará a controlar mejor el esfuerzo.'};
+  }else if(zoneMin&&zoneMax){
+    if(mLast.avg_hr>=zoneMin&&mLast.avg_hr<=zoneMax)hrChip={icon:'❤️',tone:'good',label:'Frecuencia cardíaca',text:`${mLast.avg_hr} ppm · dentro de tu zona ${zone} (${zoneMin}–${zoneMax}). Justo donde debe estar.`};
+    else if(mLast.avg_hr>zoneMax)hrChip={icon:'❤️',tone:'encourage',label:'Frecuencia cardíaca',text:`${mLast.avg_hr} ppm · por encima de tu zona ${zone} (${zoneMin}–${zoneMax}). Controla un poco el esfuerzo para entrenar en la zona objetivo.`};
+    else hrChip={icon:'❤️',tone:'encourage',label:'Frecuencia cardíaca',text:`${mLast.avg_hr} ppm · por debajo de tu zona ${zone} (${zoneMin}–${zoneMax}). Si el objetivo es esa zona, puedes apretar algo más.`};
+  }else if(mFirst.avg_hr){
     const hrDelta=mLast.avg_hr-mFirst.avg_hr;
-    if(hrDelta<=-3)chips.push({icon:'❤️',tone:'good',label:'FC media',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · mejor eficiencia`});
-    else if(hrDelta>=5)chips.push({icon:'❤️',tone:'encourage',label:'FC media',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · cuida bien el descanso`});
-    else chips.push({icon:'❤️',tone:'steady',label:'FC media',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · sin cambios relevantes`});
+    if(hrDelta<=-3)hrChip={icon:'❤️',tone:'good',label:'Frecuencia cardíaca',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · mejor eficiencia.`};
+    else if(hrDelta>=5)hrChip={icon:'❤️',tone:'encourage',label:'Frecuencia cardíaca',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · cuida bien el descanso.`};
+    else hrChip={icon:'❤️',tone:'steady',label:'Frecuencia cardíaca',text:`${mFirst.avg_hr} → ${mLast.avg_hr} ppm · sin cambios relevantes.`};
+  }else{
+    hrChip={icon:'❤️',tone:'steady',label:'Frecuencia cardíaca',text:`${mLast.avg_hr} ppm en el último resultado.`};
   }
-  if(mLast.spm&&targetPpm){
-    const dev=Math.abs(mLast.spm-targetPpm);
-    if(dev<=2)chips.push({icon:'🚣',tone:'good',label:'Palada',text:`${mLast.spm} ppm · ¡en el objetivo (${targetPpm})!`});
-    else chips.push({icon:'🚣',tone:'encourage',label:'Palada',text:`${mLast.spm} ppm · objetivo ${targetPpm}, ¡ya casi!`});
+
+  // 3) Palada frente al objetivo de la sesion -- siempre se comenta.
+  let paladaChip;
+  if(!mLast.spm){
+    paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:'No hay palada registrada en el último resultado.'};
+  }else if(targetPpm){
+    const dev=mLast.spm-targetPpm;
+    if(Math.abs(dev)<=2)paladaChip={icon:'🚣',tone:'good',label:'Palada',text:`${mLast.spm} ppm · ¡en el objetivo (${targetPpm})!`};
+    else paladaChip={icon:'🚣',tone:'encourage',label:'Palada',text:`${mLast.spm} ppm · objetivo ${targetPpm}, ¡ya casi!`};
+  }else{
+    paladaChip={icon:'🚣',tone:'steady',label:'Palada',text:`${mLast.spm} ppm en el último resultado (esta sesión no tiene un objetivo de palada definido en el título).`};
   }
-  const chipHtml=chips.map(c=>{const cs=v300ToneStyle(c.tone);return `<div style="background:${cs.bg};border:1px solid ${cs.border};border-radius:10px;padding:8px 12px;flex:1;min-width:150px"><div style="font-size:12px;color:${cs.color};font-weight:700">${c.icon} ${esc(c.label)}</div><div style="font-size:13px;color:#334155;margin-top:2px">${esc(c.text)}</div></div>`}).join('');
+
+  const chipHtml=[splitsChip,hrChip,paladaChip].map(v300Chip).join('');
 
   return `<div style="margin-top:14px;border:1px solid ${vs.border};background:${vs.bg};border-radius:14px;padding:16px">
     <div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px;line-height:1">${verdict.icon}</div><div><div style="font-size:16px;font-weight:800;color:${vs.color}">${verdict.headline}</div><div style="font-size:13px;color:#334155;margin-top:2px">${verdict.detail}</div></div></div>
-    ${chipHtml?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${chipHtml}</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${chipHtml}</div>
   </div>`;
 }
 function v300PaceEvolutionSvg(rows,opts={}){
@@ -3644,7 +3690,7 @@ function v300PaceEvolutionSvg(rows,opts={}){
     ${circles}
     <text x="${padL}" y="${H-8}" font-size="11" fill="#64748b">${firstLabel}</text>
     <text x="${W-padR}" y="${H-8}" font-size="11" fill="#64748b" text-anchor="end">${lastLabel}</text>
-  </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p>${v300ExerciseAnalysisHtml(data,opts.title)}</div>`;
+  </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p>${v300ExerciseAnalysisHtml(data,opts.title,opts.metric)}</div>`;
 }
 function v300ShowPoint(chartId,groupIndex,pointIndex){
   const entries=v300PendingCharts[chartId];if(!entries)return;
@@ -3664,7 +3710,7 @@ function v300ShowPoint(chartId,groupIndex,pointIndex){
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
 }
 
-let v300ChartCounter=0;const v300PendingCharts={};
+let v300ChartCounter=0;const v300PendingCharts={};const v300PendingMetric={};
 function v300BuildPaceRows(c2Rows,ergoRows,workoutsForUser){
   const workoutsById=new Map((workoutsForUser||[]).map(w=>[String(w.id),w]));
   const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
@@ -3723,7 +3769,7 @@ function v300GroupExercises(rows,titleMap){
   });
   return{entries,totalAssigned:base.length,totalAll:(rows||[]).length};
 }
-function v300EvolutionCardHtml(rows,titleMap){
+function v300EvolutionCardHtml(rows,titleMap,metric){
   const{entries:allEntries,totalAssigned,totalAll}=v300GroupExercises(rows,titleMap||new Map());
   const entries=allEntries.filter(([,arr])=>arr.length>=2).sort((a,b)=>b[1].length-a[1].length);
   if(!entries.length){
@@ -3731,15 +3777,16 @@ function v300EvolutionCardHtml(rows,titleMap){
     return `<p class="muted">Aún no hay ningún ejercicio con al menos 2 resultados de ERGO asignados a un entrenamiento del club como para comparar su evolución${extra}.</p>`;
   }
   const chartId=++v300ChartCounter;
-  v300PendingCharts[chartId]=entries;
+  v300PendingCharts[chartId]=entries;v300PendingMetric[chartId]=metric||null;
   const options=entries.map(([title,arr],i)=>`<option value="${i}">${esc(title)} (${arr.length})</option>`).join('');
-  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0,title:entries[0][0]})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
+  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0,title:entries[0][0],metric})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
 }
 function v300WireCharts(root){
   if(!root)return;
   root.querySelectorAll('select[data-v300]').forEach(sel=>{
     const chartId=sel.dataset.v300,entries=v300PendingCharts[chartId];if(!entries)return;
-    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value),title:entries[Number(sel.value)][0]})};
+    const metric=v300PendingMetric[chartId];
+    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value),title:entries[Number(sel.value)][0],metric})};
   });
 }
 
@@ -3775,7 +3822,7 @@ async function history(opts={}){
     return `<div class="last v147SelfHistory" data-state="${r.hidden?'hidden':'active'}" data-pending="${pending?'1':'0'}" data-type="ergo" ${r.hidden?'hidden':''}><b>${new Date(r.workout_date).toLocaleString("es-ES")}</b> ${match}${r.hidden?' <span class="tag">Oculta</span>':''}<br>${r.distance_m??"-"} m · trabajo ${r.time_formatted||"-"} · /500 ${pace} · ${r.spm??"-"} spm${v214ErgoZoneHtml(r,selfPlanMap.get(String(r.training_session_id||'')),selfMetric,selfErgConnected,'concept2')}<br><small>${r.source||"Concept2"} · confianza ${r.match_confidence??0}%</small>${v112C2PartialsHtml(r)}<div class="staffActions"><button class="v140AssignResult" data-kind="concept2" data-id="${r.id}" data-type="ERG" data-date="${String(r.workout_date||'').slice(0,10)}" data-session="${r.training_session_id||''}">${r.training_session_id?'Cambiar sesión asociada':'Asignar a una sesión'}</button>${r.training_session_id?`<button class="v162SelfUnassign" data-kind="concept2" data-id="${r.id}" data-session="${r.training_session_id}">Desasignar</button>`:''}<button class="v147SelfHideC2" data-id="${r.id}" data-session="${r.training_session_id||''}" data-hidden="${r.hidden?'1':'0'}">${r.hidden?'Volver a mostrar':'Ocultar del historial'}</button></div></div>`;
   }).join("")}</div>`:"";
 
-  const v300ChartHtml=`<div class="card"><h3>📈 Evolución de tu ritmo</h3>${v300EvolutionCardHtml(v300BuildPaceRows(displayC2,ergo,workouts),v300TitleMapFromSessions(selfPlans))}</div>`;
+  const v300ChartHtml=`<div class="card"><h3>📈 Evolución de tu ritmo</h3>${v300EvolutionCardHtml(v300BuildPaceRows(displayC2,ergo,workouts),v300TitleMapFromSessions(selfPlans),selfMetric)}</div>`;
   content.innerHTML='<div class="card"><h2>Historial</h2>'+pendingSelfBanner+'<label>Mostrar <select id="v147SelfHistoryFilter"><option value="active">Activos</option><option value="pending">Pendientes de asignar</option><option value="hidden">Ocultos</option><option value="all">Todos</option></select></label> <label>Tipo <select id="v300TypeFilterSelf"><option value="all">Todos</option><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label>'+
     v300ChartHtml+
     c2html+
@@ -5470,7 +5517,7 @@ async function results(){
   }
   function renderAthlete(openEditor=false,focusPending=false){
     const p=profiles.find(a=>a.user_id===selectedAthlete);if(!p){detail.innerHTML='';athleteSectionName.textContent='Selecciona un remero';return}athSel.value=selectedAthlete;athleteSectionName.textContent=p.full_name||'Sin nombre';const end=addDaysISO(weekStart,6),individualStart=complianceMode==='month'?monthStart:weekStart,individualEnd=complianceMode==='month'?monthEndV151(monthStart):end,comp=v79ComplianceForAthlete(p.user_id,sessions.filter(s=>s.team_code===team),workouts,gym,c2rows,individualStart,individualEnd),mm=latestMetric(p.user_id),age=ageFromBirthV103(p.birth_date),pendingCount=pendingCountForAthleteV150(p.user_id),pendingBanner=pendingCount?`<div class="info" style="background:#fff8e8;border-color:#edc36b;margin:12px 0"><b>⚠️ ${pendingCount} resultado${pendingCount===1?'':'s'} pendiente${pendingCount===1?'':'s'} de asignar</b><div class="staffActions" style="margin-top:8px"><button id="v150AthletePending" type="button">Ver solo pendientes</button></div></div>`:'';
-    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}<div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions))}</section></section>`;
+    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}<div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions),mm)}</section></section>`;
     const backToMonthTeamV170=detail.querySelector('#backToMonthTeamV170');if(backToMonthTeamV170)backToMonthTeamV170.onclick=()=>{athleteSection.open=false;document.getElementById('complianceSectionV123').open=true;document.getElementById('complianceSectionV123').scrollIntoView({behavior:'smooth',block:'start'})};const athletePrevWeekV151=detail.querySelector('#athletePrevWeekV151'),athleteNextWeekV151=detail.querySelector('#athleteNextWeekV151');if(athletePrevWeekV151)athletePrevWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,-7);complianceMode='week';renderClient();athleteSection.open=true};if(athleteNextWeekV151)athleteNextWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,7);complianceMode='week';renderClient();athleteSection.open=true};
     detail.querySelectorAll('.v154CoachEditErgo').forEach(button=>button.onclick=()=>{const w=workouts.find(x=>String(x.id)===String(button.dataset.workout)),e=ergo.find(x=>String(x.id)===String(button.dataset.ergo));v154EditManualErgo(w,e,p.user_id,team,()=>{renderClient();athleteSection.open=true})});
     detail.querySelectorAll('.v141CoachAssign').forEach(button=>button.onclick=()=>v140AssignResult(button.dataset.kind,button.dataset.id,button.dataset.type,button.dataset.date,p.user_id,team,session=>{if(button.dataset.kind==='concept2'){const row=c2rows.find(x=>String(x.id)===String(button.dataset.id));if(row){row.training_session_id=session?.id||null;row.matched_session_code=session?.title||null;row.match_status=session?'matched':'unplanned';row.match_confidence=session?100:0}}else{const row=workouts.find(x=>String(x.id)===String(button.dataset.id));if(row){row.training_session_id=session?.id||null;if(session){row.session_code=session.title;row.session_date=session.session_date}}}renderClient();athleteSection.open=true},button.dataset.session));
