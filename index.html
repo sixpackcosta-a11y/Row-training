@@ -2040,6 +2040,7 @@ async function startApp(){
   if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
+  if(currentMode==="athlete"&&currentUser)setTimeout(()=>v300CheckNewComments(),900);
   setTimeout(()=>checkForAppUpdate(),1200);
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
@@ -3767,6 +3768,20 @@ async function v300FetchComments(kind,id){
 }
 async function v300SaveComment(kind,id,userId,teamCode,text){
   return sb.from('ergo_result_comments').insert({result_kind:kind,result_id:id,user_id:userId,team_code:teamCode,comment:text,created_by:currentUser.id});
+}
+async function v300CheckNewComments(){
+  try{
+    if(currentMode!=='athlete'||!currentUser)return;
+    const seenKey='rowtraining_v300_comments_seen_'+currentUser.id;
+    const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
+    const q=await sb.from('ergo_result_comments').select('id,created_at,created_by').eq('user_id',currentUser.id).neq('created_by',currentUser.id).gt('created_at',lastSeen).order('created_at',{ascending:false}).limit(20);
+    if(q.error)return;
+    const rows=q.data||[];
+    if(!rows.length)return;
+    localStorage.setItem(seenKey,rows[0].created_at);
+    const msg=rows.length===1?'💬 Tu entrenador ha comentado un resultado de ERGO. Míralo en Historial.':`💬 Tu entrenador ha dejado ${rows.length} comentarios nuevos en tus resultados de ERGO. Míralos en Historial.`;
+    v300ShowToast(msg,()=>{tab='hist';draw();render()});
+  }catch(e){}
 }
 
 let v300ChartCounter=0;const v300PendingCharts={};const v300PendingMetric={};const v300PendingTeam={};
