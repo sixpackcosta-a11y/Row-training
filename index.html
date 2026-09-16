@@ -3555,7 +3555,7 @@ function v300PaceEvolutionSvg(rows,opts={}){
   const paces=data.map(d=>Number(d.pace_500_seconds));
   const minP=Math.min(...paces),maxP=Math.max(...paces),span=(maxP-minP)||1;
   const xAt=i=>padL+(W-padL-padR)*(data.length===1?0:i/(data.length-1));
-  const yAt=v=>padT+(H-padT-padB)*((v-minP)/span);
+  const yAt=v=>padT+(H-padT-padB)*((maxP-v)/span);
   const pts=data.map((d,i)=>({x:xAt(i),y:yAt(Number(d.pace_500_seconds)),d,originalIndex:d._pointIndex}));
   const path=pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
   const circles=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="#2563eb" style="cursor:pointer" onclick="v300ShowPoint(${chartId},${groupIndex},${p.originalIndex})"><title>${esc(shortDateES(String(p.d.workout_date).slice(0,10)))} · ${v300FmtPace(p.d.pace_500_seconds)}/500m${p.d.distance_m?' · '+p.d.distance_m+' m':''} · toca para ver el detalle</title></circle>`).join('');
