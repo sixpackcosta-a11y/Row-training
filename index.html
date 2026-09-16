@@ -3325,6 +3325,7 @@ async function saveErgoResult(){
   const workoutNotice=await notifyWorkoutCoachesV129('workout',workout.id,currentTeamCode);
   alert(`Resultado de ergómetro guardado${splits.length?` con ${splits.length} parciales`:''}.${photoWarning}${workoutNoticeTextV130(workoutNotice)}`);
   currentErgoFilesV124=[];
+  v300CheckSelfChartable();
   tab="hist";draw();render();
   } finally {ergoSaveInFlightV193=false;if(saveBtn&&document.body.contains(saveBtn)){saveBtn.disabled=false;saveBtn.textContent='Guardar resultado'}}
 }
@@ -3717,10 +3718,11 @@ function v300PaceEvolutionSvg(rows,opts={}){
     <text x="${W-padR}" y="${H-8}" font-size="11" fill="#64748b" text-anchor="end">${lastLabel}</text>
   </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p>${v300ExerciseAnalysisHtml(data,opts.title,opts.metric)}</div>`;
 }
-function v300ShowPoint(chartId,groupIndex,pointIndex){
+async function v300ShowPoint(chartId,groupIndex,pointIndex){
   const entries=v300PendingCharts[chartId];if(!entries)return;
   const group=entries[groupIndex];if(!group)return;
   const point=group[1][pointIndex];if(!point)return;
+  const teamCode=v300PendingTeam[chartId]||currentTeamCode||'';
   let body='';
   if(point._kind==='concept2'){
     const d=v144C2ForDisplay(point._raw);
@@ -3728,14 +3730,46 @@ function v300ShowPoint(chartId,groupIndex,pointIndex){
   }else{
     body=`<div class="complianceResultBlockV237"><div><b>ERGO · Registro manual</b></div>${v124ManualErgoHtml(point._raw)}</div>`;
   }
+  const resultKind=point._kind==='concept2'?'concept2':'manual',resultId=point._raw?.id;
+  const isCoachView=currentMode==='staff';
+  body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios del entrenador</b></div><p class="muted"><small>Cargando…</small></p></div>`;
   const layer=document.createElement('div');layer.className='modalBack';
   layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(group[0])}</h2><div class="muted">${esc(shortDateES(String(point.workout_date||'').slice(0,10)))}</div></div><button type="button" class="v300CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  if(resultId==null)return;
+  const box=layer.querySelector('#v300CommentsBox');
+  const renderComments=async()=>{
+    if(!box.isConnected)return;
+    const comments=await v300FetchComments(resultKind,resultId);
+    const listHtml=comments.length?comments.map(c=>`<div class="last"><small class="muted">${esc(shortDateES(String(c.created_at).slice(0,10)))}</small><br>${esc(c.comment)}</div>`).join(''):'<p class="muted">Aún no hay comentarios de este resultado.</p>';
+    const formHtml=isCoachView?`<div style="margin-top:10px"><textarea id="v300CommentInput" rows="2" placeholder="Escribe un comentario para este resultado…" style="width:100%"></textarea><div class="actions" style="margin-top:6px"><button type="button" id="v300CommentSave">Guardar comentario</button></div></div>`:'';
+    box.innerHTML=`<div><b>💬 Comentarios del entrenador</b></div>${listHtml}${formHtml}`;
+    if(isCoachView){
+      const saveBtn=box.querySelector('#v300CommentSave');
+      saveBtn.onclick=async()=>{
+        const ta=box.querySelector('#v300CommentInput'),text=ta.value.trim();if(!text)return;
+        saveBtn.disabled=true;
+        const{error}=await v300SaveComment(resultKind,resultId,point.user_id,teamCode,text);
+        if(error){alert(error.message);saveBtn.disabled=false;return}
+        await renderComments();
+      };
+    }
+  };
+  renderComments();
+}
+async function v300FetchComments(kind,id){
+  try{
+    const q=await sb.from('ergo_result_comments').select('id,comment,created_at,created_by').eq('result_kind',kind).eq('result_id',id).order('created_at',{ascending:true});
+    return q.error?[]:(q.data||[]);
+  }catch(e){return[]}
+}
+async function v300SaveComment(kind,id,userId,teamCode,text){
+  return sb.from('ergo_result_comments').insert({result_kind:kind,result_id:id,user_id:userId,team_code:teamCode,comment:text,created_by:currentUser.id});
 }
 
-let v300ChartCounter=0;const v300PendingCharts={};const v300PendingMetric={};
+let v300ChartCounter=0;const v300PendingCharts={};const v300PendingMetric={};const v300PendingTeam={};
 function v300BuildPaceRows(c2Rows,ergoRows,workoutsForUser){
   const workoutsById=new Map((workoutsForUser||[]).map(w=>[String(w.id),w]));
   const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
@@ -3796,7 +3830,7 @@ function v300GroupExercises(rows,titleMap){
   });
   return{entries,totalAssigned:base.length,totalAll:(rows||[]).length};
 }
-function v300EvolutionCardHtml(rows,titleMap,metric){
+function v300EvolutionCardHtml(rows,titleMap,metric,teamCode){
   const{entries:allEntries,totalAssigned,totalAll}=v300GroupExercises(rows,titleMap||new Map());
   const entries=allEntries.filter(([,arr])=>arr.length>=2).sort((a,b)=>b[1].length-a[1].length);
   if(!entries.length){
@@ -3804,7 +3838,7 @@ function v300EvolutionCardHtml(rows,titleMap,metric){
     return `<p class="muted">Aún no hay ningún ejercicio con al menos 2 resultados de ERGO asignados a un entrenamiento del club como para comparar su evolución${extra}.</p>`;
   }
   const chartId=++v300ChartCounter;
-  v300PendingCharts[chartId]=entries;v300PendingMetric[chartId]=metric||null;
+  v300PendingCharts[chartId]=entries;v300PendingMetric[chartId]=metric||null;v300PendingTeam[chartId]=teamCode||currentTeamCode||'';
   const options=entries.map(([title,arr],i)=>`<option value="${i}">${esc(title)} (${arr.length})</option>`).join('');
   return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0,title:entries[0][0],metric})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
 }
@@ -3815,6 +3849,47 @@ function v300WireCharts(root){
     const metric=v300PendingMetric[chartId];
     sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value),title:entries[Number(sel.value)][0],metric})};
   });
+}
+function v300ShowToast(msg,onClick){
+  document.querySelectorAll('.v300Toast').forEach(t=>t.remove());
+  const el=document.createElement('div');
+  el.className='v300Toast';
+  el.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#07162f;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;display:flex;gap:12px;align-items:center;max-width:92vw;font-size:14px;cursor:pointer';
+  el.innerHTML=`<span>${esc(msg)}</span><button type="button" aria-label="Cerrar" style="background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer;padding:0 2px;flex:0 0 auto">✕</button>`;
+  el.querySelector('button').onclick=(e)=>{e.stopPropagation();el.remove()};
+  if(onClick)el.addEventListener('click',()=>{onClick();el.remove()});
+  document.body.appendChild(el);
+  setTimeout(()=>{if(el.isConnected){el.style.transition='opacity .4s';el.style.opacity='0';setTimeout(()=>el.remove(),450)}},8000);
+}
+function v300SelfChartNotifyKey(label){
+  return 'rowtraining_v300_notified_'+(currentUser?.id||'')+'_'+String(label).toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,60);
+}
+async function v300CheckSelfChartable(){
+  try{
+    if(currentMode!=='athlete'||!currentUser||!currentTeamCode)return;
+    const [{data:c2,error:e1},{data:ergoRows,error:e2},{data:workoutRows,error:e3},{data:plans,error:e4}]=await Promise.all([
+      sb.from('concept2_results').select('*').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(100),
+      sb.from('ergo_results').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100),
+      sb.from('workout_logs').select('id,user_id,session_type,session_date,training_session_id,performed_at,created_at,hidden').eq('user_id',currentUser.id).eq('session_type','ergo').order('created_at',{ascending:false}).limit(100),
+      sb.from('training_sessions').select('id,session_date,session_type,title').eq('team_code',currentTeamCode).eq('session_type','ERG')
+    ]);
+    if(e1||e2||e3||e4)return;
+    const paceRows=v300BuildPaceRows(c2||[],ergoRows||[],workoutRows||[]);
+    const{entries}=v300GroupExercises(paceRows,v300TitleMapFromSessions(plans));
+    const ready=entries.filter(([,arr])=>arr.length>=2);
+    for(const[label,arr]of ready){
+      const key=v300SelfChartNotifyKey(label),count=arr.length,last=Number(localStorage.getItem(key)||0),shortLabel=label.length>40?label.slice(0,40)+'…':label;
+      if(last===0){
+        localStorage.setItem(key,String(count));
+        v300ShowToast(`📈 Ya tienes 2 resultados de "${shortLabel}". Mira tu evolución en Historial.`,()=>{tab='hist';draw();render()});
+        break; // uno cada vez, para no saturar si se ponen al día varios ejercicios a la vez
+      }else if(count-last>=5){
+        localStorage.setItem(key,String(count));
+        v300ShowToast(`📈 Ya llevas ${count} resultados de "${shortLabel}". Échale un ojo a tu evolución en Historial.`,()=>{tab='hist';draw();render()});
+        break;
+      }
+    }
+  }catch(e){}
 }
 
 async function history(opts={}){
@@ -3995,6 +4070,7 @@ async function autoSyncConcept2({refreshHistory=false,force=false}={}){
     const st=await concept2Status();
     if(!st?.connected) return null;
     const data=await syncConcept2(false);
+    if(data?.ok&&((data.imported||0)>0||(data.updated||0)>0))v300CheckSelfChartable();
     if(refreshHistory && tab==="hist" && data?.ok && ((data.imported||0)>0 || (data.updated||0)>0)){
       await history({skipAuto:true});
     }
@@ -5549,7 +5625,7 @@ async function results(){
   }
   function renderAthlete(openEditor=false,focusPending=false){
     const p=profiles.find(a=>a.user_id===selectedAthlete);if(!p){detail.innerHTML='';athleteSectionName.textContent='Selecciona un remero';return}athSel.value=selectedAthlete;athleteSectionName.textContent=p.full_name||'Sin nombre';const end=addDaysISO(weekStart,6),individualStart=complianceMode==='month'?monthStart:weekStart,individualEnd=complianceMode==='month'?monthEndV151(monthStart):end,comp=v79ComplianceForAthlete(p.user_id,sessions.filter(s=>s.team_code===team),workouts,gym,c2rows,individualStart,individualEnd),mm=latestMetric(p.user_id),age=ageFromBirthV103(p.birth_date),pendingCount=pendingCountForAthleteV150(p.user_id),pendingBanner=pendingCount?`<div class="info" style="background:#fff8e8;border-color:#edc36b;margin:12px 0"><b>⚠️ ${pendingCount} resultado${pendingCount===1?'':'s'} pendiente${pendingCount===1?'':'s'} de asignar</b><div class="staffActions" style="margin-top:8px"><button id="v150AthletePending" type="button">Ver solo pendientes</button></div></div>`:'';
-    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}<div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions),mm)}</section></section>`;
+    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}<div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions),mm,team)}</section></section>`;
     const backToMonthTeamV170=detail.querySelector('#backToMonthTeamV170');if(backToMonthTeamV170)backToMonthTeamV170.onclick=()=>{athleteSection.open=false;document.getElementById('complianceSectionV123').open=true;document.getElementById('complianceSectionV123').scrollIntoView({behavior:'smooth',block:'start'})};const athletePrevWeekV151=detail.querySelector('#athletePrevWeekV151'),athleteNextWeekV151=detail.querySelector('#athleteNextWeekV151');if(athletePrevWeekV151)athletePrevWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,-7);complianceMode='week';renderClient();athleteSection.open=true};if(athleteNextWeekV151)athleteNextWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,7);complianceMode='week';renderClient();athleteSection.open=true};
     detail.querySelectorAll('.v154CoachEditErgo').forEach(button=>button.onclick=()=>{const w=workouts.find(x=>String(x.id)===String(button.dataset.workout)),e=ergo.find(x=>String(x.id)===String(button.dataset.ergo));v154EditManualErgo(w,e,p.user_id,team,()=>{renderClient();athleteSection.open=true})});
     detail.querySelectorAll('.v141CoachAssign').forEach(button=>button.onclick=()=>v140AssignResult(button.dataset.kind,button.dataset.id,button.dataset.type,button.dataset.date,p.user_id,team,session=>{if(button.dataset.kind==='concept2'){const row=c2rows.find(x=>String(x.id)===String(button.dataset.id));if(row){row.training_session_id=session?.id||null;row.matched_session_code=session?.title||null;row.match_status=session?'matched':'unplanned';row.match_confidence=session?100:0}}else{const row=workouts.find(x=>String(x.id)===String(button.dataset.id));if(row){row.training_session_id=session?.id||null;if(session){row.session_code=session.title;row.session_date=session.session_date}}}renderClient();athleteSection.open=true},button.dataset.session));
