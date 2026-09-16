@@ -3595,19 +3595,43 @@ function v300TitleMapFromSessions(sessionsArr){
   (sessionsArr||[]).forEach(s=>{if(s&&s.id!=null)m.set(String(s.id),(s.title&&s.title.trim())||(s.session_date?`Sesión del ${shortDateES(s.session_date)}`:'Sesión'))});
   return m;
 }
+function v300NormalizeExerciseKey(title){
+  // Normaliza el título del entrenamiento para reconocer el mismo ejercicio aunque cambien
+  // detalles cosméticos: acentos, × vs x, 12' vs 12 min, mayúsculas, o la nota de descanso/recuperación.
+  let t=String(title||'').toLowerCase();
+  try{t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){}
+  t=t.replace(/[×xX]/g,'x');
+  t=t.replace(/[’']/g,'');
+  t=t.replace(/\bmin\b/g,'');
+  t=t.replace(/\bppm\b/g,'');
+  t=t.replace(/\bspm\b/g,'');
+  t=t.replace(/\brec\.?\s*\d+.*$/,'');
+  t=t.replace(/\bdescanso\b.*$/,'');
+  t=t.replace(/\s*x\s*/g,'x');
+  t=t.replace(/[^a-z0-9x@]+/g,' ');
+  t=t.replace(/\s+/g,' ').trim();
+  return t;
+}
 function v300GroupExercises(rows,titleMap){
   const base=(rows||[]).filter(r=>r&&!r.hidden&&r.training_session_id&&r.pace_500_seconds&&r.workout_date);
   const groups={};
   base.forEach(r=>{
-    const title=titleMap.get(String(r.training_session_id))||(r.distance_m?`Pieza sin nombre ~${Math.round(r.distance_m/250)*250} m`:'Pieza sin nombre');
-    (groups[title]=groups[title]||[]).push(r);
+    const rawTitle=titleMap.get(String(r.training_session_id))||(r.distance_m?`Pieza sin nombre ~${Math.round(r.distance_m/250)*250} m`:'Pieza sin nombre');
+    const key=v300NormalizeExerciseKey(rawTitle)||rawTitle.toLowerCase();
+    if(!groups[key])groups[key]={rows:[],titleCounts:{}};
+    groups[key].rows.push(r);
+    groups[key].titleCounts[rawTitle]=(groups[key].titleCounts[rawTitle]||0)+1;
   });
-  Object.values(groups).forEach(arr=>arr.sort((a,b)=>new Date(a.workout_date)-new Date(b.workout_date)));
-  return{groups,totalAssigned:base.length,totalAll:(rows||[]).length};
+  const entries=Object.values(groups).map(g=>{
+    g.rows.sort((a,b)=>new Date(a.workout_date)-new Date(b.workout_date));
+    const label=Object.entries(g.titleCounts).sort((a,b)=>b[1]-a[1])[0][0];
+    return[label,g.rows];
+  });
+  return{entries,totalAssigned:base.length,totalAll:(rows||[]).length};
 }
 function v300EvolutionCardHtml(rows,titleMap){
-  const{groups,totalAssigned,totalAll}=v300GroupExercises(rows,titleMap||new Map());
-  const entries=Object.entries(groups).filter(([,arr])=>arr.length>=2).sort((a,b)=>b[1].length-a[1].length);
+  const{entries:allEntries,totalAssigned,totalAll}=v300GroupExercises(rows,titleMap||new Map());
+  const entries=allEntries.filter(([,arr])=>arr.length>=2).sort((a,b)=>b[1].length-a[1].length);
   if(!entries.length){
     const extra=totalAll>totalAssigned?` (hay ${totalAll-totalAssigned} resultado${totalAll-totalAssigned===1?'':'s'} sin asignar a un entrenamiento del club, que no se cuentan aquí)`:'';
     return `<p class="muted">Aún no hay ningún ejercicio con al menos 2 resultados de ERGO asignados a un entrenamiento del club como para comparar su evolución${extra}.</p>`;
@@ -3615,7 +3639,7 @@ function v300EvolutionCardHtml(rows,titleMap){
   const chartId=++v300ChartCounter;
   v300PendingCharts[chartId]=entries;
   const options=entries.map(([title,arr],i)=>`<option value="${i}">${esc(title)} (${arr.length})</option>`).join('');
-  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1])}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas.</small></p>`;
+  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1])}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
 }
 function v300WireCharts(root){
   if(!root)return;
