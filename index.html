@@ -1801,6 +1801,7 @@ let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],rowerTeamCodes=[
 let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false,plannerTargetSessionId=null;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31";
 let workoutNotificationAthleteV129=null;
+let v300PendingCommentOpen=null;
 let coachLibrarySection="ERGO",gymEditorRows=[];
 let libraryViewMode="compact",libraryShowHidden=false,libraryFavoritesOnly=false,libraryArchiveMode="active";
 let TEAM_OPTIONS=[["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]];
@@ -2035,10 +2036,12 @@ async function startApp(){
   const launchParams=new URLSearchParams(location.search);
   if(launchParams.get("tab")==="altas"&&hasAnyCoachTeam())tab="altas";
   if(launchParams.get("tab")==="hist"&&currentMode==="athlete")tab="hist";
+  if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
   await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete')v300CheckNewComments()}},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
+  if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
   if(currentMode==="athlete"&&currentUser)setTimeout(()=>v300CheckNewComments(),900);
@@ -3781,11 +3784,31 @@ async function v300SaveComment(kind,id,userId,teamCode,text){
       audience:{mode:'users',user_ids:[userId],team_codes:[teamCode]},
       title:'💬 Comentario de tu entrenador',
       body:text.length>140?text.slice(0,140)+'…':text,
-      url:'/?tab=hist',
+      url:`/?tab=hist&ergoComment=1&kind=${encodeURIComponent(kind)}&rid=${encodeURIComponent(id)}`,
       type:'ergo_comment'
     }).catch(e=>console.warn('No se pudo enviar la notificación push del comentario',e));
   }
   return res;
+}
+async function v300OpenPendingComment(){
+  const req=v300PendingCommentOpen;v300PendingCommentOpen=null;
+  if(!req||!req.kind||!req.id||!currentUser)return;
+  try{
+    const table=req.kind==='concept2'?'concept2_results':'ergo_results';
+    const q=await sb.from(table).select('*').eq('id',req.id).eq('user_id',currentUser.id).maybeSingle();
+    if(q.error||!q.data)return;
+    const raw=q.data;
+    let title='Resultado ERGO',dateStr=req.kind==='concept2'?raw.workout_date:null;
+    if(raw.training_session_id){
+      const s=await sb.from('training_sessions').select('title').eq('id',raw.training_session_id).maybeSingle();
+      if(s.data?.title)title=s.data.title;
+    }
+    if(req.kind==='manual'&&raw.workout_id){
+      const w=await sb.from('workout_logs').select('performed_at,created_at').eq('id',raw.workout_id).maybeSingle();
+      dateStr=w.data?.performed_at||w.data?.created_at||null;
+    }
+    v300OpenResultComments(req.kind,raw,currentUser.id,currentTeamCode,title,dateStr);
+  }catch(e){}
 }
 async function v300CheckNewComments(){
   try{
