@@ -2019,11 +2019,25 @@ async function startApp(){
   r=currentMode==="staff"?"coach":"athlete";
   bootAuth?.classList.add("hidden");login.classList.add("hidden");register.classList.add("hidden");publicGuide.classList.add("hidden");forgotPassword.classList.add("hidden");resetPassword.classList.add("hidden");app.classList.remove("hidden");
   renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
+  let v300ResumeScrollY=null;
+  try{
+    const v300Resume=JSON.parse(sessionStorage.getItem('rowtraining_resume_v300')||'null');
+    sessionStorage.removeItem('rowtraining_resume_v300');
+    if(v300Resume&&(Date.now()-(v300Resume.ts||0))<120000){
+      if(v300Resume.currentMode==='staff'&&hasStaffMode()){currentMode='staff';r='coach'}
+      else if(v300Resume.currentMode==='athlete'&&hasRowerMode()){currentMode='athlete';r='athlete'}
+      if(v300Resume.tab)tab=v300Resume.tab;
+      if(v300Resume.coachSelectedTeam)coachSelectedTeam=v300Resume.coachSelectedTeam;
+      if(v300Resume.workoutNotificationAthleteV129)workoutNotificationAthleteV129=v300Resume.workoutNotificationAthleteV129;
+      if(typeof v300Resume.scrollY==='number')v300ResumeScrollY=v300Resume.scrollY;
+    }
+  }catch(e){}
   const launchParams=new URLSearchParams(location.search);
   if(launchParams.get("tab")==="altas"&&hasAnyCoachTeam())tab="altas";
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
   await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible')loadNotificationsV104()},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
   setTimeout(()=>checkForAppUpdate(),1200);
@@ -2123,6 +2137,9 @@ loadTeamsV88(true);
 async function refreshAppV159(){
   const btn=document.getElementById('refreshAppV159');if(btn){btn.disabled=true;btn.classList.add('is-refreshing')}
   try{
+    try{
+      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam,workoutNotificationAthleteV129,scrollY:window.scrollY,ts:Date.now()}));
+    }catch(e){}
     // Fuerza comprobación de versión y vuelve a cargar la app sin cerrar sesión.
     lastAppUpdateCheck=0;await checkForAppUpdate();
     const u=new URL(location.href);u.searchParams.set('refresh',Date.now());location.replace(u.toString());
@@ -3547,6 +3564,47 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
 }
 
 function v300FmtPace(s){s=Number(s);if(!s&&s!==0)return'—';const m=Math.floor(s/60),ss=(s%60).toFixed(1).padStart(4,'0');return m+':'+ss}
+function v300ResultMetrics(row){
+  if(row._kind==='concept2'){const d=v144C2ForDisplay(row._raw);return{spm:d.spm,avg_hr:d.avg_hr,max_hr:d.max_hr}}
+  const e=row._raw||{};return{spm:e.spm,avg_hr:e.avg_hr,max_hr:e.max_hr};
+}
+function v300ExtractTargetPpm(title){const m=String(title||'').match(/@\s*(\d+)/);return m?Number(m[1]):null}
+function v300ExerciseAnalysisHtml(data,title){
+  if(!data||data.length<2)return'';
+  const first=data[0],last=data[data.length-1];
+  const firstPace=Number(first.pace_500_seconds),lastPace=Number(last.pace_500_seconds);
+  const paceDeltaPct=((firstPace-lastPace)/firstPace*100); // positivo = mejora (más rápido)
+  const mFirst=v300ResultMetrics(first),mLast=v300ResultMetrics(last);
+  const targetPpm=v300ExtractTargetPpm(title);
+  const dateFirst=esc(shortDateES(String(first.workout_date).slice(0,10))),dateLast=esc(shortDateES(String(last.workout_date).slice(0,10)));
+  const lines=[];
+  if(Math.abs(paceDeltaPct)<0.3){
+    lines.push(`El ritmo se mantiene estable entre el ${dateFirst} y el ${dateLast}: ${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m.`);
+  }else if(paceDeltaPct>0){
+    lines.push(`💪 <b>Mejora de ritmo:</b> de ${v300FmtPace(firstPace)} a ${v300FmtPace(lastPace)}/500m (${paceDeltaPct.toFixed(1)}% más rápido) entre el ${dateFirst} y el ${dateLast}. ¡Buen progreso en esta pieza!`);
+  }else{
+    lines.push(`El ritmo ha bajado de ${v300FmtPace(firstPace)} a ${v300FmtPace(lastPace)}/500m (${Math.abs(paceDeltaPct).toFixed(1)}% más lento) entre el ${dateFirst} y el ${dateLast}. Puede ser fatiga acumulada, un mal día u otro factor puntual — merece la pena revisarlo con calma antes de sacar conclusiones.`);
+  }
+  if(mFirst.avg_hr&&mLast.avg_hr){
+    const hrDelta=mLast.avg_hr-mFirst.avg_hr;
+    if(paceDeltaPct>0.3&&hrDelta<=0){
+      lines.push(`❤️ Además, ha bajado el ritmo manteniendo o incluso bajando la FC media (${mFirst.avg_hr}→${mLast.avg_hr} ppm): señal de que la forma física está mejorando de verdad, no solo el esfuerzo puntual.`);
+    }else if(paceDeltaPct<-0.3&&hrDelta>0){
+      lines.push(`❤️ La FC media también ha subido (${mFirst.avg_hr}→${mLast.avg_hr} ppm) a la vez que el ritmo ha bajado. Conviene vigilar el descanso y la carga acumulada antes de la próxima sesión de este tipo.`);
+    }else if(hrDelta>=5){
+      lines.push(`❤️ La FC media ha subido de ${mFirst.avg_hr} a ${mLast.avg_hr} ppm para un ritmo parecido. Vale la pena comprobar el descanso, el sueño y la hidratación antes de la sesión.`);
+    }else if(hrDelta<=-5){
+      lines.push(`❤️ La FC media ha bajado de ${mFirst.avg_hr} a ${mLast.avg_hr} ppm para un ritmo parecido: mejor eficiencia cardiovascular.`);
+    }
+  }
+  if(mFirst.spm&&mLast.spm&&targetPpm){
+    const devLast=mLast.spm-targetPpm;
+    if(Math.abs(devLast)>2)lines.push(`🚣 El objetivo de esta sesión es ${targetPpm} ppm; el resultado más reciente se remó a ${mLast.spm} ppm (${devLast>0?'por encima':'por debajo'} del objetivo). Conviene ajustar la palada para acercarse a la consigna la próxima vez.`);
+    else lines.push(`🚣 El paladeo se mantiene ajustado al objetivo de ${targetPpm} ppm (último resultado: ${mLast.spm} ppm).`);
+  }
+  const note=data.length>=3?`<br><small class="muted">Comparación entre el primer y el último resultado de ${data.length} de este ejercicio.</small>`:'';
+  return `<div class="info" style="margin-top:10px"><b>📋 Análisis</b><br>${lines.join('<br><br>')}${note}</div>`;
+}
 function v300PaceEvolutionSvg(rows,opts={}){
   const limit=opts.limit||20,chartId=opts.chartId||0,groupIndex=opts.groupIndex||0;
   const data=(rows||[]).filter(r=>r&&r.pace_500_seconds&&r.workout_date).sort((a,b)=>new Date(a.workout_date)-new Date(b.workout_date)).slice(-limit);
@@ -3569,7 +3627,7 @@ function v300PaceEvolutionSvg(rows,opts={}){
     ${circles}
     <text x="${padL}" y="${H-8}" font-size="11" fill="#64748b">${firstLabel}</text>
     <text x="${W-padR}" y="${H-8}" font-size="11" fill="#64748b" text-anchor="end">${lastLabel}</text>
-  </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p></div>`;
+  </svg><p class="muted"><small>Ritmo /500m en cada resultado (más abajo en la gráfica = más rápido). Toca un punto para ver el detalle completo con parciales.</small></p>${v300ExerciseAnalysisHtml(data,opts.title)}</div>`;
 }
 function v300ShowPoint(chartId,groupIndex,pointIndex){
   const entries=v300PendingCharts[chartId];if(!entries)return;
@@ -3658,13 +3716,13 @@ function v300EvolutionCardHtml(rows,titleMap){
   const chartId=++v300ChartCounter;
   v300PendingCharts[chartId]=entries;
   const options=entries.map(([title,arr],i)=>`<option value="${i}">${esc(title)} (${arr.length})</option>`).join('');
-  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
+  return `<label>Ejercicio a comparar<select id="v300Select${chartId}" data-v300="${chartId}">${options}</select></label><div id="v300Box${chartId}">${v300PaceEvolutionSvg(entries[0][1],{chartId,groupIndex:0,title:entries[0][0]})}</div><p class="muted"><small>Solo se comparan resultados de ERGO asignados a la misma sesión planificada por el club, en fechas distintas. Se reconocen como el mismo ejercicio aunque el título varíe ligeramente (mayúsculas, "×" vs "x", "12'" vs "12 min", nota de descanso, etc.).</small></p>`;
 }
 function v300WireCharts(root){
   if(!root)return;
   root.querySelectorAll('select[data-v300]').forEach(sel=>{
     const chartId=sel.dataset.v300,entries=v300PendingCharts[chartId];if(!entries)return;
-    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value)})};
+    sel.onchange=()=>{const box=root.querySelector('#v300Box'+chartId);if(box)box.innerHTML=v300PaceEvolutionSvg(entries[Number(sel.value)][1],{chartId:Number(chartId),groupIndex:Number(sel.value),title:entries[Number(sel.value)][0]})};
   });
 }
 
