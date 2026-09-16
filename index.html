@@ -3731,8 +3731,7 @@ async function v300ShowPoint(chartId,groupIndex,pointIndex){
     body=`<div class="complianceResultBlockV237"><div><b>ERGO · Registro manual</b></div>${v124ManualErgoHtml(point._raw)}</div>`;
   }
   const resultKind=point._kind==='concept2'?'concept2':'manual',resultId=point._raw?.id;
-  const isCoachView=currentMode==='staff';
-  body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios del entrenador</b></div><p class="muted"><small>Cargando…</small></p></div>`;
+  body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>Cargando…</small></p></div>`;
   const layer=document.createElement('div');layer.className='modalBack';
   layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(group[0])}</h2><div class="muted">${esc(shortDateES(String(point.workout_date||'').slice(0,10)))}</div></div><button type="button" class="v300CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
   document.body.appendChild(layer);
@@ -3743,19 +3742,20 @@ async function v300ShowPoint(chartId,groupIndex,pointIndex){
   const renderComments=async()=>{
     if(!box.isConnected)return;
     const comments=await v300FetchComments(resultKind,resultId);
-    const listHtml=comments.length?comments.map(c=>`<div class="last"><small class="muted">${esc(shortDateES(String(c.created_at).slice(0,10)))}</small><br>${esc(c.comment)}</div>`).join(''):'<p class="muted">Aún no hay comentarios de este resultado.</p>';
-    const formHtml=isCoachView?`<div style="margin-top:10px"><textarea id="v300CommentInput" rows="2" placeholder="Escribe un comentario para este resultado…" style="width:100%"></textarea><div class="actions" style="margin-top:6px"><button type="button" id="v300CommentSave">Guardar comentario</button></div></div>`:'';
-    box.innerHTML=`<div><b>💬 Comentarios del entrenador</b></div>${listHtml}${formHtml}`;
-    if(isCoachView){
-      const saveBtn=box.querySelector('#v300CommentSave');
-      saveBtn.onclick=async()=>{
-        const ta=box.querySelector('#v300CommentInput'),text=ta.value.trim();if(!text)return;
-        saveBtn.disabled=true;
-        const{error}=await v300SaveComment(resultKind,resultId,point.user_id,teamCode,text);
-        if(error){alert(error.message);saveBtn.disabled=false;return}
-        await renderComments();
-      };
-    }
+    const listHtml=comments.length?comments.map(c=>{
+      const who=c.created_by===currentUser.id?'Tú':(c.created_by===point.user_id?'El remero':'Entrenador');
+      return `<div class="last"><small class="muted"><b>${esc(who)}</b> · ${esc(shortDateES(String(c.created_at).slice(0,10)))}</small><br>${esc(c.comment)}</div>`;
+    }).join(''):'<p class="muted">Aún no hay comentarios de este resultado.</p>';
+    const formHtml=`<div style="margin-top:10px"><textarea id="v300CommentInput" rows="2" placeholder="Escribe un comentario para este resultado…" style="width:100%"></textarea><div class="actions" style="margin-top:6px"><button type="button" id="v300CommentSave">Guardar comentario</button></div></div>`;
+    box.innerHTML=`<div><b>💬 Comentarios</b></div>${listHtml}${formHtml}`;
+    const saveBtn=box.querySelector('#v300CommentSave');
+    saveBtn.onclick=async()=>{
+      const ta=box.querySelector('#v300CommentInput'),text=ta.value.trim();if(!text)return;
+      saveBtn.disabled=true;
+      const{error}=await v300SaveComment(resultKind,resultId,point.user_id,teamCode,text);
+      if(error){alert(error.message);saveBtn.disabled=false;return}
+      await renderComments();
+    };
   };
   renderComments();
 }
