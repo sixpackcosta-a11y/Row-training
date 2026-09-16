@@ -3806,16 +3806,19 @@ async function v300FetchChat(rowerId){
 }
 async function v300SendChat(rowerId,teamCode,text){
   const res=await sb.from('chat_messages').insert({rower_id:rowerId,team_code:teamCode,sender_id:currentUser.id,body:text});
+  let pushResult=null,pushError=null;
   if(!res.error){
-    if(currentUser.id===rowerId){
-      // Lo envía el remero: avisar a los entrenadores del equipo.
-      sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:text}).catch(e=>console.warn('No se pudo avisar del mensaje a los entrenadores',e));
-    }else{
-      // Lo envía un entrenador: avisar al remero.
-      sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:'💬 Mensaje de tu entrenador',body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'}).catch(e=>console.warn('No se pudo avisar del mensaje al remero',e));
-    }
+    try{
+      if(currentUser.id===rowerId){
+        // Lo envía el remero: avisar a los entrenadores del equipo.
+        pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:text});
+      }else{
+        // Lo envía un entrenador: avisar al remero.
+        pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:'💬 Mensaje de tu entrenador',body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'});
+      }
+    }catch(e){pushError=e?.message||String(e)}
   }
-  return res;
+  return {error:res.error,pushResult,pushError};
 }
 function v300ChatBubblesHtml(messages,meId){
   if(!messages.length)return '<p class="muted" style="text-align:center;padding:20px 0">Aún no hay mensajes. Escribe el primero 👇</p>';
@@ -3833,11 +3836,18 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   const send=async()=>{
     const text=input.value.trim();if(!text)return;
     sendBtn.disabled=true;
-    const{error}=await v300SendChat(rowerId,teamCode,text);
+    const{error,pushResult,pushError}=await v300SendChat(rowerId,teamCode,text);
     sendBtn.disabled=false;
     if(error){alert(error.message);return}
     input.value='';
     await v300RenderChatThread(container,rowerId,teamCode);
+    if(pushError){
+      v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+pushError);
+    }else if(pushResult&&!pushResult.recipients){
+      v300ShowToast('⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
+    }else if(pushResult&&pushResult.recipients&&!pushResult.push_sent){
+      v300ShowToast('⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
+    }
   };
   sendBtn.onclick=send;
   input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
