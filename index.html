@@ -2138,7 +2138,12 @@ async function refreshAppV159(){
   const btn=document.getElementById('refreshAppV159');if(btn){btn.disabled=true;btn.classList.add('is-refreshing')}
   try{
     try{
-      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam,workoutNotificationAthleteV129,scrollY:window.scrollY,ts:Date.now()}));
+      let resumeTeam=coachSelectedTeam,resumeAthlete=workoutNotificationAthleteV129;
+      // Si está abierta la vista "Remeros" de Análisis, el equipo/remero seleccionado vive en estos <select>,
+      // no en las variables globales — los leemos directamente para no perder la selección al recargar.
+      const aTeamEl=document.getElementById('analysisTeam'),aAthEl=document.getElementById('analysisAthlete');
+      if(aTeamEl&&aAthEl){resumeTeam=aTeamEl.value||resumeTeam;resumeAthlete=aAthEl.value||resumeAthlete}
+      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam:resumeTeam,workoutNotificationAthleteV129:resumeAthlete,scrollY:window.scrollY,ts:Date.now()}));
     }catch(e){}
     // Fuerza comprobación de versión y vuelve a cargar la app sin cerrar sesión.
     lastAppUpdateCheck=0;await checkForAppUpdate();
