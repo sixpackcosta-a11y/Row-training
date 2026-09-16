@@ -3596,7 +3596,7 @@ function v300ExerciseAnalysisHtml(data,title){
   if(paceDeltaPct>0.3){
     verdict={tone:'good',icon:'💪',headline:'¡Mejora de ritmo!',detail:`${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m · ${paceDeltaPct.toFixed(1)}% más rápido<br><small>${dateFirst} → ${dateLast}</small>`};
   }else if(paceDeltaPct<-0.3){
-    verdict={tone:'encourage',icon:'🌱',headline:'¡Sigue así!',detail:`Sesión un poco más exigente (${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m). Forma parte del proceso — lo que cuenta es la constancia.<br><small>${dateFirst} → ${dateLast}</small>`};
+    verdict={tone:'encourage',icon:'🎯',headline:'A por la próxima',detail:`El ritmo ha bajado un poco (${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m, ${Math.abs(paceDeltaPct).toFixed(1)}% más lento). Toca apretar algo más en la próxima sesión de este tipo — con constancia se recupera.<br><small>${dateFirst} → ${dateLast}</small>`};
   }else{
     verdict={tone:'steady',icon:'📈',headline:'Ritmo constante',detail:`${v300FmtPace(firstPace)} → ${v300FmtPace(lastPace)}/500m, muy estable.<br><small>${dateFirst} → ${dateLast}</small>`};
   }
