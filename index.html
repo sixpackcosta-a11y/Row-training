@@ -2034,6 +2034,7 @@ async function startApp(){
   }catch(e){}
   const launchParams=new URLSearchParams(location.search);
   if(launchParams.get("tab")==="altas"&&hasAnyCoachTeam())tab="altas";
+  if(launchParams.get("tab")==="hist"&&currentMode==="athlete")tab="hist";
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
   await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete')v300CheckNewComments()}},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
