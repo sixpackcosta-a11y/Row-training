@@ -2035,7 +2035,7 @@ async function startApp(){
   const launchParams=new URLSearchParams(location.search);
   if(launchParams.get("tab")==="altas"&&hasAnyCoachTeam())tab="altas";
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
-  await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible')loadNotificationsV104()},60000);
+  await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete')v300CheckNewComments()}},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
   setTimeout(()=>showPushOnboardingV106(),700);
@@ -2170,10 +2170,12 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState!=="visible")return;
   checkForAppUpdate();
   if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
+  if(currentMode==="athlete") v300CheckNewComments();
 });
 window.addEventListener("focus",()=>{
   checkForAppUpdate();
   if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
+  if(currentMode==="athlete") v300CheckNewComments();
 });
 
 enter.onclick=async()=>{
@@ -3771,7 +3773,18 @@ async function v300FetchComments(kind,id){
   }catch(e){return[]}
 }
 async function v300SaveComment(kind,id,userId,teamCode,text){
-  return sb.from('ergo_result_comments').insert({result_kind:kind,result_id:id,user_id:userId,team_code:teamCode,comment:text,created_by:currentUser.id});
+  const res=await sb.from('ergo_result_comments').insert({result_kind:kind,result_id:id,user_id:userId,team_code:teamCode,comment:text,created_by:currentUser.id});
+  if(!res.error&&currentUser?.id!==userId){
+    // Notificación push de verdad (llega aunque no tenga la app abierta), no solo el aviso dentro de la app.
+    sendNotificationV110({
+      audience:{mode:'users',user_ids:[userId],team_codes:[teamCode]},
+      title:'💬 Comentario de tu entrenador',
+      body:text.length>140?text.slice(0,140)+'…':text,
+      url:'/?tab=hist',
+      type:'ergo_comment'
+    }).catch(e=>console.warn('No se pudo enviar la notificación push del comentario',e));
+  }
+  return res;
 }
 async function v300CheckNewComments(){
   try{
