@@ -3569,12 +3569,6 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
 }
 
 function v300FmtPace(s){s=Number(s);if(!s&&s!==0)return'—';const m=Math.floor(s/60),ss=(s%60).toFixed(1).padStart(4,'0');return m+':'+ss}
-function v300ResultMetrics(row){
-  if(row._kind==='concept2'){const d=v144C2ForDisplay(row._raw);return{spm:d.spm,avg_hr:d.avg_hr,max_hr:d.max_hr}}
-  const e=row._raw||{};return{spm:e.spm,avg_hr:e.avg_hr,max_hr:e.max_hr};
-}
-function v300ExtractTargetPpm(title){const m=String(title||'').match(/@\s*(\d+)/);return m?Number(m[1]):null}
-function v300ExtractZone(title){const m=String(title||'').toUpperCase().match(/\b(UT2|UT1|AT|TR|AN)\b/);return m?m[1]:null}
 function v300GetSplits(row){
   if(!row||!row._raw)return[];
   if(row._kind==='concept2'){
@@ -3589,6 +3583,15 @@ function v300GetSplits(row){
   }
   return v124ErgoSplitsArray(row._raw).map(p=>({pace_500_seconds:p.pace_500_seconds!=null?Number(p.pace_500_seconds):null,spm:p.spm!=null?Number(p.spm):null,avg_hr:p.avg_hr!=null?Number(p.avg_hr):null})).filter(x=>x.pace_500_seconds);
 }
+function v300AvgOf(arr,key){const vals=(arr||[]).map(x=>x[key]).filter(v=>v!=null&&!Number.isNaN(Number(v))).map(Number);return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null}
+function v300ResultMetrics(row){
+  const splits=v300GetSplits(row);
+  // Si el resumen general no trae ppm/FC (a veces solo se guardan en los parciales), usamos la media de los parciales.
+  if(row._kind==='concept2'){const d=v144C2ForDisplay(row._raw);return{spm:d.spm??v300AvgOf(splits,'spm'),avg_hr:d.avg_hr??v300AvgOf(splits,'avg_hr'),max_hr:d.max_hr}}
+  const e=row._raw||{};return{spm:e.spm??v300AvgOf(splits,'spm'),avg_hr:e.avg_hr??v300AvgOf(splits,'avg_hr'),max_hr:e.max_hr};
+}
+function v300ExtractTargetPpm(title){const m=String(title||'').match(/@\s*(\d+)/);return m?Number(m[1]):null}
+function v300ExtractZone(title){const m=String(title||'').toUpperCase().match(/\b(UT2|UT1|AT|TR|AN)\b/);return m?m[1]:null}
 function v300ToneStyle(tone){
   const map={
     good:{bg:'#e9f7ee',border:'#8fd4a8',color:'#166534'},
@@ -3627,7 +3630,7 @@ function v300ExerciseAnalysisHtml(data,title,metric){
     const paces=splits.map(s=>s.pace_500_seconds),sFirst=paces[0],sLast=paces[paces.length-1],avg=paces.reduce((a,b)=>a+b,0)/paces.length,devPct=avg?((Math.max(...paces)-Math.min(...paces))/avg*100):0,deltaPct=((sLast-sFirst)/sFirst*100);
     if(devPct<=1)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Muy buena regularidad entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). Cuesta repartir mejor el esfuerzo que así.`};
     else if(deltaPct>4)splitsChip={icon:'📋',tone:'encourage',label:'Parciales',text:`Se han ido ralentizando (1º: ${v300FmtPace(sFirst)} → último: ${v300FmtPace(sLast)}/500m). Repartir mejor el esfuerzo ayudará a aguantar el ritmo hasta el final.`};
-    else if(deltaPct<-3)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Negative split: los últimos parciales más rápidos que los primeros (${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). ¡Muy buen reparto del esfuerzo!`};
+    else if(deltaPct<-3)splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:`Ha terminado más fuerte de lo que ha empezado (${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). Buena señal de fondo, pero en este tipo de series el objetivo es mantener el mismo ritmo desde el primer parcial — la próxima vez, intenta salir más cerca de ese ritmo final para ganar en constancia.`};
     else if(deltaPct>0.5)splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:`Bastante parejos entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m), aunque el último ha sido algo más lento que el primero. Mantener el mismo ritmo en todos es el siguiente paso para ganar aún más regularidad.`};
     else splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:`Bastante parejos entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m).`};
   }
