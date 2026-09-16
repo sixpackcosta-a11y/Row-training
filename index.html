@@ -3626,7 +3626,7 @@ function v300ExerciseAnalysisHtml(data,title,metric){
   }else{
     const paces=splits.map(s=>s.pace_500_seconds),sFirst=paces[0],sLast=paces[paces.length-1],avg=paces.reduce((a,b)=>a+b,0)/paces.length,devPct=avg?((Math.max(...paces)-Math.min(...paces))/avg*100):0,deltaPct=((sLast-sFirst)/sFirst*100);
     if(devPct<=1.5)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Muy regulares entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). Justo la regularidad que se busca en este tipo de series.`};
-    else if(deltaPct>3)splitsChip={icon:'📋',tone:'encourage',label:'Parciales',text:`Se han ido enlenteciendo (1º: ${v300FmtPace(sFirst)} → último: ${v300FmtPace(sLast)}/500m). Repartir mejor el esfuerzo ayudará a aguantar el ritmo hasta el final.`};
+    else if(deltaPct>3)splitsChip={icon:'📋',tone:'encourage',label:'Parciales',text:`Se han ido ralentizando (1º: ${v300FmtPace(sFirst)} → último: ${v300FmtPace(sLast)}/500m). Repartir mejor el esfuerzo ayudará a aguantar el ritmo hasta el final.`};
     else if(deltaPct<-3)splitsChip={icon:'📋',tone:'good',label:'Parciales',text:`Negative split: los últimos parciales más rápidos que los primeros (${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m). ¡Muy buen reparto del esfuerzo!`};
     else splitsChip={icon:'📋',tone:'steady',label:'Parciales',text:`Bastante parejos entre sí (${paces.length} parciales, ${v300FmtPace(sFirst)} → ${v300FmtPace(sLast)}/500m).`};
   }
