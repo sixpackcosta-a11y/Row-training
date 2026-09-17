@@ -451,7 +451,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 <style id="v225pendingstyles">
 .v225PendingSection{margin-top:18px;padding-top:4px}.v225PendingHeading{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.v225PendingHeading h3{margin:0}.v225PendingHeading small{color:#718096}.v225PendingToolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.v225PendingToolbar button{border:0;border-radius:999px;padding:9px 14px;background:#eaf0f7;color:#10213a;font-weight:700}.v225PendingToolbar button.active{background:#071d3a;color:white}.v225PendingToolbar button span{opacity:.8}.v225PendingList{display:grid;gap:9px}.v225PendingItem{border:1px solid #d8e2ec;border-radius:14px;padding:12px;background:#fff}.v225PendingItem[hidden]{display:none!important}.v225PendingTop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px}.v225PendingItem strong{display:block;line-height:1.3}.v225PendingItem details{margin-top:8px}.v225PendingEmpty{padding:12px;border-radius:14px;background:#eefaf3;border:1px solid #ccebd8}.v225RowerPending{margin-top:22px;border-top:1px solid #dfe7ef;padding-top:18px}.v225AthleteTabs{display:flex;gap:8px;margin:18px 0 8px}.v225AthleteTabs button{border:0;border-radius:12px;padding:10px 14px;background:#eaf0f7;color:#10213a;font-weight:800}.v225AthleteTabs button.active{background:#071d3a;color:#fff}.v225AthleteTabs button span{display:inline-block;margin-left:4px;opacity:.85}.v225AthletePane[hidden]{display:none!important}
 </style>
-</head><body><header><div class="brand"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:46px;height:46px;object-fit:contain"><div><b>Row Training</b><small>Club de Remo Pedregalejo · Tiburon@s · V<span id="appVersionLabel"></span></small></div></div><div id="userHead" style="text-align:right"><div><b id="userName">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159" type="button" aria-label="Menú" title="Menú">☰<span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div><small id="role" style="display:block;opacity:.8"></small></div></header><main>
+</head><body><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px"><div class="brand" style="display:flex;align-items:center;gap:8px;min-width:0"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:30px;height:30px;object-fit:contain;flex:0 0 auto"><div style="min-width:0;overflow:hidden"><b style="white-space:nowrap">Row Training</b><small id="role" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.75"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159" type="button" aria-label="Menú" title="Menú">☰<span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div></header><main>
 <div id="bootAuth" class="card"><h2>Row Training</h2><p class="muted">Comprobando sesión…</p></div>
 <div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
@@ -1989,11 +1989,6 @@ function renderIdentityHeaderV73(){
   role.textContent=currentMode==="staff"?staffRoleText():"REMERO · "+(currentTeamCode?teamLabel(currentTeamCode):"PENDIENTE");
   const oldTeam=document.getElementById("rowerTeamSwitchV90");if(oldTeam)oldTeam.remove();if(currentMode==="athlete"&&rowerTeamCodes.length>1){const s=document.createElement("select");s.id="rowerTeamSwitchV90";s.className="rowerTeamSwitch";s.innerHTML=rowerTeamCodes.map(tc=>`<option value="${tc}" ${tc===currentTeamCode?'selected':''}>${teamLabel(tc)}</option>`).join('');s.onchange=()=>{currentTeamCode=s.value;localStorage.setItem(`rowtraining_rower_team_${currentUser.id}`,currentTeamCode);renderIdentityHeaderV73();refreshTeamSchedule();selected=getTodayIndex();draw();render()};userHead.appendChild(s)}
   const old=document.getElementById("modeSwitchV73");if(old)old.remove();
-  if(hasStaffMode()&&hasRowerMode()){
-    const b=document.createElement("button");b.id="modeSwitchV73";b.className="modeSwitch";
-    b.textContent=currentMode==="staff"?"Cambiar a modo remero":"Cambiar a modo entrenador";
-    b.onclick=()=>switchModeV73(currentMode==="staff"?"athlete":"staff");userHead.appendChild(b);
-  }
 }
 async function switchModeV73(mode){
   if(mode==="staff"&&!hasStaffMode())return;if(mode==="athlete"&&!hasRowerMode())return;
@@ -2241,6 +2236,7 @@ function v300NavItems(){
     else a=[["hoy","Hoy"],["semana","Semana"],["registro","Registro MAR"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes",mensajesLabel],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+  if(hasStaffMode()&&hasRowerMode())a=[["__switchmode__",currentMode==="staff"?"👤 Cambiar a modo remero":"🧭 Cambiar a modo entrenador"],...a];
   return a;
 }
 function v300OpenNavMenu(){
@@ -2254,6 +2250,7 @@ function v300OpenNavMenu(){
   layer.querySelectorAll('.v300NavItem').forEach(btn=>btn.onclick=()=>{
     const v=btn.dataset.t;layer.remove();
     if(v==="salir"){sb.auth.signOut().then(()=>location.reload());return}
+    if(v==="__switchmode__"){switchModeV73(currentMode==="staff"?"athlete":"staff");return}
     tab=v;draw();render();
   });
 }
