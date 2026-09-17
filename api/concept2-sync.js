@@ -185,7 +185,7 @@ async function plannedErgoIntents(userId,results){
   // Miramos también unas semanas hacia atrás: permite recuperar un 2x10 pendiente hecho días después,
   // pero solo si la prescripción coincide; la fecha nunca decide por sí sola.
   const from=addDays(dates[0],-35),to=dates[dates.length-1];
-  const sr=await rest(`training_sessions?team_code=in.(${teamFilter})&session_type=eq.ERG&session_date=gte.${encodeURIComponent(from)}&session_date=lte.${encodeURIComponent(to)}&select=id,team_code,session_date,title,content`);
+  const sr=await rest(`training_sessions?team_code=in.(${teamFilter})&session_type=in.(ERG,MIX)&session_date=gte.${encodeURIComponent(from)}&session_date=lte.${encodeURIComponent(to)}&select=id,team_code,session_date,title,content`);
   if(!sr.ok)return [];
   return (await sr.json()).map(x=>({
     id:null,training_session_id:x.id,scheduled_date:x.session_date,session_code:x.title||'ERGO',session_name:x.title||'ERGO',
