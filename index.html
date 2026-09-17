@@ -3940,16 +3940,51 @@ async function messagesView(){
 async function coachMessagesView(){
   const teams=staffViewTeamCodes();
   if(!teams.length){content.innerHTML='<div class="card"><h2>💬 Mensajes</h2><p class="muted">No tienes ningún equipo asignado.</p></div>';return}
-  const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
-  coachSelectedTeam=team;
-  const ats=await staffAthletesForTeam(team);
-  content.innerHTML=`<div class="card"><h2>💬 Mensajes</h2><div class="athleteSelectorBar"><label>Equipo<select id="msgTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><label>Remero<select id="msgAthlete">${ats.map(a=>`<option value="${a.user_id}">${esc(a.full_name||'Sin nombre')}</option>`).join('')}</select></label></div><div id="v300ChatContainer">${ats.length?'':'<p class="muted">No hay remeros en este equipo.</p>'}</div></div>`;
-  const teamSel=document.getElementById('msgTeam'),athSelMsg=document.getElementById('msgAthlete'),chatBox=document.getElementById('v300ChatContainer');
-  if(v300PendingMessageRower&&ats.some(a=>a.user_id===v300PendingMessageRower)){athSelMsg.value=v300PendingMessageRower;v300PendingMessageRower=null}
-  const loadThread=()=>{const rowerId=athSelMsg.value;if(rowerId)v300RenderChatThread(chatBox,rowerId,teamSel.value)};
-  teamSel.onchange=async()=>{coachSelectedTeam=teamSel.value;const list=await staffAthletesForTeam(teamSel.value);athSelMsg.innerHTML=list.map(a=>`<option value="${a.user_id}">${esc(a.full_name||'Sin nombre')}</option>`).join('');loadThread()};
-  athSelMsg.onchange=loadThread;
-  if(ats.length)loadThread();
+  const initialFilter=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:'all';
+  content.innerHTML=`<div class="card"><h2>💬 Mensajes</h2><label>Equipo<select id="msgTeamFilter"><option value="all" ${initialFilter==='all'?'selected':''}>Todos mis equipos</option>${teams.map(t=>`<option value="${t}" ${t===initialFilter?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">Cargando conversaciones…</p></div></div>`;
+  const teamSel=document.getElementById('msgTeamFilter'),box=document.getElementById('v300MsgInbox');
+
+  const loadInbox=async()=>{
+    box.innerHTML='<p class="muted">Cargando conversaciones…</p>';
+    const activeTeams=teamSel.value==='all'?teams:[teamSel.value];
+    coachSelectedTeam=teamSel.value==='all'?coachSelectedTeam:teamSel.value;
+    const rosterByTeam=await Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)})));
+    const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
+    const msgsRes=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(1000);
+    const lastByRower=new Map();(msgsRes.data||[]).forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
+    const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
+      if(x.last&&y.last)return new Date(y.last.created_at)-new Date(x.last.created_at);
+      if(x.last)return -1;if(y.last)return 1;
+      return (x.a.full_name||'').localeCompare(y.a.full_name||'','es');
+    });
+    if(!rows.length){box.innerHTML='<p class="muted">No hay remeros en este equipo.</p>';return}
+    box.innerHTML=rows.map(({a,last})=>{
+      const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
+      const unread=!!last&&last.sender_id!==currentUser.id&&new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0);
+      const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
+      const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+      return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:8px;background:${unread?'#eaf2fd':'#fff'};gap:10px">
+        <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b><div style="font-size:13px;color:#475569;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
+        <small class="muted" style="flex-shrink:0">${time}</small>
+      </button>`;
+    }).join('');
+    box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
+  };
+
+  const openThread=(rowerId,teamCode,name)=>{
+    box.innerHTML=`<button type="button" id="v300BackInbox" style="margin-bottom:10px">← Volver a conversaciones</button><h3 style="margin:0 0 10px">${esc(name||'Remero')}</h3><div id="v300ChatContainer"></div>`;
+    document.getElementById('v300BackInbox').onclick=loadInbox;
+    localStorage.setItem('rowtraining_v300_chat_thread_seen_'+rowerId,new Date().toISOString());
+    v300RenderChatThread(document.getElementById('v300ChatContainer'),rowerId,teamCode);
+  };
+
+  teamSel.onchange=loadInbox;
+  await loadInbox();
+  if(v300PendingMessageRower){
+    const rowerId=v300PendingMessageRower;v300PendingMessageRower=null;
+    const btn=box.querySelector(`.v300InboxRow[data-user="${rowerId}"]`);
+    if(btn)btn.click();
+  }
   localStorage.setItem('rowtraining_v300_chat_seen_staff_'+currentUser.id,new Date().toISOString());
   v300UnreadMsgCount=0;draw();
 }
