@@ -1600,7 +1600,7 @@ async function combinedLibraryFormV89(item){
   renderRows();
 }
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
-let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null;
+let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null,v300UnreadMsgCount=0;
 
 const VAPID_PUBLIC_KEY_V104='BNCE9i8ANFF6sTW5TBZdk1S-EInb7_-b2ai0iFLFjUmXXDJaiFmzYoTbNh4OZfSapQrKgtw5w-yqq1ytFQ2XaZU';
 let appNotificationsV104=[];
@@ -1809,7 +1809,9 @@ async function openNotificationsV104(){
    if(q.error){console.warn('No se pudo marcar la notificación como leída',q.error)}
    const u=el.dataset.url||'';panel.remove();await loadNotificationsV104();
    if(u.includes('tab=altas')&&hasAnyCoachTeam()){tab='altas';draw();render();return}
-   if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();}
+   if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
+   if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
+   if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
  }));
 }
 
@@ -2062,13 +2064,15 @@ async function startApp(){
   }
   if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
-  await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}}},60000);
+  await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
+  await v300RefreshUnreadMsgCount();
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
   if(currentMode==="athlete"&&currentUser)setTimeout(()=>{v300CheckNewComments();v300CheckNewChatMessages()},900);
+  v300RefreshUnreadMsgCount().then(draw);
   setTimeout(()=>checkForAppUpdate(),1200);
   if(currentMode==="athlete"&&currentRegistration?.status==="pending")setTimeout(()=>notifyPendingRegistration(),100);
   if(currentMode==="athlete"&&currentTeamCode&&!localStorage.getItem("rowtraining_guide_seen_v60"))setTimeout(()=>showQuickGuideModal(),250);
@@ -2200,11 +2204,13 @@ document.addEventListener("visibilitychange",()=>{
   checkForAppUpdate();
   if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
   if(currentMode==="athlete"){v300CheckNewComments();v300CheckNewChatMessages()}
+  v300RefreshUnreadMsgCount().then(draw);
 });
 window.addEventListener("focus",()=>{
   checkForAppUpdate();
   if(currentMode==="athlete"&&currentTeamCode) autoSyncConcept2({refreshHistory:tab==="hist"});
   if(currentMode==="athlete"){v300CheckNewComments();v300CheckNewChatMessages()}
+  v300RefreshUnreadMsgCount().then(draw);
 });
 
 enter.onclick=async()=>{
@@ -2231,12 +2237,13 @@ let authResolvedV96=false;
 
 function draw(){
   let a;
+  const mensajesLabel=`Mensajes${v300UnreadMsgCount?` (${v300UnreadMsgCount})`:''}`;
   if(currentMode==="staff"){
-    if(isGlobalCoach)a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["mensajes","Mensajes"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["sistema","Sistema"],["biblioteca","Biblioteca"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
-    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["mensajes","Mensajes"],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+    if(isGlobalCoach)a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["mensajes",mensajesLabel],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["equipo","Equipo / Roles"],["sistema","Sistema"],["biblioteca","Biblioteca"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+    else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["mensajes",mensajesLabel],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
     else a=[["hoy","Hoy"],["semana","Semana"],["registro","Registro MAR"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
-  else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes","Mensajes"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+  else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes",mensajesLabel],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
   nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return}tab=b.dataset.t;draw();render()});
 }
@@ -3871,6 +3878,24 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   sendBtn.onclick=send;
   input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
 }
+async function v300RefreshUnreadMsgCount(){
+  try{
+    if(currentMode==='athlete'&&currentUser){
+      const seenKey='rowtraining_v300_chat_seen_'+currentUser.id;
+      const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
+      const q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).eq('rower_id',currentUser.id).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
+      v300UnreadMsgCount=q.count||0;
+    }else if(currentMode==='staff'&&hasAnyCoachTeam()){
+      const seenKey='rowtraining_v300_chat_seen_staff_'+currentUser.id;
+      const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
+      const teams=staffViewTeamCodes();
+      if(teams.length){
+        const q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
+        v300UnreadMsgCount=q.count||0;
+      }else v300UnreadMsgCount=0;
+    }else v300UnreadMsgCount=0;
+  }catch(e){}
+}
 async function v300CheckNewChatMessages(){
   try{
     if(currentMode!=='athlete'||!currentUser)return;
@@ -3892,6 +3917,7 @@ async function messagesView(){
   const container=document.getElementById('v300ChatContainer');
   await v300RenderChatThread(container,currentUser.id,currentTeamCode);
   localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
+  v300UnreadMsgCount=0;draw();
 }
 async function coachMessagesView(){
   const teams=staffViewTeamCodes();
@@ -3906,6 +3932,8 @@ async function coachMessagesView(){
   teamSel.onchange=async()=>{coachSelectedTeam=teamSel.value;const list=await staffAthletesForTeam(teamSel.value);athSelMsg.innerHTML=list.map(a=>`<option value="${a.user_id}">${esc(a.full_name||'Sin nombre')}</option>`).join('');loadThread()};
   athSelMsg.onchange=loadThread;
   if(ats.length)loadThread();
+  localStorage.setItem('rowtraining_v300_chat_seen_staff_'+currentUser.id,new Date().toISOString());
+  v300UnreadMsgCount=0;draw();
 }
 async function v300OpenPendingComment(){
   const req=v300PendingCommentOpen;v300PendingCommentOpen=null;
