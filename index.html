@@ -459,7 +459,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 <div id="login" class="card hidden"><h2>Acceso</h2><input id="u" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Contraseña" autocomplete="current-password"><label class="keepLogin"><input id="keepSession" type="checkbox" checked> Mantener sesión iniciada</label><button id="enter" class="primary">Entrar</button><button id="forgotPasswordBtn" class="linkButton" type="button">He olvidado mi contraseña</button><div class="loginActions"><button id="showRegister">Crear cuenta de remero</button><button id="showPublicGuide">Guía rápida</button></div><p class="muted">No se guarda la contraseña.</p></div>
 <div id="forgotPassword" class="card authSubcard hidden"><h2>Recuperar contraseña</h2><p class="muted">Escribe el email con el que te registraste. Recibirás un enlace seguro para crear una contraseña nueva.</p><label>Email<input id="forgotEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><button id="sendReset" class="primary" type="button">Enviar enlace</button> <button id="cancelReset" type="button">Volver</button><div id="resetRequestStatus" class="saveStatus hidden"></div></div>
 <div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
-<div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
+<div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Me identifico como<select id="regGender"><option value="">Prefiero no decirlo</option><option value="m">Hombre</option><option value="f">Mujer</option></select></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
 <div id="publicGuide" class="card publicGuide hidden"></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
 <script>
@@ -2121,16 +2121,17 @@ saveNewPassword.onclick=async()=>{
 };
 sb.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY") setTimeout(openResetPassword,0);});
 doRegister.onclick=async()=>{
-  const name=regName.value.trim(),email=regEmail.value.trim(),pass=regPass.value,pass2=regPass2.value;
+  const name=regName.value.trim(),email=regEmail.value.trim(),pass=regPass.value,pass2=regPass2.value,gender=regGender.value||null;
   regStatus.className="saveStatus hidden";
   if(name.length<3) return alert("Escribe nombre y apellidos.");
   if(!email.includes("@")) return alert("Escribe un email válido.");
   if(pass.length<8) return alert("La contraseña debe tener al menos 8 caracteres.");
   if(pass!==pass2) return alert("Las contraseñas no coinciden.");
   doRegister.disabled=true;doRegister.textContent="Enviando…";
-  const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,requested_team:REG_TEAM_VALID}}});
+  const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name,requested_team:REG_TEAM_VALID,gender}}});
   doRegister.disabled=false;doRegister.textContent="Enviar inscripción";
   if(error){regStatus.className="saveStatus err";regStatus.textContent="No se pudo crear la cuenta: "+error.message;return}
+  if(data.user?.id&&gender){try{await sb.from('profiles').update({gender}).eq('user_id',data.user.id)}catch(e){}}
   regStatus.className="saveStatus ok";
   regStatus.innerHTML=data.session?`<b>Inscripción enviada.</b><br>Tu cuenta está pendiente de aprobación por un entrenador. Cuando te apruebe recibirás un correo de bienvenida con el enlace de la app y la guía de instalación.`:`<b>Cuenta creada.</b><br>Revisa tu correo y pulsa <b>Confirmar</b>. El enlace debe devolverte a Row Training. Después quedarás pendiente de aprobación; cuando te asignen a un equipo recibirás un correo de bienvenida con el acceso y la guía.`;
   regPass.value=regPass2.value="";
@@ -3813,8 +3814,9 @@ async function v300SendChat(rowerId,teamCode,text){
         // Lo envía el remero: avisar a los entrenadores del equipo.
         pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:text});
       }else{
-        // Lo envía un entrenador: avisar al remero.
-        pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:'💬 Mensaje de tu entrenador',body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'});
+        // Lo envía un entrenador: avisar al remero, con "entrenador"/"entrenadora" según cómo se haya identificado en su perfil.
+        const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
+        pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`💬 Mensaje de ${coachLabel}`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'});
       }
     }catch(e){pushError=e?.message||String(e)}
   }
@@ -4266,12 +4268,12 @@ async function staffProfileViewV167(){
   if(error){content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p>${esc(error.message)}</p></div>`;return}
   const {data:rm}=await sb.from('rower_team_memberships').select('team_code,is_rower').eq('user_id',currentUser.id).eq('is_rower',true);
   const isRower=!!(rm||[]).length;
-  content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
+  content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
   v167SaveStaffProfile.onclick=async()=>{
     const b=v167SaveStaffProfile,st=v167StaffProfileStatus;b.disabled=true;b.textContent='Guardando…';
-    const q=await sb.from('profiles').update({full_name:v167StaffName.value.trim(),height_cm:v167StaffHeight.value?Number(v167StaffHeight.value):null,birth_date:v167StaffBirth.value||null,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
+    const q=await sb.from('profiles').update({full_name:v167StaffName.value.trim(),gender:v167StaffGender.value||null,height_cm:v167StaffHeight.value?Number(v167StaffHeight.value):null,birth_date:v167StaffBirth.value||null,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
     if(q.error){st.className='saveStatus err';st.textContent=q.error.message;b.disabled=false;b.textContent='Guardar perfil';return}
-    if(currentUserProfile)currentUserProfile.full_name=v167StaffName.value.trim();st.className='saveStatus ok';st.textContent='Perfil guardado';b.disabled=false;b.textContent='Guardar perfil';renderHeaderV73?.();
+    if(currentUserProfile){currentUserProfile.full_name=v167StaffName.value.trim();currentUserProfile.gender=v167StaffGender.value||null}st.className='saveStatus ok';st.textContent='Perfil guardado';b.disabled=false;b.textContent='Guardar perfil';renderHeaderV73?.();
   };
   const full=document.getElementById('v167FullRowerProfile');if(full)full.onclick=()=>{switchModeV73('athlete');setTimeout(()=>{tab='perfil';draw();render()},50)};
 }
@@ -4290,6 +4292,7 @@ async function profileView(){
 
   content.innerHTML=`<div class="card"><h2>Perfil</h2>
   <label>Nombre<input id="pf_name" value="${pdata?.full_name||""}"></label>
+  <label>Me identifico como<select id="pf_gender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Hombre</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Mujer</option></select></label>
   <label>Altura (cm)<input id="pf_height" type="number" step=".1" value="${pdata?.height_cm??""}"></label>
   <label>Fecha de nacimiento<input id="pf_birth" type="date" value="${pdata?.birth_date??""}"></label>
 
@@ -4451,6 +4454,7 @@ async function profileView(){
 
       const profileRes=await withRetry(()=>sb.from("profiles").update({
         full_name:pf_name.value,
+        gender:document.getElementById('pf_gender').value||null,
         height_cm:pf_height.value?Number(pf_height.value):null,
         birth_date:pf_birth.value||null,
         updated_at:new Date().toISOString()
@@ -4476,7 +4480,7 @@ async function profileView(){
       const metricRes=await withRetry(()=>sb.from("athlete_metrics").insert(row));
       if(metricRes.error) throw new Error("FC y zonas: "+metricRes.error.message);
 
-      currentUserProfile={...(currentUserProfile||{}),full_name:pf_name.value.trim()}; userName.textContent=currentUserProfile.full_name||currentUser.email||"Usuario";
+      currentUserProfile={...(currentUserProfile||{}),full_name:pf_name.value.trim(),gender:document.getElementById('pf_gender').value||null}; userName.textContent=currentUserProfile.full_name||currentUser.email||"Usuario";
       setStatus("Perfil, FC máxima y zonas guardados correctamente.","ok");
     }catch(err){
       console.error("Error guardando perfil",err);
