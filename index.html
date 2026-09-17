@@ -1753,7 +1753,18 @@ async function bindNotifyComposerV110(panel){
     else {if(!rower.value)return alert('Selecciona un remero.');aud={mode:'users',user_ids:[rower.value],team_codes:[team.value]};}
     if(!confirm(`¿Enviar este aviso ahora?\n\n${title}\n${body}`))return;
     btn.disabled=true;btn.textContent='Enviando…';status.textContent='';
-    try{const j=await sendNotificationV110({audience:aud,title,body,url:'/',type:'coach_message'});status.textContent=`Enviado a ${j.recipients||0} remero(s) · push ${j.push_sent||0}${j.push_failed?` · ${j.push_failed} fallo(s)`:''}`;panel.querySelector('#notifyBodyV110').value='';}
+    try{
+      const j=await sendNotificationV110({audience:aud,title,body,url:'/',type:'coach_message'});
+      status.textContent=`Enviado a ${j.recipients||0} remero(s) · push ${j.push_sent||0}${j.push_failed?` · ${j.push_failed} fallo(s)`:''}`;
+      if(j.errors?.length){
+        const failedIds=[...new Set(j.errors.map(e=>e.user_id).filter(Boolean))];
+        const namesRes=await sb.from('profiles').select('user_id,full_name').in('user_id',failedIds);
+        const nameMap=new Map((namesRes.data||[]).map(p=>[p.user_id,p.full_name]));
+        const names=failedIds.map(id=>esc(nameMap.get(id)||id));
+        status.innerHTML+=`<br><small>Fallo al entregar el push a: ${names.join(', ')}. Puede que hayan reinstalado la app o llevan tiempo sin abrirla — tendrían que volver a activar las notificaciones desde la campana.</small>`;
+      }
+      panel.querySelector('#notifyBodyV110').value='';
+    }
     catch(e){status.textContent='Error: '+(e?.message||e)}
     finally{btn.disabled=false;btn.textContent='Enviar notificación'}
   };
