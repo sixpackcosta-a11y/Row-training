@@ -68,6 +68,17 @@ module.exports=async function handler(req,res){
       }else if(sourceType==='concept2'){
         const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code`,{key:anonKey,authToken:token}),row=rows?.[0];
         if(!row)return res.status(404).json({error:'concept2_result_not_found'});kind='ergo';sessionName=cut(row.matched_session_code||'ERGO · ErgData',120);sessionDate=String(row.workout_date||'').slice(0,10);
+      }else if(sourceType==='chat_message'){
+        // Mensaje de chat del remero a sus entrenadores: no hay fila que verificar, el cuerpo viene ya listo.
+        const msgBody=cut(req.body?.body,300)||'Nuevo mensaje';
+        const athleteName=cut(sender.user_metadata?.full_name||sender.user_metadata?.name||sender.email||'Un remero',100);
+        const [teamStaffChat,globalCoachesChat]=await Promise.all([
+          rest(`${supabaseUrl}/rest/v1/team_staff_roles?team_code=eq.${encodeURIComponent(teamCode)}&staff_role=eq.coach&select=user_id`,{key:serviceKey}),
+          rest(`${supabaseUrl}/rest/v1/user_roles?role=eq.coach&select=user_id`,{key:serviceKey})
+        ]);
+        const chatRecipientIds=uniq([...(teamStaffChat||[]).map(x=>x.user_id),...(globalCoachesChat||[]).map(x=>x.user_id)]);
+        const chatResult=await deliverNotifications({supabaseUrl,serviceKey,recipientIds:chatRecipientIds,title:`💬 Mensaje de ${athleteName}`,body:msgBody,url:`/?tab=mensajes&team=${encodeURIComponent(teamCode)}&rower=${encodeURIComponent(sender.id)}`,type:'chat_message',sourceBase:`chat_message:${sender.id}:${Date.now()}`});
+        return res.status(200).json(chatResult);
       }else return res.status(400).json({error:'bad_source_type'});
       const [teamStaff,globalCoaches]=await Promise.all([
         rest(`${supabaseUrl}/rest/v1/team_staff_roles?team_code=eq.${encodeURIComponent(teamCode)}&staff_role=eq.coach&select=user_id`,{key:serviceKey}),
