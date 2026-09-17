@@ -131,12 +131,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 /* V78 · navegación móvil visible, sin pestañas ocultas */
 @media(max-width:700px){
-  #nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible;width:100%}
-  #nav button{width:100%;min-width:0;padding:10px 6px;font-size:13px;line-height:1.15;white-space:normal;text-align:center}
+  #nav{width:100%}
+  #nav select{width:100%;padding:12px 14px;font-size:15px;font-weight:600;border-radius:10px;border:1px solid #d7dee7;background:#fff;color:#0f172a;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23475569'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%23475569' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
 }
-@media(max-width:390px){
-  #nav{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
+
 .systemGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
 .systemStat{border:1px solid #dbe5ef;border-radius:14px;padding:14px;background:#f8fafc}
 .systemStat strong{display:block;font-size:1.7rem;margin-top:4px}
@@ -2244,8 +2242,8 @@ function draw(){
     else a=[["hoy","Hoy"],["semana","Semana"],["registro","Registro MAR"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes",mensajesLabel],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
-  nav.innerHTML=a.map(x=>`<button data-t="${x[0]}" class="${tab===x[0]?"active":""}">${x[1]}</button>`).join("");
-  nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="salir"){sb.auth.signOut().then(()=>location.reload());return}tab=b.dataset.t;draw();render()});
+  nav.innerHTML=`<select id="navSelectV300">${a.map(x=>`<option value="${x[0]}" ${tab===x[0]?'selected':''}>${x[1]}</option>`).join("")}</select>`;
+  document.getElementById('navSelectV300').onchange=(e)=>{const v=e.target.value;if(v==="salir"){sb.auth.signOut().then(()=>location.reload());return}tab=v;draw();render()};
 }
 function title(x){if(x[2]==="MIX")return "MIX · GYM + ERGO";if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
 function render(){
