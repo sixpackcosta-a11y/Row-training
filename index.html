@@ -1723,7 +1723,10 @@ function coachNotifyTeamsV110(){
 function notifyComposerHtmlV110(){
   if(currentMode!=='staff'||!hasAnyCoachTeam())return '';
   const teams=coachNotifyTeamsV110();
-  return `<div class="notifyComposeV110"><h3>Enviar aviso</h3><label>Destinatarios<select id="notifyAudienceV110"><option value="all">Todos mis equipos</option><option value="team">Un equipo</option><option value="rower">Un remero</option></select></label><label id="notifyTeamWrapV110">Equipo<select id="notifyTeamV110">${teams.map(t=>`<option value="${t}">${esc(teamLabel(t))}</option>`).join('')}</select></label><label id="notifyRowerWrapV110" class="hidden">Remero<select id="notifyRowerV110"><option value="">Selecciona un remero</option></select></label><label>Título<input id="notifyTitleV110" value="Aviso del entrenador" maxlength="120"></label><label>Mensaje<textarea id="notifyBodyV110" maxlength="500" placeholder="Escribe el aviso que recibirá el equipo"></textarea></label><button id="sendManualNotifyV110" class="primary" style="width:100%">Enviar notificación</button><div id="notifyResultV110" class="notifyResultV110 muted"></div><div class="notifyHintV110">Se guarda dentro de Row Training y, si el remero tiene push activado, también llega al móvil.</div></div>`;
+  const coachTitle=currentUserProfile?.gender==='f'?'Aviso de la entrenadora':'Aviso del entrenador';
+  const defaultTitle=isGlobalCoach?'Aviso del administrador':coachTitle;
+  const senderRowHtml=isGlobalCoach?`<label>Enviar como<select id="notifySenderRoleV110"><option value="admin" selected>Administrador</option><option value="coach">${currentUserProfile?.gender==='f'?'Entrenadora':'Entrenador'}</option></select></label>`:'';
+  return `<div class="notifyComposeV110"><h3>Enviar aviso</h3>${senderRowHtml}<label>Destinatarios<select id="notifyAudienceV110"><option value="all">Todos mis equipos</option><option value="team">Un equipo</option><option value="rower">Un remero</option></select></label><label id="notifyTeamWrapV110">Equipo<select id="notifyTeamV110">${teams.map(t=>`<option value="${t}">${esc(teamLabel(t))}</option>`).join('')}</select></label><label id="notifyRowerWrapV110" class="hidden">Remero<select id="notifyRowerV110"><option value="">Selecciona un remero</option></select></label><label>Título<input id="notifyTitleV110" data-coach-title="${esc(coachTitle)}" data-admin-title="Aviso del administrador" value="${esc(defaultTitle)}" maxlength="120"></label><label>Mensaje<textarea id="notifyBodyV110" maxlength="500" placeholder="Escribe el aviso que recibirá el equipo"></textarea></label><button id="sendManualNotifyV110" class="primary" style="width:100%">Enviar notificación</button><div id="notifyResultV110" class="notifyResultV110 muted"></div><div class="notifyHintV110">Se guarda dentro de Row Training y, si el remero tiene push activado, también llega al móvil.</div></div>`;
 }
 async function bindNotifyComposerV110(panel){
   const audience=panel.querySelector('#notifyAudienceV110');if(!audience)return;
@@ -1738,6 +1741,8 @@ async function bindNotifyComposerV110(panel){
     if(mode==='rower')await loadRowers();
   }
   audience.onchange=redraw;team.onchange=()=>{if(audience.value==='rower')loadRowers()};await redraw();
+  const senderRole=panel.querySelector('#notifySenderRoleV110'),titleInput=panel.querySelector('#notifyTitleV110');
+  if(senderRole)senderRole.onchange=()=>{titleInput.value=senderRole.value==='admin'?titleInput.dataset.adminTitle:titleInput.dataset.coachTitle};
   panel.querySelector('#sendManualNotifyV110').onclick=async()=>{
     const btn=panel.querySelector('#sendManualNotifyV110'),status=panel.querySelector('#notifyResultV110');
     const title=panel.querySelector('#notifyTitleV110').value.trim(),body=panel.querySelector('#notifyBodyV110').value.trim();
@@ -2552,7 +2557,7 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
   document.body.appendChild(modal);modal.querySelectorAll('.v168Close').forEach(b=>b.onclick=()=>modal.remove());modal.onclick=e=>{if(e.target===modal)modal.remove()};
   try{
     const [pr,mr,sr,tr,ar,rr]=await Promise.all([
-      sb.from('profiles').select('user_id,full_name,height_cm,birth_date,team_code').eq('user_id',uid).maybeSingle(),
+      sb.from('profiles').select('user_id,full_name,height_cm,birth_date,team_code,gender').eq('user_id',uid).maybeSingle(),
       sb.from('rower_team_memberships').select('user_id,team_code,is_rower').eq('user_id',uid),
       sb.from('team_staff_roles').select('user_id,team_code,staff_role').eq('user_id',uid),
       sb.from('rowing_teams').select('*').order('sort_order').order('name'),
@@ -2565,7 +2570,7 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
     const teamRows=teams.filter(t=>t.is_active).map(t=>{const isR=members.some(m=>m.team_code===t.code&&m.is_rower!==false),role=roles.find(r=>r.team_code===t.code)?.staff_role||'';return `<div class="staffPerson" style="margin-bottom:10px"><b>${esc(t.name)}</b><div class="plannerGrid" style="margin-top:8px"><label class="keepLogin"><input type="checkbox" class="v168Rower" data-team="${esc(t.code)}" ${isR?'checked':''}> Remero</label><label>Rol técnico<select class="v168Staff" data-team="${esc(t.code)}"><option value="" ${!role?'selected':''}>Sin rol técnico</option><option value="coach" ${role==='coach'?'selected':''}>Entrenador</option><option value="assistant" ${role==='assistant'?'selected':''}>Ayudante</option></select></label></div></div>`}).join('');
     modal.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>Editar persona</h2><button type="button" class="v168Close">Cerrar</button></div>
       <p class="muted">El mismo editor se usa desde Equipo y desde Análisis.</p>
-      <h3>Perfil</h3><div class="plannerGrid"><label>Nombre<input id="v168Name" value="${esc(prof.full_name||reg.full_name||'')}"></label><label>Email<input value="${esc(email)}" disabled title="El email de acceso no se cambia desde este editor"></label><label>Fecha de nacimiento<input id="v168Birth" type="date" value="${prof.birth_date||''}"></label><label>Altura (cm)<input id="v168Height" type="number" step=".1" value="${prof.height_cm??''}"></label><label>Peso (kg)<input id="v168Weight" type="number" step=".1" value="${metric.weight_kg??''}"></label><label>FC reposo<input id="v168Rest" type="number" value="${metric.resting_hr??''}"></label><label>FC máxima<input id="v168Max" type="number" value="${metric.max_hr??''}"></label></div>
+      <h3>Perfil</h3><div class="plannerGrid"><label>Nombre<input id="v168Name" value="${esc(prof.full_name||reg.full_name||'')}"></label><label>Email<input value="${esc(email)}" disabled title="El email de acceso no se cambia desde este editor"></label><label>Se identifica como<select id="v168Gender"><option value="" ${!prof.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${prof.gender==='m'?'selected':''}>Hombre</option><option value="f" ${prof.gender==='f'?'selected':''}>Mujer</option></select></label><label>Fecha de nacimiento<input id="v168Birth" type="date" value="${prof.birth_date||''}"></label><label>Altura (cm)<input id="v168Height" type="number" step=".1" value="${prof.height_cm??''}"></label><label>Peso (kg)<input id="v168Weight" type="number" step=".1" value="${metric.weight_kg??''}"></label><label>FC reposo<input id="v168Rest" type="number" value="${metric.resting_hr??''}"></label><label>FC máxima<input id="v168Max" type="number" value="${metric.max_hr??''}"></label></div>
       <h4>Zonas de FC</h4><div class="profileEditorV103" style="margin:0 0 14px">${['ut2','ut1','at','tr','an'].map(z=>`<div class="zoneRow"><b>${z.toUpperCase()}</b><label>Mín<input id="v168_${z}_min" type="number" value="${metric[z+'_min']??''}"></label><label>Máx<input id="v168_${z}_max" type="number" value="${metric[z+'_max']??''}"></label></div>`).join('')}<label>Notas<textarea id="v168Notes" rows="3">${esc(metric.notes||'')}</textarea><button type="button" id="v168CalcZones">Calcular zonas desde FC</button></div>
       ${isGlobalCoach?`<h3>Equipos y roles</h3>${teamRows||'<p class="muted">No hay equipos activos.</p>'}`:''}
       <div class="actions"><button type="button" class="v168Close">Cancelar</button><button type="button" id="v168Save" class="primary">Guardar todo</button></div><div id="v168Status" class="muted"></div>
@@ -2573,7 +2578,7 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
     modal.querySelectorAll('.v168Close').forEach(b=>b.onclick=()=>modal.remove());
     modal.querySelector('#v168CalcZones').onclick=()=>{const z=karvonenZones(Number(modal.querySelector('#v168Max').value),Number(modal.querySelector('#v168Rest').value));if(!z)return alert('Introduce FC máxima y FC de reposo válidas.');Object.entries(z).forEach(([k,v])=>{modal.querySelector('#v168_'+k+'_min').value=v.min;modal.querySelector('#v168_'+k+'_max').value=v.max})};
     modal.querySelector('#v168Save').onclick=async()=>{const b=modal.querySelector('#v168Save'),st=modal.querySelector('#v168Status');b.disabled=true;st.textContent='Guardando…';try{
-      const profilePayload={full_name:modal.querySelector('#v168Name').value.trim()||null,birth_date:modal.querySelector('#v168Birth').value||null,height_cm:modal.querySelector('#v168Height').value?Number(modal.querySelector('#v168Height').value):null,updated_at:new Date().toISOString()};
+      const profilePayload={full_name:modal.querySelector('#v168Name').value.trim()||null,gender:modal.querySelector('#v168Gender').value||null,birth_date:modal.querySelector('#v168Birth').value||null,height_cm:modal.querySelector('#v168Height').value?Number(modal.querySelector('#v168Height').value):null,updated_at:new Date().toISOString()};
       const q1=await sb.from('profiles').update(profilePayload).eq('user_id',uid);if(q1.error)throw q1.error;
       if(isGlobalCoach)for(const t of teams.filter(t=>t.is_active)){
         const wantR=modal.querySelector(`.v168Rower[data-team="${CSS.escape(t.code)}"]`)?.checked||false,hadR=members.some(m=>m.team_code===t.code&&m.is_rower!==false);
@@ -3789,9 +3794,10 @@ async function v300SaveComment(kind,id,userId,teamCode,text){
   const res=await sb.from('ergo_result_comments').insert({result_kind:kind,result_id:id,user_id:userId,team_code:teamCode,comment:text,created_by:currentUser.id});
   if(!res.error&&currentUser?.id!==userId){
     // Notificación push de verdad (llega aunque no tenga la app abierta), no solo el aviso dentro de la app.
+    const commentCoachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
     sendNotificationV110({
       audience:{mode:'users',user_ids:[userId],team_codes:[teamCode]},
-      title:'💬 Comentario de tu entrenador',
+      title:`💬 Comentario de ${commentCoachLabel}`,
       body:text.length>140?text.slice(0,140)+'…':text,
       url:`/?tab=hist&ergoComment=1&kind=${encodeURIComponent(kind)}&rid=${encodeURIComponent(id)}`,
       type:'ergo_comment'
