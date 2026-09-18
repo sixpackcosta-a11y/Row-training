@@ -2319,6 +2319,8 @@ async function staffRegisterView(){
     const xs=q.data||[],today=localISODate(),nearAll=near.data||[],nearSorted=nearAll.slice().sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(today+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(today+'T12:00:00'))).slice(0,8).sort((a,b)=>a.session_date.localeCompare(b.session_date)),ids=nearSorted.map(x=>x.id);let doneIds=new Set();if(ids.length){const rr=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);doneIds=new Set((rr.data||[]).map(x=>String(x.training_session_id)))}
     const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
     dayBox?.querySelectorAll('.seaDayQuickV138').forEach(b=>b.onclick=()=>{staffRegDate.value=b.dataset.date;load()});
+    const crewMapV309=await v307FetchCrewMap(xs.map(x=>x.id));
+    xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
     staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${v307CrewBoatHtml(x.crew,x.id,false,t)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     xs.forEach(x=>{
@@ -2409,6 +2411,16 @@ async function v310CrewPhysicalStats(userIds){
   }catch(e){console.warn('No se pudieron cargar peso/W-kg de la tripulación',e)}
   return result;
 }
+async function v307FetchCrewMap(sessionIds){
+  const map=new Map();
+  const ids=[...new Set((sessionIds||[]).filter(Boolean))];
+  if(!ids.length)return map;
+  try{
+    const q=await sb.from('mar_crew').select('training_session_id,crew').in('training_session_id',ids);
+    (q.data||[]).forEach(r=>map.set(String(r.training_session_id),r.crew));
+  }catch(e){console.warn('No se pudo cargar la tripulación',e)}
+  return map;
+}
 function v307NormalizeCrew(raw,teamCode){
   const fallback=v307DefaultSeatsForTeam(teamCode);
   if(Array.isArray(raw))return {seats:10,assignments:raw};
@@ -2442,8 +2454,9 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
       const crew=v307NormalizeCrew(session.crew,teamCode);
       crew.assignments=crew.assignments.filter(c=>Number(c.position)!==position);
       if(entry)crew.assignments.push(entry);
-      const upd=await sb.from('training_sessions').update({crew}).eq('id',session.id);
-      if(upd.error){alert(upd.error.message);return}
+      const upd=await sb.from('mar_crew').upsert({training_session_id:session.id,crew,updated_by:currentUser?.id||null,updated_at:new Date().toISOString()},{onConflict:'training_session_id'}).select();
+      if(upd.error){alert('No se pudo guardar: '+upd.error.message);return}
+      if(!upd.data?.length){alert('No se pudo guardar la tripulación: no tienes permiso para modificar esta sesión.');return}
       session.crew=crew;afterSave();
     },teamCode,v307NormalizeCrew(session.crew,teamCode).assignments);
   });
@@ -2452,8 +2465,9 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
     const crew=v307NormalizeCrew(session.crew,teamCode);
     if(seatsSel)crew.seats=Number(seatsSel.value);
     crew.assignments=crew.assignments.filter(c=>Number(c.position)<=crew.seats);
-    const upd=await sb.from('training_sessions').update({crew}).eq('id',session.id);
-    if(upd.error){alert(upd.error.message);return}
+    const upd=await sb.from('mar_crew').upsert({training_session_id:session.id,crew,updated_by:currentUser?.id||null,updated_at:new Date().toISOString()},{onConflict:'training_session_id'}).select();
+    if(upd.error){alert('No se pudo guardar: '+upd.error.message);return}
+    if(!upd.data?.length){alert('No se pudo guardar la tripulación: no tienes permiso para modificar esta sesión.');return}
     session.crew=crew;afterSave();
   };
   if(seatsSel)seatsSel.onchange=saveConfig;
@@ -2648,9 +2662,10 @@ function seaUnlockBlockV186(bi){
 }
 async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   seaDeletedExistingIdsV188=new Set();
-  const sq=await sb.from('training_sessions').select('id,title,content,crew').eq('id',sessionId).maybeSingle();
+  const sq=await sb.from('training_sessions').select('id,title,content').eq('id',sessionId).maybeSingle();
   if(sq.error){alert('No se pudo cargar la sesión MAR: '+sq.error.message);return}
   const session=sq.data||{id:sessionId,title:'Sesión MAR',content:''};
+  session.crew=(await v307FetchCrewMap([sessionId])).get(String(sessionId))||null;
   const existingQ=await sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,photo_paths').eq('training_session_id',Number(sessionId)).order('id');
   const existingResults=seaSortResultsByPlanV186(existingQ.error?[]:(existingQ.data||[]),session.content);
   let blocks=seaResultBlocksFromContent(session.content).map(b=>({...b,prescription:seaPrescription(b.value),custom:false}));
@@ -2971,6 +2986,8 @@ async function coachWeekView(){
   content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">Cargando…</p></div></div>`;
   const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
+  const crewMapV309=await v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
+  sessions.forEach(x=>{if(x.session_type==='MAR')x.crew=crewMapV309.get(String(x.id))||null});
   let auditPlans=auditPlansQ.error?sessions.filter(x=>x.session_type==='ERG'):(auditPlansQ.data||[]);
   const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],sessionIds=sessions.map(x=>Number(x.id)).filter(Number.isFinite);
   let seaRows=[],workoutRows=[],gymRows=[],manualErgoRows=[],c2Rows=[],profiles=[];
@@ -3152,7 +3169,7 @@ async function coachWeekView(){
     auditBox.querySelectorAll('.v143ToggleSplit').forEach(button=>button.onclick=e=>{e.preventDefault();e.stopPropagation();const row=c2Rows.find(r=>String(r.id)===String(button.dataset.result));if(!row)return;const authSessionId=row.training_session_id||'';v143ToggleSplit(row,row.user_id,authSessionId,Number(button.dataset.index),()=>{renderAudit();const d=auditBox.querySelector('.v228Audit');if(d)d.open=true})});
   };
   renderAudit();
-  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds),races=comps.filter(x=>x.competition_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${races.map(c=>`<div class="miniSess race">🏁 ${esc(c.name)}</div>`).join('')}${xs.length?xs.map(x=>{const rc=resultCountFor(x),has=rc>0;return `<div class="weekSess ${x.session_type==='MAR'?'seaCard':''} ${has?'weekHasResultsV209':''}"><div class="weekSessTitle"><span class="tag">${x.session_type}</span><b>${esc(x.title)}</b>${has?`<span class="tag" style="background:#e8f7ed;color:#17633a">✓ ${rc} resultado${rc===1?'':'s'}</span>`:''}</div>${compact(x)}<div class="actions"><button class="weekDetailSession" data-id="${x.id}">Ver detalle</button>${has?`<button class="weekViewResultsV209 primary" data-id="${x.id}">Ver resultados</button>`:''}${canEdit?`<button class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button><button class="weekMoveSession" data-id="${x.id}" data-date="${ds}">Mover</button><button class="weekDupSession" data-id="${x.id}" data-date="${ds}">Duplicar</button>`:''}${x.session_type==='MAR'?`<button class="weekSeaResult ${has?'':'primary'}" data-id="${x.id}" data-date="${ds}">${has?'Editar resultados MAR':'Registrar MAR'}</button>`:''}</div></div>`}).join(''):'<p class="muted weekEmpty">Sin sesión</p>'}${canEdit?`<button type="button" class="weekEdit" data-date="${ds}">+ Añadir sesión</button>`:''}</section>`}).join('')}</div>`;
+  coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i),xs=sessions.filter(x=>x.session_date===ds),races=comps.filter(x=>x.competition_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${races.map(c=>`<div class="miniSess race">🏁 ${esc(c.name)}</div>`).join('')}${xs.length?xs.map(x=>{const rc=resultCountFor(x),has=rc>0,hasCrew=x.session_type==='MAR'&&v307NormalizeCrew(x.crew).assignments.length>0,showResultsBtn=has||hasCrew;return `<div class="weekSess ${x.session_type==='MAR'?'seaCard':''} ${has?'weekHasResultsV209':''}"><div class="weekSessTitle"><span class="tag">${x.session_type}</span><b>${esc(x.title)}</b>${has?`<span class="tag" style="background:#e8f7ed;color:#17633a">✓ ${rc} resultado${rc===1?'':'s'}</span>`:''}${hasCrew?'<span class="tag" style="background:#eaf7fb;color:#0369a1">🚣 Tripulación</span>':''}</div>${compact(x)}<div class="actions"><button class="weekDetailSession" data-id="${x.id}">Ver detalle</button>${showResultsBtn?`<button class="weekViewResultsV209 primary" data-id="${x.id}">${has?'Ver resultados':'Ver tripulación'}</button>`:''}${canEdit?`<button class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button><button class="weekMoveSession" data-id="${x.id}" data-date="${ds}">Mover</button><button class="weekDupSession" data-id="${x.id}" data-date="${ds}">Duplicar</button>`:''}${x.session_type==='MAR'?`<button class="weekSeaResult ${has?'':'primary'}" data-id="${x.id}" data-date="${ds}">${has?'Editar resultados MAR':'Registrar MAR'}</button>`:''}</div></div>`}).join(''):'<p class="muted weekEmpty">Sin sesión</p>'}${canEdit?`<button type="button" class="weekEdit" data-date="${ds}">+ Añadir sesión</button>`:''}</section>`}).join('')}</div>`;
   const showDetail=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>${esc(x.title)}</h2><button class="closeWeekDetail">Cerrar</button></div>${trainingContentHtml(x.content)}<div class="actions"><button class="closeWeekDetail primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekDetail').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()}};
   const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV220(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
     if(x.session_type==='MAR'){
@@ -5032,9 +5049,12 @@ function metricSeconds(v){
 }
 function fmtMetricSeconds(v){if(v==null||!isFinite(v))return "—"; const m=Math.floor(v/60),sec=v-m*60;return `${m}:${sec.toFixed(1).padStart(4,'0')}`;}
 async function getSeaResultsForTeam(team,start,end){
-  const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content,crew').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
+  const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
   if(ss.error||!ss.data?.length)return {sessions:ss.data||[],results:[]};
-  const ids=ss.data.map(x=>x.id); const rr=await sb.from('sea_results').select('*').in('training_session_id',ids).order('created_at');
+  const ids=ss.data.map(x=>x.id);
+  const crewMapV309=await v307FetchCrewMap(ids);
+  ss.data.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
+  const rr=await sb.from('sea_results').select('*').in('training_session_id',ids).order('created_at');
   const map=new Map(ss.data.map(x=>[x.id,x])),results=(rr.data||[]).map(x=>({...x,session:map.get(x.training_session_id)}));await hydrateSeaPhotosV137(results);return {sessions:ss.data,results};
 }
 async function hydrateSeaPhotosV137(rows){const all=[...new Set((rows||[]).flatMap(x=>Array.isArray(x.photo_paths)?x.photo_paths:[]).filter(Boolean))];if(!all.length)return rows||[];try{const q=await sb.storage.from('sea-media').createSignedUrls(all,3600);if(q.error)throw q.error;const map=new Map((q.data||[]).map(x=>[x.path,x.signedUrl||x.signedURL]));(rows||[]).forEach(x=>{x._photo_urls=(Array.isArray(x.photo_paths)?x.photo_paths:[]).map(p=>map.get(p)).filter(Boolean)})}catch(e){console.warn('No se pudieron abrir las capturas MAR',e)}return rows||[]}
