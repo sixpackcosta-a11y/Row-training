@@ -5572,7 +5572,11 @@ function v79ComplianceHtml(c,small=false){
 }
 function v143AthleteCalendarHtml(comp){
   const rows=comp?.details||[];if(!rows.length)return '<p class="muted">Sin sesiones GYM/ERGO en esta semana.</p>';
-  return `<div class="v143AthleteCalendar">${rows.map(x=>{const cls=x.done?'complianceDoneV151':(x.due?'complianceOverdueV306':'compliancePendingV151'),label=x.done?(x.legacy?'✓ Hecha · recuperada':'✓ Hecha'):(x.due?'⚠ Sin completar':'Pendiente');return `<div class="last" style="display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:center"><b>${shortDateES(x.date)}</b><span><b>${esc(x.type)}</b> · ${esc(x.title||'Sesión')}</span><span class="tag ${cls}">${label}</span></div>`}).join('')}</div>`;
+  return `<div class="v143AthleteCalendar">${rows.map(x=>{
+    const cls=x.done?'complianceDoneV151':(x.due?'complianceOverdueV306':'compliancePendingV151'),label=x.done?(x.legacy?'✓ Recuperada':'✓ Hecha'):(x.due?'⚠ Sin hacer':'Pendiente');
+    let title=String(x.title||'Sesión').replace(/^(GYM|ERGO)\s*[·:\-]\s*/i,'').replace(/^(GYM|ERGO)\s*[·:\-]\s*/i,'');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid #eef2f6"><div style="min-width:0"><div style="font-size:12px;color:#718096;font-weight:700">${shortDateES(x.date)} · ${esc(x.type)}</div><div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(title)}</div></div><span class="tag ${cls}" style="flex-shrink:0;white-space:nowrap">${label}</span></div>`;
+  }).join('')}</div>`;
 }
 function v143TeamCalendarHtml(rows,teamSessions,start,end,cellStateFn=null){
   const plans=(teamSessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&['GYM','ERG'].includes(s.session_type)).sort((a,b)=>a.session_date.localeCompare(b.session_date)||Number(a.id)-Number(b.id));
