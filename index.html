@@ -2378,7 +2378,7 @@ function v307CrewBoatHtml(rawCrew,sessionId,readOnly=false,teamCode=null){
     maxRow=Math.max(maxRow,row);
     seatsHtml+=seatHtml(n,row);
   }
-  const configControls=readOnly?'':`<div class="v307CrewConfig"><label>Tipo de barco<select class="v307SeatsSelect" data-session="${sessionId}"><option value="8" ${crew.seats===8?'selected':''}>Barca (Jábega)</option><option value="10" ${crew.seats===10?'selected':''}>Llaüt</option></select></label></div>`;
+  const configControls=readOnly?'':`<div class="v307CrewConfig"><label>Embarcación<select class="v307SeatsSelect" data-session="${sessionId}"><option value="8" ${crew.seats===8?'selected':''}>Barca (Jábega)</option><option value="10" ${crew.seats===10?'selected':''}>Llaüt</option></select></label></div>`;
   return `<div class="v307CrewSection"><b>🚣 Tripulación</b>${configControls}<div class="v307CrewPopa">▲ Popa</div><div class="v307CrewLabels"><span>Estribor</span><span>Babor</span></div><div class="v307CrewBoatWrap"><div class="v307HullShape"></div><div class="v307CrewBoat" data-session="${sessionId}" style="grid-template-rows:repeat(${maxRow},1fr)">${seatsHtml}</div></div><div class="v307CrewProa">Proa</div></div>`;
 }
 function v307BindCrewBoat(container,session,teamCode,afterSave){
