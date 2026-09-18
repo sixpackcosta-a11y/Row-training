@@ -2391,7 +2391,7 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
       const upd=await sb.from('training_sessions').update({crew}).eq('id',session.id);
       if(upd.error){alert(upd.error.message);return}
       session.crew=crew;afterSave();
-    },teamCode);
+    },teamCode,v307NormalizeCrew(session.crew,teamCode).assignments);
   });
   const seatsSel=container.querySelector('.v307SeatsSelect');
   const saveConfig=async()=>{
@@ -2404,11 +2404,16 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
   };
   if(seatsSel)seatsSel.onchange=saveConfig;
 }
-async function v307OpenSeatPicker(position,onSave,teamCode=null){
+async function v307OpenSeatPicker(position,onSave,teamCode=null,assignments=[]){
   const rowers=await v307AllClubRowersV307();
+  const usedByUser=new Map((assignments||[]).filter(c=>Number(c.position)!==position&&c.user_id).map(c=>[String(c.user_id),Number(c.position)]));
   const sameTeam=teamCode?rowers.filter(r=>r.team_code===teamCode):rowers;
   const others=teamCode?rowers.filter(r=>r.team_code!==teamCode):[];
-  const optHtml=r=>`<button type="button" class="v307SeatOption" data-mode="rower" data-user="${r.user_id}" data-name="${esc(r.full_name||'Sin nombre')}" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff">${esc(r.full_name||'Sin nombre')}${(!teamCode&&r.team_code)?` <small class="muted">· ${esc(teamLabel(r.team_code))}</small>`:''}</button>`;
+  const optHtml=r=>{
+    const usedAt=usedByUser.get(String(r.user_id));
+    if(usedAt)return `<button type="button" disabled style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#f1f5f9;color:#94a3b8;cursor:not-allowed">${esc(r.full_name||'Sin nombre')} <small>· ya en el puesto ${usedAt}</small></button>`;
+    return `<button type="button" class="v307SeatOption" data-mode="rower" data-user="${r.user_id}" data-name="${esc(r.full_name||'Sin nombre')}" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff">${esc(r.full_name||'Sin nombre')}${(!teamCode&&r.team_code)?` <small class="muted">· ${esc(teamLabel(r.team_code))}</small>`:''}</button>`;
+  };
   document.querySelectorAll('.v307SeatPickerBack').forEach(x=>x.remove());
   const layer=document.createElement('div');layer.className='modalBack v307SeatPickerBack';
   layer.innerHTML=`<div class="modalCard" style="max-width:380px"><div class="modalTitle"><h2 style="margin:0">Puesto ${position}</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="max-height:60vh;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px"><button type="button" class="v307SeatOption" data-mode="clear" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;color:#b91c1c;background:#fff">✕ Dejar vacío</button><button type="button" class="v307SeatOption" data-mode="manual" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px dashed #94a3b8;background:#fff">➕ Nombre nuevo / no registrado</button>${sameTeam.map(optHtml).join('')}${others.length?`<button type="button" id="v307ShowOthersV307" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px dashed #94a3b8;background:#fff;color:#0b5ed7">🔀 Ver remeros de otros equipos (${others.length})</button><div id="v307OthersListV307" style="display:none;flex-direction:column;gap:6px">${others.map(optHtml).join('')}</div>`:''}</div></div>`;
@@ -3065,7 +3070,8 @@ async function coachWeekView(){
   const showDetail=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>${esc(x.title)}</h2><button class="closeWeekDetail">Cerrar</button></div>${trainingContentHtml(x.content)}<div class="actions"><button class="closeWeekDetail primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekDetail').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()}};
   const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV220(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
     if(x.session_type==='MAR'){
-      body=sea.length?`<div class="info"><b>${sea.length} registro${sea.length===1?'':'s'} MAR</b></div>${sea.map((r,i)=>`<div class="last"><b>${esc(r.exercise_name||`Serie ${i+1}`)}</b><br>${r.distance_m!=null?`${r.distance_m} m · `:''}${r.time_text?`${esc(r.time_text)} · `:''}${r.pace_500_text?`/500 ${esc(r.pace_500_text)} · `:''}${r.spm!=null?`${r.spm} ppm`:''}${r.notes?`<br><small>${esc(r.notes)}</small>`:''}</div>`).join('')}`:'<p class="muted">No hay resultados MAR registrados.</p>';
+      body=(sea.length?`<div class="info"><b>${sea.length} registro${sea.length===1?'':'s'} MAR</b></div>${sea.map((r,i)=>`<div class="last"><b>${esc(r.exercise_name||`Serie ${i+1}`)}</b><br>${r.distance_m!=null?`${r.distance_m} m · `:''}${r.time_text?`${esc(r.time_text)} · `:''}${r.pace_500_text?`/500 ${esc(r.pace_500_text)} · `:''}${r.spm!=null?`${r.spm} ppm`:''}${r.notes?`<br><small>${esc(r.notes)}</small>`:''}</div>`).join('')}`:'<p class="muted">No hay resultados MAR registrados.</p>');
+      body=v307CrewBoatHtml(x.crew,x.id,true)+body;
     }else{
       const manualHtml=logs.map(w=>{const gs=gymRows.filter(g=>String(g.workout_id)===String(w.id)),es=manualErgoRows.filter(e=>String(e.workout_id)===String(w.id));return `<section class="last"><b>${esc(nameFor(w.user_id))}</b> · ${String(w.session_type||'').toUpperCase()}${w.notes?`<br><small>${esc(w.notes)}</small>`:''}${gs.length?`<div style="margin-top:8px">${gs.map(g=>`<div><b>${esc(g.exercise_name||'Ejercicio')}</b>${g.weight_kg!=null?` · ${g.weight_kg} kg`:''}${g.reps!=null?` · ${g.reps} rep`:''}${g.perceived_difficulty?` · ${esc(g.perceived_difficulty)}`:''}${g.note?`<br><small>${esc(g.note)}</small>`:''}</div>`).join('')}</div>`:''}${es.length?es.map(e=>`<div style="margin-top:8px"><b>ERGO manual</b> · ${e.distance_m??'—'} m · ${e.time_seconds!=null?fmtMetricSeconds(Number(e.time_seconds)):'—'} · /500 ${e.pace_500_seconds!=null?fmtMetricSeconds(Number(e.pace_500_seconds)):'—'} · ${e.spm??'—'} ppm${e.rpe?` · RPE ${e.rpe}`:''}${v124ManualPartialsHtml(e)}</div>`).join(''):''}</section>`}).join('');
       const c2Html=c2.map(r=>`<section class="last"><b>${esc(nameFor(r.user_id))}</b> · Concept2 / ErgData<br>${r.distance_m??'—'} m · ${r.time_formatted||'—'} · /500 ${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'} · ${r.spm??'—'} ppm${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}</section>`).join('');
