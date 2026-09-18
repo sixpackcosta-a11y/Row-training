@@ -2319,7 +2319,7 @@ async function staffRegisterView(){
     const xs=q.data||[],today=localISODate(),nearAll=near.data||[],nearSorted=nearAll.slice().sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(today+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(today+'T12:00:00'))).slice(0,8).sort((a,b)=>a.session_date.localeCompare(b.session_date)),ids=nearSorted.map(x=>x.id);let doneIds=new Set();if(ids.length){const rr=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);doneIds=new Set((rr.data||[]).map(x=>String(x.training_session_id)))}
     const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
     dayBox?.querySelectorAll('.seaDayQuickV138').forEach(b=>b.onclick=()=>{staffRegDate.value=b.dataset.date;load()});
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${v307CrewBoatHtml(x.crew,x.id)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${v307CrewBoatHtml(x.crew,x.id,false,t)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     xs.forEach(x=>{
       const boat=staffRegArea.querySelector(`.v307CrewBoat[data-session="${x.id}"]`);
@@ -2354,13 +2354,17 @@ async function v307AllClubRowersV307(){
   if(q.error)return [];
   return (q.data||[]).map(p=>({user_id:p.user_id,full_name:p.full_name,team_code:teamByUser.get(p.user_id)||null}));
 }
-function v307NormalizeCrew(raw){
-  if(Array.isArray(raw))return {seats:10,assignments:raw};
-  if(raw&&typeof raw==='object')return {seats:raw.seats||10,assignments:raw.assignments||[]};
-  return {seats:10,assignments:[]};
+function v307DefaultSeatsForTeam(teamCode){
+  return String(teamCode||'')==='veteranas'?10:8;
 }
-function v307CrewBoatHtml(rawCrew,sessionId,readOnly=false){
-  const crew=v307NormalizeCrew(rawCrew);
+function v307NormalizeCrew(raw,teamCode){
+  const fallback=v307DefaultSeatsForTeam(teamCode);
+  if(Array.isArray(raw))return {seats:10,assignments:raw};
+  if(raw&&typeof raw==='object')return {seats:raw.seats||fallback,assignments:raw.assignments||[]};
+  return {seats:fallback,assignments:[]};
+}
+function v307CrewBoatHtml(rawCrew,sessionId,readOnly=false,teamCode=null){
+  const crew=v307NormalizeCrew(rawCrew,teamCode);
   if(readOnly&&!crew.assignments.length)return '';
   const bySeat=new Map(crew.assignments.map(c=>[Number(c.position),c]));
   const tag=readOnly?'div':'button';
@@ -2381,7 +2385,7 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
   container.querySelectorAll('.v307SeatBtn').forEach(btn=>{
     const position=Number(btn.dataset.position);
     btn.onclick=()=>v307OpenSeatPicker(position,async(entry)=>{
-      const crew=v307NormalizeCrew(session.crew);
+      const crew=v307NormalizeCrew(session.crew,teamCode);
       crew.assignments=crew.assignments.filter(c=>Number(c.position)!==position);
       if(entry)crew.assignments.push(entry);
       const upd=await sb.from('training_sessions').update({crew}).eq('id',session.id);
@@ -2391,7 +2395,7 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
   });
   const seatsSel=container.querySelector('.v307SeatsSelect');
   const saveConfig=async()=>{
-    const crew=v307NormalizeCrew(session.crew);
+    const crew=v307NormalizeCrew(session.crew,teamCode);
     if(seatsSel)crew.seats=Number(seatsSel.value);
     crew.assignments=crew.assignments.filter(c=>Number(c.position)<=crew.seats);
     const upd=await sb.from('training_sessions').update({crew}).eq('id',session.id);
@@ -2572,9 +2576,10 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const blockHtml=blocks.map(blockHtmlV186).join('');
   const imported=Array.isArray(importedSeries)?importedSeries:[];
   let seaPhotoFilesV137=[];
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  window.scrollTo(0,0);
   const refreshCrewV307=()=>{
-    content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id);
+    content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id,false,team);
     v307BindCrewBoat(content,session,team,refreshCrewV307);
   };
   v307BindCrewBoat(content,session,team,refreshCrewV307);
