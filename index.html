@@ -127,7 +127,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V73 · roles por equipo + entrenamiento legible */
 .modeSwitch{margin-top:5px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:4px 8px;font-size:.78rem}.staffRoleBadge{display:inline-block;margin:3px 4px 0 0;padding:3px 7px;border-radius:999px;background:#e8f1fb;font-size:.74rem;font-weight:800}.staffRoleBadge.assistant{background:#f2f4f7}.permNote{padding:10px 12px;border-radius:10px;background:#fff6d9;border:1px solid #f0d98a;margin:10px 0}.staffGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.staffPerson{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.staffDayCard{border-left:5px solid #6b7280}.staffDayCard.mar{border-left-color:#18a5b8}.staffActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .seaSeriesTable{min-width:760px}.seaSeriesTable th,.seaSeriesTable td{vertical-align:middle}.seaSeriesTable input{min-width:105px;margin:0}.seaSeriesTable input[readonly]{background:#f3f6fa;font-weight:700;color:#25324a}.seaSeriesTable .seriesName{font-weight:800;white-space:nowrap}.seaAutoPace{font-weight:800}.seaBlockMeta{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:12px;margin-top:12px}@media(max-width:700px){.seaBlockMeta{grid-template-columns:1fr}.seaSeriesTable{min-width:650px}}
-.workoutReadable{display:flex;flex-direction:column;gap:0;margin:10px 0}.workoutRow{display:grid;grid-template-columns:minmax(135px,190px) 1fr;gap:10px;align-items:start;padding:10px 2px;border:0;border-bottom:1px solid #eef2f6;border-radius:0;background:transparent}.workoutReadable>.workoutRow:last-child{border-bottom:0}.workoutLabel{font-weight:850;color:#082744;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}.workoutValue{font-size:.9rem;line-height:1.35;color:#17283a}.workoutRow.work,.workoutRow.recovery,.workoutRow.warm,.workoutRow.cool,.workoutRow.note{background:transparent}.workoutCompact .workoutRow{grid-template-columns:110px 1fr;padding:7px 2px;gap:7px}.workoutCompact .workoutLabel{font-size:.67rem}.workoutCompact .workoutValue{font-size:.76rem}.workoutPyramidLinear{font-weight:800}.workoutArrow{color:#0b5ed7;font-weight:900;padding:0 3px}.ergoPrevRefV306:empty{display:none}.ergoPrevRefV306{margin:10px 0}@media(max-width:700px){.staffGrid{grid-template-columns:1fr}.workoutRow,.workoutCompact .workoutRow{grid-template-columns:1fr;gap:3px}.workoutLabel{font-size:.72rem}}
+.workoutReadable{display:flex;flex-direction:column;gap:0;margin:10px 0}.workoutRow{display:grid;grid-template-columns:minmax(135px,190px) 1fr;gap:10px;align-items:start;padding:10px 2px;border:0;border-bottom:1px solid #eef2f6;border-radius:0;background:transparent}.workoutReadable>.workoutRow:last-child{border-bottom:0}.workoutLabel{font-weight:850;color:#082744;text-transform:uppercase;font-size:.78rem;letter-spacing:.02em}.workoutValue{font-size:.9rem;line-height:1.35;color:#17283a}.workoutRow.work,.workoutRow.recovery,.workoutRow.warm,.workoutRow.cool,.workoutRow.note{background:transparent}.workoutCompact .workoutRow{grid-template-columns:110px 1fr;padding:7px 2px;gap:7px}.workoutCompact .workoutLabel{font-size:.67rem}.workoutCompact .workoutValue{font-size:.76rem}.workoutPyramidLinear{font-weight:800}.workoutArrow{color:#0b5ed7;font-weight:900;padding:0 3px}.v307CrewSection{margin:14px 0}.v307CrewBoat{display:flex;gap:6px;overflow-x:auto;padding:10px 8px;margin-top:6px;background:#eaf7fb;border-radius:14px;-webkit-overflow-scrolling:touch}.v307SeatBtn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;border-radius:12px;border:1px solid #cfe8ef;background:#fff;min-width:64px;cursor:pointer;font-family:inherit}.v307SeatBtn.filled{background:#07162f;color:#fff;border-color:#07162f}.v307SeatNum{font-size:10px;font-weight:900;opacity:.65}.v307SeatName{font-size:12px;font-weight:700;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis}.v307SeatBtn.readonly{cursor:default}.ergoPrevRefV306:empty{display:none}.ergoPrevRefV306{margin:10px 0}@media(max-width:700px){.staffGrid{grid-template-columns:1fr}.workoutRow,.workoutCompact .workoutRow{grid-template-columns:1fr;gap:3px}.workoutLabel{font-size:.72rem}}
 
 /* V78 · navegación móvil visible, sin pestañas ocultas */
 @media(max-width:700px){
@@ -2319,8 +2319,19 @@ async function staffRegisterView(){
     const xs=q.data||[],today=localISODate(),nearAll=near.data||[],nearSorted=nearAll.slice().sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(today+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(today+'T12:00:00'))).slice(0,8).sort((a,b)=>a.session_date.localeCompare(b.session_date)),ids=nearSorted.map(x=>x.id);let doneIds=new Set();if(ids.length){const rr=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);doneIds=new Set((rr.data||[]).map(x=>String(x.training_session_id)))}
     const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
     dayBox?.querySelectorAll('.seaDayQuickV138').forEach(b=>b.onclick=()=>{staffRegDate.value=b.dataset.date;load()});
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${v307CrewBoatHtml(x.crew,x.id)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
+    staffRegArea.querySelectorAll('.v307SeatBtn').forEach(btn=>{
+      const boat=btn.closest('.v307CrewBoat'),sessionId=boat.dataset.session,position=Number(btn.dataset.position),session=xs.find(s=>String(s.id)===String(sessionId));
+      if(!session)return;
+      btn.onclick=()=>v307OpenSeatPicker(position,async(entry)=>{
+        const crew=(session.crew||[]).filter(c=>Number(c.position)!==position);
+        if(entry)crew.push(entry);
+        const upd=await sb.from('training_sessions').update({crew}).eq('id',sessionId);
+        if(upd.error){alert(upd.error.message);return}
+        load();
+      });
+    });
   }
   staffRegLoad.onclick=load;
   staffRegTeam.onchange=load;
@@ -2341,6 +2352,40 @@ async function rowingCoachReviewV135(log,team,backFn){
   };
 }
 async function staffAthletesForTeam(team){const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);const q=await sb.from('profiles').select('user_id,full_name').in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}const q=await sb.from('profiles').select('user_id,full_name').eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
+async function v307AllClubRowersV307(){
+  const m=await sb.from('rower_team_memberships').select('user_id,team_code').eq('is_rower',true);
+  if(m.error||!m.data?.length)return [];
+  const teamByUser=new Map();m.data.forEach(x=>{if(!teamByUser.has(x.user_id))teamByUser.set(x.user_id,x.team_code)});
+  const ids=[...teamByUser.keys()];
+  const q=await sb.from('profiles').select('user_id,full_name').in('user_id',ids).order('full_name');
+  if(q.error)return [];
+  return (q.data||[]).map(p=>({user_id:p.user_id,full_name:p.full_name,team_code:teamByUser.get(p.user_id)||null}));
+}
+function v307CrewBoatHtml(crew,sessionId,readOnly=false){
+  if(readOnly&&!(crew||[]).length)return '';
+  const seats=Array.from({length:10},(_,i)=>i+1);
+  const bySeat=new Map((crew||[]).map(c=>[Number(c.position),c]));
+  const tag=readOnly?'div':'button';
+  return `<div class="v307CrewSection"><b>🚣 Tripulación</b><div class="v307CrewBoat" data-session="${sessionId}">${seats.map(n=>{
+    const c=bySeat.get(n),name=c?(c.full_name||c.guest_name||'—'):null;
+    return `<${tag} ${readOnly?'':'type="button"'} class="v307SeatBtn ${name?'filled':''} ${readOnly?'readonly':''}" data-position="${n}"><span class="v307SeatNum">${n}</span><span class="v307SeatName">${name?esc(name):'Vacío'}</span></${tag}>`;
+  }).join('')}</div></div>`;
+}
+async function v307OpenSeatPicker(position,onSave){
+  const rowers=await v307AllClubRowersV307();
+  document.querySelectorAll('.v307SeatPickerBack').forEach(x=>x.remove());
+  const layer=document.createElement('div');layer.className='modalBack v307SeatPickerBack';
+  layer.innerHTML=`<div class="modalCard" style="max-width:380px"><div class="modalTitle"><h2 style="margin:0">Puesto ${position}</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="max-height:60vh;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px"><button type="button" class="v307SeatOption" data-mode="clear" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;color:#b91c1c;background:#fff">✕ Dejar vacío</button><button type="button" class="v307SeatOption" data-mode="manual" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px dashed #94a3b8;background:#fff">➕ Nombre nuevo / no registrado</button>${rowers.map(r=>`<button type="button" class="v307SeatOption" data-mode="rower" data-user="${r.user_id}" data-name="${esc(r.full_name||'Sin nombre')}" style="text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#fff">${esc(r.full_name||'Sin nombre')}${r.team_code?` <small class="muted">· ${esc(teamLabel(r.team_code))}</small>`:''}</button>`).join('')}</div></div>`;
+  document.body.appendChild(layer);
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
+  layer.querySelectorAll('.v307SeatOption').forEach(btn=>btn.onclick=()=>{
+    const mode=btn.dataset.mode;layer.remove();
+    if(mode==='clear'){onSave(null);return}
+    if(mode==='manual'){const name=prompt('Nombre de la persona (no registrada en la app):');if(name&&name.trim())onSave({position,user_id:null,guest_name:name.trim(),full_name:name.trim()});return}
+    onSave({position,user_id:btn.dataset.user,guest_name:null,full_name:btn.dataset.name});
+  });
+}
 function gymExercisesFromContent(content){
   const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>readableLabel(line)).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(label)).map(([label,value])=>({name:label,dose:value}));
 }
@@ -4848,7 +4893,7 @@ function metricSeconds(v){
 }
 function fmtMetricSeconds(v){if(v==null||!isFinite(v))return "—"; const m=Math.floor(v/60),sec=v-m*60;return `${m}:${sec.toFixed(1).padStart(4,'0')}`;}
 async function getSeaResultsForTeam(team,start,end){
-  const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
+  const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content,crew').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
   if(ss.error||!ss.data?.length)return {sessions:ss.data||[],results:[]};
   const ids=ss.data.map(x=>x.id); const rr=await sb.from('sea_results').select('*').in('training_session_id',ids).order('created_at');
   const map=new Map(ss.data.map(x=>[x.id,x])),results=(rr.data||[]).map(x=>({...x,session:map.get(x.training_session_id)}));await hydrateSeaPhotosV137(results);return {sessions:ss.data,results};
@@ -5635,14 +5680,14 @@ function v79SeaExerciseChips(session){
   if(!blocks.length)return '<span class="seaExerciseChip">Sesión MAR</span>';
   return blocks.map(b=>{const fake={exercise_name:b.line};return `<span class="seaExerciseChip">${esc(v79SeaDisplayName(fake))}</span>`}).join('');
 }
-function v112SeaResultsDetailHtml(rows){
-  return `<div class="seaResultsDetail" hidden><h4>Resultados registrados</h4>${seaPhotosHtmlV137(rows)}${rows.map((x,n)=>`<div class="seaResultRow"><b>${esc(x.exercise_name||`Resultado ${n+1}`)}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>Tiempo</small>${esc(x.time_text||'—')}</div><div class="seaResultMetric"><small>Metros</small>${x.distance_m??'—'}</div><div class="seaResultMetric"><small>Ritmo /500</small>${esc(x.pace_500_text||'—')}</div><div class="seaResultMetric"><small>PPM</small>${x.spm??'—'}</div><div class="seaResultMetric"><small>RPE</small>${x.rpe??'—'}</div></div>${x.notes?`<p class="seaResultNotes"><b>Notas:</b> ${esc(x.notes)}</p>`:''}</div>`).join('')}</div>`;
+function v112SeaResultsDetailHtml(rows,crew,sessionId){
+  return `<div class="seaResultsDetail" hidden>${v307CrewBoatHtml(crew,sessionId,true)}<h4>Resultados registrados</h4>${seaPhotosHtmlV137(rows)}${rows.map((x,n)=>`<div class="seaResultRow"><b>${esc(x.exercise_name||`Resultado ${n+1}`)}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>Tiempo</small>${esc(x.time_text||'—')}</div><div class="seaResultMetric"><small>Metros</small>${x.distance_m??'—'}</div><div class="seaResultMetric"><small>Ritmo /500</small>${esc(x.pace_500_text||'—')}</div><div class="seaResultMetric"><small>PPM</small>${x.spm??'—'}</div><div class="seaResultMetric"><small>RPE</small>${x.rpe??'—'}</div></div>${x.notes?`<p class="seaResultNotes"><b>Notas:</b> ${esc(x.notes)}</p>`:''}</div>`).join('')}</div>`;
 }
 function v79SeaSessionListHtml(sessions,results,selectedIds,monthFilter='all'){
   const ss=(sessions||[]).filter(s=>monthFilter==='all'||s.session_date.startsWith(monthFilter));
   if(!ss.length)return '<div class="info">No hay sesiones MAR planificadas en este periodo.</div>';
   const monthGroups={}; ss.forEach(s=>{const ym=s.session_date.slice(0,7);(monthGroups[ym]||(monthGroups[ym]=[])).push(s)});
-  return `<div class="seaSessionList">${Object.entries(monthGroups).sort().map(([ym,list])=>`<section class="seaMonthGroup"><h3>${monthLabel(ym)}</h3>${list.map(s=>{const rr=seaSortResultsByPlanV186(results.filter(r=>String(r.training_session_id)===String(s.id)),s.content).map(x=>({...x,exercise_name:seaCurrentExerciseNameV187(x.exercise_name,s.content)})),selected=selectedIds.includes(String(s.id));return `<article class="seaSessionPick ${selected?'selectedSea':''}"><div class="seaSessionHead"><div><b>${shortDateES(s.session_date)}</b><div class="big" style="font-size:1.02rem;margin-top:3px">${esc((s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</div></div><span class="tag">${rr.length?`${rr.length} resultados`:'Sin resultados'}</span></div><div class="seaExerciseChips">${v79SeaExerciseChips(s)}</div><div class="seaSessionActions">${rr.length?`<button class="viewSeaResults primary" data-session="${s.id}" aria-expanded="false">Ver resultados</button><button class="selectSeaSession ${selected?'active':''}" data-session="${s.id}">${selected?'✓ Seleccionada':'Comparar'}</button><button class="deleteSeaResults dangerBtn" data-session="${s.id}" data-date="${s.session_date}">Eliminar resultados</button>`:`<button disabled>Sin datos todavía</button>`}</div>${rr.length?v112SeaResultsDetailHtml(rr):''}</article>`}).join('')}</section>`).join('')}</div>`;
+  return `<div class="seaSessionList">${Object.entries(monthGroups).sort().map(([ym,list])=>`<section class="seaMonthGroup"><h3>${monthLabel(ym)}</h3>${list.map(s=>{const rr=seaSortResultsByPlanV186(results.filter(r=>String(r.training_session_id)===String(s.id)),s.content).map(x=>({...x,exercise_name:seaCurrentExerciseNameV187(x.exercise_name,s.content)})),selected=selectedIds.includes(String(s.id));return `<article class="seaSessionPick ${selected?'selectedSea':''}"><div class="seaSessionHead"><div><b>${shortDateES(s.session_date)}</b><div class="big" style="font-size:1.02rem;margin-top:3px">${esc((s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</div></div><span class="tag">${rr.length?`${rr.length} resultados`:'Sin resultados'}</span></div><div class="seaExerciseChips">${v79SeaExerciseChips(s)}</div><div class="seaSessionActions">${rr.length?`<button class="viewSeaResults primary" data-session="${s.id}" aria-expanded="false">Ver resultados</button><button class="selectSeaSession ${selected?'active':''}" data-session="${s.id}">${selected?'✓ Seleccionada':'Comparar'}</button><button class="deleteSeaResults dangerBtn" data-session="${s.id}" data-date="${s.session_date}">Eliminar resultados</button>`:`<button disabled>Sin datos todavía</button>`}</div>${rr.length?v112SeaResultsDetailHtml(rr,s.crew,s.id):''}</article>`}).join('')}</section>`).join('')}</div>`;
 }
 function compareSeaHtml(rows){
   const occ=v79SeaOccurrences(rows); if(!occ.length)return '<p class="muted">Selecciona dos o más sesiones MAR con resultados para comparar ejercicios.</p>';
