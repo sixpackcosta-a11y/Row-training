@@ -1,13 +1,12 @@
+const crypto=require('crypto');
 async function rest(url,{method='GET',key,token,body,prefer}={}){
   const response=await fetch(url,{method,headers:{apikey:key,Authorization:`Bearer ${token||key}`,'Content-Type':'application/json',...(prefer?{Prefer:prefer}:{})},body:body===undefined?undefined:JSON.stringify(body)});
   const text=await response.text();
   if(!response.ok)throw new Error(`supabase_${response.status}_${text}`);
   return text?JSON.parse(text):null;
 }
-async function sha256Hex(text){
-  const data=new TextEncoder().encode(text);
-  const digest=await crypto.subtle.digest('SHA-256',data);
-  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+function sha256Hex(text){
+  return crypto.createHash('sha256').update(text,'utf8').digest('hex');
 }
 const DEEPL_TARGETS={en:'EN-GB',nl:'NL'};
 
