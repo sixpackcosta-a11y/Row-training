@@ -2251,7 +2251,11 @@ function v300NavItems(){
     else if(hasAnyCoachTeam())a=[["hoy","Hoy"],["semana","Semana"],["planificar","Planificación"],["registro","Registro MAR"],["result","Análisis"],["mensajes",mensajesLabel],["altas",`Altas${pendingRegistrationCount?` (${pendingRegistrationCount})`:""}`],["biblioteca","Biblioteca"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
     else a=[["hoy","Hoy"],["semana","Semana"],["registro","Registro MAR"],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
-  else a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes",mensajesLabel],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+  else{
+    a=[["hoy","Hoy"],["semana","Semana"],["mes","Mes"],["biblioteca","Biblioteca ERGO"],["hist","Historial"],["mensajes",mensajesLabel],["perfil","Perfil"],["ayuda","Ayuda"],["salir","Salir"]];
+    const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
+    a=[["__language__",`🌐 ${langLabel}`],...a];
+  }
   if(hasStaffMode()&&hasRowerMode())a=[["__switchmode__",currentMode==="staff"?"👤 Cambiar a modo remero":"🧭 Cambiar a modo entrenador"],...a];
   return a;
 }
@@ -2267,8 +2271,19 @@ function v300OpenNavMenu(){
     const v=btn.dataset.t;layer.remove();
     if(v==="salir"){sb.auth.signOut().then(()=>location.reload());return}
     if(v==="__switchmode__"){switchModeV73(currentMode==="staff"?"athlete":"staff");return}
+    if(v==="__language__"){v311OpenLanguagePicker();return}
     tab=v;draw();render();
   });
+}
+function v311OpenLanguagePicker(){
+  document.querySelectorAll('.v311LangPickerBack').forEach(x=>x.remove());
+  const opts=[['es','Español'],['en','English'],['nl','Nederlands']];
+  const layer=document.createElement('div');layer.className='modalBack v311LangPickerBack';
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">${v311T('idioma')}</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${opts.map(([code,label])=>`<button type="button" class="v311LangOption" data-code="${code}" style="text-align:left;padding:12px 14px;border-radius:10px;border:1px solid ${currentLocale===code?'#2563eb':'#e2e8f0'};background:${currentLocale===code?'#eaf2fd':'#fff'};font-weight:${currentLocale===code?700:500}">${label}</button>`).join('')}</div></div>`;
+  document.body.appendChild(layer);
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
+  layer.querySelectorAll('.v311LangOption').forEach(btn=>btn.onclick=()=>{layer.remove();v311SetLocale(btn.dataset.code)});
 }
 function draw(){
   const menuBtn=document.getElementById('navMenuBtnV300');
@@ -5760,8 +5775,9 @@ function v225PendingPlansForAthlete(userId,team,sessions,workouts,c2Rows,through
 }
 function v225PendingHtml(items,scope='coach'){
   const rows=items||[];
-  if(!rows.length)return `<div class="v225PendingEmpty">✅ Al día: no hay entrenamientos GYM/ERGO pendientes hasta hoy.</div>`;
-  return `<div class="v225PendingToolbar"><button type="button" class="v225PendingFilter active" data-filter="ALL">Todos <span>${rows.length}</span></button><button type="button" class="v225PendingFilter" data-filter="GYM">GYM <span>${rows.filter(x=>x.type==='GYM').length}</span></button><button type="button" class="v225PendingFilter" data-filter="ERGO">ERGO <span>${rows.filter(x=>x.type==='ERGO').length}</span></button></div><div class="v225PendingList">${rows.map(x=>`<article class="v225PendingItem" data-type="${x.type}"><div class="v225PendingTop"><span class="tag">${x.type}</span><b>${shortDateES(x.date)}</b></div><strong>${esc(x.title||'Sesión')}</strong>${x.content?`<details><summary>Ver entrenamiento</summary>${trainingContentHtml(x.content)}</details>`:''}</article>`).join('')}</div>`;
+  const tr=key=>scope==='rower'?v311T(key):V311_DICT.es[key];
+  if(!rows.length)return `<div class="v225PendingEmpty">${tr('al_dia')}</div>`;
+  return `<div class="v225PendingToolbar"><button type="button" class="v225PendingFilter active" data-filter="ALL">${tr('todos_label')} <span>${rows.length}</span></button><button type="button" class="v225PendingFilter" data-filter="GYM">GYM <span>${rows.filter(x=>x.type==='GYM').length}</span></button><button type="button" class="v225PendingFilter" data-filter="ERGO">ERGO <span>${rows.filter(x=>x.type==='ERGO').length}</span></button></div><div class="v225PendingList">${rows.map(x=>`<article class="v225PendingItem" data-type="${x.type}"><div class="v225PendingTop"><span class="tag">${x.type}</span><b>${shortDateES(x.date)}</b></div><strong>${esc(x.title||'Sesión')}</strong>${x.content?`<details><summary>${tr('ver_entrenamiento')}</summary>${trainingContentHtml(x.content)}</details>`:''}</article>`).join('')}</div>`;
 }
 function v225BindPendingFilters(root){
   if(!root)return;
@@ -6565,19 +6581,19 @@ const V311_DICT={
     hoy_title:'Hoy',ver_semana:'Ver semana',no_entrenamiento_hoy:'No hay entrenamiento planificado hoy.',
     pendientes_titulo:'Pendientes de realizar',pendientes_sub:'Sesiones GYM y ERGO con fecha hasta hoy que aún no constan como completadas.',pendientes_error:'No se pudieron cargar los pendientes.',
     registrar_gym:'Registrar GYM',abrir_ergdata:'Abrir en ErgData',registrar_manual:'Registrar manualmente',
-    idioma:'Idioma'
+    idioma:'Idioma',ver_entrenamiento:'Ver entrenamiento',todos_label:'Todos',al_dia:'✅ Al día: no hay entrenamientos GYM/ERGO pendientes hasta hoy.'
   },
   en:{
     hoy_title:'Today',ver_semana:'View week',no_entrenamiento_hoy:'No training planned today.',
     pendientes_titulo:'Still to do',pendientes_sub:"GYM and ERGO sessions up to today that aren't marked as completed yet.",pendientes_error:"Couldn't load the pending items.",
     registrar_gym:'Log GYM',abrir_ergdata:'Open in ErgData',registrar_manual:'Log manually',
-    idioma:'Language'
+    idioma:'Language',ver_entrenamiento:'View training',todos_label:'All',al_dia:'✅ All caught up: no pending GYM/ERGO sessions up to today.'
   },
   nl:{
     hoy_title:'Vandaag',ver_semana:'Bekijk week',no_entrenamiento_hoy:'Geen training gepland vandaag.',
     pendientes_titulo:'Nog te doen',pendientes_sub:'GYM- en ERGO-sessies tot vandaag die nog niet als voltooid staan.',pendientes_error:'Kon de openstaande items niet laden.',
     registrar_gym:'GYM registreren',abrir_ergdata:'Openen in ErgData',registrar_manual:'Handmatig registreren',
-    idioma:'Taal'
+    idioma:'Taal',ver_entrenamiento:'Training bekijken',todos_label:'Alle',al_dia:'✅ Helemaal bij: geen openstaande GYM/ERGO-sessies tot vandaag.'
   }
 };
 function v311T(key){
@@ -6617,6 +6633,10 @@ async function v311TranslateSessions(sessions){
   if(currentLocale==='es')return sessions;
   return Promise.all((sessions||[]).map(async s=>({...s,title:await v311TranslateContent(s.title||''),content:await v311TranslateContent(s.content||'')})));
 }
+async function v311TranslatePending(items){
+  if(items==null||currentLocale==='es')return items;
+  return Promise.all(items.map(async x=>({...x,title:await v311TranslateContent(x.title||''),content:await v311TranslateContent(x.content||'')})));
+}
 async function todayView(){
   const date=localISODate(),seasonStart='2026-09-01';
   content.innerHTML=`<div class="card"><h2>${v311T('hoy_title')}</h2><p class="muted">Cargando planificación…</p></div>`;
@@ -6630,26 +6650,13 @@ async function todayView(){
   if(tab!=='hoy'||currentMode!=='athlete')return;
   const sessions=ss.data||[],comps=cc.error?[]:(cc.data||[]),pendErr=pendingSessions.error||ww.error||c2.error;
   const pending=pendErr?null:v225PendingPlansForAthlete(currentUser.id,currentTeamCode,pendingSessions.data||[],ww.data||[],c2.data||[],date);
-  const displaySessions=await v311TranslateSessions(sessions);
+  const [displaySessions,displayPending]=await Promise.all([v311TranslateSessions(sessions),v311TranslatePending(pending)]);
   if(tab!=='hoy'||currentMode!=='athlete')return;
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${esc(teamLabel(currentTeamCode))}</h2></div><button id="goWeek">${v311T('ver_semana')}</button></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${pending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(pending,'rower')}</div></section></div>`;
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${esc(teamLabel(currentTeamCode))}</h2></div><button id="goWeek">${v311T('ver_semana')}</button></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
   goWeek.onclick=()=>{tab='semana';draw();render()};
   bindAthletePlannedActionsV113(content,sessions,todayView);
   sessions.filter(s=>s.session_type==='ERG').forEach(s=>v306InjectErgoHelpers(s));
   v225BindPendingFilters(document.getElementById('v225RowerPendingList'));
-  if(currentLocale!=='es'&&pending){
-    document.querySelectorAll('#v225RowerPendingList .v225PendingItem').forEach((el,i)=>{
-      const details=el.querySelector('details'),raw=pending[i]?.content;
-      if(!details||!raw)return;
-      details.addEventListener('toggle',async()=>{
-        if(!details.open||details.dataset.translatedV311)return;
-        details.dataset.translatedV311='1';
-        const translated=await v311TranslateContent(raw);
-        details.querySelector('.workoutReadable')?.remove();
-        details.insertAdjacentHTML('beforeend',trainingContentHtml(translated));
-      });
-    });
-  }
 }
 
 
