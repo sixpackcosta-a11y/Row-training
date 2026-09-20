@@ -6600,10 +6600,18 @@ async function v311TranslateContent(text){
     const {data:{session}}=await sb.auth.getSession();
     const r=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({text,target_lang:currentLocale})});
     const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.error){
+      const diag=`[TRANSLATE ERROR ${r.status}: ${j.error||'unknown'}${j.detail?' — '+j.detail:''}] ${text}`;
+      v311TranslateCache.set(key,diag);
+      return diag;
+    }
     const translated=j.translated||text;
     v311TranslateCache.set(key,translated);
     return translated;
-  }catch(e){console.warn('Traducción fallida',e);return text}
+  }catch(e){
+    const diag=`[TRANSLATE FETCH FAILED: ${e?.message||e}] ${text}`;
+    return diag;
+  }
 }
 async function v311TranslateSessions(sessions){
   if(currentLocale==='es')return sessions;
