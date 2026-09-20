@@ -6637,6 +6637,19 @@ async function todayView(){
   bindAthletePlannedActionsV113(content,sessions,todayView);
   sessions.filter(s=>s.session_type==='ERG').forEach(s=>v306InjectErgoHelpers(s));
   v225BindPendingFilters(document.getElementById('v225RowerPendingList'));
+  if(currentLocale!=='es'&&pending){
+    document.querySelectorAll('#v225RowerPendingList .v225PendingItem').forEach((el,i)=>{
+      const details=el.querySelector('details'),raw=pending[i]?.content;
+      if(!details||!raw)return;
+      details.addEventListener('toggle',async()=>{
+        if(!details.open||details.dataset.translatedV311)return;
+        details.dataset.translatedV311='1';
+        const translated=await v311TranslateContent(raw);
+        details.querySelector('.workoutReadable')?.remove();
+        details.insertAdjacentHTML('beforeend',trainingContentHtml(translated));
+      });
+    });
+  }
 }
 
 
