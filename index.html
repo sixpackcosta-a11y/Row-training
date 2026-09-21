@@ -5977,20 +5977,22 @@ function v214AvgHr(result,kind='manual'){
   const a=(Array.isArray(parts)?parts:[]).map(x=>Number(x.heart_rate?.average??x.heart_rate?.ending??0)).filter(x=>x>0);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
 }
 function v214ErgoZoneHtml(result,plan,metric,connected,kind='manual'){
+  const isRower=currentMode==='athlete';
+  const t=k=>isRower?v311T(k):{zona_sin_fc:'Sin frecuencia cardíaca.',zona_sin_fc_texto:'Esta sesión es {label} ({min}–{max} ppm). Utiliza la banda cardíaca para poder comprobar si trabajas en tu zona.',zona_correcto:'correcto.',zona_correcto_texto:'FC media {hr} ppm · rango personal {min}–{max} ppm.',zona_ligera:'ligeramente fuera de zona.',zona_fuera:'fuera del rango establecido.',zona_desviacion_texto:'FC media {hr} ppm · {dev}% {dir} del límite ({min}–{max}). Controla un poco más el ritmo.',zona_desviacion_texto_bad:'FC media {hr} ppm · {dev}% {dir} del límite personal ({min}–{max}). Has completado la sesión, pero ajusta el esfuerzo para mantenerte en la zona indicada.',por_debajo:'por debajo',por_encima:'por encima',zona_no_comprobar:'No se puede comprobar {label}.',zona_no_comprobar_texto:'Faltan tus zonas de frecuencia cardíaca en el perfil.',zona_sin_datos_fc:'Sin datos de frecuencia cardíaca.',zona_sin_datos_fc_texto:'Utiliza la banda cardíaca en el próximo ERGO.',ergdata_no_conectado:'ErgData no está conectado.',ergdata_no_conectado_texto:'Conecta tu cuenta de ErgData/Concept2 para sincronizar automáticamente los resultados',y_usa_banda:' y utiliza también la banda cardíaca.'}[k];
   const hr=v214AvgHr(result,kind),zone=v214ZoneFromPlan(plan),zmin=zone?Number(metric?.[zone+'_min']||0):0,zmax=zone?Number(metric?.[zone+'_max']||0):0;
   let out='';
   if(zone&&zmin&&zmax){
     const label=zone.toUpperCase();
-    if(!hr) out+=`<div class="ergoZoneV214 warn">🟠 <b>Sin frecuencia cardíaca.</b> Esta sesión es ${label} (${zmin}–${zmax} ppm). Utiliza la banda cardíaca para poder comprobar si trabajas en tu zona.</div>`;
-    else if(hr>=zmin&&hr<=zmax) out+=`<div class="ergoZoneV214 ok">✅ <b>${label} correcto.</b> FC media ${hr} ppm · rango personal ${zmin}–${zmax} ppm.</div>`;
+    if(!hr) out+=`<div class="ergoZoneV214 warn">🟠 <b>${t('zona_sin_fc')}</b> ${t('zona_sin_fc_texto').replace('{label}',label).replace('{min}',zmin).replace('{max}',zmax)}</div>`;
+    else if(hr>=zmin&&hr<=zmax) out+=`<div class="ergoZoneV214 ok">✅ <b>${label} ${t('zona_correcto')}</b> ${t('zona_correcto_texto').replace('{hr}',hr).replace('{min}',zmin).replace('{max}',zmax)}</div>`;
     else{
-      const bound=hr<zmin?zmin:zmax,dev=Math.abs(hr-bound)/bound*100,dir=hr<zmin?'por debajo':'por encima';
-      if(dev<=5) out+=`<div class="ergoZoneV214 warn">🟠 <b>${label}: ligeramente fuera de zona.</b> FC media ${hr} ppm · ${dev.toFixed(1)}% ${dir} del límite (${zmin}–${zmax}). Controla un poco más el ritmo.</div>`;
-      else out+=`<div class="ergoZoneV214 bad">🔴 <b>${label}: fuera del rango establecido.</b> FC media ${hr} ppm · ${dev.toFixed(1)}% ${dir} del límite personal (${zmin}–${zmax}). Has completado la sesión, pero ajusta el esfuerzo para mantenerte en la zona indicada.</div>`;
+      const bound=hr<zmin?zmin:zmax,dev=Math.abs(hr-bound)/bound*100,dir=hr<zmin?t('por_debajo'):t('por_encima');
+      if(dev<=5) out+=`<div class="ergoZoneV214 warn">🟠 <b>${label}: ${t('zona_ligera')}</b> ${t('zona_desviacion_texto').replace('{hr}',hr).replace('{dev}',dev.toFixed(1)).replace('{dir}',dir).replace('{min}',zmin).replace('{max}',zmax)}</div>`;
+      else out+=`<div class="ergoZoneV214 bad">🔴 <b>${label}: ${t('zona_fuera')}</b> ${t('zona_desviacion_texto_bad').replace('{hr}',hr).replace('{dev}',dev.toFixed(1)).replace('{dir}',dir).replace('{min}',zmin).replace('{max}',zmax)}</div>`;
     }
-  }else if(zone&&!metric){out+=`<div class="ergoZoneV214 warn">🟠 <b>No se puede comprobar ${zone.toUpperCase()}.</b> Faltan tus zonas de frecuencia cardíaca en el perfil.</div>`}
-  else if(!hr){out+=`<div class="ergoZoneV214 warn">🟠 <b>Sin datos de frecuencia cardíaca.</b> Utiliza la banda cardíaca en el próximo ERGO.</div>`}
-  if(connected===false)out+=`<div class="ergoZoneV214 info">🔗 <b>ErgData no está conectado.</b> Conecta tu cuenta de ErgData/Concept2 para sincronizar automáticamente los resultados${!hr?' y utiliza también la banda cardíaca.':'.'}</div>`;
+  }else if(zone&&!metric){out+=`<div class="ergoZoneV214 warn">🟠 <b>${t('zona_no_comprobar').replace('{label}',zone.toUpperCase())}</b> ${t('zona_no_comprobar_texto')}</div>`}
+  else if(!hr){out+=`<div class="ergoZoneV214 warn">🟠 <b>${t('zona_sin_datos_fc')}</b> ${t('zona_sin_datos_fc_texto')}</div>`}
+  if(connected===false)out+=`<div class="ergoZoneV214 info">🔗 <b>${t('ergdata_no_conectado')}</b> ${t('ergdata_no_conectado_texto')}${!hr?t('y_usa_banda'):'.'}</div>`;
   return out;
 }
 function v161Concept2EffectiveHidden(x){const d=String(x?.workout_date||x?.date||x?.created_at||'').slice(0,10),h=x?.hidden;return h===true||h===1||String(h).toLowerCase()==='true'||String(h)==='1'|| (!!d&&d<'2026-09-01')}
@@ -6639,6 +6641,16 @@ const V311_DICT={
     parcial_n_word:'Parcial',oculto_del_analisis:'Oculto del análisis',tiempo_label:'Tiempo',metros_label:'Metros',ritmo_500_label:'Ritmo /500',ppm_label:'PPM',fc_label:'FC',descanso_label:'Descanso',
     incluir_analisis:'Incluir en el análisis',ocultar_analisis:'Ocultar del análisis',fotos_del_ergometro:'foto(s) del ergómetro',foto_word:'foto',fotos_word:'fotos',
     abrir_foto:'Abrir foto',ver_word:'Ver',
+    zona_sin_fc:'Sin frecuencia cardíaca.',zona_sin_fc_texto:'Esta sesión es {label} ({min}–{max} ppm). Utiliza la banda cardíaca para poder comprobar si trabajas en tu zona.',
+    zona_correcto:'correcto.',zona_correcto_texto:'FC media {hr} ppm · rango personal {min}–{max} ppm.',
+    zona_ligera:'ligeramente fuera de zona.',zona_fuera:'fuera del rango establecido.',
+    zona_desviacion_texto:'FC media {hr} ppm · {dev}% {dir} del límite ({min}–{max}). Controla un poco más el ritmo.',
+    zona_desviacion_texto_bad:'FC media {hr} ppm · {dev}% {dir} del límite personal ({min}–{max}). Has completado la sesión, pero ajusta el esfuerzo para mantenerte en la zona indicada.',
+    por_debajo:'por debajo',por_encima:'por encima',
+    zona_no_comprobar:'No se puede comprobar {label}.',zona_no_comprobar_texto:'Faltan tus zonas de frecuencia cardíaca en el perfil.',
+    zona_sin_datos_fc:'Sin datos de frecuencia cardíaca.',zona_sin_datos_fc_texto:'Utiliza la banda cardíaca en el próximo ERGO.',
+    ergdata_no_conectado:'ErgData no está conectado.',ergdata_no_conectado_texto:'Conecta tu cuenta de ErgData/Concept2 para sincronizar automáticamente los resultados',
+    y_usa_banda:' y utiliza también la banda cardíaca.',
     calendario_mes_titulo:'Calendario · este mes y el siguiente',
     calendario_mes_texto:'Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.',
     completada_leyenda:'Completada',sin_completar_leyenda:'Sin completar',cargando_generico:'Cargando…',toca_ver_entrenamiento:'Toca para ver el entrenamiento',
@@ -6700,6 +6712,16 @@ const V311_DICT={
     parcial_n_word:'Split',oculto_del_analisis:'Hidden from analysis',tiempo_label:'Time',metros_label:'Distance',ritmo_500_label:'Pace /500',ppm_label:'SPM',fc_label:'HR',descanso_label:'Rest',
     incluir_analisis:'Include in analysis',ocultar_analisis:'Hide from analysis',fotos_del_ergometro:'photo(s) of the erg',foto_word:'photo',fotos_word:'photos',
     abrir_foto:'Open photo',ver_word:'View',
+    zona_sin_fc:'No heart rate.',zona_sin_fc_texto:"This session is {label} ({min}–{max} bpm). Use a heart rate band to check whether you're training in your zone.",
+    zona_correcto:'on target.',zona_correcto_texto:'Avg HR {hr} bpm · your range {min}–{max} bpm.',
+    zona_ligera:'slightly outside the zone.',zona_fuera:'outside the set range.',
+    zona_desviacion_texto:'Avg HR {hr} bpm · {dev}% {dir} the limit ({min}–{max}). Watch your pace a bit more.',
+    zona_desviacion_texto_bad:'Avg HR {hr} bpm · {dev}% {dir} your personal limit ({min}–{max}). You completed the session, but adjust your effort to stay in the target zone.',
+    por_debajo:'below',por_encima:'above',
+    zona_no_comprobar:"Can't check {label}.",zona_no_comprobar_texto:'Your heart rate zones are missing from your profile.',
+    zona_sin_datos_fc:'No heart rate data.',zona_sin_datos_fc_texto:'Use a heart rate band for your next ERGO.',
+    ergdata_no_conectado:'ErgData is not connected.',ergdata_no_conectado_texto:'Connect your ErgData/Concept2 account to automatically sync results',
+    y_usa_banda:' and also use a heart rate band.',
     calendario_mes_titulo:'Calendar · this month and next',
     calendario_mes_texto:"Tap a GYM, ERGO or TEST session to see its full content. For MAR, only the fact that there's a session is shown; the sea content stays with the coach.",
     completada_leyenda:'Completed',sin_completar_leyenda:'Not completed',cargando_generico:'Loading…',toca_ver_entrenamiento:'Tap to view the session',
@@ -6761,6 +6783,16 @@ const V311_DICT={
     parcial_n_word:'Segment',oculto_del_analisis:'Verborgen voor analyse',tiempo_label:'Tijd',metros_label:'Meters',ritmo_500_label:'Tempo /500',ppm_label:'SPM',fc_label:'Hartslag',descanso_label:'Rust',
     incluir_analisis:'Opnemen in analyse',ocultar_analisis:'Verbergen voor analyse',fotos_del_ergometro:"foto('s) van de ergometer",foto_word:'foto',fotos_word:"foto's",
     abrir_foto:'Foto openen',ver_word:'Bekijk',
+    zona_sin_fc:'Geen hartslag.',zona_sin_fc_texto:'Deze sessie is {label} ({min}–{max} bpm). Gebruik een hartslagband om te zien of je in je zone traint.',
+    zona_correcto:'op koers.',zona_correcto_texto:'Gem. hartslag {hr} bpm · jouw bereik {min}–{max} bpm.',
+    zona_ligera:'net buiten de zone.',zona_fuera:'buiten het ingestelde bereik.',
+    zona_desviacion_texto:'Gem. hartslag {hr} bpm · {dev}% {dir} de grens ({min}–{max}). Let iets meer op je tempo.',
+    zona_desviacion_texto_bad:'Gem. hartslag {hr} bpm · {dev}% {dir} je persoonlijke grens ({min}–{max}). Je hebt de sessie voltooid, maar pas je inspanning aan om in de juiste zone te blijven.',
+    por_debajo:'onder',por_encima:'boven',
+    zona_no_comprobar:'Kan {label} niet controleren.',zona_no_comprobar_texto:'Je hartslagzones ontbreken in je profiel.',
+    zona_sin_datos_fc:'Geen hartslaggegevens.',zona_sin_datos_fc_texto:'Gebruik een hartslagband bij je volgende ERGO.',
+    ergdata_no_conectado:'ErgData is niet verbonden.',ergdata_no_conectado_texto:'Verbind je ErgData/Concept2-account om resultaten automatisch te synchroniseren',
+    y_usa_banda:' en gebruik ook een hartslagband.',
     calendario_mes_titulo:'Kalender · deze maand en volgende',
     calendario_mes_texto:'Tik op een GYM-, ERGO- of TEST-sessie voor de volledige inhoud. Bij MAR wordt alleen getoond dat er een sessie is; de zee-inhoud blijft bij de trainer.',
     completada_leyenda:'Voltooid',sin_completar_leyenda:'Niet voltooid',cargando_generico:'Laden…',toca_ver_entrenamiento:'Tik om de training te bekijken',
