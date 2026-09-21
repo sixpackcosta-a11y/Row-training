@@ -805,7 +805,8 @@ function phaseMultiHtmlV88(code,selected){return `<div class="multiCheck">${PHAS
 async function ergoLibrary(){
  const rows=await loadErgoLibrary(); const coach=r==="coach"; const phase=currentPhase();
  const visible=coach?rows:rows.filter(x=>x.is_active!==false && (!x.team_codes?.length||x.team_codes.includes(currentTeamCode)) && (!x.phase_codes?.length||x.phase_codes.includes(phase)));
- content.innerHTML=`<div class="card"><h2>Biblioteca ERGO</h2><p class="muted">${coach?"Gestiona enlaces, equipos y fases. Una sesión puede servir a varios equipos y a varias fases.":"Sesiones adicionales permitidas en esta fase. No sustituyen el entrenamiento programado."}</p>${visible.length?visible.map(x=>`<div class="ex"><span class="tag">${esc(x.zone||"ERGO")}</span><h3>${esc(x.name)}</h3>${coach?`<label>Título</label><input class="libName" data-code="${esc(x.code)}" value="${esc(x.name||"")}"><label>Enlace ErgData</label><input class="libUrl" data-code="${esc(x.code)}" value="${esc(x.url||"")}"><div class="ergoMultiGrid"><div><b>Equipos</b>${teamMultiHtmlV88(x.code,x.team_codes||[])}</div><div><b>Fases</b>${phaseMultiHtmlV88(x.code,x.phase_codes||[])}</div></div><div class="actions"><button class="saveLib primary" data-code="${esc(x.code)}">Guardar</button>${x.url?`<a class="btn" href="${esc(x.url)}" target="_blank">Probar en ErgData</a>`:""}</div><div class="v201ErgoUses" data-code="${esc(x.code)}"></div>`:(x.url?`<a class="btn primary extraErgo" data-code="${esc(x.code)}" href="${esc(x.url)}">Abrir en ErgData</a>`:`<span class="muted">Enlace pendiente</span>`)}</div>`).join(""):`<div class="info"><b>No hay sesiones visibles.</b><br>Fase actual: ${phaseLabelV88(phase)}. ${currentTeamCode?`Equipo: ${esc(teamLabel(currentTeamCode))}.`:"Tu usuario todavía no tiene equipo asignado."}</div>`}</div>`;
+ const displayVisible=coach?visible:await Promise.all(visible.map(async x=>({...x,name:await v311TranslateContent(x.name||'')})));
+ content.innerHTML=`<div class="card"><h2>${coach?'Biblioteca ERGO':v311T('biblioteca_titulo')}</h2><p class="muted">${coach?"Gestiona enlaces, equipos y fases. Una sesión puede servir a varios equipos y a varias fases.":v311T('biblioteca_texto_remero')}</p>${displayVisible.length?displayVisible.map(x=>`<div class="ex"><span class="tag">${esc(x.zone||"ERGO")}</span><h3>${esc(x.name)}</h3>${coach?`<label>Título</label><input class="libName" data-code="${esc(x.code)}" value="${esc(x.name||"")}"><label>Enlace ErgData</label><input class="libUrl" data-code="${esc(x.code)}" value="${esc(x.url||"")}"><div class="ergoMultiGrid"><div><b>Equipos</b>${teamMultiHtmlV88(x.code,x.team_codes||[])}</div><div><b>Fases</b>${phaseMultiHtmlV88(x.code,x.phase_codes||[])}</div></div><div class="actions"><button class="saveLib primary" data-code="${esc(x.code)}">Guardar</button>${x.url?`<a class="btn" href="${esc(x.url)}" target="_blank">Probar en ErgData</a>`:""}</div><div class="v201ErgoUses" data-code="${esc(x.code)}"></div>`:(x.url?`<a class="btn primary extraErgo" data-code="${esc(x.code)}" href="${esc(x.url)}">${v311T('abrir_ergdata')}</a>`:`<span class="muted">${v311T('enlace_pendiente')}</span>`)}</div>`).join(""):`<div class="info"><b>${coach?'No hay sesiones visibles.':v311T('no_hay_sesiones_visibles')}</b><br>${coach?'Fase actual:':v311T('fase_actual_word')} ${phaseLabelV88(phase)}. ${currentTeamCode?`${coach?'Equipo:':v311T('equipo_word')} ${esc(teamLabel(currentTeamCode))}.`:(coach?"Tu usuario todavía no tiene equipo asignado.":v311T('sin_equipo_asignado'))}</div>`}</div>`;
  if(coach){
    document.querySelectorAll('.libAllTeams').forEach(cb=>cb.onchange=()=>{if(cb.checked)document.querySelectorAll(`.libTeamCheck[data-code="${CSS.escape(cb.dataset.code)}"]`).forEach(x=>x.checked=false)});
    document.querySelectorAll('.libTeamCheck').forEach(cb=>cb.onchange=()=>{if(cb.checked){const all=document.querySelector(`.libAllTeams[data-code="${CSS.escape(cb.dataset.code)}"]`);if(all)all.checked=false}});
@@ -4183,16 +4184,19 @@ async function v300SendChat(rowerId,teamCode,text){
   return {error:res.error,pushResult,pushError};
 }
 function v300ChatBubblesHtml(messages,meId){
-  if(!messages.length)return '<p class="muted" style="text-align:center;padding:20px 0">Aún no hay mensajes. Escribe el primero 👇</p>';
+  const isRower=currentMode==='athlete';
+  if(!messages.length)return `<p class="muted" style="text-align:center;padding:20px 0">${isRower?(currentLocale==='en'?'No messages yet. Write the first one 👇':currentLocale==='nl'?'Nog geen berichten. Schrijf het eerste 👇':'Aún no hay mensajes. Escribe el primero 👇'):'Aún no hay mensajes. Escribe el primero 👇'}</p>`;
+  const locale=isRower?(currentLocale==='es'?'es-ES':currentLocale==='nl'?'nl-NL':'en-GB'):'es-ES';
   return messages.map(m=>{
     const mine=m.sender_id===meId;
-    return `<div style="display:flex;justify-content:${mine?'flex-end':'flex-start'};margin:6px 0"><div style="max-width:78%;background:${mine?'#2563eb':'#eef2f7'};color:${mine?'#fff':'#0f172a'};padding:8px 12px;border-radius:14px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div></div>`;
+    return `<div style="display:flex;justify-content:${mine?'flex-end':'flex-start'};margin:6px 0"><div style="max-width:78%;background:${mine?'#2563eb':'#eef2f7'};color:${mine?'#fff':'#0f172a'};padding:8px 12px;border-radius:14px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString(locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div></div>`;
   }).join('');
 }
 async function v300RenderChatThread(container,rowerId,teamCode){
-  container.innerHTML='<p class="muted">Cargando conversación…</p>';
+  const isRower=currentMode==='athlete';
+  container.innerHTML=`<p class="muted">${isRower?v311T('cargando_conversacion'):'Cargando conversación…'}</p>`;
   const messages=await v300FetchChat(rowerId);
-  container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="Escribe un mensaje…" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">Enviar</button></div>`;
+  container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="${isRower?v311T('escribe_mensaje'):'Escribe un mensaje…'}" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">${isRower?v311T('enviar'):'Enviar'}</button></div>`;
   const scrollBox=container.querySelector('#v300ChatScroll');scrollBox.scrollTop=scrollBox.scrollHeight;
   const input=container.querySelector('#v300ChatInput'),sendBtn=container.querySelector('#v300ChatSend');
   const send=async()=>{
@@ -4204,11 +4208,11 @@ async function v300RenderChatThread(container,rowerId,teamCode){
     input.value='';
     await v300RenderChatThread(container,rowerId,teamCode);
     if(pushError){
-      v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+pushError);
+      v300ShowToast((isRower?v311T('push_error_msg'):'⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: ')+pushError);
     }else if(pushResult&&!pushResult.recipients){
-      v300ShowToast('⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
+      v300ShowToast(isRower?v311T('push_sin_destinatario'):'⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
     }else if(pushResult&&pushResult.recipients&&!pushResult.push_sent){
-      v300ShowToast('⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
+      v300ShowToast(isRower?v311T('push_no_entregado'):'⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
     }
   };
   sendBtn.onclick=send;
@@ -4243,13 +4247,13 @@ async function v300CheckNewChatMessages(){
     if(!rows.length)return;
     localStorage.setItem(seenKey,rows[0].created_at);
     if(tab==='mensajes')return; // ya está viendo el chat
-    const msg=rows.length===1?'💬 Tienes un mensaje nuevo de tu entrenador.':`💬 Tienes ${rows.length} mensajes nuevos de tu entrenador.`;
+    const msg=rows.length===1?v311T('toast_mensaje_1'):v311T('toast_mensajes_n').replace('{n}',rows.length);
     v300ShowToast(msg,()=>{tab='mensajes';draw();render()});
   }catch(e){}
 }
 async function messagesView(){
-  if(!currentTeamCode){content.innerHTML='<div class="card"><h2>💬 Mensajes</h2><p class="muted">Necesitas estar en un equipo para escribir a tu entrenador.</p></div>';return}
-  content.innerHTML='<div class="card"><h2>💬 Mensajes con tu entrenador</h2><div id="v300ChatContainer"></div></div>';
+  if(!currentTeamCode){content.innerHTML=`<div class="card"><h2>💬 ${v311T('nav_mensajes')}</h2><p class="muted">${v311T('necesitas_equipo_msg')}</p></div>`;return}
+  content.innerHTML=`<div class="card"><h2>${v311T('mensajes_con_entrenador')}</h2><div id="v300ChatContainer"></div></div>`;
   const container=document.getElementById('v300ChatContainer');
   await v300RenderChatThread(container,currentUser.id,currentTeamCode);
   localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
@@ -4336,7 +4340,7 @@ async function v300CheckNewComments(){
     const rows=q.data||[];
     if(!rows.length)return;
     localStorage.setItem(seenKey,rows[0].created_at);
-    const msg=rows.length===1?'💬 Tu entrenador ha comentado un resultado de ERGO. Míralo en Historial.':`💬 Tu entrenador ha dejado ${rows.length} comentarios nuevos en tus resultados de ERGO. Míralos en Historial.`;
+    const msg=rows.length===1?v311T('toast_comentario_1'):v311T('toast_comentarios_n').replace('{n}',rows.length);
     v300ShowToast(msg,()=>{tab='hist';draw();render()});
   }catch(e){}
 }
@@ -4455,11 +4459,11 @@ async function v300CheckSelfChartable(){
       const key=v300SelfChartNotifyKey(label),count=arr.length,last=Number(localStorage.getItem(key)||0),shortLabel=label.length>40?label.slice(0,40)+'…':label;
       if(last===0){
         localStorage.setItem(key,String(count));
-        v300ShowToast(`📈 Ya tienes 2 resultados de "${shortLabel}". Mira tu evolución en Historial.`,()=>{tab='hist';draw();render()});
+        v300ShowToast(v311T('toast_chartable_first').replace('{label}',shortLabel),()=>{tab='hist';draw();render()});
         break; // uno cada vez, para no saturar si se ponen al día varios ejercicios a la vez
       }else if(count-last>=5){
         localStorage.setItem(key,String(count));
-        v300ShowToast(`📈 Ya llevas ${count} resultados de "${shortLabel}". Échale un ojo a tu evolución en Historial.`,()=>{tab='hist';draw();render()});
+        v300ShowToast(v311T('toast_chartable_more').replace('{count}',count).replace('{label}',shortLabel),()=>{tab='hist';draw();render()});
         break;
       }
     }
@@ -4468,7 +4472,7 @@ async function v300CheckSelfChartable(){
 
 async function history(opts={}){
   // Historial abre primero los datos ya guardados y, en paralelo, busca nuevos resultados de Concept2.
-  content.innerHTML='<div class="card"><h2>Historial</h2><p class="muted">Cargando datos guardados…</p></div>';
+  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><p class="muted">${v311T('cargando_datos_guardados')}</p></div>`;
   try{
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3},{data:ergo,error:e4},{data:selfMetrics,error:e5},{data:selfPlans,error:e6},selfC2Status] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,session_date,training_session_id,performed_at,created_at,status,hidden").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
@@ -4481,7 +4485,7 @@ async function history(opts={}){
   ]);
   if(tab!=="hist") return; // evita que una carga antigua pise Perfil u otra pantalla
   const err=e1||e2||e3||e4||e5||e6;
-  if(err){content.innerHTML=`<div class="card"><h2>Historial</h2><p>${err.message}</p></div>`;return}
+  if(err){content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><p>${err.message}</p></div>`;return}
   await v124HydrateErgoPhotos(ergo||[]);
   const selfMetric=(selfMetrics||[])[0]||null,selfErgConnected=!!selfC2Status?.connected,selfPlanMap=new Map((selfPlans||[]).map(x=>[String(x.id),x]));
 
@@ -4489,21 +4493,21 @@ async function history(opts={}){
   const pendingSelfWorkouts=(workouts||[]).filter(w=>!w.hidden&&!w.training_session_id&&['gym','ergo','erg'].includes(String(w.session_type||'').toLowerCase()));
   const pendingSelfC2=displayC2.filter(r=>!v161Concept2EffectiveHidden(r)&&!r.training_session_id);
   const pendingSelfCount=pendingSelfWorkouts.length+pendingSelfC2.length;
-  const pendingSelfBanner=pendingSelfCount?`<div class="info" style="background:#fff8e8;border-color:#edc36b;margin:12px 0"><b>⚠️ Tienes ${pendingSelfCount} resultado${pendingSelfCount===1?'':'s'} pendiente${pendingSelfCount===1?'':'s'} de asignar</b><br><small>No pasa nada si todavía no sabes a qué sesión corresponde. Puedes revisarlo ahora o dejarlo pendiente.</small><div class="staffActions" style="margin-top:8px"><button id="v150SelfPending" type="button">Ver pendientes</button></div></div>`:'';
+  const pendingSelfBanner=pendingSelfCount?`<div class="info" style="background:#fff8e8;border-color:#edc36b;margin:12px 0"><b>${pendingSelfCount===1?v311T('tienes_pendientes_1'):v311T('tienes_pendientes_n').replace('{n}',pendingSelfCount)}</b><br><small>${v311T('no_pasa_nada_pendiente')}</small><div class="staffActions" style="margin-top:8px"><button id="v150SelfPending" type="button">${v311T('ver_pendientes')}</button></div></div>`:'';
   const c2html=displayC2.length?`<div class="card"><h3>Concept2 / ErgData</h3>${displayC2.map(r=>{
     const pace=r.pace_500_seconds?secondsToTime(r.pace_500_seconds):"-";
-    const match=r.training_session_id?`<span class="tag">Asociado · ${esc(v236CleanMatchedSessionCode(r.matched_session_code))}</span>`:
-      r.match_status==="review"?'<span class="tag">Coincidencia dudosa</span>':'<span class="tag">No programado</span>';
+    const match=r.training_session_id?`<span class="tag">${v311T('asociado')} · ${esc(v236CleanMatchedSessionCode(r.matched_session_code))}</span>`:
+      r.match_status==="review"?`<span class="tag">${v311T('coincidencia_dudosa')}</span>`:`<span class="tag">${v311T('no_programado')}</span>`;
     const effHidden=v161Concept2EffectiveHidden(r);
     const pending=!effHidden&&!r.training_session_id;
-    return `<div class="last v147SelfHistory" data-state="${effHidden?'hidden':'active'}" data-pending="${pending?'1':'0'}" data-type="ergo" ${effHidden?'hidden':''}><b>${new Date(r.workout_date).toLocaleString("es-ES")}</b> ${match}${effHidden?' <span class="tag">Oculta</span>':''}<br>${r.distance_m??"-"} m · trabajo ${r.time_formatted||"-"} · /500 ${pace} · ${r.spm??"-"} spm${v214ErgoZoneHtml(r,selfPlanMap.get(String(r.training_session_id||'')),selfMetric,selfErgConnected,'concept2')}<br><small>${r.source||"Concept2"} · confianza ${r.match_confidence??0}%</small>${v112C2PartialsHtml(r)}<div class="staffActions"><button class="v140AssignResult" data-kind="concept2" data-id="${r.id}" data-type="ERG" data-date="${String(r.workout_date||'').slice(0,10)}" data-session="${r.training_session_id||''}">${r.training_session_id?'Cambiar sesión asociada':'Asignar a una sesión'}</button>${r.training_session_id?`<button class="v162SelfUnassign" data-kind="concept2" data-id="${r.id}" data-session="${r.training_session_id}">Desasignar</button>`:''}<button class="v147SelfHideC2" data-id="${r.id}" data-session="${r.training_session_id||''}" data-hidden="${r.hidden?'1':'0'}">${r.hidden?'Volver a mostrar':'Ocultar del historial'}</button><button class="v300CommentBtn" data-kind="concept2" data-id="${r.id}" data-title="${esc(selfPlanMap.get(String(r.training_session_id||''))?.title||'Concept2 / ErgData')}">💬 Comentarios</button></div></div>`;
+    return `<div class="last v147SelfHistory" data-state="${effHidden?'hidden':'active'}" data-pending="${pending?'1':'0'}" data-type="ergo" ${effHidden?'hidden':''}><b>${new Date(r.workout_date).toLocaleString(currentLocale==='es'?'es-ES':currentLocale==='nl'?'nl-NL':'en-GB')}</b> ${match}${effHidden?` <span class="tag">${v311T('oculta_tag')}</span>`:''}<br>${r.distance_m??"-"} m · ${currentLocale==='es'?'trabajo':currentLocale==='nl'?'werk':'work'} ${r.time_formatted||"-"} · /500 ${pace} · ${r.spm??"-"} spm${v214ErgoZoneHtml(r,selfPlanMap.get(String(r.training_session_id||'')),selfMetric,selfErgConnected,'concept2')}<br><small>${r.source||"Concept2"} · ${v311T('confianza_word')} ${r.match_confidence??0}%</small>${v112C2PartialsHtml(r)}<div class="staffActions"><button class="v140AssignResult" data-kind="concept2" data-id="${r.id}" data-type="ERG" data-date="${String(r.workout_date||'').slice(0,10)}" data-session="${r.training_session_id||''}">${r.training_session_id?v311T('cambiar_sesion_asociada'):v311T('asignar_sesion')}</button>${r.training_session_id?`<button class="v162SelfUnassign" data-kind="concept2" data-id="${r.id}" data-session="${r.training_session_id}">${v311T('desasignar')}</button>`:''}<button class="v147SelfHideC2" data-id="${r.id}" data-session="${r.training_session_id||''}" data-hidden="${r.hidden?'1':'0'}">${r.hidden?v311T('volver_mostrar'):v311T('ocultar_historial')}</button><button class="v300CommentBtn" data-kind="concept2" data-id="${r.id}" data-title="${esc(selfPlanMap.get(String(r.training_session_id||''))?.title||'Concept2 / ErgData')}">${v311T('comentarios_btn')}</button></div></div>`;
   }).join("")}</div>`:"";
 
-  const v300ChartHtml=`<div class="card"><h3>📈 Evolución de tu ritmo</h3>${v300EvolutionCardHtml(v300BuildPaceRows(displayC2.filter(x=>!v161Concept2EffectiveHidden(x)),ergo,workouts),v300TitleMapFromSessions(selfPlans),selfMetric)}</div>`;
-  content.innerHTML='<div class="card"><h2>Historial</h2>'+pendingSelfBanner+'<label>Mostrar <select id="v147SelfHistoryFilter"><option value="active">Activos</option><option value="pending">Pendientes de asignar</option><option value="hidden">Ocultos</option><option value="all">Todos</option></select></label> <label>Tipo <select id="v300TypeFilterSelf"><option value="all">Todos</option><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label>'+
+  const v300ChartHtml=`<div class="card"><h3>${v311T('evolucion_ritmo')}</h3>${v300EvolutionCardHtml(v300BuildPaceRows(displayC2.filter(x=>!v161Concept2EffectiveHidden(x)),ergo,workouts),v300TitleMapFromSessions(selfPlans),selfMetric)}</div>`;
+  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2>`+pendingSelfBanner+`<label>${v311T('mostrar_label')} <select id="v147SelfHistoryFilter"><option value="active">${v311T('activos')}</option><option value="pending">${v311T('pendientes_asignar_opt')}</option><option value="hidden">${v311T('ocultos')}</option><option value="all">${v311T('todos_opt')}</option></select></label> <label>${v311T('tipo_label')} <select id="v300TypeFilterSelf"><option value="all">${v311T('todos_opt')}</option><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label>`+
     v300ChartHtml+
     c2html+
-    (workouts.length?workouts.map(w=>{const gymItems=(items||[]).filter(i=>i.workout_id===w.id),ergoItems=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id)),canAssign=['gym','ergo','erg'].includes(String(w.session_type||'').toLowerCase()),performed=w.performed_at||w.created_at,state=w.hidden?'hidden':'active',pending=canAssign&&!w.hidden&&!w.training_session_id,typeAttr=String(w.session_type||'').toLowerCase()==='gym'?'gym':'ergo';return `<div class="card v147SelfHistory" data-state="${state}" data-pending="${pending?'1':'0'}" data-type="${typeAttr}" ${w.hidden?'hidden':''}><b>${w.session_code||w.session_type||"Sesión"}</b>${w.hidden?' <span class="tag">Oculta</span>':''}<p class="muted">${w.training_session_id?`Planificado: ${shortDateES(w.session_date)} · `:''}Realizado: ${new Date(performed).toLocaleString('es-ES')}</p>${gymItems.map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">Alternativa</span><br><small>Asignado: ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?"Fácil":i.perceived_difficulty==="hard"?"Duro":"Bien"}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("")}${ergoItems.map(e=>v124ManualErgoHtml(e)+v214ErgoZoneHtml(e,selfPlanMap.get(String(w.training_session_id||'')),selfMetric,selfErgConnected,'manual')).join('')}${!gymItems.length&&!ergoItems.length?'<p class="muted">Sin resultados asociados.</p>':''}<div class="staffActions">${ergoItems.length?`<button class="v154EditSelfErgo" data-workout="${w.id}" data-ergo="${ergoItems[0].id}">Editar ERGO manual</button><button class="v300CommentBtn" data-kind="manual" data-id="${ergoItems[0].id}" data-title="${esc(selfPlanMap.get(String(w.training_session_id||''))?.title||w.session_code||'ERGO manual')}">💬 Comentarios</button>`:''}${canAssign?`<button class="v140AssignResult" data-kind="workout" data-id="${w.id}" data-type="${String(w.session_type||'').toUpperCase()}" data-date="${String(performed||w.session_date||'').slice(0,10)}" data-session="${w.training_session_id||''}">${w.training_session_id?'Cambiar sesión asociada':'Asignar a una sesión'}</button>${w.training_session_id?`<button class="v162SelfUnassign" data-kind="workout" data-id="${w.id}" data-session="${w.training_session_id}">Desasignar</button>`:''}`:''}<button class="v147SelfHideWorkout" data-id="${w.id}" data-session="${w.training_session_id||''}" data-hidden="${w.hidden?'1':'0'}">${w.hidden?'Volver a mostrar':'Ocultar del historial'}</button></div></div>`}).join(""):'Sin registros.')+
+    (workouts.length?workouts.map(w=>{const gymItems=(items||[]).filter(i=>i.workout_id===w.id),ergoItems=(ergo||[]).filter(e=>String(e.workout_id)===String(w.id)),canAssign=['gym','ergo','erg'].includes(String(w.session_type||'').toLowerCase()),performed=w.performed_at||w.created_at,state=w.hidden?'hidden':'active',pending=canAssign&&!w.hidden&&!w.training_session_id,typeAttr=String(w.session_type||'').toLowerCase()==='gym'?'gym':'ergo',locale=currentLocale==='es'?'es-ES':currentLocale==='nl'?'nl-NL':'en-GB';return `<div class="card v147SelfHistory" data-state="${state}" data-pending="${pending?'1':'0'}" data-type="${typeAttr}" ${w.hidden?'hidden':''}><b>${w.session_code||w.session_type||v311T('sesion_generica')}</b>${w.hidden?` <span class="tag">${v311T('oculta_tag')}</span>`:''}<p class="muted">${w.training_session_id?`${v311T('planificado_word')} ${shortDateES(w.session_date)} · `:''}${v311T('realizado_word')} ${new Date(performed).toLocaleString(locale)}</p>${gymItems.map(i=>{const m=storedExerciseMeta(i);return `<div class="last"><b>${i.exercise_name}</b>${m.assigned?` <span class="tag">${v311T('alternativa_tag')}</span><br><small>${v311T('asignado_word')} ${m.assigned}</small>`:""}<br>${i.weight_kg??"-"} kg × ${i.reps??"-"} reps · ${i.perceived_difficulty==="easy"?v311T('facil'):i.perceived_difficulty==="hard"?v311T('duro'):v311T('bien')}${m.userNote?`<br><small>${m.userNote}</small>`:""}</div>`}).join("")}${ergoItems.map(e=>v124ManualErgoHtml(e)+v214ErgoZoneHtml(e,selfPlanMap.get(String(w.training_session_id||'')),selfMetric,selfErgConnected,'manual')).join('')}${!gymItems.length&&!ergoItems.length?`<p class="muted">${v311T('sin_resultados_asociados')}</p>`:''}<div class="staffActions">${ergoItems.length?`<button class="v154EditSelfErgo" data-workout="${w.id}" data-ergo="${ergoItems[0].id}">${v311T('editar_ergo_manual')}</button><button class="v300CommentBtn" data-kind="manual" data-id="${ergoItems[0].id}" data-title="${esc(selfPlanMap.get(String(w.training_session_id||''))?.title||w.session_code||'ERGO manual')}">${v311T('comentarios_btn')}</button>`:''}${canAssign?`<button class="v140AssignResult" data-kind="workout" data-id="${w.id}" data-type="${String(w.session_type||'').toUpperCase()}" data-date="${String(performed||w.session_date||'').slice(0,10)}" data-session="${w.training_session_id||''}">${w.training_session_id?v311T('cambiar_sesion_asociada'):v311T('asignar_sesion')}</button>${w.training_session_id?`<button class="v162SelfUnassign" data-kind="workout" data-id="${w.id}" data-session="${w.training_session_id}">${v311T('desasignar')}</button>`:''}`:''}<button class="v147SelfHideWorkout" data-id="${w.id}" data-session="${w.training_session_id||''}" data-hidden="${w.hidden?'1':'0'}">${w.hidden?v311T('volver_mostrar'):v311T('ocultar_historial')}</button></div></div>`}).join(""):v311T('sin_registros'))+
   '</div>';
 
   content.querySelectorAll('.v140AssignResult').forEach(button=>button.onclick=()=>v140AssignResult(button.dataset.kind,button.dataset.id,button.dataset.type,button.dataset.date,currentUser.id,currentTeamCode,null,button.dataset.session));
@@ -4530,7 +4534,7 @@ async function history(opts={}){
   if(!opts.skipAuto) autoSyncConcept2({refreshHistory:true});
   }catch(e){
     console.error('Error cargando Historial',e);
-    if(tab==='hist') content.innerHTML=`<div class="card"><h2>Historial</h2><div class="saveStatus err"><b>No se pudo cargar el historial.</b><br>${esc(e?.message||String(e))}</div><button id="retryHistoryV216" type="button">Reintentar</button></div>`;
+    if(tab==='hist') content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><div class="saveStatus err"><b>${v311T('no_se_pudo_cargar_historial')}</b><br>${esc(e?.message||String(e))}</div><button id="retryHistoryV216" type="button">${v311T('reintentar')}</button></div>`;
     document.getElementById('retryHistoryV216')?.addEventListener('click',()=>history({skipAuto:true}));
   }
 }
@@ -4709,83 +4713,83 @@ async function profileView(){
   const birthAge=pdata?.birth_date?Math.floor((Date.now()-new Date(pdata.birth_date+"T12:00:00").getTime())/(365.2425*24*3600*1000)):"";
   const effectiveAge=savedAge||birthAge||"";
 
-  content.innerHTML=`<div class="card"><h2>Perfil</h2>
+  content.innerHTML=`<div class="card"><h2>${v311T('perfil_titulo')}</h2>
   <label>${v311T('idioma')}<select id="pf_locale"><option value="es" ${currentLocale==='es'?'selected':''}>Español</option><option value="en" ${currentLocale==='en'?'selected':''}>English</option><option value="nl" ${currentLocale==='nl'?'selected':''}>Nederlands</option></select></label>
-  <label>Nombre<input id="pf_name" value="${pdata?.full_name||""}"></label>
-  <label>Me identifico como<select id="pf_gender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Hombre</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Mujer</option></select></label>
-  <label>Altura (cm)<input id="pf_height" type="number" step=".1" value="${pdata?.height_cm??""}"></label>
-  <label>Fecha de nacimiento<input id="pf_birth" type="date" value="${pdata?.birth_date??""}"></label>
+  <label>${v311T('nombre_label')}<input id="pf_name" value="${pdata?.full_name||""}"></label>
+  <label>${v311T('identifico_como')}<select id="pf_gender"><option value="" ${!pdata?.gender?'selected':''}>${v311T('prefiero_no_decir')}</option><option value="m" ${pdata?.gender==='m'?'selected':''}>${v311T('hombre')}</option><option value="f" ${pdata?.gender==='f'?'selected':''}>${v311T('mujer')}</option></select></label>
+  <label>${v311T('altura_cm')}<input id="pf_height" type="number" step=".1" value="${pdata?.height_cm??""}"></label>
+  <label>${v311T('fecha_nacimiento')}<input id="pf_birth" type="date" value="${pdata?.birth_date??""}"></label>
 
   <div class="grid">
-    <label>Peso (kg)<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
-    <label>FC reposo<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
+    <label>${v311T('peso_kg')}<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
+    <label>${v311T('fc_reposo')}<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
   </div>
 
   <div class="card" style="background:#f8fafc">
-    <h3>FC máxima</h3>
-    <label>FC máxima conocida
-      <input id="pf_max" type="number" value="${m.max_hr??""}" placeholder="Ej. 188">
+    <h3>${v311T('fc_maxima')}</h3>
+    <label>${v311T('fc_maxima_conocida')}
+      <input id="pf_max" type="number" value="${m.max_hr??""}" placeholder="${currentLocale==='es'?'Ej. 188':'E.g. 188'}">
     </label>
 
-    <div class="muted" style="margin:8px 0 12px">Si no la conoces, puedes estimarla por edad.</div>
+    <div class="muted" style="margin:8px 0 12px">${v311T('estimar_edad_hint')}</div>
 
     <div class="grid">
-      <label>Edad<input id="pf_age" type="number" min="10" max="100" value="${effectiveAge}"></label>
-      <label>Sexo
+      <label>${v311T('edad_label')}<input id="pf_age" type="number" min="10" max="100" value="${effectiveAge}"></label>
+      <label>${v311T('sexo_label')}
         <select id="pf_sex" style="width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px">
-          <option value="">Seleccionar</option>
-          <option value="male" ${savedSex==="male"?"selected":""}>Hombre</option>
-          <option value="female" ${savedSex==="female"?"selected":""}>Mujer</option>
+          <option value="">${v311T('seleccionar')}</option>
+          <option value="male" ${savedSex==="male"?"selected":""}>${v311T('hombre')}</option>
+          <option value="female" ${savedSex==="female"?"selected":""}>${v311T('mujer')}</option>
         </select>
       </label>
     </div>
 
     <label class="keepLogin">
       <input id="pf_trained" type="checkbox" ${savedTrained?"checked":""}>
-      Deportista entrenado
+      ${v311T('deportista_entrenado')}
     </label>
 
     <div class="actions">
-      <button id="estimateHr" type="button">Estimar FC máx por edad</button>
+      <button id="estimateHr" type="button">${v311T('estimar_fc_btn')}</button>
     </div>
     <div id="estimateInfo" class="muted" style="margin-top:8px"></div>
   </div>
 
   <div class="info">
-    <b>Zonas automáticas por Karvonen</b><br>
-    Se calculan con FC máxima + FC de reposo. Si la FC máxima es estimada, las zonas también son orientativas.
+    <b>${v311T('zonas_karvonen_titulo')}</b><br>
+    ${v311T('zonas_karvonen_texto')}
   </div>
 
   <div class="actions">
-    <button id="calcZones" type="button">Calcular zonas</button>
+    <button id="calcZones" type="button">${v311T('calcular_zonas')}</button>
   </div>
 
-  <h3>Zonas FC</h3>
+  <h3>${v311T('zonas_fc_titulo')}</h3>
   ${["ut2","ut1","at","tr","an"].map(z=>`<div class="grid">
-    <label>${z.toUpperCase()} mín<input id="${z}_min" type="number" value="${m[z+"_min"]??""}"></label>
-    <label>${z.toUpperCase()} máx<input id="${z}_max" type="number" value="${m[z+"_max"]??""}"></label>
+    <label>${z.toUpperCase()} ${v311T('min_label')}<input id="${z}_min" type="number" value="${m[z+"_min"]??""}"></label>
+    <label>${z.toUpperCase()} ${v311T('max_label')}<input id="${z}_max" type="number" value="${m[z+"_max"]??""}"></label>
   </div>`).join("")}
 
-  <label>Notas<textarea id="pf_notes">${m.notes??""}</textarea></label>
+  <label>${v311T('notas_label')}<textarea id="pf_notes">${m.notes??""}</textarea></label>
   <div id="saveProfileStatus" class="saveStatus hidden"></div>
-  <button id="saveProfile" class="primary">Guardar perfil</button>
+  <button id="saveProfile" class="primary">${v311T('guardar_perfil')}</button>
   </div>
   <div class="card">
-    <h2>Concept2 / ErgData</h2>
-    <p>Conecta tu propia cuenta una sola vez. Row Training importa automáticamente los resultados que ErgData haya subido a Concept2.</p>
-    <div id="concept2State" class="info">Comprobando conexión…</div>
+    <h2>${v311T('concept2_titulo')}</h2>
+    <p>${v311T('concept2_texto')}</p>
+    <div id="concept2State" class="info">${v311T('comprobando_conexion')}</div>
     <div class="actions">
-      <button id="connectConcept2" type="button" class="primary">Conectar Concept2</button>
-      <button id="syncConcept2Btn" type="button">Sincronizar ahora (manual)</button>
+      <button id="connectConcept2" type="button" class="primary">${v311T('conectar_concept2')}</button>
+      <button id="syncConcept2Btn" type="button">${v311T('sincronizar_ahora')}</button>
     </div>
-    <p class="muted"><small>Sincronización automática al abrir/volver a la app y al entrar en Historial. El botón manual queda como respaldo. Solo lectura: perfil y resultados.</small></p>
+    <p class="muted"><small>${v311T('sync_footer')}</small></p>
   </div>`;
 
   function fillZones(){
     const maxHr=Number(pf_max.value);
     const restHr=Number(pf_rest.value);
     const zones=karvonenZones(maxHr,restHr);
-    if(!zones) return alert("Introduce una FC máxima y una FC de reposo válidas.");
+    if(!zones) return alert(v311T('introduce_fc_valida'));
     Object.entries(zones).forEach(([z,v])=>{
       document.getElementById(z+"_min").value=v.min;
       document.getElementById(z+"_max").value=v.max;
@@ -4797,19 +4801,19 @@ async function profileView(){
     const sex=pf_sex.value;
     const trained=pf_trained.checked;
 
-    if(!age) return alert("Introduce la edad.");
-    if(trained && !sex) return alert("Selecciona el sexo para usar la fórmula de deportistas.");
+    if(!age) return alert(v311T('introduce_edad'));
+    if(trained && !sex) return alert(v311T('selecciona_sexo'));
 
     const estimated=estimateMaxHR(age,sex,trained);
-    if(!estimated) return alert("No se pudo calcular la FC máxima.");
+    if(!estimated) return alert(v311T('no_se_pudo_calcular_fc'));
 
     pf_max.value=estimated;
 
     const formula = trained
-      ? (sex==="female" ? "Whyte: 216 − 1,09 × edad" : "Whyte: 202 − 0,55 × edad")
-      : "Tanaka: 208 − 0,7 × edad";
+      ? (sex==="female" ? v311T('formula_whyte_f') : v311T('formula_whyte_m'))
+      : v311T('formula_tanaka');
 
-    estimateInfo.innerHTML=`FC máx estimada: <b>${estimated} lpm</b><br>${formula}<br><small>Es una estimación. Una FC máxima medida en test o competición tiene prioridad.</small>`;
+    estimateInfo.innerHTML=`${v311T('fc_estimada')} <b>${estimated} lpm</b><br>${formula}<br><small>${v311T('es_una_estimacion')}</small>`;
 
     localStorage.setItem("remo_age",String(age));
     localStorage.setItem("remo_sex",sex);
@@ -4824,7 +4828,7 @@ async function profileView(){
   document.getElementById("connectConcept2").onclick=connectConcept2;
   document.getElementById("syncConcept2Btn").onclick=async()=>{
     const btn=document.getElementById("syncConcept2Btn");
-    btn.disabled=true; const old=btn.textContent; btn.textContent="Sincronizando…";
+    btn.disabled=true; const old=btn.textContent; btn.textContent=v311T('sincronizando');
     try{await syncConcept2(true); if(tab==="perfil"){const st=await concept2Status();paintConcept2State(st);}}
     finally{if(document.getElementById("syncConcept2Btn")){btn.disabled=false;btn.textContent=old;}}
   };
@@ -4832,11 +4836,11 @@ async function profileView(){
     const box=document.getElementById("concept2State");
     if(!box)return;
     if(st?.connected){
-      box.innerHTML=`✅ <b>Concept2 conectado</b>${st.username?` · ${st.username}`:""}<br><small>Última sincronización: ${st.last_sync_at?new Date(st.last_sync_at).toLocaleString("es-ES"):"pendiente"}</small>`;
-      document.getElementById("connectConcept2").textContent="Reconectar Concept2";
+      box.innerHTML=`✅ <b>${v311T('concept2_conectado')}</b>${st.username?` · ${st.username}`:""}<br><small>${v311T('ultima_sync')} ${st.last_sync_at?new Date(st.last_sync_at).toLocaleString("es-ES"):v311T('pendiente_word')}</small>`;
+      document.getElementById("connectConcept2").textContent=v311T('reconectar_concept2');
       document.getElementById("syncConcept2Btn").disabled=false;
     }else{
-      box.innerHTML="Concept2 todavía no está conectado.";
+      box.innerHTML=v311T('concept2_no_conectado');
       document.getElementById("syncConcept2Btn").disabled=true;
     }
   }
@@ -4861,12 +4865,12 @@ async function profileView(){
     };
 
     if(!navigator.onLine){
-      setStatus("Sin conexión a Internet. No se ha guardado nada.","err");
+      setStatus(v311T('sin_conexion_internet'),"err");
       return;
     }
 
     saveProfile.disabled=true;
-    setStatus("Guardando perfil…");
+    setStatus(v311T('guardando_perfil'));
 
     try{
       localStorage.setItem("remo_age",pf_age.value||"");
@@ -4896,20 +4900,20 @@ async function profileView(){
         row[z+"_max"]=document.getElementById(z+"_max").value?Number(document.getElementById(z+"_max").value):null;
       });
 
-      setStatus("Guardando FC y zonas…");
+      setStatus(v311T('guardando_fc_zonas'));
 
       const metricRes=await withRetry(()=>sb.from("athlete_metrics").insert(row));
       if(metricRes.error) throw new Error("FC y zonas: "+metricRes.error.message);
 
       currentUserProfile={...(currentUserProfile||{}),full_name:pf_name.value.trim(),gender:document.getElementById('pf_gender').value||null}; userName.textContent=currentUserProfile.full_name||currentUser.email||"Usuario";
-      setStatus("Perfil, FC máxima y zonas guardados correctamente.","ok");
+      setStatus(v311T('perfil_guardado_ok'),"ok");
     }catch(err){
       console.error("Error guardando perfil",err);
       const network = /NetworkError|fetch|Failed to fetch/i.test(String(err?.message||err));
       setStatus(
         network
-          ? "No se pudo conectar con Supabase. Revisa la conexión/VPN y vuelve a pulsar Guardar. La app no ha borrado tus datos."
-          : "Error al guardar: "+(err?.message||err),
+          ? v311T('no_se_pudo_conectar_supabase')
+          : v311T('error_guardar')+(err?.message||err),
         "err"
       );
     }finally{
@@ -5124,14 +5128,14 @@ function athleteMonthCalendarHtmlV98(ym,sessions=[],comps=[],doneMap=null){
  for(let i=0;i<first;i++)html+='<div class="coachDay out" aria-hidden="true"></div>';
  for(let d=1;d<=days;d++){
    const ds=`${ym}-${String(d).padStart(2,'0')}`,xs=sessions.filter(x=>x.session_date===ds),cs=comps.filter(x=>x.competition_date===ds);
-   html+=`<div class="coachDay ${xs.some(x=>x.session_type==='MAR')?'hasMar':''}"><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${xs.map(x=>{const isMar=x.session_type==='MAR';const isTest=/test/i.test(String(x.title||''));const cleanTitle=esc((x.title||x.session_type||'Entrenamiento').replace(/^ERG\s*[·:\-]?\s*/i,'').replace(/^GYM\s*[·:\-]?\s*/i,''));const label=isMar?'MAR · Sesión de mar':isTest?`🧪 TEST · ${cleanTitle.replace(/^.*TEST\s*/i,'')}`:`${x.session_type||''} · ${cleanTitle}`;const status=doneMap&&!isMar?doneMap.get(String(x.id)):null,statusCls=status?.done?'miniSessDone':(status?.due?'miniSessOverdue':'');return `<div class="miniSess ${isMar?'mar':'openable'} ${isTest?'test':''} ${statusCls}" ${isMar?'':`data-ath-session="${x.id}" title="Toca para ver el entrenamiento"`}>${status?.done?'✓ ':status?.due?'⚠ ':''}${label}</div>`}).join('')}</div>`;
+   html+=`<div class="coachDay ${xs.some(x=>x.session_type==='MAR')?'hasMar':''}"><div class="coachDayNum">${d}</div>${cs.map(c=>`<div class="miniSess race">🏁 ${esc(c.name||v311T('competicion_generico'))}</div>`).join('')}${xs.map(x=>{const isMar=x.session_type==='MAR';const isTest=/test/i.test(String(x.title||''));const cleanTitle=esc((x.title||x.session_type||v311T('entrenamiento_generico')).replace(/^ERG\s*[·:\-]?\s*/i,'').replace(/^GYM\s*[·:\-]?\s*/i,''));const label=isMar?`MAR · ${v311T('sesion_mar').replace(/^🚣\s*/,'')}`:isTest?`🧪 TEST · ${cleanTitle.replace(/^.*TEST\s*/i,'')}`:`${x.session_type||''} · ${cleanTitle}`;const status=doneMap&&!isMar?doneMap.get(String(x.id)):null,statusCls=status?.done?'miniSessDone':(status?.due?'miniSessOverdue':'');return `<div class="miniSess ${isMar?'mar':'openable'} ${isTest?'test':''} ${statusCls}" ${isMar?'':`data-ath-session="${x.id}" title="${v311T('toca_ver_entrenamiento')}"`}>${status?.done?'✓ ':status?.due?'⚠ ':''}${label}</div>`}).join('')}</div>`;
  }
- return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
+ return `<div class="coachCalendar">${v311T('dias_semana_letra').map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
 }
 function athleteMonthDetailHtmlV98(x){
  const isTest=/test/i.test(String(x.title||''));
- const body=String(x.content||'').trim()?trainingContentHtml(x.content):'<div class="info">Este entrenamiento todavía no tiene una prescripción detallada.</div>';
- return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">Cerrar</button><div class="tag">${esc(x.session_type||'Entrenamiento')}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||'Entrenamiento')}</h3><div class="muted">${shortDateES(x.session_date)}</div>${body}<div class="staffActions">${x.session_type==='GYM'?`<button class="athleteLogGymV113 primary" data-id="${x.id}">Registrar GYM</button>`:''}${x.session_type==='ERG'?`<button class="athleteOpenErgoV113 primary" data-id="${x.id}">Abrir en ErgData</button><button class="athleteManualErgoV113" data-id="${x.id}">Registrar manualmente</button>`:''}</div></div>`;
+ const body=String(x.content||'').trim()?trainingContentHtml(x.content):`<div class="info">${v311T('sin_prescripcion')}</div>`;
+ return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">${v311T('cerrar')}</button><div class="tag">${esc(x.session_type||v311T('entrenamiento_generico'))}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||v311T('entrenamiento_generico'))}</h3><div class="muted">${shortDateES(x.session_date)}</div>${body}<div class="staffActions">${x.session_type==='GYM'?`<button class="athleteLogGymV113 primary" data-id="${x.id}">${v311T('registrar_gym')}</button>`:''}${x.session_type==='ERG'?`<button class="athleteOpenErgoV113 primary" data-id="${x.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${x.id}">${v311T('registrar_manual')}</button>`:''}</div></div>`;
 }
 async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
@@ -5892,7 +5896,7 @@ async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
   const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador. <span style="color:#166534">🟢 Completada</span> · <span style="color:#9c2b23">🔴 Sin completar</span></p><div id="athMonthV96"><p class="muted">Cargando…</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>';
+  content.innerHTML=`<div class="card"><h2>${v311T('calendario_mes_titulo')}</h2><p class="muted">${v311T('calendario_mes_texto')} <span style="color:#166534">🟢 ${v311T('completada_leyenda')}</span> · <span style="color:#9c2b23">🔴 ${v311T('sin_completar_leyenda')}</span></p><div id="athMonthV96"><p class="muted">${v311T('cargando_generico')}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
   const [ss,cc,ww,gg,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,start,end),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode]),
@@ -5907,9 +5911,11 @@ async function athleteMonthViewV96(){
   const comp=compErr?null:v79ComplianceForAthlete(currentUser.id,sessions,ww.data||[],gg.data||[],c2.data||[],start,end);
   const doneMap=new Map((comp?.details||[]).map(x=>[String(x.id),{done:!!x.done,due:!!x.due}]));
   const box=document.getElementById('athMonthV96'); if(!box)return;
-  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
+  const displaySessions=await v311TranslateSessions(sessions);
+  if(tab!=="mes")return;
+  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${v311MonthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,displaySessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
   const detail=document.getElementById('athMonthDetailV98');
-  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';bindAthletePlannedActionsV113(detail,[x],athleteMonthViewV96);detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=displaySessions.find(s=>String(s.id)===String(el.dataset.athSession)),orig=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';bindAthletePlannedActionsV113(detail,[orig||x],athleteMonthViewV96);detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
 }
 
 async function coachSeaResultsView(){
@@ -6587,7 +6593,49 @@ const V311_DICT={
     no_se_pudo_cargar_semana:'No se pudo cargar la semana.',reintentar:'Reintentar',contenido_reservado:'Contenido reservado para entrenador',
     toca_ver_detalle:'Toca para ver detalle',pendiente_status:'Pendiente',completada_status:'Completada ✓',sin_completar_status:'⚠ Sin completar',
     sin_sesiones_gym_ergo:'Sin sesiones GYM/ERGO',no_se_pudo_calcular_cumplimiento:'No se pudo calcular el cumplimiento semanal.',sesiones_completadas:'sesiones completadas',
-    semana_anterior:'Semana anterior',semana_siguiente:'Semana siguiente',dias_semana:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
+    semana_anterior:'Semana anterior',semana_siguiente:'Semana siguiente',dias_semana:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],
+    perfil_titulo:'Perfil',nombre_label:'Nombre',identifico_como:'Me identifico como',prefiero_no_decir:'Prefiero no decirlo',hombre:'Hombre',mujer:'Mujer',
+    altura_cm:'Altura (cm)',fecha_nacimiento:'Fecha de nacimiento',peso_kg:'Peso (kg)',fc_reposo:'FC reposo',fc_maxima:'FC máxima',fc_maxima_conocida:'FC máxima conocida',
+    estimar_edad_hint:'Si no la conoces, puedes estimarla por edad.',edad_label:'Edad',sexo_label:'Sexo',seleccionar:'Seleccionar',deportista_entrenado:'Deportista entrenado',
+    estimar_fc_btn:'Estimar FC máx por edad',zonas_karvonen_titulo:'Zonas automáticas por Karvonen',
+    zonas_karvonen_texto:'Se calculan con FC máxima + FC de reposo. Si la FC máxima es estimada, las zonas también son orientativas.',
+    calcular_zonas:'Calcular zonas',zonas_fc_titulo:'Zonas FC',min_label:'mín',max_label:'máx',notas_label:'Notas',guardar_perfil:'Guardar perfil',
+    concept2_titulo:'Concept2 / ErgData',concept2_texto:'Conecta tu propia cuenta una sola vez. Row Training importa automáticamente los resultados que ErgData haya subido a Concept2.',
+    comprobando_conexion:'Comprobando conexión…',conectar_concept2:'Conectar Concept2',sincronizar_ahora:'Sincronizar ahora (manual)',
+    sync_footer:'Sincronización automática al abrir/volver a la app y al entrar en Historial. El botón manual queda como respaldo. Solo lectura: perfil y resultados.',
+    introduce_edad:'Introduce la edad.',selecciona_sexo:'Selecciona el sexo para usar la fórmula de deportistas.',no_se_pudo_calcular_fc:'No se pudo calcular la FC máxima.',
+    fc_estimada:'FC máx estimada:',es_una_estimacion:'Es una estimación. Una FC máxima medida en test o competición tiene prioridad.',
+    formula_whyte_f:'Whyte: 216 − 1,09 × edad',formula_whyte_m:'Whyte: 202 − 0,55 × edad',formula_tanaka:'Tanaka: 208 − 0,7 × edad',
+    sincronizando:'Sincronizando…',concept2_conectado:'Concept2 conectado',ultima_sync:'Última sincronización:',pendiente_word:'pendiente',
+    reconectar_concept2:'Reconectar Concept2',concept2_no_conectado:'Concept2 todavía no está conectado.',introduce_fc_valida:'Introduce una FC máxima y una FC de reposo válidas.',
+    sin_conexion_internet:'Sin conexión a Internet. No se ha guardado nada.',guardando_perfil:'Guardando perfil…',guardando_fc_zonas:'Guardando FC y zonas…',
+    perfil_guardado_ok:'Perfil, FC máxima y zonas guardados correctamente.',no_se_pudo_conectar_supabase:'No se pudo conectar con Supabase. Revisa la conexión/VPN y vuelve a pulsar Guardar. La app no ha borrado tus datos.',
+    error_guardar:'Error al guardar: ',
+    toast_mensaje_1:'💬 Tienes un mensaje nuevo de tu entrenador.',toast_mensajes_n:'💬 Tienes {n} mensajes nuevos de tu entrenador.',
+    toast_comentario_1:'💬 Tu entrenador ha comentado un resultado de ERGO. Míralo en Historial.',toast_comentarios_n:'💬 Tu entrenador ha dejado {n} comentarios nuevos en tus resultados de ERGO. Míralos en Historial.',
+    toast_chartable_first:'📈 Ya tienes 2 resultados de "{label}". Mira tu evolución en Historial.',toast_chartable_more:'📈 Ya llevas {count} resultados de "{label}". Échale un ojo a tu evolución en Historial.',
+    calendario_mes_titulo:'Calendario · este mes y el siguiente',
+    calendario_mes_texto:'Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.',
+    completada_leyenda:'Completada',sin_completar_leyenda:'Sin completar',cargando_generico:'Cargando…',toca_ver_entrenamiento:'Toca para ver el entrenamiento',
+    cerrar:'Cerrar',entrenamiento_generico:'Entrenamiento',sin_prescripcion:'Este entrenamiento todavía no tiene una prescripción detallada.',
+    dias_semana_letra:['L','M','X','J','V','S','D'],competicion_generico:'Competición',
+    historial_titulo:'Historial',cargando_datos_guardados:'Cargando datos guardados…',
+    tienes_pendientes_1:'⚠️ Tienes 1 resultado pendiente de asignar',tienes_pendientes_n:'⚠️ Tienes {n} resultados pendientes de asignar',
+    no_pasa_nada_pendiente:'No pasa nada si todavía no sabes a qué sesión corresponde. Puedes revisarlo ahora o dejarlo pendiente.',
+    ver_pendientes:'Ver pendientes',mostrar_label:'Mostrar',activos:'Activos',pendientes_asignar_opt:'Pendientes de asignar',ocultos:'Ocultos',todos_opt:'Todos',tipo_label:'Tipo',
+    asociado:'Asociado',coincidencia_dudosa:'Coincidencia dudosa',no_programado:'No programado',oculta_tag:'Oculta',
+    cambiar_sesion_asociada:'Cambiar sesión asociada',asignar_sesion:'Asignar a una sesión',desasignar:'Desasignar',volver_mostrar:'Volver a mostrar',
+    ocultar_historial:'Ocultar del historial',comentarios_btn:'💬 Comentarios',confianza_word:'confianza',alternativa_tag:'Alternativa',asignado_word:'Asignado:',
+    facil:'Fácil',duro:'Duro',bien:'Bien',sin_resultados_asociados:'Sin resultados asociados.',sin_registros:'Sin registros.',editar_ergo_manual:'Editar ERGO manual',
+    planificado_word:'Planificado:',realizado_word:'Realizado:',no_se_pudo_cargar_historial:'No se pudo cargar el historial.',evolucion_ritmo:'📈 Evolución de tu ritmo',sesion_generica:'Sesión',
+    cargando_conversacion:'Cargando conversación…',escribe_mensaje:'Escribe un mensaje…',enviar:'Enviar',
+    necesitas_equipo_msg:'Necesitas estar en un equipo para escribir a tu entrenador.',mensajes_con_entrenador:'💬 Mensajes con tu entrenador',
+    push_error_msg:'⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: ',
+    push_sin_destinatario:'⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.',
+    push_no_entregado:'⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).',
+    biblioteca_titulo:'Biblioteca ERGO',biblioteca_texto_remero:'Sesiones adicionales permitidas en esta fase. No sustituyen el entrenamiento programado.',
+    enlace_pendiente:'Enlace pendiente',no_hay_sesiones_visibles:'No hay sesiones visibles.',fase_actual_word:'Fase actual:',equipo_word:'Equipo:',
+    sin_equipo_asignado:'Tu usuario todavía no tiene equipo asignado.'
   },
   en:{
     hoy_title:'Today',ver_semana:'View week',no_entrenamiento_hoy:'No training planned today.',
@@ -6600,7 +6648,49 @@ const V311_DICT={
     no_se_pudo_cargar_semana:'Could not load the week.',reintentar:'Retry',contenido_reservado:'Content reserved for the coach',
     toca_ver_detalle:'Tap to see detail',pendiente_status:'Pending',completada_status:'Completed ✓',sin_completar_status:'⚠ Not completed',
     sin_sesiones_gym_ergo:'No GYM/ERGO sessions',no_se_pudo_calcular_cumplimiento:'Could not calculate weekly compliance.',sesiones_completadas:'sessions completed',
-    semana_anterior:'Previous week',semana_siguiente:'Next week',dias_semana:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    semana_anterior:'Previous week',semana_siguiente:'Next week',dias_semana:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    perfil_titulo:'Profile',nombre_label:'Name',identifico_como:'I identify as',prefiero_no_decir:'Prefer not to say',hombre:'Man',mujer:'Woman',
+    altura_cm:'Height (cm)',fecha_nacimiento:'Date of birth',peso_kg:'Weight (kg)',fc_reposo:'Resting HR',fc_maxima:'Max HR',fc_maxima_conocida:'Known max HR',
+    estimar_edad_hint:"If you don't know it, you can estimate it from your age.",edad_label:'Age',sexo_label:'Sex',seleccionar:'Select',deportista_entrenado:'Trained athlete',
+    estimar_fc_btn:'Estimate max HR by age',zonas_karvonen_titulo:'Automatic Karvonen zones',
+    zonas_karvonen_texto:'Calculated from max HR + resting HR. If the max HR is estimated, the zones are also approximate.',
+    calcular_zonas:'Calculate zones',zonas_fc_titulo:'HR zones',min_label:'min',max_label:'max',notas_label:'Notes',guardar_perfil:'Save profile',
+    concept2_titulo:'Concept2 / ErgData',concept2_texto:'Connect your own account once. Row Training automatically imports the results ErgData has uploaded to Concept2.',
+    comprobando_conexion:'Checking connection…',conectar_concept2:'Connect Concept2',sincronizar_ahora:'Sync now (manual)',
+    sync_footer:'Automatic sync when opening/returning to the app and when entering History. The manual button is a backup. Read-only: profile and results.',
+    introduce_edad:'Enter your age.',selecciona_sexo:'Select a sex to use the athlete formula.',no_se_pudo_calcular_fc:'Could not calculate the max HR.',
+    fc_estimada:'Estimated max HR:',es_una_estimacion:'This is an estimate. A max HR measured in a test or race takes priority.',
+    formula_whyte_f:'Whyte: 216 − 1.09 × age',formula_whyte_m:'Whyte: 202 − 0.55 × age',formula_tanaka:'Tanaka: 208 − 0.7 × age',
+    sincronizando:'Syncing…',concept2_conectado:'Concept2 connected',ultima_sync:'Last sync:',pendiente_word:'pending',
+    reconectar_concept2:'Reconnect Concept2',concept2_no_conectado:'Concept2 is not connected yet.',introduce_fc_valida:'Enter a valid max HR and resting HR.',
+    sin_conexion_internet:'No internet connection. Nothing was saved.',guardando_perfil:'Saving profile…',guardando_fc_zonas:'Saving HR and zones…',
+    perfil_guardado_ok:'Profile, max HR and zones saved successfully.',no_se_pudo_conectar_supabase:'Could not connect to Supabase. Check your connection/VPN and press Save again. The app has not deleted your data.',
+    error_guardar:'Error saving: ',
+    toast_mensaje_1:'💬 You have a new message from your coach.',toast_mensajes_n:'💬 You have {n} new messages from your coach.',
+    toast_comentario_1:'💬 Your coach commented on an ERGO result. Check it in History.',toast_comentarios_n:'💬 Your coach left {n} new comments on your ERGO results. Check them in History.',
+    toast_chartable_first:'📈 You already have 2 results for "{label}". Check your progress in History.',toast_chartable_more:'📈 You now have {count} results for "{label}". Take a look at your progress in History.',
+    calendario_mes_titulo:'Calendar · this month and next',
+    calendario_mes_texto:"Tap a GYM, ERGO or TEST session to see its full content. For MAR, only the fact that there's a session is shown; the sea content stays with the coach.",
+    completada_leyenda:'Completed',sin_completar_leyenda:'Not completed',cargando_generico:'Loading…',toca_ver_entrenamiento:'Tap to view the session',
+    cerrar:'Close',entrenamiento_generico:'Training',sin_prescripcion:"This session doesn't have a detailed prescription yet.",
+    dias_semana_letra:['M','T','W','T','F','S','S'],competicion_generico:'Race',
+    historial_titulo:'History',cargando_datos_guardados:'Loading saved data…',
+    tienes_pendientes_1:'⚠️ You have 1 result pending assignment',tienes_pendientes_n:'⚠️ You have {n} results pending assignment',
+    no_pasa_nada_pendiente:"It's fine if you don't know which session it belongs to yet. You can review it now or leave it pending.",
+    ver_pendientes:'View pending',mostrar_label:'Show',activos:'Active',pendientes_asignar_opt:'Pending assignment',ocultos:'Hidden',todos_opt:'All',tipo_label:'Type',
+    asociado:'Linked',coincidencia_dudosa:'Uncertain match',no_programado:'Not scheduled',oculta_tag:'Hidden',
+    cambiar_sesion_asociada:'Change linked session',asignar_sesion:'Assign to a session',desasignar:'Unassign',volver_mostrar:'Show again',
+    ocultar_historial:'Hide from history',comentarios_btn:'💬 Comments',confianza_word:'confidence',alternativa_tag:'Alternative',asignado_word:'Assigned:',
+    facil:'Easy',duro:'Hard',bien:'Good',sin_resultados_asociados:'No linked results.',sin_registros:'No records.',editar_ergo_manual:'Edit manual ERGO',
+    planificado_word:'Planned:',realizado_word:'Done:',no_se_pudo_cargar_historial:'Could not load the history.',evolucion_ritmo:'📈 Your pace over time',sesion_generica:'Session',
+    cargando_conversacion:'Loading conversation…',escribe_mensaje:'Write a message…',enviar:'Send',
+    necesitas_equipo_msg:'You need to be on a team to message your coach.',mensajes_con_entrenador:'💬 Messages with your coach',
+    push_error_msg:"⚠️ Message saved, but the push notification couldn't be sent. Detail: ",
+    push_sin_destinatario:'⚠️ Message saved, but no recipient has push notifications enabled.',
+    push_no_entregado:"⚠️ Message saved and there's a recipient, but the push notification could not be delivered (check whether notifications are enabled on their phone).",
+    biblioteca_titulo:'ERGO Library',biblioteca_texto_remero:"Additional sessions allowed in this phase. They don't replace the scheduled training.",
+    enlace_pendiente:'Link pending',no_hay_sesiones_visibles:'No sessions visible.',fase_actual_word:'Current phase:',equipo_word:'Team:',
+    sin_equipo_asignado:"Your account doesn't have a team assigned yet."
   },
   nl:{
     hoy_title:'Vandaag',ver_semana:'Bekijk week',no_entrenamiento_hoy:'Geen training gepland vandaag.',
@@ -6613,11 +6703,58 @@ const V311_DICT={
     no_se_pudo_cargar_semana:'De week kon niet worden geladen.',reintentar:'Opnieuw proberen',contenido_reservado:'Inhoud voorbehouden aan de trainer',
     toca_ver_detalle:'Tik voor details',pendiente_status:'In behandeling',completada_status:'Voltooid ✓',sin_completar_status:'⚠ Niet voltooid',
     sin_sesiones_gym_ergo:'Geen GYM/ERGO-sessies',no_se_pudo_calcular_cumplimiento:'Kon de wekelijkse naleving niet berekenen.',sesiones_completadas:'sessies voltooid',
-    semana_anterior:'Vorige week',semana_siguiente:'Volgende week',dias_semana:['Ma','Di','Wo','Do','Vr','Za','Zo']
+    semana_anterior:'Vorige week',semana_siguiente:'Volgende week',dias_semana:['Ma','Di','Wo','Do','Vr','Za','Zo'],
+    perfil_titulo:'Profiel',nombre_label:'Naam',identifico_como:'Ik identificeer me als',prefiero_no_decir:'Zeg ik liever niet',hombre:'Man',mujer:'Vrouw',
+    altura_cm:'Lengte (cm)',fecha_nacimiento:'Geboortedatum',peso_kg:'Gewicht (kg)',fc_reposo:'Hartslag in rust',fc_maxima:'Maximale hartslag',fc_maxima_conocida:'Bekende max. hartslag',
+    estimar_edad_hint:'Als je die niet weet, kun je hem schatten op basis van leeftijd.',edad_label:'Leeftijd',sexo_label:'Geslacht',seleccionar:'Selecteren',deportista_entrenado:'Getrainde sporter',
+    estimar_fc_btn:'Schat max. hartslag o.b.v. leeftijd',zonas_karvonen_titulo:'Automatische Karvonen-zones',
+    zonas_karvonen_texto:'Berekend met max. hartslag + rusthartslag. Als de max. hartslag geschat is, zijn de zones ook indicatief.',
+    calcular_zonas:'Zones berekenen',zonas_fc_titulo:'Hartslagzones',min_label:'min',max_label:'max',notas_label:'Notities',guardar_perfil:'Profiel opslaan',
+    concept2_titulo:'Concept2 / ErgData',concept2_texto:'Verbind je eigen account eenmalig. Row Training importeert automatisch de resultaten die ErgData naar Concept2 heeft geüpload.',
+    comprobando_conexion:'Verbinding controleren…',conectar_concept2:'Concept2 verbinden',sincronizar_ahora:'Nu synchroniseren (handmatig)',
+    sync_footer:'Automatische synchronisatie bij het openen/terugkeren naar de app en bij Geschiedenis. De handmatige knop is een back-up. Alleen-lezen: profiel en resultaten.',
+    introduce_edad:'Vul je leeftijd in.',selecciona_sexo:'Kies een geslacht om de sportersformule te gebruiken.',no_se_pudo_calcular_fc:'De maximale hartslag kon niet worden berekend.',
+    fc_estimada:'Geschatte max. hartslag:',es_una_estimacion:'Dit is een schatting. Een gemeten max. hartslag tijdens een test of wedstrijd heeft voorrang.',
+    formula_whyte_f:'Whyte: 216 − 1,09 × leeftijd',formula_whyte_m:'Whyte: 202 − 0,55 × leeftijd',formula_tanaka:'Tanaka: 208 − 0,7 × leeftijd',
+    sincronizando:'Synchroniseren…',concept2_conectado:'Concept2 verbonden',ultima_sync:'Laatste synchronisatie:',pendiente_word:'in behandeling',
+    reconectar_concept2:'Concept2 opnieuw verbinden',concept2_no_conectado:'Concept2 is nog niet verbonden.',introduce_fc_valida:'Vul een geldige max. hartslag en rusthartslag in.',
+    sin_conexion_internet:'Geen internetverbinding. Er is niets opgeslagen.',guardando_perfil:'Profiel opslaan…',guardando_fc_zonas:'Hartslag en zones opslaan…',
+    perfil_guardado_ok:'Profiel, max. hartslag en zones succesvol opgeslagen.',no_se_pudo_conectar_supabase:'Kon geen verbinding maken met Supabase. Controleer je verbinding/VPN en druk opnieuw op Opslaan. De app heeft je gegevens niet verwijderd.',
+    error_guardar:'Fout bij opslaan: ',
+    toast_mensaje_1:'💬 Je hebt een nieuw bericht van je trainer.',toast_mensajes_n:'💬 Je hebt {n} nieuwe berichten van je trainer.',
+    toast_comentario_1:'💬 Je trainer heeft een opmerking geplaatst bij een ERGO-resultaat. Bekijk het in Geschiedenis.',toast_comentarios_n:'💬 Je trainer heeft {n} nieuwe opmerkingen achtergelaten bij je ERGO-resultaten. Bekijk ze in Geschiedenis.',
+    toast_chartable_first:'📈 Je hebt al 2 resultaten voor "{label}". Bekijk je voortgang in Geschiedenis.',toast_chartable_more:'📈 Je hebt nu {count} resultaten voor "{label}". Bekijk je voortgang in Geschiedenis.',
+    calendario_mes_titulo:'Kalender · deze maand en volgende',
+    calendario_mes_texto:'Tik op een GYM-, ERGO- of TEST-sessie voor de volledige inhoud. Bij MAR wordt alleen getoond dat er een sessie is; de zee-inhoud blijft bij de trainer.',
+    completada_leyenda:'Voltooid',sin_completar_leyenda:'Niet voltooid',cargando_generico:'Laden…',toca_ver_entrenamiento:'Tik om de training te bekijken',
+    cerrar:'Sluiten',entrenamiento_generico:'Training',sin_prescripcion:'Deze training heeft nog geen gedetailleerd schema.',
+    dias_semana_letra:['M','D','W','D','V','Z','Z'],competicion_generico:'Wedstrijd',
+    historial_titulo:'Geschiedenis',cargando_datos_guardados:'Opgeslagen gegevens laden…',
+    tienes_pendientes_1:'⚠️ Je hebt 1 resultaat dat nog toegewezen moet worden',tienes_pendientes_n:'⚠️ Je hebt {n} resultaten die nog toegewezen moeten worden',
+    no_pasa_nada_pendiente:'Geen probleem als je nog niet weet bij welke sessie het hoort. Je kunt het nu bekijken of laten staan.',
+    ver_pendientes:'Openstaande bekijken',mostrar_label:'Tonen',activos:'Actief',pendientes_asignar_opt:'Nog toe te wijzen',ocultos:'Verborgen',todos_opt:'Alle',tipo_label:'Type',
+    asociado:'Gekoppeld',coincidencia_dudosa:'Onzekere match',no_programado:'Niet gepland',oculta_tag:'Verborgen',
+    cambiar_sesion_asociada:'Gekoppelde sessie wijzigen',asignar_sesion:'Toewijzen aan een sessie',desasignar:'Loskoppelen',volver_mostrar:'Weer tonen',
+    ocultar_historial:'Verbergen uit geschiedenis',comentarios_btn:'💬 Opmerkingen',confianza_word:'zekerheid',alternativa_tag:'Alternatief',asignado_word:'Toegewezen:',
+    facil:'Makkelijk',duro:'Zwaar',bien:'Goed',sin_resultados_asociados:'Geen gekoppelde resultaten.',sin_registros:'Geen gegevens.',editar_ergo_manual:'Handmatige ERGO bewerken',
+    planificado_word:'Gepland:',realizado_word:'Uitgevoerd:',no_se_pudo_cargar_historial:'De geschiedenis kon niet worden geladen.',evolucion_ritmo:'📈 Jouw tempo in de tijd',sesion_generica:'Sessie',
+    cargando_conversacion:'Gesprek laden…',escribe_mensaje:'Schrijf een bericht…',enviar:'Versturen',
+    necesitas_equipo_msg:'Je moet bij een team horen om je trainer een bericht te sturen.',mensajes_con_entrenador:'💬 Berichten met je trainer',
+    push_error_msg:'⚠️ Bericht opgeslagen, maar de pushmelding kon niet worden verstuurd. Detail: ',
+    push_sin_destinatario:'⚠️ Bericht opgeslagen, maar niemand heeft pushmeldingen ingeschakeld.',
+    push_no_entregado:'⚠️ Bericht opgeslagen en er is een ontvanger, maar de pushmelding kon niet worden afgeleverd (controleer of meldingen op zijn/haar telefoon aanstaan).',
+    biblioteca_titulo:'ERGO-bibliotheek',biblioteca_texto_remero:'Extra sessies toegestaan in deze fase. Ze vervangen niet de geplande training.',
+    enlace_pendiente:'Link nog niet ingesteld',no_hay_sesiones_visibles:'Geen sessies zichtbaar.',fase_actual_word:'Huidige fase:',equipo_word:'Team:',
+    sin_equipo_asignado:'Je account heeft nog geen team toegewezen.'
   }
 };
 function v311T(key){
   return (V311_DICT[currentLocale]&&V311_DICT[currentLocale][key])||V311_DICT.es[key]||key;
+}
+function v311MonthLabel(ym){
+  const localeMap={es:'es-ES',en:'en-GB',nl:'nl-NL'};
+  const [y,m]=ym.split('-').map(Number);
+  return new Intl.DateTimeFormat(localeMap[currentLocale]||'es-ES',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(y,m-1,1))).replace(/^./,c=>c.toUpperCase());
 }
 async function v311SetLocale(loc){
   if(!V311_DICT[loc])return;
