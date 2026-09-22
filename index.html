@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="250";
+const APP_VERSION="252";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2627,19 +2627,95 @@ function addSeaSeriesRowV137(bi,values={}){
   const tbody=document.querySelector(`.seaSeriesBodyV137[data-block-index="${bi}"]`);if(!tbody)return null;const n=tbody.querySelectorAll('.seaSeriesInputRowV137').length+1,label=values.label||`Serie ${n}`;
   tbody.insertAdjacentHTML('beforeend',seaSeriesRowHtmlV137(bi,{label,fixedTimeSeconds:null,fixedDistanceM:null,targetSpm:null},true));const row=tbody.lastElementChild;bindSeaSeriesRowV137(row);fillSeaSeriesRowV137(row,values);return row;
 }
-function fillSeaSeriesRowV137(row,series={}){if(!row)return;const t=row.querySelector('.seaTimeV137'),m=row.querySelector('.seaMetersV137'),s=row.querySelector('.seaSpmV137');if(t&&Number.isFinite(Number(series.duration_seconds)))t.value=seaSeriesTimeText(Math.round(Number(series.duration_seconds)));if(m&&Number.isFinite(Number(series.distance_m)))m.value=String(Math.round(Number(series.distance_m)));if(s&&Number.isFinite(Number(series.average_spm)))s.value=String(Math.round(Number(series.average_spm)));updateSeaRowPaceV137(row)}
+function v250HasOcrValue(v){return v!=null&&v!==''&&Number.isFinite(Number(v))}
+function fillSeaSeriesRowV137(row,series={}){if(!row)return;const t=row.querySelector('.seaTimeV137'),m=row.querySelector('.seaMetersV137'),s=row.querySelector('.seaSpmV137');if(t&&v250HasOcrValue(series.duration_seconds))t.value=seaSeriesTimeText(Math.round(Number(series.duration_seconds)));if(m&&v250HasOcrValue(series.distance_m))m.value=String(Math.round(Number(series.distance_m)));if(s&&v250HasOcrValue(series.average_spm))s.value=String(Math.round(Number(series.average_spm)));updateSeaRowPaceV137(row)}
 function seaRowHasEnteredDataV137(t,m,s){if(t?.readOnly)return Boolean(m?.value||s?.value);if(m?.readOnly)return Boolean(t?.value||s?.value);return Boolean(t?.value||m?.value||s?.value)}
-function parseRowingCoachOcrV137(raw){
-  const text=String(raw||'').replace(/[Oo](?=\d)/g,'0'),lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);let duration_seconds=null,distance_m=null,average_spm=null,pace_500_seconds=null;
-  const times=[...text.matchAll(/\b(\d{1,2}):(\d{2})\b/g)].map(x=>({raw:x[0],sec:Number(x[1])*60+Number(x[2]),i:x.index||0}));
-  const secLine=lines.find(x=>/\bsec\b/i.test(x)&&/\d{1,2}:\d{2}/.test(x));const tm=secLine?.match(/(\d{1,2}):(\d{2})/);if(tm)duration_seconds=Number(tm[1])*60+Number(tm[2]);else if(times.length)duration_seconds=times[0].sec;
-  const distCandidates=[];lines.forEach(line=>{if(/\/\s*30\s*min/i.test(line)||/stroke\s*length/i.test(line)||/\/\s*500\s*m?/i.test(line))return;for(const m of line.matchAll(/\b(\d{2,5})\s*m\b/gi)){const v=Number(m[1]);if(v>=50&&v<=50000)distCandidates.push(v)}});if(distCandidates.length)distance_m=distCandidates[0];
-  const spmLine=lines.find(x=>/(strokes?\s*\/\s*min|strokes?\/min|spm)/i.test(x));const sm=spmLine?.match(/\b(\d{1,2})\b/);if(sm)average_spm=Number(sm[1]);
-  const avgLine=lines.find(x=>/avg/i.test(x)&&/500\s*m?/i.test(x));const pm=avgLine?.match(/(\d{1,2}):(\d{2})/);if(pm)pace_500_seconds=Number(pm[1])*60+Number(pm[2]);else if(times.length>1)pace_500_seconds=times[times.length-1].sec;
-  if(duration_seconds&&distance_m)pace_500_seconds=duration_seconds*500/distance_m;
+function v251MergeLoneDigits(s){return String(s||'').replace(/\b\d(?:\s+\d\b)+/g,x=>x.replace(/\s+/g,''))}
+function v251NumsInRange(str,lo,hi){const s=v251MergeLoneDigits(String(str||'').replace(/[Oo](?=\d)/g,'0'));return [...s.matchAll(/\b(\d{2,5})\b/g)].map(m=>Number(m[1])).filter(v=>v>=lo&&v<=hi)}
+function v251PaceInRange(str){return [...String(str||'').matchAll(/\b(\d{1,2})[:;](\d{2})\b/g)].map(m=>Number(m[1])*60+Number(m[2])).filter(s=>s>=60&&s<=600)}
+function parseRowingCoachOcrV137(raw,bands){
+  // Rowing Coach cards OCR very poorly with a single whole-card Tesseract pass: "35° COG   776m"
+  // is read as "3 500 776." (the "m" of the distance is swapped for a stray "."), and "23
+  // strokes/min" comes out as garbage like "eres"/"evcresimi"/"Devoresinn" — the digits are lost
+  // entirely, not just the label. Cropping each line into its own band and re-OCRing it upscaled
+  // (see readRowingCoachPhotosV137) recovers it reliably — confirmed against real captures: the
+  // same "23 strokes/min" line that OCRs as pure noise in a whole-card pass reads correctly once
+  // isolated. There's also no real elapsed-duration text on these cards, only two pace figures
+  // ("3:59.../500m" instantaneous, "3:55 avg/500m" average) — anything else that looks like
+  // "H:MM" (e.g. the phone's status-bar clock, "23:18") is NOT a session duration and must be
+  // ignored, or it silently overwrites the real value with the time of day the photo was taken.
+  const text=String(raw||'').replace(/[Oo](?=\d)/g,'0');
+  let duration_seconds=null,distance_m=null,average_spm=null,pace_500_seconds=null;
+
+  if(bands){
+    const distCands=v251NumsInRange(bands.dist,50,5000);
+    const spmCands=v251NumsInRange(bands.spm,12,45);
+    const paceAvg=v251PaceInRange(bands.avg);
+    const paceTop=v251PaceInRange(bands.pace);
+    if(distCands.length)distance_m=Math.max(...distCands);
+    if(spmCands.length)average_spm=spmCands[0];
+    if(paceAvg.length)pace_500_seconds=paceAvg[paceAvg.length-1];
+    else if(paceTop.length)pace_500_seconds=paceTop[0];
+  }
+
+  // Fall back to (and fill gaps from) a whole-card OCR pass, for anything the bands missed.
+  if(distance_m==null||average_spm==null||pace_500_seconds==null){
+    const lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    if(pace_500_seconds==null){
+      const paceCandidates=v251PaceInRange(text);
+      if(paceCandidates.length)pace_500_seconds=paceCandidates[paceCandidates.length-1];// last = the "avg" figure at the bottom of the card
+    }
+    let distLineIdx=-1;
+    if(distance_m==null){
+      // Distance: the COG°/metros line sits between the top pace and the strokes/min line.
+      // Match bare digit groups (not "\d+m") since OCR drops or mangles the trailing "m", and
+      // take the largest number on that line — the COG angle is small, the distance isn't.
+      lines.forEach((line,i)=>{
+        if(distance_m!=null||/avg/i.test(line))return;
+        const nums=v251NumsInRange(line,50,5000);
+        if(nums.length){distance_m=Math.max(...nums);distLineIdx=i}
+      });
+    }
+    if(average_spm==null){
+      // Strokes/min: a bare 2-digit number in a plausible stroke-rate range (12–45), read from
+      // the line right after the distance line first (that's where it sits on the card),
+      // falling back to any other non-distance, non-avg line if the layout shifted.
+      const spmFrom=(from,to)=>{for(let i=from;i<to;i++){if(i<0||i>=lines.length)continue;if(i===distLineIdx||/avg/i.test(lines[i]))continue;const m=v251MergeLoneDigits(lines[i]).match(/\b(\d{2})\b/);if(m){const v=Number(m[1]);if(v>=12&&v<=45)return v}}return null};
+      average_spm=spmFrom(distLineIdx+1,lines.length);
+      if(average_spm==null)average_spm=spmFrom(0,lines.length);
+    }
+  }
+
+  // These cards never show a total elapsed time — derive it from the average pace and distance.
+  if(pace_500_seconds&&distance_m)duration_seconds=Math.round(pace_500_seconds*distance_m/500);
   return {duration_seconds,distance_m,average_spm,pace_500_seconds,ocr_text:text};
 }
-async function readRowingCoachPhotosV137(files,onProgress){const out=[];for(let i=0;i<files.length;i++){onProgress?.(`Leyendo captura ${i+1} de ${files.length}…`);const r=await Tesseract.recognize(files[i],'eng');out.push(parseRowingCoachOcrV137(r?.data?.text||''))}return out}
+function v251LoadImageEl(file){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('No se pudo leer la imagen'));im.src=URL.createObjectURL(file)})}
+function v251CropCanvas(img,y0f,y1f,scale){const y0=Math.max(0,Math.round(img.height*y0f)),y1=Math.min(img.height,Math.round(img.height*y1f)),h=Math.max(1,y1-y0),w=img.width;const canvas=document.createElement('canvas');canvas.width=w*scale;canvas.height=h*scale;const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=true;if('imageSmoothingQuality' in ctx)ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,y0,w,h,0,0,w*scale,h*scale);return canvas}
+async function v251OcrBand(img,y0f,y1f){const canvas=v251CropCanvas(img,y0f,y1f,3);const r=await Tesseract.recognize(canvas,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});return r?.data?.text||''}
+async function readRowingCoachPhotosV137(files,onProgress){
+  const out=[];
+  for(let i=0;i<files.length;i++){
+    onProgress?.(`Leyendo captura ${i+1} de ${files.length}…`);
+    let whole='';
+    try{const r=await Tesseract.recognize(files[i],'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});whole=r?.data?.text||''}catch(e){}
+    let bands=null;
+    try{
+      const img=await v251LoadImageEl(files[i]);
+      // The card always stacks, top to bottom: instant pace · COG°/metros · strokes/min · avg pace.
+      // Bands overlap on purpose (cheap insurance against the card not filling the whole photo).
+      const [pace,dist,spm,avg]=await Promise.all([
+        v251OcrBand(img,0.00,0.30),
+        v251OcrBand(img,0.20,0.50),
+        v251OcrBand(img,0.40,0.68),
+        v251OcrBand(img,0.60,1.00)
+      ]);
+      bands={pace,dist,spm,avg};
+    }catch(e){}
+    out.push(parseRowingCoachOcrV137(whole,bands));
+  }
+  return out;
+}
 async function uploadSeaPhotosV137(files,sessionId,team){const paths=[];for(let i=0;i<files.length;i++){const f=files[i],ext=(String(f.name||'').split('.').pop()||String(f.type||'image/jpeg').split('/').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg',path=`${team}/${sessionId}/${currentUser.id}/${Date.now()}-${i+1}.${ext}`,up=await sb.storage.from('sea-media').upload(path,f,{cacheControl:'3600',upsert:false});if(up.error)throw up.error;paths.push(path)}return paths}
 
 function seaSeriesNumberV186(name){const m=String(name||'').match(/(?:^|·)\s*Serie\s+(\d+)\s*$/i);return m?Number(m[1]):1}
