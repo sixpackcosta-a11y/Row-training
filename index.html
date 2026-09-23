@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="258";
+const APP_VERSION="259";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2877,12 +2877,52 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   }
   if(seaImportLogV191)seaImportLogV191.onclick=async()=>{seaImportLogV191.disabled=true;seaImportLogV191.textContent='Buscando…';seaLogInboxV191.innerHTML='';try{const {data:{session:authSession}}=await sb.auth.getSession();const response=await fetch('/api/rowingcoach-inbox',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authSession.access_token}}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||`Error ${response.status}`);const logs=(data.logs||[]).filter(log=>!log.date||String(log.date)===String(date));seaLogInboxV191.innerHTML=`<div class="info"><b>Correo para Rowing Coach:</b><br>${esc(data.inbox||'No disponible')}</div>${logs.length?logs.map((log,index)=>`<div class="last"><b>${log.date?shortDateES(log.date):shortDateES(date)} · ${esc(log.filename)}</b><br><span class="muted">${log.series.filter(x=>x.suggested).length} bloques probables · ${log.series.length} detectados</span><br><button type="button" class="seaUseLogV191" data-index="${index}">Asignar series del log</button></div>`).join(''):'<div class="info">No se encontraron logs para esta fecha.</div>'}`;seaLogInboxV191.querySelectorAll('.seaUseLogV191').forEach(button=>button.onclick=()=>showRowingCoachMapV191(logs[Number(button.dataset.index)]));}catch(error){const raw=error?.message||String(error),friendly=raw.includes('gmail_not_configured')?'Falta configurar el correo de Row Training en Vercel.':raw.includes('gmail_login_failed')?'Gmail ha rechazado el acceso. Revisa la contraseña de aplicación.':`No se pudieron consultar los logs. ${raw}`;seaLogInboxV191.innerHTML=`<div class="info">${esc(friendly)}</div>`}finally{seaImportLogV191.disabled=false;seaImportLogV191.textContent='Importar log recibido'}};
   const photoInput=document.getElementById('seaRowingCoachPhotosV137'),photoStatus=document.getElementById('seaPhotoStatusV137'),photoPreview=document.getElementById('seaPhotoPreviewV137');
-  photoInput.onchange=async()=>{seaPhotoFilesV137=[...(photoInput.files||[])];photoPreview.innerHTML=seaPhotoFilesV137.map((f,i)=>`<div><img src="${URL.createObjectURL(f)}" alt="Captura Rowing Coach ${i+1}"><small>Serie ${i+1} · ${esc(f.name)}</small></div>`).join('');if(!seaPhotoFilesV137.length){photoStatus.textContent='';return}photoInput.disabled=true;try{const detected=await readRowingCoachPhotosV137(seaPhotoFilesV137,t=>photoStatus.textContent=t);let rows=[...document.querySelectorAll('.seaSeriesInputRowV137')];detected.forEach((s,i)=>{if(!rows[i])rows.push(addSeaSeriesRowV137(blocks.length-1,{label:`Serie ${i+1}`}));fillSeaSeriesRowV137(rows[i],s)});const ok=detected.filter(x=>x.duration_seconds||x.distance_m||x.average_spm).length;
-    // Diagnostic readout (v257): shows exactly what each cropped region OCR'd to, so a mismatch
-    // can be reported as text instead of another photo — this is what's actually needed to fix a
-    // stubborn misread, since this environment can't run the same OCR engine as the phone/browser.
-    const debugLines=detected.map((s,i)=>`Serie ${i+1}: ${esc(s.ocr_text||'(vacío)')} → dist=${s.distance_m??'–'} spm=${s.average_spm??'–'} ritmo=${s.pace_500_seconds??'–'}`).join('<br>');
-    photoStatus.innerHTML=`<span class="ocrDetectedV124">${ok}/${detected.length} capturas leídas. Revisa las filas antes de guardar.</span><div style="margin-top:6px;font-size:11px;color:#8a94a6;font-family:monospace;white-space:normal">${debugLines}</div>`}catch(e){photoStatus.textContent='No se pudieron leer las capturas: '+(e.message||e)}finally{photoInput.disabled=false}};
+  // v258: igual que "Importar log recibido" (seaAutoMapLogV191/showRowingCoachMapV191) — asigna
+  // cada captura a una serie automáticamente (por duración cuando hay, si no por orden), pero deja
+  // reasignar cada una a mano antes de aplicar. Antes se volcaba directo a la fila N-ésima del DOM,
+  // así que una captura de más/menos, o subida en otro orden, desplazaba todas las siguientes.
+  function seaAutoMapPhotosV258(detected,targets){
+    const used=new Set(),mapping=new Array(detected.length).fill(''),available=()=>targets.filter(t=>!used.has(t.id)&&!t.existing&&!t.hasData);
+    detected.forEach((s,i)=>{
+      const dur=Number(s.duration_seconds)||null;if(!dur)return;
+      const timed=available().filter(t=>Number.isFinite(t.expected));if(!timed.length)return;
+      timed.sort((a,b)=>Math.abs(a.expected-dur)-Math.abs(b.expected-dur)||a.order-b.order);
+      if(Math.abs(timed[0].expected-dur)<=90){used.add(timed[0].id);mapping[i]=timed[0].id}
+    });
+    detected.forEach((s,i)=>{if(mapping[i])return;const rest=available();if(rest.length){used.add(rest[0].id);mapping[i]=rest[0].id}});
+    return mapping;
+  }
+  function showRowingCoachPhotoMapV258(detected,files){
+    const targets=seaVisibleTargetsV191();
+    if(!targets.length){photoStatus.innerHTML='<div class="info">No quedan series visibles a las que asignar las capturas. Añade una serie o bloque si hace falta.</div>';return}
+    const auto=seaAutoMapPhotosV258(detected,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
+    const rowsHtml=detected.map((s,i)=>{
+      const f=files[i],debugLine=`${esc(s.ocr_text||'(vacío)')} → dist=${s.distance_m??'–'} spm=${s.average_spm??'–'} ritmo=${s.pace_500_seconds??'–'}`;
+      return `<div class="last seaPhotoMapRowV258" data-index="${i}"><div style="display:flex;gap:10px;align-items:flex-start">${f?`<img src="${URL.createObjectURL(f)}" alt="Captura ${i+1}" style="width:64px;border-radius:6px;flex-shrink:0">`:''}<div style="flex:1;min-width:0"><div><b>Captura ${i+1}</b>${f?` · <small class="muted">${esc(f.name)}</small>`:''}</div><div class="muted"><small>${s.duration_seconds?fmtMetricSeconds(s.duration_seconds):'sin tiempo'} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm</small></div><div class="muted" style="font-family:monospace;font-size:11px;word-break:break-all">${debugLine}</div><label>Asignar a<select class="seaPhotoTargetV258"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div></div></div>`;
+    }).join('');
+    photoStatus.innerHTML=`<div class="info">Asignación sugerida por orden y duración. Cambia el destino de cualquier captura antes de aplicar.</div><div id="seaPhotoMapRowsV258">${rowsHtml}</div><div class="actions"><button type="button" id="seaApplyPhotoMapV258" class="primary">Aplicar asignación</button><button type="button" id="seaCancelPhotoMapV258">Cancelar</button></div>`;
+    photoStatus.querySelectorAll('.seaPhotoMapRowV258').forEach((row,i)=>{const sel=row.querySelector('.seaPhotoTargetV258');if(sel)sel.value=auto[i]||''});
+    document.getElementById('seaCancelPhotoMapV258').onclick=()=>{photoStatus.innerHTML=''};
+    document.getElementById('seaApplyPhotoMapV258').onclick=()=>{
+      const rows=[...photoStatus.querySelectorAll('.seaPhotoMapRowV258')],chosen=rows.map(r=>r.querySelector('.seaPhotoTargetV258')?.value||'').filter(Boolean);
+      if(new Set(chosen).size!==chosen.length)return alert('Hay dos capturas asignadas a la misma serie. Elige destinos distintos.');
+      let applied=0;const currentTargets=seaVisibleTargetsV191();
+      rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaPhotoTargetV258')?.value;if(!targetId)return;const target=currentTargets.find(t=>t.id===targetId);if(!target)return;fillSeaSeriesRowV137(target.row,detected[i]);applied++});
+      if(!applied)return alert('Elige al menos una captura para asignar.');
+      photoStatus.innerHTML=`<span class="ocrDetectedV124">${applied} captura${applied===1?'':'s'} aplicada${applied===1?'':'s'}.</span> <small class="muted">Revisa las filas antes de guardar.</small>`;
+    };
+  }
+  photoInput.onchange=async()=>{
+    seaPhotoFilesV137=[...(photoInput.files||[])];
+    photoPreview.innerHTML=seaPhotoFilesV137.map((f,i)=>`<div><img src="${URL.createObjectURL(f)}" alt="Captura Rowing Coach ${i+1}"><small>Captura ${i+1} · ${esc(f.name)}</small></div>`).join('');
+    if(!seaPhotoFilesV137.length){photoStatus.textContent='';return}
+    photoInput.disabled=true;
+    try{
+      const detected=await readRowingCoachPhotosV137(seaPhotoFilesV137,t=>photoStatus.textContent=t);
+      showRowingCoachPhotoMapV258(detected,seaPhotoFilesV137);
+    }catch(e){photoStatus.textContent='No se pudieron leer las capturas: '+(e.message||e)}
+    finally{photoInput.disabled=false}
+  };
   if(imported.length){
     const fields=[...document.querySelectorAll('.seaSeriesInputRowV137')];
     imported.forEach((series,index)=>{if(!fields[index])fields.push(addSeaSeriesRowV137(blocks.length-1,{label:`Serie ${index+1}`}));fillSeaSeriesRowV137(fields[index],series)});
