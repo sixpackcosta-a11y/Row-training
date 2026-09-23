@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="260";
+const APP_VERSION="261";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2707,6 +2707,33 @@ async function v252OcrDigits(img,x0f,x1f,y0f,y1f,withColon){
   if(confidence<V256_MIN_OCR_CONFIDENCE)return '';
   return text;
 }
+async function v260OcrDigitsEnsemble(img,x0f,x1f,y0f,y1f,lo,hi){
+  // A single crop can drop or invent one digit (confirmed on real captures: "7353" read for an
+  // actual 753, a lone "3" read for an actual 37). Re-OCR the same region at a couple of
+  // different scales/paddings — a different scale changes how the glyphs get anti-aliased and
+  // often clears up exactly this kind of single-character noise — and trust a value two attempts
+  // agree on over a single reading, valid-range or not.
+  const variants=[{scale:3,pad:0},{scale:5,pad:0.012},{scale:4,pad:-0.006}];
+  const attempts=[];
+  for(const v of variants){
+    try{
+      const canvas=v252CropCanvas(img,x0f,x1f,Math.max(0,y0f-v.pad),Math.min(1,y1f+v.pad),v.scale);
+      const r=await v252OcrDigitsRaw(canvas,'0123456789');
+      const raw=(r.text.match(/\d/g)||[]).join(''),num=Number(raw);
+      attempts.push({raw,num,confidence:r.confidence,valid:Boolean(raw)&&Number.isFinite(num)&&num>=lo&&num<=hi});
+    }catch(e){}
+  }
+  const validOnes=attempts.filter(a=>a.valid);
+  if(validOnes.length){
+    const counts={};validOnes.forEach(a=>{counts[a.num]=(counts[a.num]||0)+1});
+    const agreed=Object.entries(counts).find(([,c])=>c>=2);
+    if(agreed)return {value:Number(agreed[0]),raw:agreed[0]};
+    validOnes.sort((a,b)=>b.confidence-a.confidence);
+    return {value:validOnes[0].num,raw:validOnes[0].raw};
+  }
+  attempts.sort((a,b)=>b.confidence-a.confidence);
+  return {value:null,raw:attempts[0]?.raw||''};
+}
 async function readRowingCoachPhotosV137(files,onProgress){
   const out=[];
   for(let i=0;i<files.length;i++){
@@ -2721,25 +2748,22 @@ async function readRowingCoachPhotosV137(files,onProgress){
       // (or digit+colon) whitelist. A whole-card single pass reads these as garbage ("eres",
       // "3 500 776."); isolating each number this way reads them correctly and removes any
       // ambiguity about which number is which, since only one can appear in each crop.
-      const [paceTxt,distTxt,spmTxt,avgTxt]=await Promise.all([
+      const [paceTxt,distEns,spmEns,avgTxt]=await Promise.all([
         v252OcrDigits(img,0,0.86,0.31,0.41,true),   // top "M:SS" instant pace
-        v252OcrDigits(img,0.35,1.0,0.415,0.485,false), // metros (right side of the COG°/metros row)
-        v252OcrDigits(img,0,0.35,0.485,0.550,false),   // strokes/min (left side of its row)
+        v260OcrDigitsEnsemble(img,0.35,1.0,0.415,0.485,50,5000), // metros (right side of the COG°/metros row)
+        v260OcrDigitsEnsemble(img,0,0.35,0.485,0.550,12,45),     // strokes/min (left side of its row)
         v252OcrDigits(img,0,0.86,0.550,0.650,true)     // avg "M:SS" pace
       ]);
       const paceTopSec=v253ParsePaceDigits(paceTxt),paceAvgSec=v253ParsePaceDigits(avgTxt);
-      const distRaw=(distTxt.match(/\d/g)||[]).join(''),spmRaw=(spmTxt.match(/\d/g)||[]).join('');
-      const dist=Number(distRaw),spm=Number(spmRaw);
       const pace_500_seconds=paceAvgSec!=null?paceAvgSec:paceTopSec;
-      const distance_m=(Number.isFinite(dist)&&dist>=50&&dist<=5000)?dist:null;
-      const average_spm=(Number.isFinite(spm)&&spm>=12&&spm<=45)?spm:null;
+      const distance_m=distEns.value,average_spm=spmEns.value;
       const duration_seconds=(pace_500_seconds&&distance_m)?Math.round(pace_500_seconds*distance_m/500):null;
       // Note what was rejected (out-of-range digit strings — an inserted or dropped digit, not a
       // recoverable value) so the UI can show it as a hint instead of silently losing it.
       result={duration_seconds,distance_m,average_spm,pace_500_seconds,
-        distance_raw:(distance_m==null&&distRaw)?distRaw:null,
-        spm_raw:(average_spm==null&&spmRaw)?spmRaw:null,
-        ocr_text:`pace:${paceTxt}|dist:${distTxt}|spm:${spmTxt}|avg:${avgTxt}`};
+        distance_raw:(distance_m==null&&distEns.raw)?distEns.raw:null,
+        spm_raw:(average_spm==null&&spmEns.raw)?spmEns.raw:null,
+        ocr_text:`pace:${paceTxt}|dist:${distEns.raw}(${distEns.value??'✗'})|spm:${spmEns.raw}(${spmEns.value??'✗'})|avg:${avgTxt}`};
     }catch(e){}
     // Fall back to a single whole-card OCR pass, but ONLY for pace/duration — that's the one
     // field this actually recovers reliably (when the tight crop's digit+colon read comes back
