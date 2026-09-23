@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="254";
+const APP_VERSION="256";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2615,7 +2615,7 @@ let seaDynamicSeriesCounterV137=0;
 let seaDeletedExistingIdsV188=new Set();
 function seaSeriesRowHtmlV137(bi,series,removable=false){
   const key=`${bi}_${seaDynamicSeriesCounterV137++}`,fixedTime=series.fixedTimeSeconds!=null?seaSeriesTimeText(series.fixedTimeSeconds):'',fixedMeters=series.fixedDistanceM!=null?String(series.fixedDistanceM):'';
-  return `<tr class="seaSeriesInputRowV137" data-block-index="${bi}" data-series-label="${esc(series.label||'Serie')}"><td class="seriesName" data-label="Serie"><span class="seaSeriesLabelV137">${esc(series.label||'Serie')}</span><button type="button" class="seaRemoveSeriesV137 dangerBtn" style="margin-top:6px;padding:5px 8px">Eliminar serie</button></td><td data-label="Tiempo"><input id="v137SeaTime_${key}" inputmode="numeric" enterkeyhint="next" autocomplete="off" class="seaTimeInput seaTimeV137" value="${esc(fixedTime)}" ${series.fixedTimeSeconds!=null?'readonly':''} placeholder="mm:ss"></td><td data-label="Metros"><input id="v137SeaMeters_${key}" class="seaMetersV137" type="number" min="0" value="${esc(fixedMeters)}" ${series.fixedDistanceM!=null?'readonly':''} placeholder="m"></td><td data-label="PPM"><input id="v137SeaSpm_${key}" class="seaSpmV137" type="number" min="10" max="50" placeholder="${series.targetSpm?`Objetivo ${series.targetSpm}`:'ppm'}"></td><td data-label="Ritmo /500"><input id="v137SeaPace_${key}" class="seaAutoPace seaPaceV137" readonly placeholder="Automático"></td><td data-label="Nota de la serie"><input id="v137SeaNote_${key}" class="seaSeriesNoteV308" placeholder="Nota de esta serie (opcional)"></td></tr>`;
+  return `<tr class="seaSeriesInputRowV137" data-block-index="${bi}" data-series-label="${esc(series.label||'Serie')}"><td class="seriesName" data-label="Serie"><span class="seaSeriesLabelV137">${esc(series.label||'Serie')}</span><button type="button" class="seaRemoveSeriesV137 dangerBtn" style="margin-top:6px;padding:5px 8px">Eliminar serie</button></td><td data-label="Tiempo"><input id="v137SeaTime_${key}" inputmode="numeric" enterkeyhint="next" autocomplete="off" class="seaTimeInput seaTimeV137" value="${esc(fixedTime)}" placeholder="mm:ss"></td><td data-label="Metros"><input id="v137SeaMeters_${key}" class="seaMetersV137" type="number" min="0" value="${esc(fixedMeters)}" placeholder="m"></td><td data-label="PPM"><input id="v137SeaSpm_${key}" class="seaSpmV137" type="number" min="10" max="50" placeholder="${series.targetSpm?`Objetivo ${series.targetSpm}`:'ppm'}"></td><td data-label="Ritmo /500"><input id="v137SeaPace_${key}" class="seaAutoPace seaPaceV137" readonly placeholder="Automático"></td><td data-label="Nota de la serie"><input id="v137SeaNote_${key}" class="seaSeriesNoteV308" placeholder="Nota de esta serie (opcional)"></td></tr>`;
 }
 function updateSeaRowPaceV137(row){const t=row?.querySelector('.seaTimeV137'),m=row?.querySelector('.seaMetersV137'),p=row?.querySelector('.seaPaceV137');if(!t||!m||!p)return;const seconds=timeTextToSeconds(t.value),meters=Number(m.value);p.value=(seconds!=null&&seconds>0&&meters>0)?fmtMetricSeconds(seconds*500/meters):''}
 function bindSeaSeriesRowV137(row){
@@ -2678,10 +2678,23 @@ function v252CropCanvas(img,x0f,x1f,y0f,y1f,scale){
   ctx.drawImage(img,x0,y0,w,h,0,0,w*scale,h*scale);
   return canvas;
 }
+async function v252OcrDigitsRaw(canvas,whitelist){
+  const opts={tessedit_pageseg_mode:7};
+  if(whitelist)opts.tessedit_char_whitelist=whitelist;
+  const r=await Tesseract.recognize(canvas,'eng',opts);
+  return r?.data?.text||'';
+}
 async function v252OcrDigits(img,x0f,x1f,y0f,y1f,withColon){
   const canvas=v252CropCanvas(img,x0f,x1f,y0f,y1f,3);
-  const r=await Tesseract.recognize(canvas,'eng',{tessedit_pageseg_mode:7,tessedit_char_whitelist:withColon?'0123456789:':'0123456789'});
-  return r?.data?.text||'';
+  const txt=await v252OcrDigitsRaw(canvas,withColon?'0123456789:':'0123456789');
+  // A colon-restricted whitelist sometimes yields NOTHING at all (Tesseract can reject the whole
+  // line rather than just drop the colon). If that happens for a pace crop, retry the exact same
+  // crop with no whitelist at all — a looser pass at least gets the digits back, even if other
+  // characters ride along; v253ParsePaceDigits below strips anything that isn't 0-9/":" anyway.
+  if(withColon&&!/\d/.test(txt)){
+    try{const retry=await v252OcrDigitsRaw(canvas,null);if(/\d/.test(retry))return retry}catch(e){}
+  }
+  return txt;
 }
 async function readRowingCoachPhotosV137(files,onProgress){
   const out=[];
@@ -2712,10 +2725,22 @@ async function readRowingCoachPhotosV137(files,onProgress){
       const duration_seconds=(pace_500_seconds&&distance_m)?Math.round(pace_500_seconds*distance_m/500):null;
       result={duration_seconds,distance_m,average_spm,pace_500_seconds,ocr_text:`pace:${paceTxt}|dist:${distTxt}|spm:${spmTxt}|avg:${avgTxt}`};
     }catch(e){}
-    // Fall back to a single whole-card OCR pass only if the precise crop path failed outright,
-    // or came back with nothing at all.
-    if(!result||(!result.distance_m&&!result.average_spm&&!result.pace_500_seconds)){
-      try{const r=await Tesseract.recognize(files[i],'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});const fb=parseRowingCoachOcrV137(r?.data?.text||'');result=result?{...fb,...Object.fromEntries(Object.entries(result).filter(([k,v])=>v!=null))}:fb}catch(e){}
+    // Fall back to a single whole-card OCR pass whenever the precise crop path left ANY field
+    // blank — not only when it failed completely. This is what actually recovers the pace/avg
+    // figure when the tight crop's digit+colon read comes back empty (distance and spm can
+    // succeed independently of pace, so don't wait for a total failure to try again).
+    if(!result||result.distance_m==null||result.average_spm==null||result.pace_500_seconds==null){
+      try{
+        const r=await Tesseract.recognize(files[i],'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});
+        const fb=parseRowingCoachOcrV137(r?.data?.text||'');
+        if(!result)result=fb;
+        else{
+          if(result.distance_m==null&&fb.distance_m!=null)result.distance_m=fb.distance_m;
+          if(result.average_spm==null&&fb.average_spm!=null)result.average_spm=fb.average_spm;
+          if(result.pace_500_seconds==null&&fb.pace_500_seconds!=null)result.pace_500_seconds=fb.pace_500_seconds;
+          if(result.pace_500_seconds!=null&&result.distance_m!=null)result.duration_seconds=Math.round(result.pace_500_seconds*result.distance_m/500);
+        }
+      }catch(e){}
     }
     out.push(result||{duration_seconds:null,distance_m:null,average_spm:null,pace_500_seconds:null,ocr_text:''});
   }
@@ -2781,7 +2806,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
     const p=b.prescription||{series:[{label:'Serie 1',fixedTimeSeconds:null,fixedDistanceM:null,targetSpm:null}]};
     const rows=p.series.map(series=>seaSeriesRowHtmlV137(bi,series,false)).join('');
     const allTimed=p.series.every(x=>x.fixedTimeSeconds!=null),allDistance=p.series.every(x=>x.fixedDistanceM!=null);
-    const fixedHint=b.custom?`Bloque añadido como realizado. Introduce exactamente lo que se hizo.`:allTimed?`Cada tramo aparece por separado. Introduce metros y PPM; si el tiempo real fue distinto, pulsa “Adaptar bloque realizado”.`:allDistance?`La distancia viene de la planificación. Si cambió en el agua, pulsa “Adaptar bloque realizado”.`:`Introduce tiempo, metros y PPM; el ritmo /500 m se calcula automáticamente.`;
+    const fixedHint=b.custom?`Bloque añadido como realizado. Introduce exactamente lo que se hizo.`:allTimed?`Cada tramo aparece por separado. Tiempo y metros vienen de la planificación pero puedes editarlos directamente si lo real fue distinto.`:allDistance?`La distancia viene de la planificación pero puedes editarla directamente si cambió en el agua.`:`Introduce tiempo, metros y PPM; el ritmo /500 m se calcula automáticamente.`;
     const blockNotePrefill=existingResults.find(x=>x.exercise_name&&x.exercise_name.startsWith(b.label))?.block_notes||'';
     return `<section class="card staffDayCard mar seaResultBlock" data-block-index="${bi}"><span class="tag">${bi+1}</span><h3 class="seaBlockTitleV186">${esc(b.label)}</h3><p class="muted seaBlockValueV186">${esc(b.value)}</p><p class="muted seaAdjustNoteV186" data-block-index="${bi}"><b>${esc(fixedHint)}</b></p><div class="tableWrap"><table class="seaSeriesTable"><thead><tr><th>Serie</th><th>Tiempo</th><th>Metros</th><th>PPM</th><th>Ritmo /500 m</th><th>Nota de la serie</th></tr></thead><tbody class="seaSeriesBodyV137" data-block-index="${bi}">${rows}</tbody></table></div><label>Nota del bloque<textarea class="seaBlockNoteV308" data-block-index="${bi}" rows="2" placeholder="Nota de este bloque, ej. viento, técnica del grupo… (opcional)">${esc(blockNotePrefill)}</textarea></label><div class="actions"><button type="button" class="addSeaSeriesV137" data-block-index="${bi}">+ Añadir serie</button>${b.custom?'':`<button type="button" class="adjustSeaBlockV186" data-block-index="${bi}">Editar bloque</button>`}<button type="button" class="removeSeaBlockV188 dangerBtn" data-block-index="${bi}">Eliminar bloque</button></div></section>`;
   }
