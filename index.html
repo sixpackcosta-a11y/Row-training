@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="253";
+const APP_VERSION="254";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2631,6 +2631,20 @@ function v250HasOcrValue(v){return v!=null&&v!==''&&Number.isFinite(Number(v))}
 function fillSeaSeriesRowV137(row,series={}){if(!row)return;const t=row.querySelector('.seaTimeV137'),m=row.querySelector('.seaMetersV137'),s=row.querySelector('.seaSpmV137');if(t&&v250HasOcrValue(series.duration_seconds))t.value=seaSeriesTimeText(Math.round(Number(series.duration_seconds)));if(m&&v250HasOcrValue(series.distance_m))m.value=String(Math.round(Number(series.distance_m)));if(s&&v250HasOcrValue(series.average_spm))s.value=String(Math.round(Number(series.average_spm)));updateSeaRowPaceV137(row)}
 function seaRowHasEnteredDataV137(t,m,s){if(t?.readOnly)return Boolean(m?.value||s?.value);if(m?.readOnly)return Boolean(t?.value||s?.value);return Boolean(t?.value||m?.value||s?.value)}
 function v252PaceInRange(str){return [...String(str||'').matchAll(/\b(\d{1,2})[:;](\d{2})\b/g)].map(m=>Number(m[1])*60+Number(m[2])).filter(s=>s>=60&&s<=600)}
+function v253ParsePaceDigits(txt){
+  // The colon in a "M:SS" crop is small and thin — Tesseract sometimes drops it even with a
+  // digit+colon whitelist, leaving a bare digit string like "254" instead of "2:54". When that
+  // happens, fall back to reading it positionally: the last two digits are always the seconds.
+  const s=String(txt||'').replace(/[^0-9:]/g,'');
+  const m=s.match(/(\d{1,2}):(\d{2})/);
+  if(m){const sec=Number(m[1])*60+Number(m[2]);if(sec>=60&&sec<=600)return sec}
+  const digits=s.replace(/:/g,'');
+  if(digits.length>=3&&digits.length<=4){
+    const ss=Number(digits.slice(-2)),mm=Number(digits.slice(0,-2)),sec=mm*60+ss;
+    if(ss<60&&sec>=60&&sec<=600)return sec;
+  }
+  return null;
+}
 function parseRowingCoachOcrV137(raw){
   // Whole-card fallback only (used when the precise per-line crop below throws). Rowing Coach
   // cards OCR very poorly in one pass: "35° COG 776m" reads as "3 500 776." (the distance's "m"
@@ -2689,10 +2703,10 @@ async function readRowingCoachPhotosV137(files,onProgress){
         v252OcrDigits(img,0,0.35,0.485,0.550,false),   // strokes/min (left side of its row)
         v252OcrDigits(img,0,0.86,0.550,0.650,true)     // avg "M:SS" pace
       ]);
-      const paceTop=v252PaceInRange(paceTxt),paceAvg=v252PaceInRange(avgTxt);
+      const paceTopSec=v253ParsePaceDigits(paceTxt),paceAvgSec=v253ParsePaceDigits(avgTxt);
       const dist=Number((distTxt.match(/\d/g)||[]).join(''));
       const spm=Number((spmTxt.match(/\d/g)||[]).join(''));
-      const pace_500_seconds=paceAvg.length?paceAvg[paceAvg.length-1]:(paceTop.length?paceTop[0]:null);
+      const pace_500_seconds=paceAvgSec!=null?paceAvgSec:paceTopSec;
       const distance_m=(Number.isFinite(dist)&&dist>=50&&dist<=5000)?dist:null;
       const average_spm=(Number.isFinite(spm)&&spm>=12&&spm<=45)?spm:null;
       const duration_seconds=(pace_500_seconds&&distance_m)?Math.round(pace_500_seconds*distance_m/500):null;
