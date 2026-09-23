@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="262";
+const APP_VERSION="263";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2615,7 +2615,7 @@ let seaDynamicSeriesCounterV137=0;
 let seaDeletedExistingIdsV188=new Set();
 function seaSeriesRowHtmlV137(bi,series,removable=false){
   const key=`${bi}_${seaDynamicSeriesCounterV137++}`,fixedTime=series.fixedTimeSeconds!=null?seaSeriesTimeText(series.fixedTimeSeconds):'',fixedMeters=series.fixedDistanceM!=null?String(series.fixedDistanceM):'';
-  return `<tr class="seaSeriesInputRowV137" data-block-index="${bi}" data-series-label="${esc(series.label||'Serie')}"><td class="seriesName" data-label="Serie"><span class="seaSeriesLabelV137">${esc(series.label||'Serie')}</span><button type="button" class="seaRemoveSeriesV137 dangerBtn" style="margin-top:6px;padding:5px 8px">Eliminar serie</button></td><td data-label="Tiempo"><input id="v137SeaTime_${key}" inputmode="numeric" enterkeyhint="next" autocomplete="off" class="seaTimeInput seaTimeV137" value="${esc(fixedTime)}" placeholder="mm:ss"></td><td data-label="Metros"><input id="v137SeaMeters_${key}" class="seaMetersV137" type="number" min="0" value="${esc(fixedMeters)}" placeholder="m"></td><td data-label="PPM"><input id="v137SeaSpm_${key}" class="seaSpmV137" type="number" min="10" max="50" placeholder="${series.targetSpm?`Objetivo ${series.targetSpm}`:'ppm'}"></td><td data-label="Ritmo /500"><input id="v137SeaPace_${key}" class="seaAutoPace seaPaceV137" readonly placeholder="Automático"></td><td data-label="Nota de la serie"><input id="v137SeaNote_${key}" class="seaSeriesNoteV308" placeholder="Nota de esta serie (opcional)"></td></tr>`;
+  return `<tr class="seaSeriesInputRowV137" data-block-index="${bi}" data-series-label="${esc(series.label||'Serie')}" data-default-time="${esc(fixedTime)}" data-default-meters="${esc(fixedMeters)}"><td class="seriesName" data-label="Serie"><span class="seaSeriesLabelV137">${esc(series.label||'Serie')}</span><button type="button" class="seaRemoveSeriesV137 dangerBtn" style="margin-top:6px;padding:5px 8px">Eliminar serie</button></td><td data-label="Tiempo"><input id="v137SeaTime_${key}" inputmode="numeric" enterkeyhint="next" autocomplete="off" class="seaTimeInput seaTimeV137" value="${esc(fixedTime)}" placeholder="mm:ss"></td><td data-label="Metros"><input id="v137SeaMeters_${key}" class="seaMetersV137" type="number" min="0" value="${esc(fixedMeters)}" placeholder="m"></td><td data-label="PPM"><input id="v137SeaSpm_${key}" class="seaSpmV137" type="number" min="10" max="50" placeholder="${series.targetSpm?`Objetivo ${series.targetSpm}`:'ppm'}"></td><td data-label="Ritmo /500"><input id="v137SeaPace_${key}" class="seaAutoPace seaPaceV137" readonly placeholder="Automático"></td><td data-label="Nota de la serie"><input id="v137SeaNote_${key}" class="seaSeriesNoteV308" placeholder="Nota de esta serie (opcional)"></td></tr>`;
 }
 function updateSeaRowPaceV137(row){const t=row?.querySelector('.seaTimeV137'),m=row?.querySelector('.seaMetersV137'),p=row?.querySelector('.seaPaceV137');if(!t||!m||!p)return;const seconds=timeTextToSeconds(t.value),meters=Number(m.value);p.value=(seconds!=null&&seconds>0&&meters>0)?fmtMetricSeconds(seconds*500/meters):''}
 function bindSeaSeriesRowV137(row){
@@ -2881,7 +2881,14 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
         if(!row.dataset.v190Target)row.dataset.v190Target=`t${Date.now()}_${order}_${Math.random().toString(36).slice(2,7)}`;
         const time=row.querySelector('.seaTimeV137'),meters=row.querySelector('.seaMetersV137'),spm=row.querySelector('.seaSpmV137');
         const expected=time?.value?timeTextToSeconds(time.value):null,label=row.dataset.seriesLabel||`Serie ${ri+1}`;
-        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,existing:Boolean(row.dataset.existingId),hasData:Boolean(meters?.value||spm?.value||(time&&!time.readOnly&&time.value)),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
+        // Tiempo/Metros come prefilled with the PLANNED value (e.g. "750" for a "3×750 m" block)
+        // and stay that way whether or not the coach has actually entered a real result — since
+        // v256 they're editable but still start with that default. Comparing against the value
+        // this row was rendered with (not just truthiness) is what tells "still showing the plan"
+        // apart from "already has a real result", so a batch of fresh photos gets suggested here.
+        const timeIsReal=Boolean(time&&time.value&&time.value!==(row.dataset.defaultTime||'')),
+              metersIsReal=Boolean(meters&&meters.value&&meters.value!==(row.dataset.defaultMeters||''));
+        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,existing:Boolean(row.dataset.existingId),hasData:Boolean(timeIsReal||metersIsReal||spm?.value),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
       });
     });
     return out;
@@ -2940,13 +2947,25 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
     }
     return mapping;
   }
+  function seaOpenPhotoLightboxV262(src){
+    let overlay=document.getElementById('seaPhotoLightboxV262');
+    if(!overlay){
+      overlay=document.createElement('div');overlay.id='seaPhotoLightboxV262';
+      overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out';
+      overlay.innerHTML='<img id="seaPhotoLightboxImgV262" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.5)">';
+      overlay.onclick=()=>overlay.remove();
+      document.body.appendChild(overlay);
+    }
+    overlay.querySelector('#seaPhotoLightboxImgV262').src=src;
+  }
+  window.seaOpenPhotoLightboxV262=seaOpenPhotoLightboxV262;
   function showRowingCoachPhotoMapV258(detected,files){
     const targets=seaVisibleTargetsV191();
     if(!targets.length){photoStatus.innerHTML='<div class="info">No quedan series visibles a las que asignar las capturas. Añade una serie o bloque si hace falta.</div>';return}
     const auto=seaAutoMapPhotosV258(detected,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
     const rowsHtml=detected.map((s,i)=>{
-      const f=files[i],debugLine=`${esc(s.ocr_text||'(vacío)')} → dist=${s.distance_m??'–'} spm=${s.average_spm??'–'} ritmo=${s.pace_500_seconds??'–'}`;
-      return `<div class="last seaPhotoMapRowV258" data-index="${i}" style="padding:12px 0"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="display:flex;gap:8px;align-items:center;flex-shrink:0">${f?`<img src="${URL.createObjectURL(f)}" alt="Captura ${i+1}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0">`:''}<b>Captura ${i+1}</b></div><div style="flex:1;min-width:220px"><div class="muted"><small>${s.duration_seconds?fmtMetricSeconds(s.duration_seconds):'sin tiempo'} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm</small></div><details style="margin:4px 0"><summary style="cursor:pointer;color:#8a94a6;font-size:11px">Detalle técnico</summary><div class="muted" style="font-family:monospace;font-size:11px;word-break:break-all;margin-top:4px">${debugLine}</div></details><label style="display:block;margin-top:4px">Asignar a<select class="seaPhotoTargetV258" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div></div></div>`;
+      const f=files[i],debugLine=`${esc(s.ocr_text||'(vacío)')} → dist=${s.distance_m??'–'} spm=${s.average_spm??'–'} ritmo=${s.pace_500_seconds??'–'}`,thumbSrc=f?URL.createObjectURL(f):'';
+      return `<div class="last seaPhotoMapRowV258" data-index="${i}" style="padding:12px 0"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="display:flex;gap:8px;align-items:center;flex-shrink:0">${f?`<img src="${thumbSrc}" alt="Captura ${i+1}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:zoom-in" onclick="seaOpenPhotoLightboxV262('${thumbSrc}')">`:''}<b>Captura ${i+1}</b></div><div style="flex:1;min-width:220px"><div class="muted"><small>${s.duration_seconds?fmtMetricSeconds(s.duration_seconds):'sin tiempo'} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm</small></div><details style="margin:4px 0"><summary style="cursor:pointer;color:#8a94a6;font-size:11px">Detalle técnico</summary><div class="muted" style="font-family:monospace;font-size:11px;word-break:break-all;margin-top:4px">${debugLine}</div></details><label style="display:block;margin-top:4px">Asignar a<select class="seaPhotoTargetV258" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div></div></div>`;
     }).join('');
     photoStatus.innerHTML=`<div class="info">Asignación sugerida por orden y duración. Cambia el destino de cualquier captura antes de aplicar.</div><div id="seaPhotoMapRowsV258">${rowsHtml}</div><div class="actions"><button type="button" id="seaApplyPhotoMapV258" class="primary">Aplicar asignación</button><button type="button" id="seaCancelPhotoMapV258">Cancelar</button></div>`;
     photoStatus.querySelectorAll('.seaPhotoMapRowV258').forEach((row,i)=>{const sel=row.querySelector('.seaPhotoTargetV258');if(sel)sel.value=auto[i]||''});
@@ -2962,7 +2981,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   }
   photoInput.onchange=async()=>{
     seaPhotoFilesV137=[...(photoInput.files||[])];
-    photoPreview.innerHTML=seaPhotoFilesV137.map((f,i)=>`<div><img src="${URL.createObjectURL(f)}" alt="Captura Rowing Coach ${i+1}"><small>Captura ${i+1} · ${esc(f.name)}</small></div>`).join('');
+    photoPreview.innerHTML=seaPhotoFilesV137.map((f,i)=>{const src=URL.createObjectURL(f);return `<div><img src="${src}" alt="Captura Rowing Coach ${i+1}" style="cursor:zoom-in" onclick="seaOpenPhotoLightboxV262('${src}')"><small>Captura ${i+1} · ${esc(f.name)}</small></div>`}).join('');
     if(!seaPhotoFilesV137.length){photoStatus.textContent='';return}
     photoInput.disabled=true;
     try{
