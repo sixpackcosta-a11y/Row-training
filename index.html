@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="264";
+const APP_VERSION="265";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4194,7 +4194,47 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
   [...layer.querySelectorAll('.v154EditSplit')].forEach(v193WireSplitRow);
   layer.querySelector('#v193AddSplit').onclick=()=>{const wrap=layer.querySelector('#v154Splits'),i=wrap.querySelectorAll('.v154EditSplit').length,row=document.createElement('div');row.className='v154EditSplit';row.dataset.i=String(i);row.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b class="v193SplitTitle">Parcial ${i+1}</b><button type="button" class="v193DeleteSplit">Eliminar parcial</button></div><div class="v154EditGrid"><label>Metros<input class="esDist" inputmode="numeric"></label><label>Tiempo<input class="esTime" inputmode="numeric" placeholder="1000 → 10:00"></label><label>Ritmo /500<input class="esPace" inputmode="numeric" placeholder="2247 → 2:24.7"></label><label>PPM<input class="esSpm" inputmode="numeric"></label><label>FC media<input class="esAvg" inputmode="numeric"></label><label>FC máxima<input class="esMax" inputmode="numeric"></label><label>Descanso<input class="esRest" inputmode="numeric"></label></div>`;wrap.appendChild(row);v193WireSplitRow(row);v193RenumberSplits();row.scrollIntoView({behavior:'smooth',block:'center'})};
   [layer.querySelector('#v154Time')].filter(Boolean).forEach(inp=>inp.addEventListener('blur',()=>v158FormatTimeField(inp)));[layer.querySelector('#v154Pace')].filter(Boolean).forEach(inp=>inp.addEventListener('blur',()=>v175FormatPaceField(inp)));
-  const ocrBtn=layer.querySelector('#v174OCR');if(ocrBtn)ocrBtn.onclick=async()=>{const st=layer.querySelector('#v174OCRStatus');ocrBtn.disabled=true;try{st.textContent='Leyendo…';let rows=[];for(const url of (ergoRow._photo_urls||[])){const r=await Tesseract.recognize(url,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}if(!rows.length)throw new Error('No se detectaron filas válidas.');const splitEls=[...layer.querySelectorAll('.v154EditSplit')];let usable=rows;const biggest=rows.slice().sort((a,b)=>(timeTextToSeconds(b.time_text)||0)-(timeTextToSeconds(a.time_text)||0))[0];if(rows.length>splitEls.length&&biggest)usable=rows.filter(x=>x!==biggest);usable.slice(0,splitEls.length).forEach((x,i)=>{const r=splitEls[i];r.querySelector('.esDist').value=x.distance_m||'';r.querySelector('.esTime').value=x.time_text||'';r.querySelector('.esPace').value=x.pace_text||'';r.querySelector('.esSpm').value=x.spm||'';r.querySelector('.esAvg').value=x.avg_hr||'';r.querySelector('.esMax').value=x.max_hr||''});if(biggest&&rows.length>splitEls.length){layer.querySelector('#v154Dist').value=biggest.distance_m||'';layer.querySelector('#v154Time').value=biggest.time_text||'';layer.querySelector('#v154Pace').value=biggest.pace_text||'';layer.querySelector('#v154Spm').value=biggest.spm||''}st.textContent=`${rows.length} fila${rows.length===1?'':'s'} detectada${rows.length===1?'':'s'}. Revísalas antes de guardar.`}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
+  // v265: misma idea que en las capturas de Rowing Coach — asignación sugerida (no volcado ciego
+  // a la fila N-ésima) que se puede reasignar antes de aplicar, más lo que se leyó realmente
+  // visible en pantalla en vez de perderse tras un simple "X filas detectadas".
+  function v265ErgoOcrTargets(){
+    const out=[{id:'main',name:'Resultado principal',row:null}];
+    [...layer.querySelectorAll('.v154EditSplit')].forEach((row,i)=>out.push({id:`split${i}`,name:`Parcial ${i+1}`,row}));
+    return out;
+  }
+  function v265FillErgoTarget(target,x){
+    const set=(sel,v)=>{const el=(target.row||layer).querySelector(target.row?sel:`#v154${sel==='.esDist'?'Dist':sel==='.esTime'?'Time':sel==='.esPace'?'Pace':sel==='.esSpm'?'Spm':sel==='.esAvg'?'Avg':'Max'}`);if(el)el.value=v||''};
+    set('.esDist',x.distance_m);set('.esTime',x.time_text);set('.esPace',x.pace_text);set('.esSpm',x.spm);set('.esAvg',x.avg_hr);set('.esMax',x.max_hr);
+  }
+  function v265AutoMapErgoRows(rows,targets){
+    const mapping=new Array(rows.length).fill('');if(!rows.length)return mapping;
+    const scored=rows.map((r,i)=>({i,score:(timeTextToSeconds(r.time_text)||0)+(Number(r.distance_m)||0)/10})).sort((a,b)=>b.score-a.score);
+    const splitSlots=targets.length-1,looksLikeSummary=rows.length>splitSlots;
+    const used=new Set();
+    if(looksLikeSummary){mapping[scored[0].i]='main';used.add(scored[0].i)}
+    let splitPos=0;
+    rows.forEach((r,i)=>{if(used.has(i))return;const target=targets[1+splitPos];if(target){mapping[i]=target.id;splitPos++}});
+    return mapping;
+  }
+  function v265ShowErgoOcrMap(rows,st){
+    const targets=v265ErgoOcrTargets(),auto=v265AutoMapErgoRows(rows,targets),options=t=>`<option value="${t.id}">${esc(t.name)}</option>`;
+    const rowsHtml=rows.map((r,i)=>{
+      const debugLine=`dist=${r.distance_m??'–'} tiempo=${r.time_text||'–'} ritmo=${r.pace_text||'–'} ppm=${r.spm||'–'} fc media=${r.avg_hr||'–'} fc máx=${r.max_hr||'–'}`;
+      return `<div class="last v265ErgoMapRow" data-index="${i}" style="padding:10px 0"><div><b>Fila ${i+1}</b></div><div class="muted"><small>${esc(debugLine)}</small></div><label style="display:block;margin-top:4px">Asignar a<select class="v265ErgoTarget" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div>`;
+    }).join('');
+    st.innerHTML=`<div class="info">Asignación sugerida. Cambia el destino de cualquier fila antes de aplicar.</div><div>${rowsHtml}</div><div class="actions"><button type="button" id="v265ApplyErgoMap" class="primary">Aplicar asignación</button><button type="button" id="v265CancelErgoMap">Cancelar</button></div>`;
+    st.querySelectorAll('.v265ErgoMapRow').forEach((row,i)=>{const sel=row.querySelector('.v265ErgoTarget');if(sel)sel.value=auto[i]||''});
+    st.querySelector('#v265CancelErgoMap').onclick=()=>{st.innerHTML=''};
+    st.querySelector('#v265ApplyErgoMap').onclick=()=>{
+      const rowsEl=[...st.querySelectorAll('.v265ErgoMapRow')],chosen=rowsEl.map(r=>r.querySelector('.v265ErgoTarget')?.value||'').filter(Boolean);
+      if(new Set(chosen).size!==chosen.length)return alert('Hay dos filas asignadas al mismo destino. Elige destinos distintos.');
+      let applied=0;const currentTargets=v265ErgoOcrTargets();
+      rowsEl.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.v265ErgoTarget')?.value;if(!targetId)return;const target=currentTargets.find(t=>t.id===targetId);if(!target)return;v265FillErgoTarget(target,rows[i]);applied++});
+      if(!applied)return alert('Elige al menos una fila para asignar.');
+      st.innerHTML=`<span class="ocrDetectedV124">${applied} fila${applied===1?'':'s'} aplicada${applied===1?'':'s'}.</span> <small class="muted">Revisa los campos antes de guardar.</small>`;
+    };
+  }
+  const ocrBtn=layer.querySelector('#v174OCR');if(ocrBtn)ocrBtn.onclick=async()=>{const st=layer.querySelector('#v174OCRStatus');ocrBtn.disabled=true;try{st.textContent='Leyendo…';let rows=[];for(const url of (ergoRow._photo_urls||[])){const r=await Tesseract.recognize(url,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}if(!rows.length)throw new Error('No se detectaron filas válidas.');v265ShowErgoOcrMap(rows,st)}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
   layer.querySelector('#v154Save').onclick=async()=>{
     const b=layer.querySelector('#v154Save');b.disabled=true;b.textContent='Guardando…';
     try{
