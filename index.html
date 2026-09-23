@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="256";
+const APP_VERSION="257";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2682,19 +2682,25 @@ async function v252OcrDigitsRaw(canvas,whitelist){
   const opts={tessedit_pageseg_mode:7};
   if(whitelist)opts.tessedit_char_whitelist=whitelist;
   const r=await Tesseract.recognize(canvas,'eng',opts);
-  return r?.data?.text||'';
+  return {text:r?.data?.text||'',confidence:Number.isFinite(r?.data?.confidence)?r.data.confidence:0};
 }
+// Minimum Tesseract confidence (0–100) to trust a cropped digit reading. Below this, the crop is
+// treated as unread (empty) rather than handing back a low-confidence guess: a WRONG number that
+// looks filled-in is worse than a blank field, because the coach has no reason to double-check a
+// field that already has something in it — and every field is directly editable now anyway.
+const V256_MIN_OCR_CONFIDENCE=55;
 async function v252OcrDigits(img,x0f,x1f,y0f,y1f,withColon){
   const canvas=v252CropCanvas(img,x0f,x1f,y0f,y1f,3);
-  const txt=await v252OcrDigitsRaw(canvas,withColon?'0123456789:':'0123456789');
+  let {text,confidence}=await v252OcrDigitsRaw(canvas,withColon?'0123456789:':'0123456789');
   // A colon-restricted whitelist sometimes yields NOTHING at all (Tesseract can reject the whole
   // line rather than just drop the colon). If that happens for a pace crop, retry the exact same
   // crop with no whitelist at all — a looser pass at least gets the digits back, even if other
   // characters ride along; v253ParsePaceDigits below strips anything that isn't 0-9/":" anyway.
-  if(withColon&&!/\d/.test(txt)){
-    try{const retry=await v252OcrDigitsRaw(canvas,null);if(/\d/.test(retry))return retry}catch(e){}
+  if(withColon&&!/\d/.test(text)){
+    try{const retry=await v252OcrDigitsRaw(canvas,null);if(/\d/.test(retry.text)){text=retry.text;confidence=retry.confidence}}catch(e){}
   }
-  return txt;
+  if(confidence<V256_MIN_OCR_CONFIDENCE)return '';
+  return text;
 }
 async function readRowingCoachPhotosV137(files,onProgress){
   const out=[];
