@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="263";
+const APP_VERSION="264";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2925,7 +2925,21 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   // reasignar cada una a mano antes de aplicar. Antes se volcaba directo a la fila N-ésima del DOM,
   // así que una captura de más/menos, o subida en otro orden, desplazaba todas las siguientes.
   function seaAutoMapPhotosV258(detected,targets){
-    const used=new Set(),mapping=new Array(detected.length).fill(''),available=()=>targets.filter(t=>!used.has(t.id)&&!t.existing&&!t.hasData);
+    const used=new Set(),mapping=new Array(detected.length).fill('');
+    // Prefer a target with no result at all yet; but after several rounds of re-testing the same
+    // session, EVERY series can already have a saved result ("existing") — excluding those
+    // outright left nothing to suggest at all. Re-uploading photos to refresh an already-saved
+    // series is a normal thing to do here, so fall back to "existing" targets rather than
+    // proposing nothing; still never touch a target with unsaved data already typed into it.
+    const available=()=>{
+      const fresh=targets.filter(t=>!used.has(t.id)&&!t.existing&&!t.hasData);if(fresh.length)return fresh;
+      // Existing rows already have real (previously-saved) data in every field, so filtering by
+      // hasData here would exclude them too — same dead end as before. At this fallback tier, any
+      // not-yet-claimed target is fair game as a DEFAULT suggestion; the coach still sees and can
+      // change every assignment before anything is written.
+      const notUsed=targets.filter(t=>!used.has(t.id));if(notUsed.length)return notUsed;
+      return [];
+    };
     detected.forEach((s,i)=>{
       const dur=Number(s.duration_seconds)||null;if(!dur)return;
       const timed=available().filter(t=>Number.isFinite(t.expected));if(!timed.length)return;
