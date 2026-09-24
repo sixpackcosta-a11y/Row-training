@@ -1937,7 +1937,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="265";
+const APP_VERSION="266";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2241,9 +2241,13 @@ enter.onclick=async()=>{
   startApp();
 };
 let authResolvedV96=false;
+// v266: si getSession() no responde (mala conexión, Supabase lento, token atascado),
+// no dejar la app colgada en "Comprobando sesión…" para siempre: pasar a login tras 10s.
+setTimeout(()=>{if(!authResolvedV96){authResolvedV96=true;try{openLogin()}catch(e){}}},10000);
 (async function resolveInitialAuthV96(){
   try{
     const {data,error}=await sb.auth.getSession();
+    if(authResolvedV96)return;
     authResolvedV96=true;
     if(error)throw error;
     if(data?.session){ if(PASSWORD_RECOVERY_HINT) openResetPassword(); else await startApp(); return; }
@@ -2251,7 +2255,7 @@ let authResolvedV96=false;
     if(q.get("registro")==="1") openRegister();
     else if(q.get("guia")==="1") openPublicGuide();
     else openLogin();
-  }catch(e){authResolvedV96=true;openLogin();}
+  }catch(e){if(authResolvedV96)return;authResolvedV96=true;openLogin();}
 })();
 
 function v300NavItems(){
