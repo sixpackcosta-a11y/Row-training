@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="277";
+const APP_VERSION="278";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6381,6 +6381,10 @@ async function coachSeaResultsView(){
 }
 
 function v214ZoneFromPlan(plan){
+  // v278: una sesión de TEST (esfuerzo máximo) no se comprueba contra ninguna zona de FC, aunque su
+  // calentamiento mencione una zona (p.ej. "10' en UT2 antes del test"): esa mención no es la zona
+  // objetivo de la pieza fuerte, y avisar de "fuera de UT2" en un test a tope no tiene sentido.
+  if(/\btest\b/i.test(String(plan?.title||'')))return null;
   const t=`${plan?.title||''} ${plan?.content||''}`.toUpperCase();
   if(/\bUT2\b/.test(t))return 'ut2';
   if(/\bUT1\b/.test(t))return 'ut1';
