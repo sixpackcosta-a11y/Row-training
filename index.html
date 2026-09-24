@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="270";
+const APP_VERSION="273";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5035,6 +5035,23 @@ async function profileView(){
   if(tab!=="perfil") return; // evita carreras de render al cambiar rápido de pestaña
   const m=mdata?.[0]||{};
 
+  // v271: W/kg del último test ERGO del propio remero, reutilizando v309FindLatestTestPower/v309WattsFromPace500
+  // (misma lógica que ya usa el entrenador en Análisis). Solo lectura aquí, no hace falta que el remero toque nada.
+  let v271TestWkg=null,v271TestPower=null;
+  try{
+    const [sessRes,c2Res,workRes]=await Promise.all([
+      sb.from('training_sessions').select('id,title').ilike('title','%test%'),
+      sb.from('concept2_results').select('*').eq('user_id',currentUser.id),
+      sb.from('workout_logs').select('id,training_session_id,session_date,user_id').eq('user_id',currentUser.id)
+    ]);
+    const workoutIds=(workRes.data||[]).map(w=>w.id);
+    const ergoRes=workoutIds.length?await sb.from('ergo_results').select('*').in('workout_id',workoutIds):{data:[]};
+    if(tab!=="perfil")return;
+    v271TestPower=v309FindLatestTestPower(currentUser.id,sessRes.data||[],c2Res.data||[],ergoRes.data||[],workRes.data||[]);
+    const testWatts=v271TestPower?v309WattsFromPace500(v271TestPower.pace):null;
+    v271TestWkg=(testWatts&&m.weight_kg)?(testWatts/m.weight_kg):null;
+  }catch(e){console.warn('No se pudo calcular W/kg del test',e)}
+
   const savedAge=localStorage.getItem("remo_age")||"";
   const savedSex=localStorage.getItem("remo_sex")||"";
   const savedTrained=localStorage.getItem("remo_trained")==="1";
@@ -5052,6 +5069,7 @@ async function profileView(){
     <label>${v311T('peso_kg')}<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
     <label>${v311T('fc_reposo')}<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
   </div>
+  <div class="info"><b>W/kg (último test ERGO):</b> ${v271TestWkg!=null?`${v271TestWkg.toFixed(2)} W/kg${v271TestPower?` · ${shortDateES(v271TestPower.date)}`:''}`:(m.weight_kg?'Aún no tienes ningún test registrado.':'Registra tu peso para poder calcularlo.')}</div>
 
   <div class="card" style="background:#f8fafc">
     <h3>${v311T('fc_maxima')}</h3>
@@ -6479,8 +6497,67 @@ async function results(){
     const rowHtml=(r,i)=>{const totalSec=r.testPower.distance?r.testPower.pace*r.testPower.distance/500:null;
       return `<div class="last" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${totalSec?`${secondsToTime(totalSec)} total · `:''}${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''} · ${shortDateES(r.testPower.date)}</small></div><div style="text-align:right;font-weight:800">${mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)} W/kg`:'—'):secondsToTime(r.testPower.pace)+'/500m'}</div></div>`;
     };
-    box.innerHTML=`<div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie con peso registrado para calcular W/kg todavía.</div>'}</div>`;
+    box.innerHTML=`<div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" id="v272ExportRanking">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie con peso registrado para calcular W/kg todavía.</div>'}</div>`;
     box.querySelectorAll('.v269RankBtn').forEach(b=>b.onclick=()=>{v269RankMode=b.dataset.mode;renderComparison()});
+    const exportBtn=box.querySelector('#v272ExportRanking');if(exportBtn)exportBtn.onclick=()=>v272ExportRankingImage(list,mode);
+  }
+  // v272: dibuja el ranking en un <canvas> propio (sin depender de librerías externas) y lo comparte/descarga
+  // como PNG, para poder pasarlo por WhatsApp u otro sitio tal cual se ve en la app.
+  // v273: cabecera con logo del club, nombre del equipo y fecha bien visibles.
+  function v273LoadImage(src){return new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src})}
+  function v273FullDateES(ds){const [y,m,d]=String(ds||'').split('-').map(Number);if(!y||!m||!d)return '';const dt=new Date(y,m-1,d);return dt.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}
+  async function v272ExportRankingImage(list,mode){
+    if(!list.length)return;
+    const logo=await v273LoadImage('assets/club-pedregalejo.png');
+    const W=900,rowH=64,bannerH=110,subH=56,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
+    const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#07162f';ctx.fillRect(0,0,W,bannerH);
+    let textX=28;
+    if(logo){
+      const logoSize=76,logoY=(bannerH-logoSize)/2;
+      ctx.save();ctx.beginPath();ctx.arc(28+logoSize/2,bannerH/2,logoSize/2,0,Math.PI*2);ctx.closePath();ctx.clip();
+      ctx.drawImage(logo,28,logoY,logoSize,logoSize);ctx.restore();
+      textX=28+logoSize+16;
+    }
+    ctx.fillStyle='#ffffff';ctx.font='700 26px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('Club de Remo Pedregalejo',textX,44);
+    ctx.font='400 18px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('Row Training · Ranking test ERGO',textX,70);
+    ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.globalAlpha=.85;
+    ctx.fillText(v273FullDateES(localISODate()),textX,92);ctx.globalAlpha=1;
+    ctx.fillStyle='#f4f7fb';ctx.fillRect(0,bannerH,W,subH);
+    ctx.fillStyle='#0b1b35';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+34);
+    ctx.fillStyle='#475569';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.textAlign='right';ctx.fillText(mode==='wkg'?'Ordenado por W/kg':'Ordenado por resultado',W-28,bannerH+34);ctx.textAlign='left';
+    ctx.fillStyle='#64748b';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('Puesto',28,headerH-14);ctx.fillText('Remero',110,headerH-14);ctx.fillText('Detalle',480,headerH-14);ctx.fillText(mode==='wkg'?'W/kg':'Ritmo/500',W-160,headerH-14);
+    list.forEach((r,i)=>{
+      const y=headerH+i*rowH;
+      if(i%2===1){ctx.fillStyle='#f6f9fc';ctx.fillRect(0,y,W,rowH)}
+      const totalSec=r.testPower.distance?r.testPower.pace*r.testPower.distance/500:null;
+      ctx.fillStyle='#0b1b35';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      ctx.fillText(String(i+1),28,y+38);
+      ctx.fillText(String(r.p.full_name||'Sin nombre').slice(0,26),110,y+38);
+      ctx.fillStyle='#64748b';ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      ctx.fillText(`${totalSec?`${secondsToTime(totalSec)} total · `:''}${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''}`,480,y+30);
+      ctx.fillText(shortDateES(r.testPower.date),480,y+50);
+      ctx.fillStyle='#07162f';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      const valueText=mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)}`:'—'):`${secondsToTime(r.testPower.pace)}`;
+      ctx.fillText(valueText,W-160,y+38);
+    });
+    ctx.fillStyle='#94a3b8';ctx.font='400 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)return alert('No se pudo generar la imagen.');
+    const file=new File([blob],`ranking-test-ergo-${team}.png`,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'Ranking test ERGO'});return}catch(e){if(e?.name==='AbortError')return}
+    }
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
   }
   function v242UniqueResultsById(rows){
     const seen=new Set();
