@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="275";
+const APP_VERSION="276";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6448,7 +6448,7 @@ async function results(){
   const err=pr.error||mt.error||wo.error||gy.error||er.error||c2.error||ss.error;if(err){content.innerHTML=`<div class="card"><h2>Análisis de remeros</h2><p>${esc(err.message)}</p></div>`;return}
   const profiles=pr.data||[],metrics=mt.data||[],workouts=wo.data||[],gym=gy.data||[],ergo=er.data||[],c2rows=c2.data||[],sessions=ss.data||[],memberships=rm.error?[]:(rm.data||[]),concept2Statuses=cx?.error?[]:(cx?.data||[]),concept2StatusMap=new Map(concept2Statuses.map(x=>[String(x.user_id),x]));
   await v124HydrateErgoPhotos(ergo);
-  let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete=workoutNotificationAthleteV129||'',complianceMode='week',monthStart=localISODate().slice(0,7)+'-01',v269RankMode='result';
+  let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete=workoutNotificationAthleteV129||'',complianceMode='week',monthStart=localISODate().slice(0,7)+'-01',v269RankMode='result',v276SelectedTestId='latest';
   const monthEndV151=(start)=>{const d=new Date(start+'T12:00:00');d.setMonth(d.getMonth()+1);d.setDate(0);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
   const addMonthsV151=(start,n)=>{const d=new Date(start+'T12:00:00');d.setMonth(d.getMonth()+n);d.setDate(1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`};
   const monthLabelV151=(start)=>new Date(start+'T12:00:00').toLocaleDateString('es-ES',{month:'long',year:'numeric'});
@@ -6485,11 +6485,44 @@ async function results(){
     compare.querySelectorAll('.editAthleteV103').forEach(b=>b.onclick=()=>{const uid=b.dataset.user;openUnifiedPersonEditorV168(uid,{onSaved:({profile,metric})=>{const pp=profiles.find(x=>x.user_id===uid);if(pp)Object.assign(pp,profile||{});if(metric)metrics.unshift(metric);selectedAthlete=uid;renderClient();athleteSection.open=true},onDeleted:async()=>{selectedAthlete='';await results()}})});
     v269RenderTestRanking(rows);
   }
-  // v269: ranking del último test ERGO del equipo, ordenable por resultado (ritmo/500) o por W/kg.
+  // v276: potencia de UN remero en UNA sesión de test concreta (no necesariamente la más reciente),
+  // misma lógica que v309FindLatestTestPower pero restringida a un training_session_id dado.
+  function v276PowerForSpecificSession(userId,sessionId,c2rows,ergo,workouts){
+    if(!sessionId)return null;
+    const idStr=String(sessionId);
+    let found=null;
+    (c2rows||[]).forEach(r=>{
+      if(found)return;
+      if(String(r.user_id)!==String(userId))return;
+      if(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(r))return;
+      if(String(r.training_session_id)!==idStr)return;
+      if(r.pace_500_seconds)found={date:String(r.workout_date||'').slice(0,10),pace:Number(r.pace_500_seconds),distance:r.distance_m,source:'ErgData'};
+    });
+    if(found)return found;
+    const w=(workouts||[]).find(x=>String(x.user_id)===String(userId)&&String(x.training_session_id)===idStr);
+    if(w){
+      const e=(ergo||[]).find(x=>String(x.workout_id)===String(w.id));
+      if(e){const secs=timeTextToSeconds(e.time_text);if(secs&&e.distance_m)return{date:String(w.session_date||'').slice(0,10),pace:secs*500/e.distance_m,distance:e.distance_m,source:'Manual'}}
+    }
+    return null;
+  }
+  // v269: ranking del test ERGO del equipo, ordenable por resultado (ritmo/500) o por W/kg, y con un
+  // selector para elegir qué test de la temporada mirar (v276) en vez de solo el más reciente de cada uno.
   function v269RenderTestRanking(rows){
     const box=document.getElementById('v269TestRanking');if(!box)return;
-    const tested=rows.filter(r=>r.testPower&&r.testPower.pace!=null);
-    if(!tested.length){box.innerHTML='<div class="info">Ningún remero de este equipo tiene aún un test ERGO registrado (sesión con "TEST" en el título).</div>';return}
+    const testSessions=sessions.filter(s=>s.team_code===team&&/test/i.test(String(s.title||''))).sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||'')));
+    if(!testSessions.length){box.innerHTML='<div class="info">Este equipo no tiene ninguna sesión con "TEST" en el título todavía.</div>';return}
+    let tested;
+    if(v276SelectedTestId==='latest'){
+      tested=rows.filter(r=>r.testPower&&r.testPower.pace!=null);
+    }else{
+      tested=rows.map(r=>{
+        const testPower=v276PowerForSpecificSession(r.p.user_id,v276SelectedTestId,c2rows,ergo,workouts);
+        const testWatts=testPower?v309WattsFromPace500(testPower.pace):null;
+        const testWkg=(testWatts&&r.m?.weight_kg)?testWatts/r.m.weight_kg:null;
+        return {...r,testPower,testWkg};
+      }).filter(r=>r.testPower&&r.testPower.pace!=null);
+    }
     const byResult=tested.slice().sort((a,b)=>a.testPower.pace-b.testPower.pace);
     const byWkg=tested.filter(r=>r.testWkg!=null).slice().sort((a,b)=>b.testWkg-a.testWkg);
     const mode=v269RankMode;
@@ -6497,16 +6530,19 @@ async function results(){
     const rowHtml=(r,i)=>{const totalSec=r.testPower.distance?r.testPower.pace*r.testPower.distance/500:null;
       return `<div class="last" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${totalSec?`${secondsToTime(totalSec)} total · `:''}${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''} · ${shortDateES(r.testPower.date)}</small></div><div style="text-align:right;font-weight:800">${mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)} W/kg`:'—'):secondsToTime(r.testPower.pace)+'/500m'}</div></div>`;
     };
-    box.innerHTML=`<div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" id="v272ExportRanking">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie con peso registrado para calcular W/kg todavía.</div>'}</div>`;
+    const dateOptions=`<option value="latest" ${v276SelectedTestId==='latest'?'selected':''}>Más reciente de cada uno</option>${testSessions.map(s=>`<option value="${s.id}" ${String(v276SelectedTestId)===String(s.id)?'selected':''}>${shortDateES(s.session_date)} · ${esc(s.title||'Test')}</option>`).join('')}`;
+    box.innerHTML=`<label>Test<select id="v276TestPicker">${dateOptions}</select></label><div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" id="v272ExportRanking">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene resultado para este test todavía.</div>'}</div>`;
+    box.querySelector('#v276TestPicker').onchange=(e)=>{v276SelectedTestId=e.target.value;renderComparison()};
     box.querySelectorAll('.v269RankBtn').forEach(b=>b.onclick=()=>{v269RankMode=b.dataset.mode;renderComparison()});
-    const exportBtn=box.querySelector('#v272ExportRanking');if(exportBtn)exportBtn.onclick=()=>v272ExportRankingImage(list,mode);
+    const testLabel=v276SelectedTestId==='latest'?'Test más reciente de cada remero':(()=>{const s=testSessions.find(x=>String(x.id)===String(v276SelectedTestId));return s?`${s.title||'Test'} · ${v273FullDateES(s.session_date)}`:'Test'})();
+    const exportBtn=box.querySelector('#v272ExportRanking');if(exportBtn)exportBtn.onclick=()=>v272ExportRankingImage(list,mode,testLabel);
   }
   // v272: dibuja el ranking en un <canvas> propio (sin depender de librerías externas) y lo comparte/descarga
   // como PNG, para poder pasarlo por WhatsApp u otro sitio tal cual se ve en la app.
   // v273: cabecera con logo del club, nombre del equipo y fecha bien visibles.
   function v273LoadImage(src){return new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src})}
   function v273FullDateES(ds){const [y,m,d]=String(ds||'').split('-').map(Number);if(!y||!m||!d)return '';const dt=new Date(y,m-1,d);return dt.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}
-  async function v272ExportRankingImage(list,mode){
+  async function v272ExportRankingImage(list,mode,testLabel){
     if(!list.length)return;
     const logo=await v273LoadImage('assets/club-pedregalejo.png');
     const W=900,rowH=64,bannerH=110,subH=120,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
@@ -6526,7 +6562,7 @@ async function results(){
     ctx.font='400 18px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText('Row Training · Ranking test ERGO',textX,70);
     ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.globalAlpha=.85;
-    ctx.fillText(v273FullDateES(localISODate()),textX,92);ctx.globalAlpha=1;
+    ctx.fillText(testLabel||v273FullDateES(localISODate()),textX,92);ctx.globalAlpha=1;
     ctx.fillStyle='#f4f7fb';ctx.fillRect(0,bannerH,W,subH);
     ctx.fillStyle='#0b1b35';ctx.font='700 24px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+38);
