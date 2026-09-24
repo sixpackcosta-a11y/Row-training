@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="274";
+const APP_VERSION="275";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6509,7 +6509,7 @@ async function results(){
   async function v272ExportRankingImage(list,mode){
     if(!list.length)return;
     const logo=await v273LoadImage('assets/club-pedregalejo.png');
-    const W=900,rowH=64,bannerH=110,subH=76,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
+    const W=900,rowH=64,bannerH=110,subH=120,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
     const ctx=canvas.getContext('2d');
     ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
@@ -6528,12 +6528,13 @@ async function results(){
     ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.globalAlpha=.85;
     ctx.fillText(v273FullDateES(localISODate()),textX,92);ctx.globalAlpha=1;
     ctx.fillStyle='#f4f7fb';ctx.fillRect(0,bannerH,W,subH);
-    ctx.fillStyle='#0b1b35';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-    ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+32);
-    ctx.fillStyle='#475569';ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-    ctx.fillText(mode==='wkg'?'Ordenado por W/kg':'Ordenado por resultado',28,bannerH+56);
-    ctx.fillStyle='#64748b';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-    ctx.fillText('Puesto',28,headerH-14);ctx.fillText('Remero',110,headerH-14);ctx.fillText('Detalle',480,headerH-14);ctx.fillText(mode==='wkg'?'W/kg':'Ritmo/500',W-160,headerH-14);
+    ctx.fillStyle='#0b1b35';ctx.font='700 24px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+38);
+    ctx.fillStyle='#475569';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(mode==='wkg'?'Ordenado por W/kg':'Ordenado por resultado',28,bannerH+68);
+    ctx.strokeStyle='#dbe3ec';ctx.beginPath();ctx.moveTo(28,bannerH+86);ctx.lineTo(W-28,bannerH+86);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='700 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('PUESTO',28,headerH-20);ctx.fillText('REMERO',110,headerH-20);ctx.fillText('DETALLE',480,headerH-20);ctx.fillText(mode==='wkg'?'W/KG':'RITMO/500',W-160,headerH-20);
     list.forEach((r,i)=>{
       const y=headerH+i*rowH;
       if(i%2===1){ctx.fillStyle='#f6f9fc';ctx.fillRect(0,y,W,rowH)}
