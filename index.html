@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="268";
+const APP_VERSION="269";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6647,7 +6647,7 @@ async function results(){
       if(String(r.user_id)!==String(userId))return;
       if(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(r))return;
       if(!r.training_session_id||!testSessionIds.has(String(r.training_session_id)))return;
-      if(r.pace_500_seconds)candidates.push({date:r.workout_date,pace:Number(r.pace_500_seconds),distance:r.distance_m,source:'ErgData'});
+      if(r.pace_500_seconds)candidates.push({date:String(r.workout_date||'').slice(0,10),pace:Number(r.pace_500_seconds),distance:r.distance_m,source:'ErgData'});
     });
     const testWorkouts=(workouts||[]).filter(w=>String(w.user_id)===String(userId)&&w.training_session_id&&testSessionIds.has(String(w.training_session_id)));
     const testWorkoutIds=new Set(testWorkouts.map(w=>String(w.id)));
@@ -6655,7 +6655,7 @@ async function results(){
       if(!testWorkoutIds.has(String(e.workout_id)))return;
       const w=testWorkouts.find(x=>String(x.id)===String(e.workout_id));
       const secs=timeTextToSeconds(e.time_text);
-      if(secs&&e.distance_m)candidates.push({date:w?.session_date,pace:secs*500/e.distance_m,distance:e.distance_m,source:'Manual'});
+      if(secs&&e.distance_m)candidates.push({date:String(w?.session_date||'').slice(0,10),pace:secs*500/e.distance_m,distance:e.distance_m,source:'Manual'});
     });
     if(!candidates.length)return null;
     candidates.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
