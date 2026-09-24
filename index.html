@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="276";
+const APP_VERSION="277";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6589,12 +6589,29 @@ async function results(){
     ctx.fillText(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!blob)return alert('No se pudo generar la imagen.');
-    const file=new File([blob],`ranking-test-ergo-${team}.png`,{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:'Ranking test ERGO'});return}catch(e){if(e?.name==='AbortError')return}
-    }
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    v277ShowRankingPreview(blob,`ranking-test-ergo-${team}.png`);
+  }
+  // v277: en vez de descargar o abrir el panel de compartir directamente, primero se ve la imagen
+  // generada y desde ahí se elige compartir o descargar.
+  function v277ShowRankingPreview(blob,filename){
+    const url=URL.createObjectURL(blob);
+    let overlay=document.getElementById('v277RankingPreview');
+    if(overlay)overlay.remove();
+    overlay=document.createElement('div');overlay.id='v277RankingPreview';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px';
+    overlay.innerHTML=`<img src="${url}" style="max-width:100%;max-height:75vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.5);background:#fff"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${(navigator.share?'<button type="button" id="v277Share" class="primary">📤 Compartir</button>':'')}<button type="button" id="v277Download">⬇️ Descargar</button><button type="button" id="v277Close">Cerrar</button></div>`;
+    overlay.querySelector('#v277Close').onclick=()=>{overlay.remove();URL.revokeObjectURL(url)};
+    overlay.addEventListener('click',(e)=>{if(e.target===overlay){overlay.remove();URL.revokeObjectURL(url)}});
+    overlay.querySelector('#v277Download').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove()};
+    const shareBtn=overlay.querySelector('#v277Share');
+    if(shareBtn)shareBtn.onclick=async()=>{
+      const file=new File([blob],filename,{type:'image/png'});
+      try{
+        if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'Ranking test ERGO'});
+        else await navigator.share({title:'Ranking test ERGO'});
+      }catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir: '+(e?.message||e))}
+    };
+    document.body.appendChild(overlay);
   }
   function v242UniqueResultsById(rows){
     const seen=new Set();
