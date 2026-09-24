@@ -462,6 +462,22 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 <div id="publicGuide" class="card publicGuide hidden"></div>
 <div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
 <script>
+// v266b: watchdog totalmente independiente del resto del código de la app. Si por lo que sea
+// (librería externa que no carga, error en el script principal) la app se queda colgada en
+// "Comprobando sesión…", esto SIEMPRE muestra un botón para reintentar, pase lo que pase con
+// el resto del JS.
+(function(){
+  setTimeout(function(){
+    try{
+      var b=document.getElementById('bootAuth');
+      if(b && !b.classList.contains('hidden')){
+        b.innerHTML='<h2>Row Training</h2><p class="muted">La app está tardando más de lo normal en cargar. Puede ser la conexión o un fallo al cargar algún recurso.</p><button type="button" onclick="location.reload()" style="margin-top:10px" class="primary">Reintentar</button>';
+      }
+    }catch(e){}
+  },8000);
+})();
+</script>
+<script>
 
 const alternativeExerciseLibrary = {
   "Sentadilla goblet a cajón": {img:"goblet", dose:"3×10", rest:"90 s",
@@ -1937,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="266";
+const APP_VERSION="267";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
