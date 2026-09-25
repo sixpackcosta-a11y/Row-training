@@ -1953,7 +1953,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="280";
+const APP_VERSION="282";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2418,10 +2418,10 @@ function v309WattsFromPace500(paceSeconds){
 // es recalibrarlas con el nivel real del equipo según pasen las temporadas.
 function v280TeamWkgTarget(team){
   const t=String(team||'');
-  if(t==='senior_m')return{target:4.0,label:'club competitivo, senior masculino'};
+  if(t==='senior_m')return{target:3.5,label:'club competitivo, senior masculino'};
   if(t==='senior_f')return{target:3.5,label:'club competitivo, senior femenino'};
-  if(t==='veteranos_m')return{target:3.5,label:'club competitivo, veteranos'};
-  if(t==='veteranas')return{target:3.0,label:'club competitivo, veteranas'};
+  if(t==='veteranos_m')return{target:3.2,label:'club competitivo, veteranos'};
+  if(t==='veteranas')return{target:3.2,label:'club competitivo, veteranas'};
   return null;
 }
 function v280WkgTargetComment(wkg,team){
