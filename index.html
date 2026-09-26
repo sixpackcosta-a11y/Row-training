@@ -1,7 +1,23 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Row Training</title><meta name="application-name" content="Row Training"><meta name="apple-mobile-web-app-title" content="Row Training"><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json">
 <style>
+/* V312 · escala tipográfica: antes casi todos los títulos (h2/h3/h4) se quedaban en la
+   misma franja de 13-19px porque cada sitio fijaba su propio tamaño suelto. Esta base define
+   una jerarquía clara (tamaño + peso + espaciado) que se aplica donde no hay ya una regla más
+   específica pisándola, así que no rompe nada existente: solo rellena lo que no tenía estilo propio. */
+:root{
+  --fs-xs:.75rem;--fs-sm:.875rem;--fs-base:1rem;--fs-md:1.125rem;--fs-lg:1.375rem;--fs-xl:1.75rem;--fs-2xl:2.125rem;
+  --lh-tight:1.18;--lh-normal:1.5;
+}
+h1,h2,h3,h4,h5,h6{margin:0 0 6px;font-weight:800;line-height:var(--lh-tight);letter-spacing:-.01em;color:#0b1830}
+h1{font-size:var(--fs-2xl);font-weight:850;letter-spacing:-.02em}
+h2{font-size:var(--fs-xl);font-weight:800}
+h3{font-size:var(--fs-lg);font-weight:750}
+h4{font-size:var(--fs-md);font-weight:700}
+h5,h6{font-size:var(--fs-base);font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#475569}
+p{line-height:var(--lh-normal)}
+small{font-size:var(--fs-sm)}
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
-*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:10px}.card{background:#fff;border-radius:18px;padding:15px;margin:8px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#0b1830;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;line-height:var(--lh-normal);-webkit-font-smoothing:antialiased}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:10px}.card{background:#fff;border-radius:18px;padding:15px;margin:8px 0;box-shadow:0 1px 6px #0000000d}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:0;border-radius:11px;padding:11px 14px;font-size:15px;background:#e7edf5;color:#0b1830;text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white}.muted{color:#718096}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:12px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:#eaf4ff;border-radius:13px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:#e7edf5;border-radius:99px;padding:5px 9px;font-size:12px}.ex{border:1px solid #e3e9f0;border-radius:15px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:12px;background:#f8fafc;overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:#eaf4ff;border-radius:11px;padding:10px;margin:10px 0}.last{background:#f5f8fb;border-radius:10px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid #c8d4e2;border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid #c8d4e2;border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:#f8fafc;border-radius:12px;padding:11px;margin:10px 0}summary{font-weight:750;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:14px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
 .realPhoto{object-fit:contain;background:#fff;display:block}.thumb.realPhoto{width:min(220px,42vw);height:auto;max-width:42%;max-height:none}.fullimg.realPhoto{width:100%;height:auto;max-width:100%;object-fit:contain}
 .athleteHead{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .workoutDetail{border-top:1px solid #e3e9f0;padding-top:12px;margin-top:12px}
@@ -294,17 +310,14 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 }
 
 /* V240 · cumplimiento móvil: sin corte horizontal y subapartados plegados */
+/* V311: esta regla pisaba, sin querer, el scroll horizontal de V238 (forzaba table-layout:fixed
+   y width:100%, así que con muchas sesiones las columnas se comprimían y las cabeceras se
+   solapaban en vez de poder deslizar la tabla). Se deja solo lo que no choca con el scroll. */
 @media(max-width:700px){
   #complianceSectionV123 .coachAnalysisSectionBodyV123{padding-left:8px!important;padding-right:8px!important;overflow:visible!important}
   #teamCompliance,.complianceSubV176,.complianceSubBodyV176{max-width:100%!important;min-width:0!important}
   .complianceSubV176{margin-left:0!important;margin-right:0!important;overflow:hidden!important}
   .complianceSubBodyV176{padding:10px 8px!important}
-  .complianceCalendarScrollV151{width:100%!important;max-width:100%!important;overflow-x:hidden!important;margin:0!important;padding:0!important}
-  .complianceCalendarScrollV151 .complianceTableV100{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;font-size:.72rem!important}
-  .complianceCalendarScrollV151 .complianceTableV100 th:first-child,.complianceCalendarScrollV151 .complianceTableV100 td:first-child{position:static!important;width:34%!important;min-width:0!important;max-width:none!important;padding:6px 4px!important;white-space:normal!important;overflow-wrap:anywhere!important}
-  .complianceCalendarScrollV151 .complianceTableV100 th:not(:first-child),.complianceCalendarScrollV151 .complianceTableV100 td:not(:first-child){width:auto!important;min-width:0!important;max-width:none!important;padding:5px 1px!important;text-align:center!important}
-  .complianceCalendarScrollV151 .complianceCellBtnV237,.complianceCalendarScrollV151 .tag{min-width:0!important;width:88%!important;max-width:46px!important;min-height:38px!important;padding:5px 2px!important}
-  .complianceCalendarScrollV151 th{font-size:.7rem!important;line-height:1.15!important}
 }
 .v240ReviewBanner{background:#fff8e8;border:1px solid #edc36b;border-radius:12px;padding:10px 12px;margin:8px 0 12px}.v240ReviewBanner .staffActions{margin-top:8px}.v240ReviewBanner button{font-size:.82rem;padding:8px 10px}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -1955,7 +1968,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="289";
+const APP_VERSION="291";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
