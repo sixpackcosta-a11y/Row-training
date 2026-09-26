@@ -2025,7 +2025,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="308";
+const APP_VERSION="309";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6433,7 +6433,7 @@ function v225PendingHtml(items,scope='coach'){
   const rows=items||[];
   const tr=key=>scope==='rower'?v311T(key):V311_DICT.es[key];
   if(!rows.length)return `<div class="v225PendingEmpty">${tr('al_dia')}</div>`;
-  return `<div class="v225PendingToolbar"><button type="button" class="v225PendingFilter active" data-filter="ALL">${tr('todos_label')} <span>${rows.length}</span></button><button type="button" class="v225PendingFilter" data-filter="GYM">GYM <span>${rows.filter(x=>x.type==='GYM').length}</span></button><button type="button" class="v225PendingFilter" data-filter="ERGO">ERGO <span>${rows.filter(x=>x.type==='ERGO').length}</span></button></div><div class="v225PendingList">${rows.map(x=>`<article class="v225PendingItem" data-type="${x.type}"><div class="v225PendingTop"><span class="tag">${x.type}</span><b>${shortDateES(x.date)}</b></div><strong>${esc(x.title||'Sesión')}</strong>${x.content?`<details><summary>${tr('ver_entrenamiento')}</summary>${trainingContentHtml(x.content)}</details>`:''}</article>`).join('')}</div>`;
+  return `<div class="v225PendingToolbar"><button type="button" class="v225PendingFilter active" data-filter="ALL">${tr('todos_label')} <span>${rows.length}</span></button><button type="button" class="v225PendingFilter" data-filter="GYM">GYM <span>${rows.filter(x=>x.type==='GYM').length}</span></button><button type="button" class="v225PendingFilter" data-filter="ERGO">ERGO <span>${rows.filter(x=>x.type==='ERGO').length}</span></button></div><div class="v225PendingList">${rows.map(x=>`<article class="v225PendingItem" data-type="${x.type}"><div class="v225PendingTop"><span class="tag">${x.type}</span><b>${shortDateES(x.date)}</b></div><strong>${esc(x.title||'Sesión')}</strong>${x.content?`<details><summary>${tr('ver_entrenamiento')}</summary>${trainingContentHtml(x.content)}</details>`:''}${scope==='rower'?`<div class="staffActions">${x.type==='GYM'?`<button class="athleteLogGymV113 primary" data-id="${x.id}">${v311T('registrar_gym')}</button>`:`<button class="athleteOpenErgoV113 primary" data-id="${x.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${x.id}">${v311T('registrar_manual')}</button>`}</div>`:''}</article>`).join('')}</div>`;
 }
 function v225BindPendingFilters(root){
   if(!root)return;
@@ -7788,7 +7788,8 @@ async function todayView(){
   if(tab!=='hoy'||currentMode!=='athlete')return;
   content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">${v311T('hoy_tag')} · ${shortDateES(date)}</span><h2>${esc(teamLabelDisplay)}</h2></div><button id="goWeek">${v311T('ver_semana')}</button></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
   goWeek.onclick=()=>{tab='semana';draw();render()};
-  bindAthletePlannedActionsV113(content,sessions,todayView);
+  const pendingAsSessionsV308=(displayPending||[]).map(x=>({id:x.id,title:x.title,content:x.content,session_date:x.date,session_type:x.type==='ERGO'?'ERG':'GYM'}));
+  bindAthletePlannedActionsV113(content,[...sessions,...pendingAsSessionsV308],todayView);
   sessions.filter(s=>s.session_type==='ERG').forEach(s=>v306InjectErgoHelpers(s));
   v225BindPendingFilters(document.getElementById('v225RowerPendingList'));
 }
