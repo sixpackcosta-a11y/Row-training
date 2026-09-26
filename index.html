@@ -2068,7 +2068,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="319";
+const APP_VERSION="320";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2479,6 +2479,7 @@ function render(){
 async function staffTodayView(){
   const teams=staffViewTeamCodes(),date=localISODate();if(!teams.length){content.innerHTML='<div class="card"><h2>Sin equipo asignado</h2><p>Un administrador debe asignarte como entrenador o ayudante.</p></div>';return}
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
+  content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
   const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
   const sessions=ss.data||[],comps=cc.data||[];
   content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2><p class="muted">${canEdit?'Entrenador: puedes editar la planificación y registrar datos.':'Ayudante: puedes registrar datos. La planificación es de solo lectura.'}</p></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label>Equipo<select id="staffTodayTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button id="staffGoWeek" type="button">Ver semana</button></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
@@ -2676,7 +2677,7 @@ function v307CrewBoatHtml(rawCrew,sessionId,readOnly=false,teamCode=null){
   }
   const configControls=readOnly?'':`<div class="v307CrewConfig"><label>Embarcación<select class="v307SeatsSelect" data-session="${sessionId}"><option value="8" ${crew.seats===8?'selected':''}>Barca (Jábega)</option><option value="10" ${crew.seats===10?'selected':''}>Llaüt</option></select></label></div>`;
   const hasRegisteredCrew=crew.assignments.some(c=>c.user_id);
-  return `<div class="v307CrewSection"><b>🚣 Tripulación</b>${configControls}<div class="v307CrewPopa">▲ Popa</div><div class="v307CrewLabels"><span>Estribor</span><span>Babor</span></div><div class="v307CrewBoatWrap"><div class="v307HullShape"></div><div class="v307CrewBoat" data-session="${sessionId}" style="grid-template-rows:repeat(${maxRow},1fr)">${seatsHtml}</div></div><div class="v307CrewProa">Proa</div>${hasRegisteredCrew?`<div class="v307CrewSummary" data-session="${sessionId}"><span class="muted">Cargando peso/W-kg…</span></div>`:''}</div>`;
+  return `<div class="v307CrewSection"><b>🚣 Tripulación</b>${configControls}<div class="v307CrewPopa">▲ Popa</div><div class="v307CrewLabels"><span>Estribor</span><span>Babor</span></div><div class="v307CrewBoatWrap"><div class="v307HullShape"></div><div class="v307CrewBoat" data-session="${sessionId}" style="grid-template-rows:repeat(${maxRow},1fr)">${seatsHtml}</div></div><div class="v307CrewProa">Proa</div>${hasRegisteredCrew?`<div class="v307CrewSummary" data-session="${sessionId}"><span class="muted">${v316Loading('Cargando peso/W-kg…')}</span></div>`:''}</div>`;
 }
 function v307BindCrewBoat(container,session,teamCode,afterSave){
   container.querySelectorAll('.v307SeatBtn').forEach(btn=>{
@@ -3464,7 +3465,7 @@ function v228AuditOne(r,sessions){
 async function coachWeekView(){
   const teams=staffViewTeamCodes();if(!teams.length){content.innerHTML='<div class="card"><h2>Semana</h2><p>Sin equipo asignado.</p></div>';return}
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);const start=mondayOfISO(coachWeekStart||localISODate()),end=addDaysISO(start,6);coachWeekStart=start;
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">Cargando…</p></div></div>`;
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
   const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
   const crewMapV309=await v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
@@ -5756,7 +5757,7 @@ async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
   const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML='<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">Cargando…</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>';
+  content.innerHTML=`<div class="card"><h2>Calendario · este mes y el siguiente</h2><p class="muted">Toca un entrenamiento GYM, ERGO o TEST para ver su contenido completo. En MAR solo se muestra que hay sesión; el contenido de mar sigue siendo del entrenador.</p><div id="athMonthV96"><p class="muted">${v316Loading()}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
   const [ss,cc]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,start,end),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
@@ -6101,7 +6102,7 @@ function sessionEditor(x=null){
 async function individualPlanEditorV249(){
  const team=planTeam.value,teamName=TEAM_OPTIONS.find(x=>x[0]===team)?.[1]||team;
  planArea.innerHTML=`<div class="card"><h3>👤 Plan individual · ${esc(teamName)}</h3><p class="muted">Crea de una vez varias sesiones GYM/ERGO dirigidas solo a las personas que marques. El resto del equipo sigue con su sesión general de ese día; MAR y mensajes no cambian. Si repites el guardado con las mismas personas, fecha y tipo, la sesión se actualiza en vez de duplicarse.</p>
- <div id="ipRosterV249" class="info">Cargando remeros…</div>
+ <div id="ipRosterV249" class="info">${v316Loading('Cargando remeros…')}</div>
  <h4 style="margin:14px 0 6px">Sesiones</h4><div id="ipListV249"></div>
  <div class="actions"><button type="button" id="ipAddV249">+ Añadir sesión</button></div>
  <details style="margin:12px 0"><summary><b>Pegar varias sesiones en bloque (opcional)</b></summary><p class="muted" style="margin:8px 0">Una sesión por bloque. Cada bloque empieza con una línea <code>### AAAA-MM-DD TIPO · Título</code> (TIPO = GYM o ERG) y las líneas siguientes son su contenido.</p><textarea id="ipBulkV249" rows="8" placeholder="### 2026-09-24 GYM · Título&#10;Ejercicio · 3×12-10-8 · notas&#10;### 2026-09-24 ERG · Título&#10;CALENTAMIENTO · 10 min"></textarea><div class="actions" style="margin-top:8px"><button type="button" id="ipParseV249">Convertir en sesiones</button></div></details>
@@ -6256,7 +6257,7 @@ function ergDataStatusHtmlV103(uid,statusMap,compact=false){
   return `<span class="ergStatusV103 ${connected?'connected':'offline'}" title="${esc(title)}"><span class="ergDotV103"></span>${label}</span>`;
 }
 async function results(){
-  content.innerHTML='<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">Cargando…</p></div>';
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">${v316Loading()}</p></div>`;
 
   const {data:profiles,error:e1}=await sb.from("profiles").select("user_id,full_name,height_cm,team_code");
   const {data:roles,error:eRole}=await sb.from("user_roles").select("user_id,role");
@@ -6732,7 +6733,7 @@ function ageFromBirthV103(v){
 function metricValueV103(v,suffix=''){return v===null||v===undefined||v===''?'<span class="profilePendingV103">Pendiente</span>':`${esc(String(v))}${suffix}`}
 function zonesCompactV103(m){if(!m)return 'Pendiente';return ['UT2','UT1','AT','TR','AN'].map(z=>{const k=z.toLowerCase();return `${z} ${m[k+'_min']??'—'}–${m[k+'_max']??'—'}`}).join(' · ')}
 async function results(){
-  content.innerHTML='<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">Remeros</button></div><h2>Análisis de remeros</h2><p class="muted">Cargando…</p></div>';
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">Remeros</button></div><h2>Análisis de remeros</h2><p class="muted">${v316Loading()}</p></div>`;
   const visibleTeams=(currentMode==='staff'&&!isGlobalCoach)?editableTeamCodes():TEAM_OPTIONS.map(x=>x[0]);
   const [pr,mt,wo,gy,er,c2,ss,rm,cx]=await Promise.all([
     sb.from('profiles').select('user_id,full_name,height_cm,birth_date,team_code').order('full_name'),
