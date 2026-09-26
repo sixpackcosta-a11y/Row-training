@@ -1955,7 +1955,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="288";
+const APP_VERSION="289";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6385,11 +6385,36 @@ function v143AthleteCalendarHtml(comp){
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid #eef2f6"><div style="min-width:0"><div style="font-size:12px;color:#718096;font-weight:700">${shortDateES(x.date)} · ${esc(x.type)}</div><div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(title)}</div></div><span class="tag ${cls}" style="flex-shrink:0;white-space:nowrap">${label}</span></div>`;
   }).join('')}</div>`;
 }
+function v310ComplianceColumns(teamSessions,start,end){
+  // V310: agrupa las sesiones por fecha+tipo para que un plan individual (Pilar, Lidia...) comparta
+  // la misma columna que el resto del equipo en vez de generar una columna extra. Si para una misma
+  // fecha+tipo hay una sesión de equipo y una o varias individuales, la columna representativa es la
+  // de equipo (con target_user_ids vacío); si todas son individuales, se usa la primera como referencia
+  // solo para la cabecera (cada remero se comprueba contra la suya, no contra esta).
+  const rawPlans=(teamSessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&['GYM','ERG'].includes(s.session_type));
+  const byKeyV310=new Map();
+  rawPlans.forEach(s=>{
+    const key=`${s.session_date}|${s.session_type}`,cur=byKeyV310.get(key);
+    if(!cur||(sessionTargetsV249(cur).length&&!sessionTargetsV249(s).length))byKeyV310.set(key,s);
+  });
+  return [...byKeyV310.values()].sort((a,b)=>a.session_date.localeCompare(b.session_date)||Number(a.id)-Number(b.id));
+}
+function v310ComplianceCell(a,c,s,teamSessions,cellStateFn,today){
+  const type=s.session_type==='ERG'?'ERGO':'GYM';
+  const d=c.details.find(x=>x.date===s.session_date&&x.type===type);
+  if(!d?.done){
+    const overdue=(d?d.date:s.session_date)<today;
+    return {status:overdue?'overdue':'pending',title:(d?d.title:s.title)||'',sessionId:d?d.id:s.id};
+  }
+  const athleteSession=teamSessions.find(x=>String(x.id)===String(d.id))||s;
+  const st=typeof cellStateFn==='function'?cellStateFn(a.user_id,athleteSession):{state:'ok',title:'Resultado realizado'};
+  return {status:st?.state==='review'?'review':'ok',title:st?.title||d.title||s.title||'',sessionId:d.id};
+}
 function v143TeamCalendarHtml(rows,teamSessions,start,end,cellStateFn=null){
-  const plans=(teamSessions||[]).filter(s=>s.session_date>=start&&s.session_date<=end&&['GYM','ERG'].includes(s.session_type)).sort((a,b)=>a.session_date.localeCompare(b.session_date)||Number(a.id)-Number(b.id));
+  const plans=v310ComplianceColumns(teamSessions,start,end);
   if(!plans.length)return '<div class="info">No hay sesiones GYM/ERGO planificadas esta semana.</div>';
   const today=localISODate();
-  return `<h3>Calendario de cumplimiento</h3><p class="muted">Cada columna es una sesión de la planificación, aunque el remero la haya realizado otro día.</p><div class="complianceCalendarHintV237">Pulsa sobre un ✓ para ver el resultado. <b>Verde</b> = resultado claro · <b>ámbar</b> = realizado, pero conviene revisar la asignación · <b>rojo</b> = ya venció el plazo y no se ha hecho.</div>${plans.length>6?'<div class="muted" style="margin:6px 0"><small>👉 Desliza la tabla hacia los lados para ver todas las sesiones.</small></div>':''}<div class="tableWrap complianceCalendarScrollV151"><table class="complianceTableV100"><thead><tr><th>Remero</th>${plans.map(s=>`<th title="${esc(s.title||'')}">${shortDateES(s.session_date)}<br>${esc(s.session_type==='ERG'?'ERGO':'GYM')}</th>`).join('')}</tr></thead><tbody>${rows.map(({a,c})=>`<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td>${plans.map(s=>{const d=c.details.find(x=>String(x.id)===String(s.id));if(!d?.done){const overdue=s.session_date<today;return `<td><span class="tag ${overdue?'complianceOverdueV306':'compliancePendingV151'}" title="${esc(s.title||'')}">${overdue?'✕':'—'}</span></td>`}const st=typeof cellStateFn==='function'?cellStateFn(a.user_id,s):{state:'ok',title:'Resultado realizado'};return `<td><button type="button" class="complianceCellBtnV237 ${st?.state==='review'?'complianceReviewV237':'complianceDoneV151'}" data-user="${esc(a.user_id)}" data-session="${esc(s.id)}" title="${esc(st?.title||s.title||'Ver resultado')}">✓</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<h3>Calendario de cumplimiento</h3><p class="muted">Cada columna es una sesión de la planificación, aunque el remero la haya realizado otro día. Si un remero tiene un plan individual ese día, su columna es la misma y se comprueba su propia sesión.</p><div class="complianceCalendarHintV237">Pulsa sobre un ✓ para ver el resultado. <b>Verde</b> = resultado claro · <b>ámbar</b> = realizado, pero conviene revisar la asignación · <b>rojo</b> = ya venció el plazo y no se ha hecho.</div>${plans.length>6?'<div class="muted" style="margin:6px 0"><small>👉 Desliza la tabla hacia los lados para ver todas las sesiones.</small></div>':''}<div class="v225PendingToolbar"><button type="button" id="v310ExportCalendarBtn">📤 Exportar imagen</button></div><div class="tableWrap complianceCalendarScrollV151"><table class="complianceTableV100"><thead><tr><th>Remero</th>${plans.map(s=>`<th title="${esc(s.title||'')}">${shortDateES(s.session_date)}<br>${esc(s.session_type==='ERG'?'ERGO':'GYM')}</th>`).join('')}</tr></thead><tbody>${rows.map(({a,c})=>`<tr><td><b>${esc(a.full_name||'Sin nombre')}</b></td>${plans.map(s=>{const cell=v310ComplianceCell(a,c,s,teamSessions,cellStateFn,today);if(cell.status==='pending'||cell.status==='overdue'){return `<td><span class="tag ${cell.status==='overdue'?'complianceOverdueV306':'compliancePendingV151'}" title="${esc(cell.title||'')}">${cell.status==='overdue'?'✕':'—'}</span></td>`}return `<td><button type="button" class="complianceCellBtnV237 ${cell.status==='review'?'complianceReviewV237':'complianceDoneV151'}" data-user="${esc(a.user_id)}" data-session="${esc(cell.sessionId)}" title="${esc(cell.title||'Ver resultado')}">✓</button></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 async function loadRowerWeekCompliance(start,end){
   const box=document.getElementById('rowerWeekCompliance'); if(!box||!currentUser||!currentTeamCode)return;
@@ -6743,7 +6768,7 @@ async function results(){
   }
   // v277: en vez de descargar o abrir el panel de compartir directamente, primero se ve la imagen
   // generada y desde ahí se elige compartir o descargar.
-  function v277ShowRankingPreview(blob,filename){
+  function v277ShowRankingPreview(blob,filename,shareTitle='Ranking test ERGO'){
     const url=URL.createObjectURL(blob);
     let overlay=document.getElementById('v277RankingPreview');
     if(overlay)overlay.remove();
@@ -6757,11 +6782,96 @@ async function results(){
     if(shareBtn)shareBtn.onclick=async()=>{
       const file=new File([blob],filename,{type:'image/png'});
       try{
-        if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'Ranking test ERGO'});
-        else await navigator.share({title:'Ranking test ERGO'});
+        if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:shareTitle});
+        else await navigator.share({title:shareTitle});
       }catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir: '+(e?.message||e))}
     };
     document.body.appendChild(overlay);
+  }
+  // V310: exporta el calendario de cumplimiento como imagen, igual que v272ExportRankingImage para
+  // el ranking del test ERGO. No se incluye el título de cada sesión en la columna (no cabría con
+  // muchas sesiones, sobre todo en vista mensual); en su lugar hay una leyenda de colores y, si hace
+  // falta, se puede seguir consultando el detalle desde la app.
+  async function v310ExportComplianceImage(rows,teamSessions,start,end,cellStateFn,periodLabel){
+    if(!rows.length)return alert('No hay remeros para exportar.');
+    const plans=v310ComplianceColumns(teamSessions,start,end);
+    if(!plans.length)return alert('No hay sesiones planificadas en este periodo.');
+    const today=localISODate();
+    const logo=await v273LoadImage('assets/club-pedregalejo.png');
+    const leftW=190,cols=plans.length;
+    const colW=cols<=6?100:cols<=10?82:cols<=16?64:cols<=24?50:38;
+    const fontColHeader=colW>=70?14:colW>=54?12:10;
+    const rowH=40,bannerH=100,subH=60,legendH=30,colHeaderH=44,footerH=32;
+    const headerH=bannerH+subH+legendH+colHeaderH;
+    const W=Math.max(leftW+cols*colW,640),H=headerH+rows.length*rowH+footerH;
+    const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#07162f';ctx.fillRect(0,0,W,bannerH);
+    let textX=28;
+    if(logo){
+      const logoSize=68,logoY=(bannerH-logoSize)/2;
+      ctx.save();ctx.beginPath();ctx.arc(28+logoSize/2,bannerH/2,logoSize/2,0,Math.PI*2);ctx.closePath();ctx.clip();
+      ctx.drawImage(logo,28,logoY,logoSize,logoSize);ctx.restore();
+      textX=28+logoSize+16;
+    }
+    ctx.fillStyle='#ffffff';ctx.font='700 24px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('Club de Remo Pedregalejo',textX,42);
+    ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText('Row Training · Calendario de cumplimiento',textX,66);
+    ctx.font='400 14px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.globalAlpha=.85;
+    ctx.fillText(periodLabel||'',textX,86);ctx.globalAlpha=1;
+    ctx.fillStyle='#f4f7fb';ctx.fillRect(0,bannerH,W,subH);
+    ctx.fillStyle='#0b1b35';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+38);
+    const legendY=bannerH+subH+legendH/2+5;
+    const legendItems=[['#16a34a','Hecho'],['#d97706','Revisar'],['#dc2626','No hecho'],['#94a3b8','Pendiente']];
+    let lx=28;
+    ctx.font='400 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    legendItems.forEach(([color,label])=>{
+      ctx.fillStyle=color;ctx.beginPath();ctx.arc(lx+6,legendY-4,6,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#334155';ctx.fillText(label,lx+18,legendY);
+      lx+=18+ctx.measureText(label).width+22;
+    });
+    ctx.strokeStyle='#dbe3ec';ctx.beginPath();ctx.moveTo(0,bannerH+subH+legendH);ctx.lineTo(W,bannerH+subH+legendH);ctx.stroke();
+    const colHeaderTop=bannerH+subH+legendH;
+    ctx.fillStyle='#eef2f7';ctx.fillRect(0,colHeaderTop,W,colHeaderH);
+    ctx.textAlign='center';
+    plans.forEach((s,i)=>{
+      const cx=leftW+i*colW+colW/2;
+      ctx.fillStyle='#0b1b35';ctx.font=`700 ${fontColHeader}px -apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+      ctx.fillText(shortDateES(s.session_date),cx,colHeaderTop+18);
+      ctx.fillStyle='#64748b';ctx.font=`400 ${fontColHeader-1}px -apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+      ctx.fillText(s.session_type==='ERG'?'ERGO':'GYM',cx,colHeaderTop+34);
+    });
+    ctx.textAlign='left';
+    ctx.strokeStyle='#dbe3ec';ctx.beginPath();ctx.moveTo(0,headerH);ctx.lineTo(W,headerH);ctx.stroke();
+    const stateColors={ok:{bg:'#16a34a',fg:'#ffffff',symbol:'✓'},review:{bg:'#d97706',fg:'#ffffff',symbol:'✓'},overdue:{bg:'#fde2e2',fg:'#dc2626',symbol:'✕'},pending:{bg:'#eef1f5',fg:'#94a3b8',symbol:'—'}};
+    rows.forEach(({a,c},ri)=>{
+      const y=headerH+ri*rowH;
+      if(ri%2===1){ctx.fillStyle='#f8fafc';ctx.fillRect(0,y,W,rowH)}
+      ctx.fillStyle='#0b1b35';ctx.font='700 14px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      let name=String(a.full_name||'Sin nombre');
+      while(ctx.measureText(name).width>leftW-36&&name.length>4){name=name.slice(0,-1)}
+      if(name!==String(a.full_name||'Sin nombre'))name=name.trimEnd()+'…';
+      ctx.fillText(name,16,y+rowH/2+5);
+      plans.forEach((s,ci)=>{
+        const cell=v310ComplianceCell(a,c,s,teamSessions,cellStateFn,today);
+        const col=stateColors[cell.status];
+        const cx=leftW+ci*colW+colW/2,cy=y+rowH/2;
+        const r=Math.min(colW,rowH)*0.32;
+        ctx.fillStyle=col.bg;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle=col.fg;ctx.font=`700 ${Math.max(11,Math.min(15,colW*0.22))}px -apple-system,Segoe UI,Roboto,Arial,sans-serif`;ctx.textAlign='center';
+        ctx.fillText(col.symbol,cx,cy+5);ctx.textAlign='left';
+      });
+    });
+    ctx.strokeStyle='#e5e9ef';
+    for(let i=0;i<=cols;i++){const x=leftW+i*colW;ctx.beginPath();ctx.moveTo(x,headerH);ctx.lineTo(x,H-footerH);ctx.stroke()}
+    ctx.fillStyle='#94a3b8';ctx.font='400 12px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+    ctx.fillText(`Generado el ${shortDateES(localISODate())} · Row Training`,16,H-12);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)return alert('No se pudo generar la imagen.');
+    v277ShowRankingPreview(blob,`calendario-cumplimiento-${team}.png`,'Calendario de cumplimiento');
   }
   function v242UniqueResultsById(rows){
     const seen=new Set();
@@ -6936,6 +7046,7 @@ async function results(){
     layer.querySelectorAll('.v239AssignInline').forEach(b=>b.onclick=()=>{const kind=b.dataset.kind,id=b.dataset.id,date=b.dataset.date||plan.session_date;v140AssignResult(kind,id,'ERG',date,uid,team,session=>{if(kind==='concept2'){const row=c2rows.find(x=>String(x.id)===String(id));if(row){row.training_session_id=session?.id||null;row.matched_session_code=session?.title||null;row.match_status=session?'matched':'unplanned';row.match_confidence=session?100:0}}else{const row=workouts.find(x=>String(x.id)===String(id));if(row){row.training_session_id=session?.id||null;if(session){row.session_code=session.title;row.session_date=session.session_date}}}layer.remove();renderClient()},plan.id)});
   }
   let v300PanelOpen={resumen:false,calendario:false,individualCal:false,profile:false};
+  let v310CalendarExportCtx={rows:[],start:'',end:'',periodLabel:''};
   function v309FindLatestTestPower(userId,sessions,c2rows,ergo,workouts){
     const testSessionIds=new Set((sessions||[]).filter(s=>/test/i.test(String(s.title||''))).map(s=>String(s.id)));
     if(!testSessionIds.size)return null;
@@ -6982,14 +7093,17 @@ async function results(){
       const v240ReviewHtml=v240ReviewErgos.length?`<div class="v240ReviewBanner"><b>⚠️ ${v240ReviewErgos.length} ERGO${v240ReviewErgos.length===1?'':'s'} por resolver esta semana</b><div class="muted"><small>Son los mismos resultados que aparecen en ámbar en el calendario.</small></div><div class="staffActions">${v240ReviewErgos.map(({a,plan})=>`<button type="button" class="v240OpenReview" data-user="${esc(a.user_id)}" data-session="${esc(plan.id)}">${esc(a.full_name||'Remero')} · ${shortDateES(plan.session_date)}</button>`).join('')}</div></div>`:'';
       teamBox.innerHTML=`<details class="complianceSubV176" data-v300key="resumen" ${v300PanelOpen.resumen?'open':''}><summary><b>Resumen semanal</b><span>Porcentajes y sesiones completadas</span></summary><div class="complianceSubBodyV176">${v240ReviewHtml}<p class="muted">Cada GYM y cada ERGO cuentan como 1 sesión. MAR queda fuera.</p>${rows.length?`<div class="tableWrap complianceTableWrapV100"><table class="complianceTableV100"><thead><tr><th>Remero</th><th>Cumplimiento</th><th>Completadas</th><th></th></tr></thead><tbody>${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<tr><td><b>${v300ChartableAthletes.has(a.user_id)?'📈 ':''}${esc(a.full_name||'Sin nombre')}</b></td><td><span class="complianceBadgeV100"><span>${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</span></td><td>${c.expected?`${c.completed}/${c.expected} semana · ${c.dueExpected?`${c.dueCompleted}/${c.dueExpected} al día`:'sin vencidas'}`:'—'}</td><td><button class="openAthlete" data-user="${a.user_id}">Analizar</button></td></tr>`}).join('')}</tbody></table></div><div class="teamComplianceCardsV100">${rows.map(({a,c})=>{const m=v100Motivation(c.percent||0,c.expected,c.completed);return `<article class="teamComplianceCardV100"><div class="teamComplianceTopV100"><div class="teamComplianceNameV100">${v300ChartableAthletes.has(a.user_id)?'📈 ':''}${esc(a.full_name||'Sin nombre')}</div><div class="complianceBadgeV100"><span class="motivationIconV100">${m.icon}</span>${c.percent==null?'—':`${c.percent}%`}</div></div><div class="teamComplianceMetaV100"><b>${c.expected?`${c.completed}/${c.expected} de la semana`:'Sin sesiones'}${c.dueExpected?` · ${c.dueCompleted}/${c.dueExpected} al día`:''}</b></div><button class="openAthlete" data-user="${a.user_id}">Analizar</button></article>`}).join('')}</div>`:'<div class="info">No hay remeros asignados a este equipo.</div>'}`;
       teamBox.insertAdjacentHTML('beforeend','</div></details><details class="complianceSubV176" data-v300key="calendario" '+(v300PanelOpen.calendario?'open':'')+'><summary><b>Calendario de cumplimiento</b><span>Detalle por sesión planificada</span></summary><div class="complianceSubBodyV176">'+v143TeamCalendarHtml(rows,teamSessions,weekStart,end,complianceCellStateV237)+'</div></details>');
+      v310CalendarExportCtx={rows,start:weekStart,end,periodLabel:`Semana del ${shortDateES(weekStart)} al ${shortDateES(end)}`};
     }else{
       const mEnd=monthEndV151(monthStart),mRows=ats.map(a=>({a,c:v79ComplianceForAthlete(a.user_id,teamSessions,workouts,gym,c2rows,monthStart,mEnd)}));
       const dueEligible=mRows.filter(x=>x.c.dueExpected>0),upToDate=dueEligible.filter(x=>x.c.dueCompleted===x.c.dueExpected).length,fullMonth=mRows.filter(x=>x.c.expected>0&&x.c.completed===x.c.expected).length;
       const plannedMonth=teamSessions.filter(s=>s.session_date>=monthStart&&s.session_date<=mEnd&&['GYM','ERG'].includes(s.session_type)).length;
       teamBox.innerHTML=`<details class="complianceSubV176" data-v300key="resumen" ${v300PanelOpen.resumen?'open':''}><summary><b>Resumen mensual</b><span>Porcentajes y sesiones completadas</span></summary><div class="complianceSubBodyV176"><h3>Cumplimiento mensual · ${esc(monthLabelV151(monthStart))}</h3><p class="muted">Resumen mensual. “2 de 4 · 50 %” significa 2 sesiones realizadas de 4 planificadas/computables. Pulsa en el nombre de un remero para abrir su análisis individual.</p><div class="monthSummaryV151"><div><small>Sesiones planificadas</small><b>${plannedMonth}</b></div><div><small>Remeros al día</small><b>${upToDate}/${dueEligible.length||ats.length}</b></div><div><small>Mes completo</small><b>${fullMonth}/${ats.length}</b></div></div><div class="monthRowerListV151">${mRows.map(({a,c})=>{const pct=c.percent==null?0:c.percent,up=c.dueExpected&&c.dueCompleted===c.dueExpected;return `<div class="monthRowerV151"><button type="button" class="openAthlete monthAthleteLinkV170" data-user="${a.user_id}" title="Abrir análisis individual">${v300ChartableAthletes.has(a.user_id)?'📈 ':''}${esc(a.full_name||'Sin nombre')}</button><span class="monthPctV151 ${pct===100?'ok':''}">${c.expected?`${c.completed} de ${c.expected} · ${pct}%`:'—'}</span><span class="monthDueV151 ${up?'ok':'pending'}">${c.dueExpected?(up?'✓ Al día':`${c.dueCompleted}/${c.dueExpected} vencidas`):'Sin sesiones vencidas'}</span></div>`}).join('')}</div></div></details>`;
       teamBox.insertAdjacentHTML('beforeend','<details class="complianceSubV176" data-v300key="calendario" '+(v300PanelOpen.calendario?'open':'')+'><summary><b>Calendario de cumplimiento</b><span>Detalle por sesión planificada</span></summary><div class="complianceSubBodyV176">'+v143TeamCalendarHtml(mRows,teamSessions,monthStart,mEnd,complianceCellStateV237)+'</div></details>');
+      v310CalendarExportCtx={rows:mRows,start:monthStart,end:mEnd,periodLabel:`Mes de ${monthLabelV151(monthStart)}`};
     }
     teamBox.querySelectorAll('.complianceCellBtnV237').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));teamBox.querySelectorAll('.v240OpenReview').forEach(b=>b.onclick=()=>showComplianceResultV237(b.dataset.user,b.dataset.session));teamBox.querySelectorAll('.complianceCalendarScrollV151').forEach(sc=>{sc.scrollLeft=0});
+    const v310ExportBtn=teamBox.querySelector('#v310ExportCalendarBtn');if(v310ExportBtn)v310ExportBtn.onclick=()=>v310ExportComplianceImage(v310CalendarExportCtx.rows,teamSessions,v310CalendarExportCtx.start,v310CalendarExportCtx.end,complianceCellStateV237,v310CalendarExportCtx.periodLabel);
     teamBox.querySelectorAll('.openAthlete').forEach(b=>b.onclick=()=>{selectedAthlete=b.dataset.user;athSel.value=selectedAthlete;athleteSection.open=true;renderAthlete();athleteSection.scrollIntoView({behavior:'smooth',block:'start'})});
     renderAthlete();
   }
