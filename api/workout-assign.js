@@ -22,8 +22,8 @@ module.exports=async function handler(req,res){
     const user=await auth.json(),kind=String(req.body?.kind||''),sourceId=req.body?.source_id,sessionId=req.body?.training_session_id,targetUserId=req.body?.athlete_user_id||user.id,action=String(req.body?.action||'assign');
     if(!['concept2','workout'].includes(kind)||!validSourceId(sourceId))return res.status(400).json({error:'bad_assignment'});
     if(!validUuid(targetUserId))return res.status(400).json({error:'bad_athlete'});
-    if(!['assign','unassign','hide','unhide','splits','edit_manual'].includes(action))return res.status(400).json({error:'bad_action'});
-    const selfNoSession=targetUserId===user.id&&['hide','unhide','edit_manual'].includes(action);
+    if(!['assign','unassign','hide','unhide','splits','edit_manual','additional','unadditional'].includes(action))return res.status(400).json({error:'bad_action'});
+    const selfNoSession=targetUserId===user.id&&['hide','unhide','edit_manual','additional','unadditional'].includes(action);
     if(!selfNoSession&&!validSessionId(sessionId)&&action!=='edit_manual')return res.status(400).json({error:'bad_assignment'});
 
     let session=null;
@@ -70,6 +70,7 @@ module.exports=async function handler(req,res){
       const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}&select=id,concept2_result_id`,{key:serviceKey});
       if(!rows?.length)return res.status(404).json({error:'result_not_found'});
       if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide',updated_at:new Date().toISOString()}});
+      else if(action==='additional'||action==='unadditional')await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{is_additional:action==='additional',updated_at:new Date().toISOString()}});
       else if(action==='splits'){
         const indexes=[...new Set((Array.isArray(req.body?.excluded_splits)?req.body.excluded_splits:[]).map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<100))].sort((a,b)=>a-b);
         await rest(`${supabaseUrl}/rest/v1/concept2_results?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{excluded_splits:indexes,updated_at:new Date().toISOString()}});
@@ -90,6 +91,7 @@ module.exports=async function handler(req,res){
         await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{notes:clean.notes}});
       }
       else if(action==='hide'||action==='unhide')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{hidden:action==='hide'}});
+      else if(action==='additional'||action==='unadditional')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{is_additional:action==='additional'}});
       else if(action==='unassign')await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:null}});
       else await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${targetUserId}`,{method:'PATCH',key:serviceKey,prefer:'return=minimal',body:{training_session_id:Number(session.id),session_code:session.title,session_date:session.session_date}});
     }

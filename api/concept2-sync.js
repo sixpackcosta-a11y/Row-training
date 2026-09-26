@@ -85,7 +85,7 @@ async function validToken(c){
 }
 function dateOnly(v){return String(v||"").slice(0,10)}
 function resultSeconds(result){return result.time==null?null:Number(result.time)/10}
-function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim()}
+function norm(v){return String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim()}
 function addDays(dateStr,days){const d=new Date(`${dateStr}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
 function planWorkText(title,content){
   const lines=String(content||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
@@ -164,16 +164,20 @@ function scoreResult(result,intents){
   for(const i of intents){const c=compatibility(result,i);if(c)hits.push({intent:i,...c});}
   hits.sort((a,b)=>b.score-a.score);
   const best=hits[0];
-  if(!best)return {status:'unplanned',confidence:0,code:null,intentId:null,sessionId:null};
+  if(!best)return {status:'unplanned',confidence:0,code:null,intentId:null,sessionId:null,isAdditional:false};
   const second=hits.find(x=>String(x.intent.training_session_id||'')!==String(best.intent.training_session_id||''));
+  // v291: un intent creado desde "Abrir ErgData" en la biblioteca (fuera de lo planificado)
+  // lleva status:'additional' y no tiene training_session_id. Si el resultado real encaja
+  // con su prescripción, no lo dejamos como "sin asignar": lo marcamos is_additional.
+  const isAdditional=best.intent?.status==='additional';
   // Si hay dos sesiones diferentes con la misma prescripción y puntuación parecida, no elegimos por la cara.
   if(second&&second.score>=best.score-5){
-    return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null};
+    return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null,isAdditional};
   }
   if(best.score>=70){
-    return {status:'matched',confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:best.intent.training_session_id||null};
+    return {status:'matched',confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:isAdditional?null:(best.intent.training_session_id||null),isAdditional};
   }
-  return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null};
+  return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null,isAdditional};
 }
 async function plannedErgoIntents(userId,results){
   const mr=await rest(`rower_team_memberships?user_id=eq.${encodeURIComponent(userId)}&is_rower=eq.true&select=team_code`);
@@ -252,7 +256,7 @@ module.exports=async function handler(req,res){
     const idList=results.map(x=>String(x.id)).filter(Boolean);
     let existing=new Set(),existingRows=new Map();
     if(idList.length){
-      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_intent_id,matched_session_code,match_status,match_confidence`);
+      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_intent_id,matched_session_code,match_status,match_confidence,is_additional`);
       if(er.ok){
         const old=await er.json();
         existing=new Set(old.map(x=>String(x.concept2_result_id)));
@@ -266,13 +270,17 @@ module.exports=async function handler(req,res){
       let match;
       if(old?.training_session_id){
         // Una asignación explícita/manual ya guardada manda siempre. La sincronización no la toca.
-        match={status:old.match_status||'matched',confidence:old.match_confidence??100,code:old.matched_session_code||null,intentId:old.matched_intent_id||null,sessionId:old.training_session_id};
+        match={status:old.match_status||'matched',confidence:old.match_confidence??100,code:old.matched_session_code||null,intentId:old.matched_intent_id||null,sessionId:old.training_session_id,isAdditional:false};
       }else if(old?.match_status==='unplanned'&&old?.matched_session_code==null){
         // Si el entrenador/remero lo dejó expresamente sin asignar, no lo reasignamos en una sincronización posterior.
-        match={status:'unplanned',confidence:old.match_confidence??0,code:null,intentId:null,sessionId:null};
+        match={status:'unplanned',confidence:old.match_confidence??0,code:null,intentId:null,sessionId:null,isAdditional:false};
       }else{
         match=scoreResult(x,intents);
       }
+      // v291: si alguien lo marcó a mano como "adicional" desde la app, una sincronización
+      // posterior nunca se lo quita — solo un match nuevo contra un intent 'additional' lo
+      // puede volver a poner true por sí solo.
+      const isAdditional=old?.is_additional?true:!!match.isAdditional;
       return {
         user_id:me.id,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
         distance_m:x.distance==null?null:Number(x.distance),
@@ -283,6 +291,7 @@ module.exports=async function handler(req,res){
         training_session_id:match.sessionId||null,
         matched_intent_id:match.intentId,matched_session_code:match.code,
         match_status:match.status,match_confidence:match.confidence,
+        is_additional:isAdditional,
         raw_result:x,updated_at:now
       };
     });
