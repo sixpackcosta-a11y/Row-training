@@ -196,7 +196,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V60 · registro, altas y guía */
 .loginActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .registerCard{max-width:720px;margin:12px auto}.inviteTeam{background:#fff8db;border:1px solid #efd36d;border-radius:7px;padding:11px;margin:10px 0;color:#0b1830}
-.modalBack{position:fixed;inset:0;background:#07162fcc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.modalCard{width:min(680px,100%);max-height:90vh;overflow:auto;background:white;border-radius:11px;padding:20px;box-shadow:0 20px 60px #0005}.guideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.guideStep{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface-2)}.guideStep b{display:block;margin-bottom:5px}.regBadge{display:inline-flex;min-width:22px;height:22px;border-radius:99px;background:#b42318;color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 6px}.requestCard{border:1px solid var(--border);border-radius:8px;padding:14px;margin:10px 0}.requestHead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.requestActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.inviteLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inviteLink{border:1px solid var(--border);border-radius:7px;padding:10px;background:var(--surface-2)}.pendingHero{text-align:center;padding:24px 10px}.pendingHero .bigIcon{font-size:48px}.statusPill{display:inline-block;border-radius:999px;padding:6px 10px;background:#fff8db;border:1px solid #efd36d;font-weight:800;color:#0b1830}.copyOk{background:#eaf8ef!important;color:#0b1830}.publicGuide{max-width:860px;margin:12px auto}
+.modalBack{position:fixed;inset:0;background:#07162fcc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.modalCard{width:min(680px,100%);max-height:90vh;overflow:auto;background:var(--surface);color:var(--text);border-radius:11px;padding:20px;box-shadow:0 20px 60px #0005}.guideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.guideStep{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface-2)}.guideStep b{display:block;margin-bottom:5px}.regBadge{display:inline-flex;min-width:22px;height:22px;border-radius:99px;background:#b42318;color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 6px}.requestCard{border:1px solid var(--border);border-radius:8px;padding:14px;margin:10px 0}.requestHead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.requestActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.inviteLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inviteLink{border:1px solid var(--border);border-radius:7px;padding:10px;background:var(--surface-2)}.pendingHero{text-align:center;padding:24px 10px}.pendingHero .bigIcon{font-size:48px}.statusPill{display:inline-block;border-radius:999px;padding:6px 10px;background:#fff8db;border:1px solid #efd36d;font-weight:800;color:#0b1830}.copyOk{background:#eaf8ef!important;color:#0b1830}.publicGuide{max-width:860px;margin:12px auto}
 @media(max-width:650px){.guideSteps,.inviteLinks{grid-template-columns:1fr}.requestHead{flex-direction:column}}
 /* V63 · recuperación de contraseña */
 .authSubcard{max-width:620px;margin:12px auto}.authHint{background:#eef6ff;border:1px solid #c9def6;border-radius:7px;padding:11px;margin:10px 0;color:#0b1830}.linkButton{background:transparent;border:0;color:#0b5ed7;text-decoration:underline;padding:8px 0;font-weight:700;cursor:pointer}.passwordRules{font-size:.9rem;color:var(--text-muted);margin:6px 0 12px}
@@ -476,7 +476,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 </style>
 
 <style id="v154css">
-.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}
+.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .22s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .12s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
 .pullRefreshV159{position:fixed;z-index:9999;top:10px;left:50%;transform:translate(-50%,-70px);background:#07162f;color:white;border-radius:999px;padding:8px 14px;font-weight:700;box-shadow:0 4px 16px #0003;transition:transform .18s ease}.pullRefreshV159.show{transform:translate(-50%,0)}
 .v154EditGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v154EditGrid label{display:block}.v154EditGrid input,.v154EditGrid textarea{width:100%;box-sizing:border-box}.v154EditSplit{border-top:1px solid var(--border);padding-top:10px;margin-top:10px}.v154EditActions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface);padding-top:10px}.v154EditModal{max-width:760px!important}@media(max-width:640px){.v154EditGrid{grid-template-columns:1fr}.v154EditModal{width:calc(100vw - 20px)!important;max-width:none!important;max-height:92vh!important;padding:14px!important}}
 </style>
@@ -569,6 +569,25 @@ function applyThemeV299(mode){
       }
     }catch(e){}
   },8000);
+})();
+</script>
+
+<script>
+// v316: transición suave al cambiar de pestaña/vista. Se activa observando cambios
+// en #content en vez de tocar cada función de renderizado (son ~30 y muchas son async).
+(function(){
+  var el=document.getElementById('content');
+  if(!el)return;
+  var raf=null;
+  var mo=new MutationObserver(function(){
+    if(raf)cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(function(){
+      el.classList.remove('v316Fade');
+      void el.offsetWidth;
+      el.classList.add('v316Fade');
+    });
+  });
+  mo.observe(el,{childList:true});
 })();
 </script>
 <script>
@@ -2049,7 +2068,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="315";
+const APP_VERSION="318";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2442,6 +2461,20 @@ function render(){
   }
   if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
 }
+(function(){
+  var v316OrigRender=render;
+  var v316ReduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  render=function(){
+    var el=document.getElementById("content");
+    if(!v316ReduceMotion&&el&&el.firstElementChild){
+      el.classList.remove("v316Fade");
+      el.classList.add("v316FadeOut");
+      setTimeout(function(){el.classList.remove("v316FadeOut");v316OrigRender()},110);
+    }else{
+      v316OrigRender();
+    }
+  };
+})();
 
 async function staffTodayView(){
   const teams=staffViewTeamCodes(),date=localISODate();if(!teams.length){content.innerHTML='<div class="card"><h2>Sin equipo asignado</h2><p>Un administrador debe asignarte como entrenador o ayudante.</p></div>';return}
@@ -2458,7 +2491,7 @@ async function staffRegisterView(){
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
   coachSelectedTeam=team;
   const date=localStorage.getItem('rowtraining_staff_register_date')||localISODate();
-  content.innerHTML=`<div class="card"><h2>Registro MAR</h2><p class="muted">Elige directamente uno de los días de mar planificados.</p><label>Equipo<select id="staffRegTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><div id="staffRegSeaDaysV138"><p class="muted">Cargando días de mar…</p></div><details class="libraryAccordion"><summary>Elegir otra fecha</summary><div class="accordionBody"><div class="plannerGrid"><label>Fecha<input id="staffRegDate" type="date" value="${date}"></label></div><button id="staffRegLoad">Cargar fecha</button></div></details><div id="staffRegArea"></div></div>`;
+  content.innerHTML=`<div class="card"><h2>Registro MAR</h2><p class="muted">Elige directamente uno de los días de mar planificados.</p><label>Equipo<select id="staffRegTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><div id="staffRegSeaDaysV138">${v316Loading('Cargando días de mar…')}</div><details class="libraryAccordion"><summary>Elegir otra fecha</summary><div class="accordionBody"><div class="plannerGrid"><label>Fecha<input id="staffRegDate" type="date" value="${date}"></label></div><button id="staffRegLoad">Cargar fecha</button></div></details><div id="staffRegArea"></div></div>`;
   async function load(){
     const t=staffRegTeam.value,d=staffRegDate.value;
     coachSelectedTeam=t;
@@ -3208,7 +3241,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
 }
 async function systemView(){
   if(!isGlobalCoach)return;
-  content.innerHTML=`<div class="card"><h2>Sistema</h2><p class="muted">Resumen del uso real de Row Training. Sirve para controlar el crecimiento de la aplicación sin esperar a que aparezcan problemas de capacidad.</p><div id="systemStats" class="systemGrid"><div class="systemStat">Cargando…</div></div><div class="info"><b>Capacidad:</b> estos contadores muestran los datos almacenados por Row Training. Las cuotas exactas de Vercel y Supabase se consultan en sus paneles; aquí evitamos estimaciones engañosas.</div><button id="systemRefresh">Actualizar</button></div>`;
+  content.innerHTML=`<div class="card"><h2>Sistema</h2><p class="muted">Resumen del uso real de Row Training. Sirve para controlar el crecimiento de la aplicación sin esperar a que aparezcan problemas de capacidad.</p><div id="systemStats" class="systemGrid"><div class="systemStat">${v316Loading()}</div></div><div class="info"><b>Capacidad:</b> estos contadores muestran los datos almacenados por Row Training. Las cuotas exactas de Vercel y Supabase se consultan en sus paneles; aquí evitamos estimaciones engañosas.</div><button id="systemRefresh">Actualizar</button></div>`;
   async function exactCount(table,build){
     try{
       let q=sb.from(table).select('*',{count:'exact',head:true});
@@ -3239,7 +3272,7 @@ function slugTeamCodeV88(name){return String(name||'').toLowerCase().normalize('
 async function openUnifiedPersonEditorV168(uid,opts={}){
   if(!uid)return;
   const modal=document.createElement('div');modal.className='modalBack';
-  modal.innerHTML='<div class="modalCard"><div class="modalTitle"><h2>Editar persona</h2><button type="button" class="v168Close">Cerrar</button></div><p class="muted">Cargando perfil, equipos y roles…</p></div>';
+  modal.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>Editar persona</h2><button type="button" class="v168Close">Cerrar</button></div><p class="muted">${v316Loading('Cargando perfil, equipos y roles…')}</p></div>`;
   document.body.appendChild(modal);modal.querySelectorAll('.v168Close').forEach(b=>b.onclick=()=>modal.remove());modal.onclick=e=>{if(e.target===modal)modal.remove()};
   try{
     const [pr,mr,sr,tr,ar,rr]=await Promise.all([
@@ -4610,7 +4643,7 @@ function v300OpenResultComments(kind,raw,userId,teamCode,title,dateStr){
     body=`<div class="complianceResultBlockV237"><div><b>ERGO · Registro manual</b></div>${v124ManualErgoHtml(raw)}</div>`;
   }
   const resultId=raw?.id;
-  body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>Cargando…</small></p></div>`;
+  body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>${v316Loading()}</small></p></div>`;
   const layer=document.createElement('div');layer.className='modalBack';
   layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(title||'Resultado ERGO')}</h2><div class="muted">${dateStr?esc(shortDateES(String(dateStr).slice(0,10))):''}</div></div><button type="button" class="v300CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
   document.body.appendChild(layer);
@@ -4694,7 +4727,7 @@ function v300ChatBubblesHtml(messages,meId){
 }
 async function v300RenderChatThread(container,rowerId,teamCode){
   const isRower=currentMode==='athlete';
-  container.innerHTML=`<p class="muted">${isRower?v311T('cargando_conversacion'):'Cargando conversación…'}</p>`;
+  container.innerHTML=`<p class="muted">${v316Loading(isRower?v311T('cargando_conversacion'):'Cargando conversación…')}</p>`;
   const messages=await v300FetchChat(rowerId);
   container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="${isRower?v311T('escribe_mensaje'):'Escribe un mensaje…'}" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">${isRower?v311T('enviar'):'Enviar'}</button></div>`;
   const scrollBox=container.querySelector('#v300ChatScroll');scrollBox.scrollTop=scrollBox.scrollHeight;
@@ -4763,11 +4796,11 @@ async function coachMessagesView(){
   const teams=staffViewTeamCodes();
   if(!teams.length){content.innerHTML='<div class="card"><h2>💬 Mensajes</h2><p class="muted">No tienes ningún equipo asignado.</p></div>';return}
   const initialFilter=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:'all';
-  content.innerHTML=`<div class="card"><h2>💬 Mensajes</h2><label>Equipo<select id="msgTeamFilter"><option value="all" ${initialFilter==='all'?'selected':''}>Todos mis equipos</option>${teams.map(t=>`<option value="${t}" ${t===initialFilter?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">Cargando conversaciones…</p></div></div>`;
+  content.innerHTML=`<div class="card"><h2>💬 Mensajes</h2><label>Equipo<select id="msgTeamFilter"><option value="all" ${initialFilter==='all'?'selected':''}>Todos mis equipos</option>${teams.map(t=>`<option value="${t}" ${t===initialFilter?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
   const teamSel=document.getElementById('msgTeamFilter'),box=document.getElementById('v300MsgInbox');
 
   const loadInbox=async()=>{
-    box.innerHTML='<p class="muted">Cargando conversaciones…</p>';
+    box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     const activeTeams=teamSel.value==='all'?teams:[teamSel.value];
     coachSelectedTeam=teamSel.value==='all'?coachSelectedTeam:teamSel.value;
     const rosterByTeam=await Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)})));
@@ -4974,7 +5007,7 @@ async function v300CheckSelfChartable(){
 
 async function history(opts={}){
   // Historial abre primero los datos ya guardados y, en paralelo, busca nuevos resultados de Concept2.
-  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><p class="muted">${v311T('cargando_datos_guardados')}</p></div>`;
+  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><p class="muted">${v316Loading(v311T('cargando_datos_guardados'))}</p></div>`;
   try{
   const [{data:workouts,error:e1},{data:items,error:e2},{data:c2,error:e3},{data:ergo,error:e4},{data:selfMetrics,error:e5},{data:selfPlans,error:e6},selfC2Status] = await Promise.all([
     sb.from("workout_logs").select("id,session_code,session_type,session_date,training_session_id,performed_at,created_at,status,hidden,is_additional").eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(50),
@@ -6027,7 +6060,7 @@ function sessionEditor(x=null){
   const box=document.getElementById('audienceBoxV249');if(!box)return;
   if(!['GYM','ERG'].includes(sessType.value)){box.style.display='none';return}
   box.style.display='';
-  if(!rosterV249){box.innerHTML='<span class="muted">Cargando remeros…</span>';rosterV249=await staffAthletesForTeam(team)}
+  if(!rosterV249){box.innerHTML=`<span class="muted">${v316Loading('Cargando remeros…')}</span>`;rosterV249=await staffAthletesForTeam(team)}
   const known=new Set(rosterV249.map(p=>p.user_id));
   const extra=[...audienceSelV249].filter(id=>!known.has(id)).map(id=>({user_id:id,full_name:'(persona fuera de este equipo)'}));
   const list=[...rosterV249,...extra];
@@ -6141,6 +6174,8 @@ function seaResultEditor(sessionId){
 }
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function v316Loading(text){return `<span class="v316LoadingWrap"><span class="v316BoatTrack"><span class="v316Boat">🚣</span></span>${text?`<span class="muted">${esc(text)}</span>`:''}</span>`}
+
 function pendingRegistrationView(){
   const st=currentRegistration?.status||"pending";
   const requested=currentRegistration?.requested_team;
@@ -6167,7 +6202,7 @@ function invitationUrl(team){const u=new URL(location.origin+location.pathname);
 async function copyInvite(btn,url){try{await navigator.clipboard.writeText(url);const old=btn.textContent;btn.textContent="Copiado ✓";btn.classList.add("copyOk");setTimeout(()=>{btn.textContent=old;btn.classList.remove("copyOk")},1200)}catch(e){prompt("Copia este enlace:",url)}}
 async function registrationsView(){
   if(r!=="coach")return;
-  content.innerHTML=`<div class="card"><h2>Altas de remeros</h2><p class="muted">Cargando solicitudes…</p></div>`;
+  content.innerHTML=`<div class="card"><h2>Altas de remeros</h2><p class="muted">${v316Loading('Cargando solicitudes…')}</p></div>`;
   const q=await sb.from("registration_requests").select("*").order("created_at",{ascending:false});
   if(q.error){content.innerHTML=`<div class="card"><h2>Altas de remeros</h2><div class="saveStatus err">${esc(q.error.message)}<br><small>Si acabas de actualizar la app, ejecuta setup_v61.sql en Supabase.</small></div></div>`;return}
   const manageCodes=isGlobalCoach?(coachTeams.length?coachTeams:TEAM_OPTIONS.map(x=>x[0])):editableTeamCodes();
@@ -6597,7 +6632,7 @@ async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
   const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML=`<div class="card"><h2>${v311T('calendario_mes_titulo')}</h2><p class="muted">${v311T('calendario_mes_texto')} <span style="color:#166534">🟢 ${v311T('completada_leyenda')}</span> · <span style="color:#9c2b23">🔴 ${v311T('sin_completar_leyenda')}</span></p><div id="athMonthV96"><p class="muted">${v311T('cargando_generico')}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
+  content.innerHTML=`<div class="card"><h2>${v311T('calendario_mes_titulo')}</h2><p class="muted">${v311T('calendario_mes_texto')} <span class="v228Ok">🟢 ${v311T('completada_leyenda')}</span> · <span class="v228Unassigned">🔴 ${v311T('sin_completar_leyenda')}</span></p><div id="athMonthV96"><p class="muted">${v316Loading(v311T('cargando_generico'))}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
   const [ss,cc,ww,gg,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,start,end),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode]),
@@ -7797,7 +7832,7 @@ async function v311TranslatePending(items){
 }
 async function todayView(){
   const date=localISODate(),seasonStart='2026-09-01';
-  content.innerHTML=`<div class="card"><h2>${v311T('hoy_title')}</h2><p class="muted">${v311T('cargando_plan')}</p></div>`;
+  content.innerHTML=`<div class="card"><h2>${v311T('hoy_title')}</h2><p class="muted">${v316Loading(v311T('cargando_plan'))}</p></div>`;
   const [ss,cc,pendingSessions,ww,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,date,date),
     sb.from('competitions').select('*').eq('competition_date',date).contains('team_codes',[currentTeamCode]),
@@ -7833,7 +7868,7 @@ function athleteWeekSessionV123(s){
 async function loadRowerWeekComplianceV123(start,end,sessions){const box=document.getElementById('rowerWeekComplianceV123');if(!box||!currentUser)return;try{const [ww,gg,cc]=await Promise.all([sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,created_at,hidden').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100),sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,note,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(500),sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(100)]),err=ww.error||gg.error||cc.error;if(err)throw err;const c=v79ComplianceForAthlete(currentUser.id,sessions,ww.data||[],gg.data||[],cc.data||[],start,end),pct=Math.max(0,Math.min(100,c.percent||0));if(!document.getElementById('rowerWeekComplianceV123'))return;box.innerHTML=c.expected?`<div class="athleteWeekProgressTopV123"><b>${c.completed}/${c.expected} ${v311T('sesiones_completadas')}</b><span>${pct}%</span></div><div class="athleteWeekProgressBarV123" aria-label="Progreso semanal ${pct}%"><span style="width:${pct}%"></span></div>`:`<div class="athleteWeekProgressTopV123"><b>${v311T('sin_sesiones_gym_ergo')}</b><span>—</span></div>`;const queues={};c.details.forEach(x=>{const key=`${x.date}|${x.type==='ERGO'?'ERG':'GYM'}`;(queues[key]||(queues[key]=[])).push(x)});content.querySelectorAll('.athleteWeekSessionV123[data-type="GYM"],.athleteWeekSessionV123[data-type="ERG"]').forEach(row=>{const x=(queues[`${row.dataset.date}|${row.dataset.type}`]||[]).shift(),status=row.querySelector('.athleteWeekStatusV123');row.classList.remove('is-done','is-overdue');if(x?.done){row.classList.add('is-done');if(status)status.textContent=v311T('completada_status')}else if(x?.due){row.classList.add('is-overdue');if(status)status.textContent=v311T('sin_completar_status')}else if(status)status.textContent=v311T('pendiente_status')})}catch(e){box.innerHTML=`<span class="muted">${v311T('no_se_pudo_calcular_cumplimiento')}</span>`}}
 async function weekly(){
   const start=athleteWeekStartV113,end=addDaysISO(start,6);
-  content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekLoadV123">${v311T('cargando_semana')}</div></div>`;
+  content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekLoadV123">${v316Loading(v311T('cargando_semana'))}</div></div>`;
   try{
     const [ss,cc]=await Promise.all([
       loadAthleteSessionsV139(currentTeamCode,start,end),
