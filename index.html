@@ -552,6 +552,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v330SubTab.active{background:#2563eb;border-color:#2563eb;color:#fff}
 .v330ProfileQuickActions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .v330ProfileQuickActions button{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.v330ProfileQuickActions button .nBadge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;padding:0 4px}
 .pullRefreshV159{position:fixed;z-index:9999;top:10px;left:50%;transform:translate(-50%,-70px);background:#07162f;color:white;border-radius:999px;padding:8px 14px;font-weight:700;box-shadow:0 4px 16px #0003;transition:transform .18s ease}.pullRefreshV159.show{transform:translate(-50%,0)}
 .v154EditGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v154EditGrid label{display:block}.v154EditGrid input,.v154EditGrid textarea{width:100%;box-sizing:border-box}.v154EditSplit{border-top:1px solid var(--border);padding-top:10px;margin-top:10px}.v154EditActions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface);padding-top:10px}.v154EditModal{max-width:760px!important}@media(max-width:640px){.v154EditGrid{grid-template-columns:1fr}.v154EditModal{width:calc(100vw - 20px)!important;max-width:none!important;max-height:92vh!important;padding:14px!important}}
 </style>
@@ -2194,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="377";
+const APP_VERSION="379";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2648,12 +2649,24 @@ function v330GroupForTab(t){
   if(t==='hist'||t==='biblioteca')return 'actividad';
   if(t==='mensajes')return 'mensajes';
   if(t==='perfil')return 'yo';
+  // V378 · agrupación equivalente para el modo entrenador (antes solo el remero tenía barra
+  // inferior agrupada; el entrenador tenía un menú plano de 12+ botones). V379 · reagrupado a
+  // petición: Registro MAR va con Hoy/Semana/Mes (trabajo del día a día); Planificación se junta
+  // con Análisis y Biblioteca (preparar/revisar); Equipo y Sistema se pliegan dentro de "Más"
+  // (junto con Perfil/Ajustes/Ayuda/Salir) para quedar en 4 botones.
+  if(currentMode==='staff'){
+    if(t==='registro')return 'trabajo';
+    if(t==='planificar'||t==='result')return 'actividad';
+    if(t==='equipo'||t==='sistema')return 'yo';
+  }
   return null;
 }
 function v330RenderBottomNav(){
   const navEl=document.getElementById('nav'),appEl=document.getElementById('app'),menuBtn=document.getElementById('navMenuBtnV300'),bellBtn=document.getElementById('notifyBellV104');
   if(!navEl)return;
-  const show=currentMode==='athlete'&&!!currentTeamCode;
+  // V378 · el entrenador también tiene barra inferior agrupada (antes solo el remero); el
+  // hamburguesa deja de hacer falta salvo para el caso mínimo de ayudante sin equipo propio.
+  const show=(currentMode==='athlete'&&!!currentTeamCode)||currentMode==='staff';
   if(menuBtn)menuBtn.classList.toggle('hidden',show);
   if(bellBtn)bellBtn.classList.toggle('hidden',show);
   if(!show){navEl.innerHTML='';navEl.classList.remove('v330BottomNav');if(appEl)appEl.classList.remove('v330HasBottomNav');document.body.classList.remove('v330HasBottomNav');return}
@@ -2662,14 +2675,26 @@ function v330RenderBottomNav(){
   navEl.classList.add('v330BottomNav');
   const group=v330GroupForTab(tab);
   const mensajesCount=(v300UnreadMsgCount||0)+(v334UnreadNotifCount||0);
-  const items=[
-    ['trabajo','trabajo',v311T('nav_trabajo'),'hoy'],
-    ['actividad','actividad',v311T('nav_actividad'),'hist'],
-    ['mensajes','mensajes',v311T('nav_mensajes'),'mensajes'],
-    ['yo','perfil',v311T('nav_yo'),'perfil']
-  ];
+  let items;
+  if(currentMode==='staff'){
+    // V379 · 4 botones: Trabajo (Hoy/Semana/Mes/Registro MAR), Actividad (Planificación/Análisis/
+    // Biblioteca), Mensajes, y Más (Equipo/Sistema/Perfil/Ajustes/Ayuda/Salir, con aviso de altas
+    // pendientes ya que "Equipo" vive ahí dentro).
+    items=[['trabajo','trabajo','Trabajo','hoy']];
+    if(hasAnyCoachTeam())items.push(['actividad','actividad','Actividad','planificar']);
+    if(hasAnyCoachTeam())items.push(['mensajes','mensajes','Mensajes','mensajes']);
+    items.push(['yo','ajustes','Más','perfil']);
+  }else{
+    items=[
+      ['trabajo','trabajo',v311T('nav_trabajo'),'hoy'],
+      ['actividad','actividad',v311T('nav_actividad'),'hist'],
+      ['mensajes','mensajes',v311T('nav_mensajes'),'mensajes'],
+      ['yo','perfil',v311T('nav_yo'),'perfil']
+    ];
+  }
   navEl.innerHTML=items.map(([g,icon,label,defaultTab])=>{
-    const badge=g==='mensajes'&&mensajesCount?`<span class="nBadge">${mensajesCount>9?'9+':mensajesCount}</span>`:'';
+    const masCount=g==='yo'&&currentMode==='staff'&&hasAnyCoachTeam()?(pendingRegistrationCount||0):0;
+    const badge=(g==='mensajes'&&mensajesCount)?`<span class="nBadge">${mensajesCount>9?'9+':mensajesCount}</span>`:(masCount?`<span class="nBadge">${masCount>9?'9+':masCount}</span>`:'');
     return `<button type="button" class="v330NavBtn ${group===g?'active':''}" data-group="${g}" data-default="${defaultTab}" aria-label="${esc(label)}" title="${esc(label)}">${badge}<span class="v330NavIcon">${v332Icon(icon,22)}</span><span class="v330NavLabel">${esc(label)}</span></button>`;
   }).join('');
   navEl.querySelectorAll('.v330NavBtn').forEach(btn=>btn.onclick=()=>{
@@ -2678,12 +2703,20 @@ function v330RenderBottomNav(){
   });
 }
 function v330InjectSubTabs(){
-  if(!(currentMode==='athlete'&&currentTeamCode))return;
+  // V378 · el entrenador también tiene sub-pestañas dentro de "Trabajo" y "Actividad" (antes solo
+  // el remero). "Más" agrupa pantallas sueltas (Equipo, Sistema, Perfil…) y no necesita sub-pestañas.
+  // V379 · Trabajo = Hoy/Semana/Mes/Registro MAR; Actividad = Planificación/Análisis/Biblioteca.
+  if(!((currentMode==='athlete'&&currentTeamCode)||currentMode==='staff'))return;
   const group=v330GroupForTab(tab);
   if(group!=='trabajo'&&group!=='actividad')return;
   const el=document.getElementById('content');
   if(!el||!el.firstElementChild||el.querySelector('.v330SubTabs'))return;
-  const items=group==='trabajo'?[['hoy',v311T('nav_hoy')],['semana',v311T('nav_semana')],['mes',v311T('nav_mes')]]:[['hist',v311T('nav_hist')],['biblioteca',v311T('nav_biblioteca')]];
+  let items;
+  if(currentMode==='staff'){
+    items=group==='trabajo'?[['hoy','Hoy'],['semana','Semana'],['mes','Mes'],['registro','Registro MAR']]:[['planificar','Planificación'],['result','Análisis'],['biblioteca','Biblioteca']];
+  }else{
+    items=group==='trabajo'?[['hoy',v311T('nav_hoy')],['semana',v311T('nav_semana')],['mes',v311T('nav_mes')]]:[['hist',v311T('nav_hist')],['biblioteca',v311T('nav_biblioteca')]];
+  }
   const bar=document.createElement('div');
   bar.className='v330SubTabs';
   bar.innerHTML=items.map(([t,label])=>`<button type="button" class="v330SubTab ${tab===t?'active':''}" data-t="${t}">${esc(label)}</button>`).join('');
@@ -2697,6 +2730,8 @@ function render(){
   if(currentMode==="athlete"&&tab==="mes")return athleteMonthViewV96();
   if(currentMode==="staff"){
     if(tab==="hoy")return staffTodayView();if(tab==="semana"){if(!coachWeekStart||coachWeekStart==="2026-08-31")coachWeekStart=mondayOfISO(localISODate());return coachWeekView()}if(tab==="registro")return staffRegisterView();
+    // V379 · "Mes" se activa para el entrenador (antes solo el remero la tenía), dentro del grupo Trabajo.
+    if(tab==="mes"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachMonthView();}
     if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
@@ -3501,7 +3536,10 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
 }
 async function systemView(){
   if(!isGlobalCoach)return;
-  content.innerHTML=`<div class="card"><h2>Sistema</h2><p class="muted">Resumen del uso real de Row Training. Sirve para controlar el crecimiento de la aplicación sin esperar a que aparezcan problemas de capacidad.</p><div id="systemStats" class="systemGrid"><div class="systemStat">${v316Loading()}</div></div><div class="info"><b>Capacidad:</b> estos contadores muestran los datos almacenados por Row Training. Las cuotas exactas de Vercel y Supabase se consultan en sus paneles; aquí evitamos estimaciones engañosas.</div><button id="systemRefresh">Actualizar</button></div>`;
+  // V378 · "Sistema" ya no está en el menú hamburguesa (ahora se llega desde el botón "Sistema" en
+  // Mi perfil, dentro del grupo "Yo"), así que necesita su propio botón para volver.
+  content.innerHTML=`<div class="card"><button type="button" id="v378SystemBack" style="margin-bottom:10px">← Volver</button><h2>Sistema</h2><p class="muted">Resumen del uso real de Row Training. Sirve para controlar el crecimiento de la aplicación sin esperar a que aparezcan problemas de capacidad.</p><div id="systemStats" class="systemGrid"><div class="systemStat">${v316Loading()}</div></div><div class="info"><b>Capacidad:</b> estos contadores muestran los datos almacenados por Row Training. Las cuotas exactas de Vercel y Supabase se consultan en sus paneles; aquí evitamos estimaciones engañosas.</div><button id="systemRefresh">Actualizar</button></div>`;
+  document.getElementById('v378SystemBack').onclick=()=>{tab='perfil';draw();render()};
   async function exactCount(table,build){
     try{
       let q=sb.from(table).select('*',{count:'exact',head:true});
@@ -5712,7 +5750,18 @@ async function staffProfileViewV167(){
   if(error){content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p>${esc(error.message)}</p></div>`;return}
   const {data:rm}=await sb.from('rower_team_memberships').select('team_code,is_rower').eq('user_id',currentUser.id).eq('is_rower',true);
   const isRower=!!(rm||[]).length;
-  content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
+  // V378 · misma fila de accesos rápidos que ya tiene el remero en su Perfil (Ajustes/Ayuda/Salir,
+  // más Sistema para el admin), para que el entrenador no dependa del menú hamburguesa para esto
+  // ahora que la navegación inferior le oculta ese botón.
+  // V379 · el botón inferior "Más" agrupa Equipo, Sistema y esta pantalla de Perfil, así que Equipo
+  // se añade aquí como acceso rápido (con el mismo aviso de altas pendientes que antes tenía su
+  // propio botón de barra inferior).
+  content.innerHTML=`<div class="card v330ProfileQuickActions">${hasAnyCoachTeam()?`<button type="button" id="v330OpenEquipo">${v332Icon('equipo')}Equipo${pendingRegistrationCount?`<span class="nBadge">${pendingRegistrationCount>9?'9+':pendingRegistrationCount}</span>`:''}</button>`:''}<button type="button" id="v330OpenSettings">${v332Icon('ajustes')}Ajustes</button><button type="button" id="v330OpenHelp">${v332Icon('ayuda')}Ayuda</button>${isGlobalCoach?`<button type="button" id="v330OpenSystem">${v332Icon('sistema')}Sistema</button>`:''}<button type="button" id="v330LogOut">${v332Icon('salir')}Salir</button></div><div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
+  document.getElementById('v330OpenEquipo')?.addEventListener('click',()=>{tab='equipo';draw();render()});
+  document.getElementById('v330OpenSettings')?.addEventListener('click',()=>v300OpenSettingsMenu());
+  document.getElementById('v330OpenHelp')?.addEventListener('click',()=>{tab='ayuda';draw();render()});
+  document.getElementById('v330OpenSystem')?.addEventListener('click',()=>{tab='sistema';draw();render()});
+  document.getElementById('v330LogOut')?.addEventListener('click',()=>{sb.auth.signOut().then(()=>location.reload())});
   v167SaveStaffProfile.onclick=async()=>{
     const b=v167SaveStaffProfile,st=v167StaffProfileStatus;b.disabled=true;b.textContent='Guardando…';
     const q=await sb.from('profiles').update({full_name:v167StaffName.value.trim(),gender:v167StaffGender.value||null,height_cm:v167StaffHeight.value?Number(v167StaffHeight.value):null,birth_date:v167StaffBirth.value||null,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
@@ -6217,7 +6266,7 @@ async function coachSeaResultsView(){
 }
 async function coachMonthView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
-  const now='2026-09';
+  const now=localISODate().slice(0,7); // V379 · antes fijo en "2026-09"; ahora usa el mes actual real.
   content.innerHTML=`<div class="card"><h2>Visión mensual</h2><div class="plannerGrid"><label>Equipo<select id="monthTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Mes<input id="monthPick" type="month" value="${now}"></label></div><button id="loadMonth" class="primary">Ver mes</button><div id="monthArea"></div></div>`;
   if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
 }
