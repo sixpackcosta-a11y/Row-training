@@ -2033,10 +2033,14 @@ function refreshTeamSchedule(){schedule=schedules[teamKey()];}
 function readableLabel(line){
   const m=line.match(/^([^·:]{2,32})\s*[·:]\s*(.+)$/);return m?[m[1].trim(),m[2].trim()]:["",line.trim()];
 }
-function workoutRowClass(label,value){
+function workoutRowClass(label,value,hadLabel){
   const x=(label+" "+value).toLowerCase();
   if(x.includes("calent"))return "warm";if(x.includes("vuelta a la calma"))return "cool";if(x.includes("recup")||x.includes("descanso"))return "recovery";
   if(x.includes("trabajo")||x.includes("técnica")||x.includes("tecnica")||x.includes("base")||x.includes("salida")||x.includes("virada")||x.includes("ciaboga")||x.includes("serie")||x.includes("pirámide")||x.includes("piramide"))return "work";
+  // V357 · cualquier bloque con una etiqueta explícita del entrenador (p.ej. SIMULACIÓN, REGISTRAR,
+  // OBJETIVO, CONTROL) es un apartado estructurado más, no una nota al margen — se pinta igual que
+  // los demás. El estilo apagado "note" se reserva solo para líneas sueltas sin etiqueta.
+  if(hadLabel)return "work";
   return "note";
 }
 function workoutRowIcon(label,cls){
@@ -2058,8 +2062,8 @@ function trainingContentHtml(content,compact=false){
   const raw=String(content||"").replace(/\\n/g,"\n").trim();if(!raw)return "";
   const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
   return `<div class="workoutReadable ${compact?'workoutCompact':''}">${lines.map(line=>{
-    let [label,value]=readableLabel(line);if(!label){label="Bloque";value=line;}
-    const cls=workoutRowClass(label,value),icon=workoutRowIcon(label,cls);
+    let [label,value]=readableLabel(line);const hadLabel=!!label;if(!label){label="Bloque";value=line;}
+    const cls=workoutRowClass(label,value,hadLabel),icon=workoutRowIcon(label,cls);
     const isP=/pirámide|piramide/i.test(label+" "+value);if(isP)value=`<span class="workoutPyramidLinear">${makePyramidLinear(esc(value))}</span>`;else value=esc(value);
     return `<div class="workoutRow ${cls}"><div class="workoutLabel">${icon} ${esc(label)}</div><div class="workoutValue">${value}</div></div>`;
   }).join("")}</div>`;
@@ -2121,7 +2125,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="357";
+const APP_VERSION="358";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
