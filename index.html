@@ -485,7 +485,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 </style>
 
 <style id="v154css">
-.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .22s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .12s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
+.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .22s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .12s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
 .v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
 .v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
@@ -501,6 +501,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v330NavBtn.active{background:rgba(37,99,235,.18);color:#5b9dff}
 .v330NavIcon{line-height:1}
 .v330NavBtn .nBadge{position:absolute;top:1px;right:22%;min-width:16px;height:16px;border-radius:99px;background:#ef4444;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
+.v334MsgBellBtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
+.v334MsgBellBtn .nBadge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
+.v334MsgBellBtn .nBadge.hidden{display:none}
 .v330SubTabs{display:flex;gap:6px;margin:0 0 10px;overflow-x:auto}
 .v330SubTab{flex:0 0 auto;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600}
 .v330SubTab.active{background:#2563eb;border-color:#2563eb;color:#fff}
@@ -1761,7 +1764,7 @@ async function combinedLibraryFormV89(item){
   renderRows();
 }
 // Estado global de sesión/equipo. Debe declararse antes de construir el calendario.
-let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null,v300UnreadMsgCount=0;
+let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null,v300UnreadMsgCount=0,v334UnreadNotifCount=0;
 
 const VAPID_PUBLIC_KEY_V104='BNCE9i8ANFF6sTW5TBZdk1S-EInb7_-b2ai0iFLFjUmXXDJaiFmzYoTbNh4OZfSapQrKgtw5w-yqq1ytFQ2XaZU';
 let appNotificationsV104=[];
@@ -1779,7 +1782,13 @@ async function loadNotificationsV104(){
     }
     appNotificationsV104=clean.slice(0,30);
   }}catch(e){}
-  const bell=document.getElementById('notifyBellV104'),badge=document.getElementById('notifyBadgeV104');if(bell)bell.classList.remove('hidden');const n=appNotificationsV104.filter(x=>!x.is_read).length;if(badge){badge.textContent=n>9?'9+':String(n);badge.classList.toggle('hidden',!n)}
+  const n=appNotificationsV104.filter(x=>!x.is_read).length;v334UnreadNotifCount=n;
+  const foldedIntoMensajes=currentMode==='athlete'&&!!currentTeamCode;
+  const bell=document.getElementById('notifyBellV104'),badge=document.getElementById('notifyBadgeV104');
+  if(bell)bell.classList.toggle('hidden',foldedIntoMensajes);
+  if(badge){badge.textContent=n>9?'9+':String(n);badge.classList.toggle('hidden',!n||foldedIntoMensajes)}
+  if(typeof draw==='function')draw();
+  v334UpdateMensajesBellBadge();
 }
 async function enablePushV104(){
   if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){alert('Este dispositivo o navegador no admite notificaciones push.');return false}
@@ -2098,7 +2107,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="333";
+const APP_VERSION="335";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2445,6 +2454,7 @@ function v332Icon(name,size=18){
     sol:'<circle cx="12" cy="12" r="4.2"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.6" y2="6.6"/><line x1="17.4" y1="17.4" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.6" y2="17.4"/><line x1="17.4" y1="6.6" x2="19.1" y2="4.9"/>',
     luna:'<path d="M20 14.5A8.5 8.5 0 119.5 4a7 7 0 0010.5 10.5z"/>',
     globo:'<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/>',
+    campana:'<path d="M6 10a6 6 0 0112 0c0 4 1.4 5.5 2 6.2H4c.6-.7 2-2.2 2-6.2z"/><path d="M10 19a2 2 0 004 0"/>',
     trabajo:'<rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/><rect x="6.5" y="7" width="2.2" height="10" rx="1"/><rect x="15.3" y="7" width="2.2" height="10" rx="1"/><line x1="8.7" y1="12" x2="15.3" y2="12"/>',
     actividad:'<polyline points="3 16 8.5 10 12.5 14 21 5"/><polyline points="15.5 5 21 5 21 10.5"/>'
   };
@@ -2528,14 +2538,16 @@ function v330GroupForTab(t){
   return null;
 }
 function v330RenderBottomNav(){
-  const navEl=document.getElementById('nav'),appEl=document.getElementById('app'),menuBtn=document.getElementById('navMenuBtnV300');
+  const navEl=document.getElementById('nav'),appEl=document.getElementById('app'),menuBtn=document.getElementById('navMenuBtnV300'),bellBtn=document.getElementById('notifyBellV104');
   if(!navEl)return;
   const show=currentMode==='athlete'&&!!currentTeamCode;
   if(menuBtn)menuBtn.classList.toggle('hidden',show);
+  if(bellBtn)bellBtn.classList.toggle('hidden',show);
   if(!show){navEl.innerHTML='';navEl.classList.remove('v330BottomNav');if(appEl)appEl.classList.remove('v330HasBottomNav');return}
   if(appEl)appEl.classList.add('v330HasBottomNav');
   navEl.classList.add('v330BottomNav');
   const group=v330GroupForTab(tab);
+  const mensajesCount=(v300UnreadMsgCount||0)+(v334UnreadNotifCount||0);
   const items=[
     ['trabajo','trabajo',v311T('nav_trabajo'),'hoy'],
     ['actividad','actividad',v311T('nav_actividad'),'hist'],
@@ -2543,7 +2555,7 @@ function v330RenderBottomNav(){
     ['yo','perfil',v311T('nav_yo'),'perfil']
   ];
   navEl.innerHTML=items.map(([g,icon,label,defaultTab])=>{
-    const badge=g==='mensajes'&&v300UnreadMsgCount?`<span class="nBadge">${v300UnreadMsgCount>9?'9+':v300UnreadMsgCount}</span>`:'';
+    const badge=g==='mensajes'&&mensajesCount?`<span class="nBadge">${mensajesCount>9?'9+':mensajesCount}</span>`:'';
     return `<button type="button" class="v330NavBtn ${group===g?'active':''}" data-group="${g}" data-default="${defaultTab}">${badge}<span class="v330NavIcon">${v332Icon(icon,23)}</span><span class="v330NavLabel">${esc(label)}</span></button>`;
   }).join('');
   navEl.querySelectorAll('.v330NavBtn').forEach(btn=>btn.onclick=()=>{
@@ -4954,9 +4966,16 @@ async function v300CheckNewChatMessages(){
     v300ShowToast(msg,()=>{tab='mensajes';draw();render()});
   }catch(e){}
 }
+function v334UpdateMensajesBellBadge(){
+  const b=document.getElementById('v334MsgBellBadge');if(!b)return;
+  const n=v334UnreadNotifCount||0;b.textContent=n>9?'9+':String(n);b.classList.toggle('hidden',!n);
+}
 async function messagesView(){
   if(!currentTeamCode){content.innerHTML=`<div class="card"><h2>💬 ${v311T('nav_mensajes')}</h2><p class="muted">${v311T('necesitas_equipo_msg')}</p></div>`;return}
-  content.innerHTML=`<div class="card"><h2>${v311T('mensajes_con_entrenador')}</h2><div id="v300ChatContainer"></div></div>`;
+  const bellHtml=currentMode==='athlete'?`<button type="button" id="v334MsgBellBtn" class="v334MsgBellBtn" aria-label="Notificaciones" title="Notificaciones">${v332Icon('campana',20)}<span id="v334MsgBellBadge" class="nBadge hidden">0</span></button>`:'';
+  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h2 style="margin:0">${v311T('mensajes_con_entrenador')}</h2>${bellHtml}</div><div id="v300ChatContainer"></div></div>`;
+  document.getElementById('v334MsgBellBtn')?.addEventListener('click',openNotificationsV104);
+  v334UpdateMensajesBellBadge();
   const container=document.getElementById('v300ChatContainer');
   await v300RenderChatThread(container,currentUser.id,currentTeamCode);
   localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
