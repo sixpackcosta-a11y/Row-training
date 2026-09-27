@@ -643,11 +643,26 @@ function applyThemeV299(mode){
   // un div interno (no en #content directamente, p.ej. Mensajes o Registro MAR), y hay además
   // una red de seguridad con temporizador (junto al render() envuelto, más abajo) por si alguna
   // pantalla no la llama y el observer tampoco ve el cambio.
+  // V369 · en pestañas rápidas (Hoy/Semana/Mes casi siempre lo son) el atenuado se quitaba
+  // antes de completar su propia bajada de opacidad: apenas se llegaba a los .4 de opacidad
+  // cuando ya se estaba subiendo de vuelta a 1, así que el "fundido" se veía como casi nada.
+  // Garantizamos un mínimo de tiempo atenuado (aunque el contenido ya esté listo) para que el
+  // recorrido completo (1 → .4 → 1) siempre se vea entero, sea cual sea la velocidad de carga.
+  var v363MinDim=140;
   window.v360FinishLoad=function(){
     clearTimeout(el._v363SafetyTimer);
-    el.classList.remove('v363Dim');
-    if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
-    if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
+    var finish=function(){
+      el.classList.remove('v363Dim');
+      if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
+      if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
+    };
+    var elapsed=el._v363DimAt?(Date.now()-el._v363DimAt):v363MinDim;
+    clearTimeout(el._v363HoldTimer);
+    if(el.classList.contains('v363Dim')&&elapsed<v363MinDim){
+      el._v363HoldTimer=setTimeout(finish,v363MinDim-elapsed);
+    }else{
+      finish();
+    }
   };
   var raf=null;
   var mo=new MutationObserver(function(){
@@ -2150,7 +2165,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="368";
+const APP_VERSION="369";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2672,6 +2687,7 @@ function render(){
     // un salto ni un parpadeo a transparente.
     if(!v316ReduceMotion&&el&&el.firstElementChild){
       el.classList.add("v363Dim");
+      el._v363DimAt=Date.now();
       if(overlay){
         clearTimeout(overlay._v366Timer);
         overlay._v366Timer=setTimeout(function(){overlay.classList.add("show")},220);
