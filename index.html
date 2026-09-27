@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="382";
+const APP_VERSION="383";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6279,6 +6279,9 @@ async function renderCoachMonth(){
   const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
   const counts=t=>sessions.filter(x=>x.session_type===t).length;
   monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div>${calendarCellsHtml(ym,sessions,comps,[],'edit',[])}`;
+  // V383 · pinchar un entrenamiento concreto dentro del día va directo a ese entrenamiento; pinchar
+  // en cualquier otra parte del día (número, hueco vacío…) abre el día completo para verlo/editarlo.
+  monthArea.querySelectorAll('.coachDay:not(:disabled) .miniSess[data-session-id]').forEach(item=>item.addEventListener('click',e=>{e.stopPropagation();openCoachPlanner(team,item.closest('.coachDay').dataset.date,item.dataset.sessionId)}));
   monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
   const sea=await getSeaResultsForTeam(team,start,end); monthArea.innerHTML+=`<h3>Resultados MAR del equipo</h3>${seaSummaryHtml(sea.results)}${seaRowsHtml(sea.results)}`;
 }
