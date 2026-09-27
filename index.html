@@ -2073,7 +2073,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="323";
+const APP_VERSION="324";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2406,18 +2406,18 @@ function v300NavItems(){
   }else if(!currentTeamCode)a=[["pendiente","Estado"],["ayuda","Ayuda"],["salir","Salir"]];
   else{
     a=[["hoy",v311T('nav_hoy')],["semana",v311T('nav_semana')],["mes",v311T('nav_mes')],["biblioteca",v311T('nav_biblioteca')],["hist",v311T('nav_hist')],["mensajes",`${v311T('nav_mensajes')}${v300UnreadMsgCount?` (${v300UnreadMsgCount})`:''}`],["perfil",v311T('nav_perfil')],["ayuda",v311T('nav_ayuda')],["salir",v311T('nav_salir')]];
-    const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
-    a=[["__language__",`🌐 ${langLabel}`],...a];
   }
   if(hasStaffMode()&&hasRowerMode())a=[["__switchmode__",currentMode==="staff"?"👤 Cambiar a modo remero":"🧭 Cambiar a modo entrenador"],...a];
+  const salirIdxV324=a.findIndex(x=>x[0]==="salir");
+  const settingsItemV324=["__settings__","⚙️ Ajustes"];
+  if(salirIdxV324>=0)a.splice(salirIdxV324,0,settingsItemV324);else a.push(settingsItemV324);
   return a;
 }
 function v300OpenNavMenu(){
   const a=v300NavItems();
   document.querySelectorAll('.v300NavMenuBack').forEach(x=>x.remove());
-  const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
   const layer=document.createElement('div');layer.className='modalBack v300NavMenuBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:340px"><div class="modalTitle"><h2 style="margin:0">Menú</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;max-height:70vh;overflow-y:auto"><button type="button" class="v300NavItem" data-t="__theme__" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);font-weight:500;color:var(--text)">${isDarkNow?'☀️ Modo claro':'🌙 Modo oscuro'}</button>${a.map(x=>`<button type="button" class="v300NavItem" data-t="${x[0]}" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid ${tab===x[0]?'#2563eb':'var(--border)'};background:${tab===x[0]?'var(--accent-tint)':'var(--surface)'};font-weight:${tab===x[0]?700:500};color:var(--text)">${x[1]}</button>`).join('')}</div></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:340px"><div class="modalTitle"><h2 style="margin:0">Menú</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;max-height:70vh;overflow-y:auto">${a.map(x=>`<button type="button" class="v300NavItem" data-t="${x[0]}" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid ${tab===x[0]?'#2563eb':'var(--border)'};background:${tab===x[0]?'var(--accent-tint)':'var(--surface)'};font-weight:${tab===x[0]?700:500};color:var(--text)">${x[1]}</button>`).join('')}</div></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
@@ -2425,16 +2425,30 @@ function v300OpenNavMenu(){
     const v=btn.dataset.t;layer.remove();
     if(v==="salir"){sb.auth.signOut().then(()=>location.reload());return}
     if(v==="__switchmode__"){switchModeV73(currentMode==="staff"?"athlete":"staff");return}
-    if(v==="__language__"){v311OpenLanguagePicker();return}
-    if(v==="__theme__"){applyThemeV299(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');return}
+    if(v==="__settings__"){v300OpenSettingsMenu();return}
     tab=v;draw();render();
+  });
+}
+function v300OpenSettingsMenu(){
+  document.querySelectorAll('.v300SettingsMenuBack').forEach(x=>x.remove());
+  const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
+  const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
+  const layer=document.createElement('div');layer.className='modalBack v300SettingsMenuBack';
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${isDarkNow?'☀️ Modo claro':'🌙 Modo oscuro'}</button><button type="button" class="v300NavItem" data-a="__language__" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">🌐 Idioma · ${langLabel}</button></div></div>`;
+  document.body.appendChild(layer);
+  layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  layer.querySelectorAll('.v300NavItem').forEach(btn=>btn.onclick=()=>{
+    const v=btn.dataset.a;layer.remove();
+    if(v==="__theme__"){applyThemeV299(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');return}
+    if(v==="__language__"){v311OpenLanguagePicker();return}
   });
 }
 function v311OpenLanguagePicker(){
   document.querySelectorAll('.v311LangPickerBack').forEach(x=>x.remove());
   const opts=[['es','Español'],['en','English'],['nl','Nederlands']];
   const layer=document.createElement('div');layer.className='modalBack v311LangPickerBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">${v311T('idioma')}</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${opts.map(([code,label])=>`<button type="button" class="v311LangOption" data-code="${code}" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid ${currentLocale===code?'#2563eb':'var(--border)'};background:${currentLocale===code?'#eaf2fd':'#fff'};font-weight:${currentLocale===code?700:500}">${label}</button>`).join('')}</div></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">${v311T('idioma')}</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${opts.map(([code,label])=>`<button type="button" class="v311LangOption" data-code="${code}" style="text-align:left;padding:12px 14px;border-radius:6px;border:1px solid ${currentLocale===code?'#2563eb':'var(--border)'};background:${currentLocale===code?'var(--accent-tint)':'var(--surface)'};font-weight:${currentLocale===code?700:500};color:var(--text)">${label}</button>`).join('')}</div></div>`;
   document.body.appendChild(layer);
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
