@@ -482,6 +482,15 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 <style id="v154css">
 .refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .22s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .12s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
+.v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
+.v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
+.v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
+.v325ReactionPill span{font-weight:700}
+.v325AddReaction{border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
+.v325EmojiPicker{display:flex;gap:4px;position:absolute;bottom:100%;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 6px 18px #0004;z-index:5}
+.v325EmojiPicker.hidden{display:none}
+.v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
+.v325EmojiOpt:hover{background:var(--surface-2)}
 .pullRefreshV159{position:fixed;z-index:9999;top:10px;left:50%;transform:translate(-50%,-70px);background:#07162f;color:white;border-radius:999px;padding:8px 14px;font-weight:700;box-shadow:0 4px 16px #0003;transition:transform .18s ease}.pullRefreshV159.show{transform:translate(-50%,0)}
 .v154EditGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.v154EditGrid label{display:block}.v154EditGrid input,.v154EditGrid textarea{width:100%;box-sizing:border-box}.v154EditSplit{border-top:1px solid var(--border);padding-top:10px;margin-top:10px}.v154EditActions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface);padding-top:10px}.v154EditModal{max-width:760px!important}@media(max-width:640px){.v154EditGrid{grid-template-columns:1fr}.v154EditModal{width:calc(100vw - 20px)!important;max-width:none!important;max-height:92vh!important;padding:14px!important}}
 </style>
@@ -2073,7 +2082,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="324";
+const APP_VERSION="325";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4719,6 +4728,29 @@ async function v300FetchChat(rowerId){
     return q.error?[]:(q.data||[]);
   }catch(e){return[]}
 }
+const V325_REACTION_EMOJIS=['👍','❤️','💪','🔥','👏','😂'];
+async function v325FetchReactions(messageIds){
+  if(!messageIds||!messageIds.length)return [];
+  try{
+    const q=await sb.from('chat_message_reactions').select('id,message_id,user_id,emoji').in('message_id',messageIds);
+    return q.error?[]:(q.data||[]);
+  }catch(e){return[]}
+}
+async function v325ToggleReaction(messageId,emoji){
+  try{
+    const existing=await sb.from('chat_message_reactions').select('id').eq('message_id',messageId).eq('user_id',currentUser.id).eq('emoji',emoji).maybeSingle();
+    if(existing.error)return {error:existing.error};
+    if(existing.data)return {error:(await sb.from('chat_message_reactions').delete().eq('id',existing.data.id)).error};
+    return {error:(await sb.from('chat_message_reactions').insert({message_id:messageId,user_id:currentUser.id,emoji})).error};
+  }catch(e){return {error:e}}
+}
+function v325ReactionsHtml(messageId,reactions,meId){
+  const forMsg=(reactions||[]).filter(r=>r.message_id===messageId);
+  const groups=new Map();
+  forMsg.forEach(r=>{if(!groups.has(r.emoji))groups.set(r.emoji,[]);groups.get(r.emoji).push(r.user_id)});
+  const pills=[...groups.entries()].map(([emoji,users])=>`<button type="button" class="v325ReactionPill${users.includes(meId)?' mine':''}" data-emoji="${emoji}" data-msg="${messageId}">${emoji} <span>${users.length}</span></button>`).join('');
+  return `${pills}<button type="button" class="v325AddReaction" data-msg="${messageId}" title="Reaccionar">🙂+</button><div class="v325EmojiPicker hidden" data-picker-for="${messageId}">${V325_REACTION_EMOJIS.map(e=>`<button type="button" class="v325EmojiOpt" data-emoji="${e}" data-msg="${messageId}">${e}</button>`).join('')}</div>`;
+}
 async function v300SendChat(rowerId,teamCode,text){
   const res=await sb.from('chat_messages').insert({rower_id:rowerId,team_code:teamCode,sender_id:currentUser.id,body:text});
   let pushResult=null,pushError=null;
@@ -4736,21 +4768,36 @@ async function v300SendChat(rowerId,teamCode,text){
   }
   return {error:res.error,pushResult,pushError};
 }
-function v300ChatBubblesHtml(messages,meId){
+function v300ChatBubblesHtml(messages,meId,reactions){
   const isRower=currentMode==='athlete';
   if(!messages.length)return `<p class="muted" style="text-align:center;padding:20px 0">${isRower?(currentLocale==='en'?'No messages yet. Write the first one 👇':currentLocale==='nl'?'Nog geen berichten. Schrijf het eerste 👇':'Aún no hay mensajes. Escribe el primero 👇'):'Aún no hay mensajes. Escribe el primero 👇'}</p>`;
   const locale=isRower?(currentLocale==='es'?'es-ES':currentLocale==='nl'?'nl-NL':'en-GB'):'es-ES';
   return messages.map(m=>{
     const mine=m.sender_id===meId;
-    return `<div style="display:flex;justify-content:${mine?'flex-end':'flex-start'};margin:6px 0"><div style="max-width:78%;background:${mine?'#2563eb':'#eef2f7'};color:${mine?'#fff':'#0f172a'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString(locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div></div>`;
+    return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0"><div style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString(locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div><div class="v325ReactionsRow" style="${mine?'justify-content:flex-end':''}">${v325ReactionsHtml(m.id,reactions,meId)}</div></div>`;
   }).join('');
 }
 async function v300RenderChatThread(container,rowerId,teamCode){
   const isRower=currentMode==='athlete';
   container.innerHTML=`<p class="muted">${v316Loading(isRower?v311T('cargando_conversacion'):'Cargando conversación…')}</p>`;
   const messages=await v300FetchChat(rowerId);
-  container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="${isRower?v311T('escribe_mensaje'):'Escribe un mensaje…'}" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">${isRower?v311T('enviar'):'Enviar'}</button></div>`;
+  const reactions=await v325FetchReactions(messages.map(m=>m.id));
+  container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id,reactions)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="${isRower?v311T('escribe_mensaje'):'Escribe un mensaje…'}" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">${isRower?v311T('enviar'):'Enviar'}</button></div>`;
   const scrollBox=container.querySelector('#v300ChatScroll');scrollBox.scrollTop=scrollBox.scrollHeight;
+  scrollBox.querySelectorAll('.v325AddReaction').forEach(btn=>btn.onclick=()=>{
+    const picker=scrollBox.querySelector(`.v325EmojiPicker[data-picker-for="${btn.dataset.msg}"]`);
+    if(!picker)return;
+    scrollBox.querySelectorAll('.v325EmojiPicker').forEach(p=>{if(p!==picker)p.classList.add('hidden')});
+    picker.classList.toggle('hidden');
+  });
+  scrollBox.querySelectorAll('.v325EmojiOpt,.v325ReactionPill').forEach(btn=>btn.onclick=async()=>{
+    scrollBox.querySelectorAll('.v325EmojiPicker').forEach(p=>p.classList.add('hidden'));
+    const{error}=await v325ToggleReaction(Number(btn.dataset.msg),btn.dataset.emoji);
+    if(error){alert(/relation .* does not exist|chat_message_reactions/i.test(error.message||'')?'Falta ejecutar 17_reacciones_mensajes.sql en Supabase antes de poder reaccionar.':error.message);return}
+    const st=scrollBox.scrollTop;
+    await v300RenderChatThread(container,rowerId,teamCode);
+    const sb2=container.querySelector('#v300ChatScroll');if(sb2)sb2.scrollTop=st;
+  });
   const input=container.querySelector('#v300ChatInput'),sendBtn=container.querySelector('#v300ChatSend');
   const send=async()=>{
     const text=input.value.trim();if(!text)return;
@@ -4838,7 +4885,7 @@ async function coachMessagesView(){
       const unread=!!last&&last.sender_id!==currentUser.id&&new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0);
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-      return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'#eaf2fd':'#fff'};gap:10px">
+      return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
         <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
         <small class="muted" style="flex-shrink:0">${time}</small>
       </button>`;
