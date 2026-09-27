@@ -2125,7 +2125,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="359";
+const APP_VERSION="360";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2642,7 +2642,16 @@ function render(){
     if(!v316ReduceMotion&&el&&el.firstElementChild){
       el.classList.remove("v316Fade");
       el.classList.add("v316FadeOut");
-      setTimeout(function(){el.classList.remove("v316FadeOut");v316OrigRender()},200);
+      setTimeout(function(){
+        el.classList.remove("v316FadeOut");
+        // V360 · algunas vistas (p.ej. Perfil) no ponen su propio aviso de "Cargando…" antes de
+        // pedir datos, así que sin esto la pantalla ANTERIOR se quedaba visible a pantalla completa
+        // (con la opacidad ya repuesta a 1) durante toda la espera, pareciendo que "se recarga la
+        // pestaña de antes". Vaciamos el contenido aquí para que eso nunca se vea, tenga o no la
+        // vista su propio "Cargando…".
+        el.innerHTML="";
+        v316OrigRender();
+      },200);
     }else{
       v316OrigRender();
     }
