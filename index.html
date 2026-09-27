@@ -493,14 +493,14 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 
 <style id="v154css">
 .refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px;opacity:0;animation:v316LoadingReveal .28s ease .22s forwards}@keyframes v316LoadingReveal{to{opacity:1}}@media(prefers-reduced-motion:reduce){.v316LoadingWrap{animation:none;opacity:1}}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}
-/* V367 · un único aviso de carga: el icono grande superpuesto. Ya no se usa el barquito
+/* V368 · un único aviso de carga: el icono grande superpuesto. Ya no se usa el barquito
    pequeño con texto (v316LoadingWrap se deja vacío, ver v316Loading() más abajo) para que
    nunca haya dos avisos a la vez. El fundido en sí SIGUE existiendo (no se ha quitado): al
    cambiar de pestaña, #content se atenúa rápido (.12s) y luego, en cuanto llega el contenido
-   definitivo, sube de opacidad con un fundido más largo y perceptible (.35s) — nunca por
+   definitivo, sube de opacidad con un fundido más largo y perceptible (.5s) — nunca por
    keyframes que reinician desde 0 (eso daba el salto), siempre por transición continua. Si la
    carga se alarga, además aparece el icono grande centrado. */
-#content{transition:opacity .35s ease}
+#content{transition:opacity .5s ease}
 #content.v363Dim{opacity:.4;transition:opacity .12s ease}
 #app{position:relative}
 .v366Overlay{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:55;opacity:0;transition:opacity .25s ease}
@@ -2150,7 +2150,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="367";
+const APP_VERSION="368";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6479,7 +6479,14 @@ async function helpView(){
   const isRower=currentMode==="athlete";
   const guideHtml=isRower?await v311TranslateContent(publicGuideHtml()):publicGuideHtml();
   const title=isRower?v311T('ayuda_titulo'):'Ayuda · Row Training';
-  content.innerHTML=`<div class="card"><h2>${title}</h2>${guideHtml}${coachExtra?`<h3>Funciones del entrenador</h3><div class="guideSteps">${coachExtra}</div>`:""}</div>`;
+  // V367 · la Ayuda no formaba parte de ningún grupo del menú/pestañas inferior, así que al
+  // entrar (p.ej. desde "Ayuda" en Yo) no había ningún botón visible para volver. Añadimos uno
+  // explícito que regresa a donde tiene sentido: Perfil si ya hay equipo, o el estado de alta
+  // pendiente si el remero todavía no tiene equipo asignado.
+  const backTab=(currentMode==="athlete"&&!currentTeamCode)?'pendiente':'perfil';
+  const backLabel=isRower?v311T('volver_word'):'← Volver';
+  content.innerHTML=`<div class="card"><button type="button" id="v367HelpBack" style="margin-bottom:10px">${backLabel}</button><h2>${title}</h2>${guideHtml}${coachExtra?`<h3>Funciones del entrenador</h3><div class="guideSteps">${coachExtra}</div>`:""}</div>`;
+  document.getElementById('v367HelpBack').onclick=()=>{tab=backTab;draw();render()};
 }
 function showQuickGuideModal(){
   if(document.getElementById("quickGuideModal"))return;
@@ -7849,7 +7856,7 @@ const V311_LANG_KEY='rowtraining_v311_lang';
 let currentLocale=localStorage.getItem(V311_LANG_KEY)||'es';
 const V311_DICT={
   es:{
-    hoy_title:'Hoy',ver_semana:'Ver semana',no_entrenamiento_hoy:'No hay entrenamiento planificado hoy.',
+    hoy_title:'Hoy',ver_semana:'Ver semana',volver_word:'← Volver',no_entrenamiento_hoy:'No hay entrenamiento planificado hoy.',
     pendientes_titulo:'Pendientes de realizar',pendientes_sub:'Sesiones GYM y ERGO con fecha hasta hoy que aún no constan como completadas.',pendientes_error:'No se pudieron cargar los pendientes.',
     registrar_gym:'Registrar GYM',abrir_ergdata:'Abrir en ErgData',registrar_manual:'Registrar manualmente',
     idioma:'Idioma',ver_entrenamiento:'Ver entrenamiento',todos_label:'Todos',al_dia:'✅ Al día: no hay entrenamientos GYM/ERGO pendientes hasta hoy.',
@@ -7923,7 +7930,7 @@ const V311_DICT={
     sin_equipo_asignado:'Tu usuario todavía no tiene equipo asignado.'
   },
   en:{
-    hoy_title:'Today',ver_semana:'View week',no_entrenamiento_hoy:'No training planned today.',
+    hoy_title:'Today',ver_semana:'View week',volver_word:'← Back',no_entrenamiento_hoy:'No training planned today.',
     pendientes_titulo:'Still to do',pendientes_sub:"GYM and ERGO sessions up to today that aren't marked as completed yet.",pendientes_error:"Couldn't load the pending items.",
     registrar_gym:'Log GYM',abrir_ergdata:'Open in ErgData',registrar_manual:'Log manually',
     idioma:'Language',ver_entrenamiento:'View training',todos_label:'All',al_dia:'✅ All caught up: no pending GYM/ERGO sessions up to today.',
@@ -7998,7 +8005,7 @@ const V311_DICT={
     sin_equipo_asignado:"Your account doesn't have a team assigned yet."
   },
   nl:{
-    hoy_title:'Vandaag',ver_semana:'Bekijk week',no_entrenamiento_hoy:'Geen training gepland vandaag.',
+    hoy_title:'Vandaag',ver_semana:'Bekijk week',volver_word:'← Terug',no_entrenamiento_hoy:'Geen training gepland vandaag.',
     pendientes_titulo:'Nog te doen',pendientes_sub:'GYM- en ERGO-sessies tot vandaag die nog niet als voltooid staan.',pendientes_error:'Kon de openstaande items niet laden.',
     registrar_gym:'GYM registreren',abrir_ergdata:'Openen in ErgData',registrar_manual:'Handmatig registreren',
     idioma:'Taal',ver_entrenamiento:'Training bekijken',todos_label:'Alle',al_dia:'✅ Helemaal bij: geen openstaande GYM/ERGO-sessies tot vandaag.',
