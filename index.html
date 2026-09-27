@@ -88,6 +88,13 @@ small{font-size:var(--fs-sm);font-weight:300}
 b,strong{font-weight:500}
 button,.btn,label.btn,summary,[role="button"]{cursor:pointer} button:disabled{cursor:not-allowed}
 *{box-sizing:border-box}html{overscroll-behavior-y:none}body{margin:0;overscroll-behavior-y:none;background:var(--bg);color:var(--text);font-family:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;font-weight:300;line-height:var(--lh-normal);-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}header{background:#07162f;color:#fff;padding:18px 16px;display:flex;justify-content:space-between;align-items:center}main{max-width:1280px;margin:auto;padding:10px}.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px;margin:8px 0;box-shadow:0 2px 8px #0b183014}.card .card{background:var(--surface-2);box-shadow:none}.hidden{display:none}nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}button,.btn,a.btn,label.btn,summary,.daybtn{cursor:pointer}button:disabled,.btn.disabled{cursor:not-allowed}button,.btn{border:1.5px solid #94a3b8;border-radius:6px;padding:9.5px 12.5px;font-size:15px;background:var(--chip-bg);color:var(--text);text-decoration:none;display:inline-block}.primary,.active{background:#07162f;color:white;border-color:#07162f}.muted{color:var(--text-muted);font-size:.9rem;font-weight:300}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calday{padding:8px 2px;border-radius:7px}.calday.today{background:#07162f;color:#fff}.calday .num{font-size:22px;font-weight:750}.dot{font-size:15px}.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.info{background:var(--accent-tint);border-radius:7px;padding:13px;margin:14px 0}.session{border-left:5px solid #8ba0b8}.tag{display:inline-block;background:var(--chip-bg);border-radius:99px;padding:5px 9px;font-size:12px}.v151TagOk{background:#dff5e8;color:#12633f}.v151TagWarn{background:#fff0d9;color:#8a5200}.ex{border:1px solid var(--border);border-radius:8px;padding:14px;margin:12px 0}.exhead{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.exhead>div{min-width:0;flex:1}.ex{overflow:visible}.thumb{width:112px;max-width:32%;border-radius:7px;background:var(--surface-2);overflow:visible}.big{font-size:21px;font-weight:800}.dose{font-weight:750}.target{background:var(--accent-tint);border-radius:6px;padding:10px;margin:10px 0}.last{background:var(--surface-2);border-radius:6px;padding:9px;margin:9px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}input,textarea{width:100%;font-size:16px;padding:10px;border:1px solid var(--border);border-radius:9px;margin:4px 0 8px}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.choices label{border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center}.choices input{width:auto;margin:0}details{background:var(--surface-2);border-radius:7px;padding:11px;margin:10px 0}summary{font-weight:500;cursor:pointer}.fullimg{width:100%;max-width:440px;display:block;margin:10px auto;border-radius:8px}.actions{display:flex;gap:8px;flex-wrap:wrap}.daybtn{cursor:pointer}.selected{outline:2px solid #1687ff}.sectionTitle{font-size:25px;margin:20px 0 5px}
+/* V347 · el bottom-nav flotante deriva hacia el centro de la pantalla al hacer scroll en iOS Safari
+   porque position:fixed sobre el <body> que hace scroll no está garantizado por WebKit al 100%.
+   Solución robusta: el <body> ya no hace scroll; el scroll real ocurre dentro de #v347Scroll,
+   y el nav queda fuera de ese contenedor, como hermano fijo respecto al viewport real. */
+html,body{height:100%}
+body{overflow:hidden}
+#v347Scroll{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 .realPhoto{object-fit:contain;background:var(--surface);display:block}.thumb.realPhoto{width:min(220px,42vw);height:auto;max-width:42%;max-height:none}.fullimg.realPhoto{width:100%;height:auto;max-width:100%;object-fit:contain}
 .athleteHead{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .workoutDetail{border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
@@ -495,7 +502,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v325EmojiPicker.hidden{display:none}
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
-#app.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+body.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 #nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(10px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:#17191ccc;border:1px solid #ffffff1a;border-radius:999px;padding:7px 6px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);transform-origin:center bottom;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
 #nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
 .v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:8px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
@@ -567,7 +574,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 <style id="v225pendingstyles">
 .v225PendingSection{margin-top:18px;padding-top:4px}.v225PendingHeading{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.v225PendingHeading h3{margin:0}.v225PendingHeading small{color:var(--text-muted)}.v225PendingToolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.v225PendingToolbar button{border:0;border-radius:999px;padding:9px 14px;background:var(--surface-2);color:var(--text);font-weight:700}.v225PendingToolbar button.active{background:#071d3a;color:white}.v225PendingToolbar button span{opacity:.8}.v225PendingList{display:grid;gap:9px}.v225PendingItem{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface)}.v225PendingItem[hidden]{display:none!important}.v225PendingTop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px}.v225PendingItem strong{display:block;line-height:1.3}.v225PendingItem details{margin-top:8px}.v225PendingEmpty{padding:12px;border-radius:8px;background:#eefaf3;color:#0f3d2a;border:1px solid #ccebd8}.v225RowerPending{margin-top:22px;border-top:1px solid #dfe7ef;padding-top:18px}.v225AthleteTabs{display:flex;gap:8px;margin:18px 0 8px}.v225AthleteTabs button{border:0;border-radius:7px;padding:10px 14px;background:var(--surface-2);color:var(--text);font-weight:800}.v225AthleteTabs button.active{background:#071d3a;color:#fff}.v225AthleteTabs button span{display:inline-block;margin-left:4px;opacity:.85}.v225AthletePane[hidden]{display:none!important}
 </style>
-</head><body><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:8px;min-width:0"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:30px;height:30px;object-fit:contain;flex:0 0 auto"><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:4px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">Row Training</span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.75"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div></header><main><script>
+</head><body><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:8px;min-width:0"><img src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" style="width:30px;height:30px;object-fit:contain;flex:0 0 auto"><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:4px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">Row Training</span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.75"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button></div></header><main><script>
 function applyThemeV299(mode){
   var isDark=mode==='dark';
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
@@ -588,7 +595,8 @@ function applyThemeV299(mode){
 <div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
 <div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Me identifico como<select id="regGender"><option value="">Prefiero no decirlo</option><option value="m">Hombre</option><option value="f">Mujer</option></select></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
 <div id="publicGuide" class="card publicGuide hidden"></div>
-<div id="app" class="hidden"><nav id="nav"></nav><div id="content"></div></div></main>
+<div id="app" class="hidden"><div id="content"></div></div></main>
+</div><nav id="nav"></nav>
 <script>
 // v266b: watchdog totalmente independiente del resto del código de la app. Si por lo que sea
 // (librería externa que no carga, error en el script principal) la app se queda colgada en
@@ -2109,7 +2117,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="346";
+const APP_VERSION="347";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2260,7 +2268,7 @@ async function startApp(){
   await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
   await v300RefreshUnreadMsgCount();
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
-  if(v300ResumeScrollY!=null)setTimeout(()=>window.scrollTo(0,v300ResumeScrollY),150);
+  if(v300ResumeScrollY!=null)setTimeout(()=>v347ScrollTo(v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
@@ -2360,6 +2368,10 @@ doRegister.onclick=async()=>{
 };
 loadTeamsV88(true);
 
+// V347 · el scroll real ahora ocurre dentro de #v347Scroll (ver CSS), no en window/body.
+function v347ScrollTop(){const el=document.getElementById('v347Scroll');return el?el.scrollTop:(window.scrollY||0)}
+function v347ScrollTo(y){const el=document.getElementById('v347Scroll');if(el)el.scrollTop=y;else window.scrollTo(0,y)}
+
 // V159 · actualización manual y gesto de arrastrar hacia abajo.
 async function refreshAppV159(){
   const btn=document.getElementById('refreshAppV159');if(btn){btn.disabled=true;btn.classList.add('is-refreshing')}
@@ -2370,7 +2382,7 @@ async function refreshAppV159(){
       // no en las variables globales — los leemos directamente para no perder la selección al recargar.
       const aTeamEl=document.getElementById('analysisTeam'),aAthEl=document.getElementById('analysisAthlete');
       if(aTeamEl&&aAthEl){resumeTeam=aTeamEl.value||resumeTeam;resumeAthlete=aAthEl.value||resumeAthlete}
-      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam:resumeTeam,workoutNotificationAthleteV129:resumeAthlete,scrollY:window.scrollY,ts:Date.now()}));
+      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam:resumeTeam,workoutNotificationAthleteV129:resumeAthlete,scrollY:v347ScrollTop(),ts:Date.now()}));
     }catch(e){}
     // Fuerza comprobación de versión y vuelve a cargar la app sin cerrar sesión.
     lastAppUpdateCheck=0;await checkForAppUpdate();
@@ -2382,26 +2394,29 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
   if(!('ontouchstart' in window))return;
   const tip=document.createElement('div');tip.className='pullRefreshV159';tip.textContent='↓ Suelta para actualizar';document.body.appendChild(tip);
   let startY=null,armed=false;
-  document.addEventListener('touchstart',e=>{if(window.scrollY<=2&&e.touches.length===1){startY=e.touches[0].clientY;armed=false}}, {passive:true});
-  document.addEventListener('touchmove',e=>{if(startY==null)return;const d=e.touches[0].clientY-startY;if(d>65&&window.scrollY<=2){armed=true;tip.classList.add('show')}else if(d<35){armed=false;tip.classList.remove('show')}}, {passive:true});
+  document.addEventListener('touchstart',e=>{if(v347ScrollTop()<=2&&e.touches.length===1){startY=e.touches[0].clientY;armed=false}}, {passive:true});
+  document.addEventListener('touchmove',e=>{if(startY==null)return;const d=e.touches[0].clientY-startY;if(d>65&&v347ScrollTop()<=2){armed=true;tip.classList.add('show')}else if(d<35){armed=false;tip.classList.remove('show')}}, {passive:true});
   document.addEventListener('touchend',()=>{if(armed){tip.textContent='Actualizando…';setTimeout(refreshAppV159,80)}else tip.classList.remove('show');startY=null;armed=false}, {passive:true});
 })();
 
 // V341 · el menú flotante se encoge un poco al bajar y vuelve a su tamaño al subir (estilo Instagram).
 // (Se probó también compensar el hueco de la barra de direcciones de Safari con VisualViewport,
 // pero el cálculo empujaba el menú hacia arriba incluso en reposo y empeoraba las cosas — retirado.)
+// V347 · el listener ahora escucha el scroll de #v347Scroll (el contenedor que realmente hace scroll),
+// no de window — ver el cambio de arquitectura de scroll más arriba.
 (function v341ScrollShrinkNav(){
-  let lastY=window.scrollY,ticking=false,shrunk=false;
+  let lastY=v347ScrollTop(),ticking=false,shrunk=false;
   function apply(){
     ticking=false;
     const navEl=document.getElementById('nav');
-    if(!navEl||!navEl.classList.contains('v330BottomNav')){lastY=window.scrollY;return}
-    const y=window.scrollY,dy=y-lastY;
+    if(!navEl||!navEl.classList.contains('v330BottomNav')){lastY=v347ScrollTop();return}
+    const y=v347ScrollTop(),dy=y-lastY;
     if(dy>3&&y>30&&!shrunk){navEl.classList.add('v339Shrink');shrunk=true}
     else if((dy<-3||y<=30)&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false}
     lastY=y;
   }
-  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(apply)}},{passive:true});
+  const scrollEl=document.getElementById('v347Scroll')||window;
+  scrollEl.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(apply)}},{passive:true});
 })();
 
 window.addEventListener("pagehide",()=>{
@@ -2562,8 +2577,9 @@ function v330RenderBottomNav(){
   const show=currentMode==='athlete'&&!!currentTeamCode;
   if(menuBtn)menuBtn.classList.toggle('hidden',show);
   if(bellBtn)bellBtn.classList.toggle('hidden',show);
-  if(!show){navEl.innerHTML='';navEl.classList.remove('v330BottomNav');if(appEl)appEl.classList.remove('v330HasBottomNav');return}
+  if(!show){navEl.innerHTML='';navEl.classList.remove('v330BottomNav');if(appEl)appEl.classList.remove('v330HasBottomNav');document.body.classList.remove('v330HasBottomNav');return}
   if(appEl)appEl.classList.add('v330HasBottomNav');
+  document.body.classList.add('v330HasBottomNav');
   navEl.classList.add('v330BottomNav');
   const group=v330GroupForTab(tab);
   const mensajesCount=(v300UnreadMsgCount||0)+(v334UnreadNotifCount||0);
@@ -3210,7 +3226,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const imported=Array.isArray(importedSeries)?importedSeries:[];
   let seaPhotoFilesV137=[];
   content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
-  window.scrollTo(0,0);
+  v347ScrollTo(0);
   const refreshCrewV307=()=>{
     content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id,false,team);
     v307BindCrewBoat(content,session,team,refreshCrewV307);
