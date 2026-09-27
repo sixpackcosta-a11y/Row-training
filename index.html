@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="389";
+const APP_VERSION="390";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6303,7 +6303,8 @@ async function renderCoachMonth(){
   // V387 · pinchar un día en Mes muestra SOLO ese día, con la misma tarjeta de Semana (Ver
   // detalle/Editar/Mover/Duplicar/Eliminar/Registrar MAR), no la semana completa ni Planificación.
   monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;tab='semana';draw();render()});
-  const sea=await getSeaResultsForTeam(team,start,end); monthArea.innerHTML+=`<h3>Resultados MAR del equipo</h3>${seaSummaryHtml(sea.results)}${seaRowsHtml(sea.results)}`;
+  // V390 · quitado el listado de "Resultados MAR del equipo": duplicaba lo que ya hace Análisis MAR,
+  // y en Mes no aportaba nada que no estuviera ya ahí.
 }
 function seasonExportTeamCodesV170(){
   if(isGlobalCoach)return coachTeams.length?coachTeams:TEAM_OPTIONS.map(t=>t[0]);
