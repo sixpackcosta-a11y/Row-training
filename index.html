@@ -496,7 +496,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
 #app.v330HasBottomNav main{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
-#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:var(--header-bg);border:1px solid #ffffff22;border-radius:999px;padding:6px 4px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:var(--header-bg);border:1px solid #ffffff22;border-radius:999px;padding:6px 4px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
+#nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
 .v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:9px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
 .v330NavBtn.active{background:rgba(37,99,235,.18);color:#5b9dff}
 .v330NavIcon{line-height:1}
@@ -2108,7 +2109,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="338";
+const APP_VERSION="339";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2384,6 +2385,25 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
   document.addEventListener('touchstart',e=>{if(window.scrollY<=2&&e.touches.length===1){startY=e.touches[0].clientY;armed=false}}, {passive:true});
   document.addEventListener('touchmove',e=>{if(startY==null)return;const d=e.touches[0].clientY-startY;if(d>65&&window.scrollY<=2){armed=true;tip.classList.add('show')}else if(d<35){armed=false;tip.classList.remove('show')}}, {passive:true});
   document.addEventListener('touchend',()=>{if(armed){tip.textContent='Actualizando…';setTimeout(refreshAppV159,80)}else tip.classList.remove('show');startY=null;armed=false}, {passive:true});
+})();
+
+// V339 · el menú flotante se encoge un poco al bajar y vuelve a su tamaño al subir (estilo Instagram).
+// De paso, el listener activo de scroll obliga a iOS Safari a recalcular la posición del elemento
+// "fixed" en cada frame, que es la mitigación habitual para el bug de iOS por el que a veces se queda
+// "flotando" a mitad de pantalla en vez de pegado abajo.
+(function v339ScrollShrinkNav(){
+  let lastY=window.scrollY,ticking=false,shrunk=false;
+  function apply(){
+    ticking=false;
+    const navEl=document.getElementById('nav');
+    if(!navEl||!navEl.classList.contains('v330BottomNav')){lastY=window.scrollY;return}
+    const y=window.scrollY,dy=y-lastY;
+    if(dy>3&&y>30&&!shrunk){navEl.classList.add('v339Shrink');shrunk=true}
+    else if(dy<-3&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false}
+    else if(y<=30&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false}
+    lastY=y;
+  }
+  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(apply)}},{passive:true});
 })();
 
 window.addEventListener("pagehide",()=>{
