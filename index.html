@@ -503,9 +503,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
 body.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
-#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(10px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:#17191ccc;border:1px solid #ffffff1a;border-radius:999px;padding:7px 6px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);transform-origin:center bottom;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
-#nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
-.v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:8px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
+#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(4px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:#17191ccc;border:1px solid #ffffff1a;border-radius:999px;padding:5px 5px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);transform-origin:center bottom;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
+#nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.94);transform:translateZ(0) scale(.94);opacity:.88}
+.v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:transparent;color:#9aa4b2;padding:6px 4px;border-radius:999px;font-size:10px;font-weight:700;position:relative}
 .v330NavBtn.active{background:#2563eb;color:#fff}
 .v330NavIcon{line-height:1}
 .v330NavBtn .nBadge{position:absolute;top:1px;right:22%;min-width:16px;height:16px;border-radius:99px;background:#ef4444;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
@@ -2117,7 +2117,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="347";
+const APP_VERSION="348";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2591,7 +2591,7 @@ function v330RenderBottomNav(){
   ];
   navEl.innerHTML=items.map(([g,icon,label,defaultTab])=>{
     const badge=g==='mensajes'&&mensajesCount?`<span class="nBadge">${mensajesCount>9?'9+':mensajesCount}</span>`:'';
-    return `<button type="button" class="v330NavBtn ${group===g?'active':''}" data-group="${g}" data-default="${defaultTab}" aria-label="${esc(label)}" title="${esc(label)}">${badge}<span class="v330NavIcon">${v332Icon(icon,22)}</span><span class="v330NavLabel">${esc(label)}</span></button>`;
+    return `<button type="button" class="v330NavBtn ${group===g?'active':''}" data-group="${g}" data-default="${defaultTab}" aria-label="${esc(label)}" title="${esc(label)}">${badge}<span class="v330NavIcon">${v332Icon(icon,20)}</span><span class="v330NavLabel">${esc(label)}</span></button>`;
   }).join('');
   navEl.querySelectorAll('.v330NavBtn').forEach(btn=>btn.onclick=()=>{
     if(v330GroupForTab(tab)===btn.dataset.group)return;
