@@ -2082,7 +2082,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="325";
+const APP_VERSION="326";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4736,12 +4736,24 @@ async function v325FetchReactions(messageIds){
     return q.error?[]:(q.data||[]);
   }catch(e){return[]}
 }
-async function v325ToggleReaction(messageId,emoji){
+async function v325ToggleReaction(messageId,emoji,rowerId,teamCode,messageBody){
   try{
     const existing=await sb.from('chat_message_reactions').select('id').eq('message_id',messageId).eq('user_id',currentUser.id).eq('emoji',emoji).maybeSingle();
     if(existing.error)return {error:existing.error};
     if(existing.data)return {error:(await sb.from('chat_message_reactions').delete().eq('id',existing.data.id)).error};
-    return {error:(await sb.from('chat_message_reactions').insert({message_id:messageId,user_id:currentUser.id,emoji})).error};
+    const ins=await sb.from('chat_message_reactions').insert({message_id:messageId,user_id:currentUser.id,emoji});
+    if(!ins.error&&rowerId&&teamCode){
+      const preview=messageBody?(messageBody.length>60?messageBody.slice(0,60)+'…':messageBody):'';
+      try{
+        if(currentUser.id===rowerId){
+          await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_reaction',source_id:String(Date.now())},title:`${emoji} Reacción de tu remero`,body:preview,url:'/?tab=mensajes',type:'chat_reaction'});
+        }else{
+          const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
+          await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`${emoji} Reacción de ${coachLabel}`,body:preview,url:'/?tab=mensajes',type:'chat_reaction'});
+        }
+      }catch(e){console.warn('No se pudo enviar la notificación de la reacción',e)}
+    }
+    return {error:ins.error};
   }catch(e){return {error:e}}
 }
 function v325ReactionsHtml(messageId,reactions,meId){
@@ -4792,7 +4804,8 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   });
   scrollBox.querySelectorAll('.v325EmojiOpt,.v325ReactionPill').forEach(btn=>btn.onclick=async()=>{
     scrollBox.querySelectorAll('.v325EmojiPicker').forEach(p=>p.classList.add('hidden'));
-    const{error}=await v325ToggleReaction(Number(btn.dataset.msg),btn.dataset.emoji);
+    const targetMsg=messages.find(m=>String(m.id)===btn.dataset.msg);
+    const{error}=await v325ToggleReaction(Number(btn.dataset.msg),btn.dataset.emoji,rowerId,teamCode,targetMsg?.body);
     if(error){alert(/relation .* does not exist|chat_message_reactions/i.test(error.message||'')?'Falta ejecutar 17_reacciones_mensajes.sql en Supabase antes de poder reaccionar.':error.message);return}
     const st=scrollBox.scrollTop;
     await v300RenderChatThread(container,rowerId,teamCode);
