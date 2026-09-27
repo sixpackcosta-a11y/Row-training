@@ -4,7 +4,7 @@
 /* V314 · Manrope en vez de Inter, con pesos realmente ligeros (300 en texto normal/secundario,
    500 en títulos) en vez de la negrita 600-800 de las versiones V312/V313 que no convencían. */
 :root{
-  --fs-xs:.75rem;--fs-sm:.875rem;--fs-base:1rem;--fs-md:1.15rem;--fs-lg:1.4rem;--fs-xl:1.75rem;--fs-2xl:2.125rem;
+  --fs-xs:.75rem;--fs-sm:.875rem;--fs-base:1rem;--fs-md:1.05rem;--fs-lg:1.2rem;--fs-xl:1.4rem;--fs-2xl:1.65rem;
   --lh-tight:1.25;--lh-normal:1.5;
   --bg:#e9eef4;--surface:#fff;--surface-2:#eef1f6;--text:#0b1830;--text-muted:#718096;--border:#dbe5ef;
   --accent-tint:#eaf4ff;--chip-bg:#e7edf5;--header-bg:#07162f;
@@ -2108,7 +2108,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="336";
+const APP_VERSION="337";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
