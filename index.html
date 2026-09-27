@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="379";
+const APP_VERSION="380";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -6271,15 +6271,16 @@ async function coachMonthView(){
   if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
 }
 async function renderCoachMonth(){
-  const team=monthTeam.value,ym=monthPick.value; coachSelectedTeam=team; const [y,m]=ym.split('-').map(Number); const start=`${ym}-01`; const end=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);
+  // V380 · el calendario ".calendar/.calday" original no tenía CSS responsive y se salía de la
+  // pantalla en móvil. Reutilizamos calendarCellsHtml()/.coachCalendar, el mismo calendario ya
+  // usado (y probado en móvil) en Planificación y Análisis MAR.
+  const team=monthTeam.value,ym=monthPick.value; coachSelectedTeam=team; const [start,end]=monthBounds(ym);
   const [ss,cc]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team])]);
-  const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]); const days=new Date(Date.UTC(y,m,0)).getUTCDate(); const first=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7;
+  const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
   const counts=t=>sessions.filter(x=>x.session_type===t).length;
-  let cells=Array(first).fill('<div class="calday muted"></div>');
-  for(let d=1;d<=days;d++){const ds=`${ym}-${String(d).padStart(2,'0')}`, xs=sessions.filter(x=>x.session_date===ds), cs=comps.filter(x=>x.competition_date===ds);cells.push(`<div class="calday" style="min-height:120px"><b>${d}</b>${cs.map(c=>`<div class="tag" style="margin-top:5px">🏁 ${c.name}</div>`).join('')}${xs.map(x=>`<div style="margin-top:5px;font-size:.78rem"><b>${x.session_type}</b> ${x.title}</div>`).join('')}<button class="editDay" data-date="${ds}" style="margin-top:8px">Editar</button></div>`)}
-  monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div><div class="calendar" style="grid-template-columns:repeat(7,1fr)">${['L','M','X','J','V','S','D'].map(x=>`<div class="calday"><b>${x}</b></div>`).join('')}${cells.join('')}</div>`;
+  monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div>${calendarCellsHtml(ym,sessions,comps,[],'edit',[])}`;
+  monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
   const sea=await getSeaResultsForTeam(team,start,end); monthArea.innerHTML+=`<h3>Resultados MAR del equipo</h3>${seaSummaryHtml(sea.results)}${seaRowsHtml(sea.results)}`;
-  document.querySelectorAll('.editDay').forEach(b=>b.onclick=()=>openCoachPlanner(team,b.dataset.date));
 }
 function seasonExportTeamCodesV170(){
   if(isGlobalCoach)return coachTeams.length?coachTeams:TEAM_OPTIONS.map(t=>t[0]);
