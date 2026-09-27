@@ -630,6 +630,24 @@ function applyThemeV299(mode){
 (function(){
   var el=document.getElementById('content'),overlay=document.getElementById('v360LoadOverlay');
   if(!el)return;
+  // V362 · algunas vistas (Mensajes del entrenador, Registro MAR, Mes del remero…) pintan
+  // el aviso "Cargando…" dentro de #content pero luego solo actualizan un div interno
+  // (no #content directamente) cuando llegan los datos. Este observer solo ve cambios
+  // directos en #content, así que esas vistas nunca disparaban el "contenido definitivo"
+  // de abajo: el fondo atenuado y el barquito se quedaban enganchados para siempre.
+  // v360FinishLoad() queda expuesta como función global para que esas vistas la llamen
+  // ellas mismas en cuanto terminan de pintar su contenido real, y además ponemos una
+  // red de seguridad con temporizador (más abajo, junto al render() envuelto) por si
+  // se nos escapa alguna vista más.
+  window.v360FinishLoad=function(){
+    if(overlay){clearTimeout(overlay._v360Timer);overlay.classList.remove('show')}
+    clearTimeout(el._v360SafetyTimer);
+    el.classList.remove('v360Dim');
+    el.classList.remove('v316Fade');
+    void el.offsetWidth;
+    el.classList.add('v316Fade');
+    if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
+  };
   var raf=null;
   var mo=new MutationObserver(function(){
     if(raf)cancelAnimationFrame(raf);
@@ -640,12 +658,7 @@ function applyThemeV299(mode){
       // Mientras tanto seguimos con el fondo atenuado + icono (V361), sin tocarlos.
       if(el.querySelector('.v316LoadingWrap')){el.classList.remove('v316Fade');return}
       // Contenido definitivo: quitamos el atenuado y el icono superpuesto, y fundimos.
-      if(overlay){clearTimeout(overlay._v360Timer);overlay.classList.remove('show')}
-      el.classList.remove('v360Dim');
-      el.classList.remove('v316Fade');
-      void el.offsetWidth;
-      el.classList.add('v316Fade');
-      if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
+      window.v360FinishLoad();
     });
   });
   mo.observe(el,{childList:true});
@@ -2139,7 +2152,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="362";
+const APP_VERSION="363";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2665,6 +2678,12 @@ function render(){
         clearTimeout(overlay._v360Timer);
         overlay._v360Timer=setTimeout(function(){overlay.classList.add("show")},220);
       }
+      // V362 · red de seguridad: si la vista actual deja el contenido final en un div
+      // interno (en vez de en #content directamente) el observer nunca ve esa mutación
+      // final y el atenuado/icono se quedarían enganchados. Forzamos que desaparezcan
+      // solos pasado un tiempo, aunque ninguna vista debería tardar tanto en cargar.
+      clearTimeout(el._v360SafetyTimer);
+      el._v360SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},4000);
     }
     v316OrigRender();
   };
@@ -2703,6 +2722,7 @@ async function staffRegisterView(){
       const boat=staffRegArea.querySelector(`.v307CrewBoat[data-session="${x.id}"]`);
       if(boat){const card=boat.closest('.card');v307BindCrewBoat(card,x,t,load);v307InjectCrewPhysicals(card,x.crew,x.id)}
     });
+    if(typeof v360FinishLoad==='function')v360FinishLoad();
   }
   staffRegLoad.onclick=load;
   staffRegTeam.onchange=load;
@@ -5065,7 +5085,7 @@ async function coachMessagesView(){
       if(x.last)return -1;if(y.last)return 1;
       return (x.a.full_name||'').localeCompare(y.a.full_name||'','es');
     });
-    if(!rows.length){box.innerHTML='<p class="muted">No hay remeros en este equipo.</p>';return}
+    if(!rows.length){box.innerHTML='<p class="muted">No hay remeros en este equipo.</p>';if(typeof v360FinishLoad==='function')v360FinishLoad();return}
     box.innerHTML=rows.map(({a,last})=>{
       const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
       const unread=!!last&&last.sender_id!==currentUser.id&&new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0);
@@ -5077,6 +5097,7 @@ async function coachMessagesView(){
       </button>`;
     }).join('');
     box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
+    if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
 
   const openThread=(rowerId,teamCode,name)=>{
@@ -5084,6 +5105,7 @@ async function coachMessagesView(){
     document.getElementById('v300BackInbox').onclick=loadInbox;
     localStorage.setItem('rowtraining_v300_chat_thread_seen_'+rowerId,new Date().toISOString());
     v300RenderChatThread(document.getElementById('v300ChatContainer'),rowerId,teamCode);
+    if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
 
   teamSel.onchange=loadInbox;
@@ -6907,7 +6929,7 @@ async function athleteMonthViewV96(){
   const displaySessions=await v311TranslateSessions(sessions);
   if(tab!=="mes")return;
   box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${v311MonthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,displaySessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
-  if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
+  if(typeof v360FinishLoad==='function')v360FinishLoad();
   const detail=document.getElementById('athMonthDetailV98');
   box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=displaySessions.find(s=>String(s.id)===String(el.dataset.athSession)),orig=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';bindAthletePlannedActionsV113(detail,[orig||x],athleteMonthViewV96);detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
 }
