@@ -496,6 +496,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V361 · en vez de vaciar/ocultar la pantalla anterior mientras llega la siguiente, la dejamos
    visible pero atenuada (como un fondo congelado) y superponemos un icono grande y centrado.
    Así nunca hay un hueco en blanco ni la sensación de que "se recarga" la pestaña de antes. */
+#content{transition:opacity .25s ease}
 #content.v360Dim{opacity:.32;filter:saturate(.7);transition:opacity .2s ease;pointer-events:none}
 #app{position:relative}
 .v360Overlay{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:55;opacity:0;transition:opacity .25s ease}
@@ -642,10 +643,21 @@ function applyThemeV299(mode){
   window.v360FinishLoad=function(){
     if(overlay){clearTimeout(overlay._v360Timer);overlay.classList.remove('show')}
     clearTimeout(el._v360SafetyTimer);
+    // V363c · "saltitos" al cambiar de pestaña: si el contenido estaba atenuado (v360Dim,
+    // opacidad .32), reanudar el fundido de "página nueva" (v316Fade) reinicia la animación
+    // desde opacidad 0 — el filtro CSS a keyframes ignora la opacidad actual — así que
+    // durante una fracción de segundo la pantalla parpadeaba a transparente del todo antes
+    // de volver a aparecer, dando esa sensación de tirón. Si veníamos de estar atenuados,
+    // basta con quitar la atenuación: la transición suave de opacidad de #content ya lleva
+    // de .32 a 1 sin pasar por 0. Solo usamos el fundido "desde cero" cuando no había
+    // atenuación previa (p.ej. la primera pantalla que se pinta).
+    var wasDimmed=el.classList.contains('v360Dim');
     el.classList.remove('v360Dim');
     el.classList.remove('v316Fade');
-    void el.offsetWidth;
-    el.classList.add('v316Fade');
+    if(!wasDimmed){
+      void el.offsetWidth;
+      el.classList.add('v316Fade');
+    }
     if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
   };
   var raf=null;
@@ -2152,7 +2164,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="363";
+const APP_VERSION="364";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5060,6 +5072,12 @@ async function messagesView(){
   content.innerHTML=`<div class="card"><h2 style="margin:0 0 10px">${v311T('mensajes_con_entrenador')}</h2>${bellHtml?`<div style="margin-bottom:12px">${bellHtml}</div>`:''}<div id="v300ChatContainer"></div></div>`;
   document.getElementById('v334MsgBellBtn')?.addEventListener('click',openNotificationsV104);
   v334UpdateMensajesBellBadge();
+  // V363b · esta pantalla ya está "lista" en cuanto se pinta el hueco de arriba (título + Avisos):
+  // lo que tarda es solo el hilo de chat de dentro, que tiene su propio "Cargando…" pequeño.
+  // Si dejamos que el observer global decida solo, ve ese "Cargando…" interno (aunque no sea
+  // el de esta pantalla) y piensa que la vista entera sigue cargando, dejando el barquito grande
+  // y el fondo atenuado enganchados de más. Por eso cerramos el overlay global aquí a mano.
+  if(typeof v360FinishLoad==='function')v360FinishLoad();
   const container=document.getElementById('v300ChatContainer');
   await v300RenderChatThread(container,currentUser.id,currentTeamCode);
   localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
