@@ -492,18 +492,15 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 </style>
 
 <style id="v154css">
-.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px;opacity:0;animation:v316LoadingReveal .28s ease .22s forwards}@keyframes v316LoadingReveal{to{opacity:1}}@media(prefers-reduced-motion:reduce){.v316LoadingWrap{animation:none;opacity:1}}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .38s ease-in-out}@keyframes v316FadeIn{from{opacity:0}to{opacity:1}}#content.v316FadeOut{animation:v316FadeOutKf .18s ease-in-out forwards}@keyframes v316FadeOutKf{to{opacity:0}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
-/* V361 · en vez de vaciar/ocultar la pantalla anterior mientras llega la siguiente, la dejamos
-   visible pero atenuada (como un fondo congelado) y superponemos un icono grande y centrado.
-   Así nunca hay un hueco en blanco ni la sensación de que "se recarga" la pestaña de antes. */
-#content{transition:opacity .25s ease}
-#content.v360Dim{opacity:.32;filter:saturate(.7);transition:opacity .2s ease;pointer-events:none}
-#app{position:relative}
-.v360Overlay{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:55;opacity:0;transition:opacity .25s ease}
-.v360Overlay.show{opacity:1}
-.v360OverlayIcon{font-size:34px;line-height:1;width:74px;height:74px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface);box-shadow:0 8px 24px #0004;animation:v360Bob 1.1s ease-in-out infinite}
-@keyframes v360Bob{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(-6deg)}}
-@media(prefers-reduced-motion:reduce){#content.v360Dim{transition:none}.v360Overlay{transition:none}.v360OverlayIcon{animation:none}}
+.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px;opacity:0;animation:v316LoadingReveal .28s ease .22s forwards}@keyframes v316LoadingReveal{to{opacity:1}}@media(prefers-reduced-motion:reduce){.v316LoadingWrap{animation:none;opacity:1}}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}
+/* V364 · fundido único y sencillo: en vez de un icono grande superpuesto (que además se veía
+   a la vez que el "Cargando…" propio de cada pantalla, dando la sensación de dos barquitos),
+   #content simplemente baja de opacidad un poco mientras se piden los datos nuevos y sube
+   suavemente cuando llegan. Todo por transición CSS continua (nunca por keyframes que
+   reinician desde 0), así nunca hay un salto ni un parpadeo a transparente del todo. */
+#content{transition:opacity .22s ease}
+#content.v363Dim{opacity:.5}
+@media(prefers-reduced-motion:reduce){#content{transition:none}}
 .v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
 .v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
@@ -606,7 +603,7 @@ function applyThemeV299(mode){
 <div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
 <div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Me identifico como<select id="regGender"><option value="">Prefiero no decirlo</option><option value="m">Hombre</option><option value="f">Mujer</option></select></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
 <div id="publicGuide" class="card publicGuide hidden"></div>
-<div id="app" class="hidden"><div id="content"></div><div id="v360LoadOverlay" class="v360Overlay"><div class="v360OverlayIcon">🚣</div></div></div></main>
+<div id="app" class="hidden"><div id="content"></div></div></main>
 </div><nav id="nav"></nav>
 <script>
 // v266b: watchdog totalmente independiente del resto del código de la app. Si por lo que sea
@@ -629,47 +626,29 @@ function applyThemeV299(mode){
 // v316: transición suave al cambiar de pestaña/vista. Se activa observando cambios
 // en #content en vez de tocar cada función de renderizado (son ~30 y muchas son async).
 (function(){
-  var el=document.getElementById('content'),overlay=document.getElementById('v360LoadOverlay');
+  var el=document.getElementById('content');
   if(!el)return;
-  // V362 · algunas vistas (Mensajes del entrenador, Registro MAR, Mes del remero…) pintan
-  // el aviso "Cargando…" dentro de #content pero luego solo actualizan un div interno
-  // (no #content directamente) cuando llegan los datos. Este observer solo ve cambios
-  // directos en #content, así que esas vistas nunca disparaban el "contenido definitivo"
-  // de abajo: el fondo atenuado y el barquito se quedaban enganchados para siempre.
-  // v360FinishLoad() queda expuesta como función global para que esas vistas la llamen
-  // ellas mismas en cuanto terminan de pintar su contenido real, y además ponemos una
-  // red de seguridad con temporizador (más abajo, junto al render() envuelto) por si
-  // se nos escapa alguna vista más.
+  // V364 · rediseño a lo simple tras varias vueltas fallidas: nada de icono grande superpuesto
+  // (se veía a la vez que el "Cargando…" propio de cada pantalla → parecían dos barquitos) ni
+  // de animación por keyframes (que reinicia desde opacidad 0 y da un salto visible). Solo una
+  // transición CSS continua de opacidad en #content: baja un poco al cambiar de pestaña, sube
+  // sola en cuanto el contenido definitivo está listo. v360FinishLoad() queda expuesta como
+  // función global para que la llamen a mano las pantallas cuyo contenido final se pinta en un
+  // div interno (no en #content directamente, p.ej. Mensajes o Registro MAR), y hay además una
+  // red de seguridad con temporizador (junto al render() envuelto, más abajo) por si alguna
+  // pantalla no la llama y el observer tampoco ve el cambio.
   window.v360FinishLoad=function(){
-    if(overlay){clearTimeout(overlay._v360Timer);overlay.classList.remove('show')}
-    clearTimeout(el._v360SafetyTimer);
-    // V363c · "saltitos" al cambiar de pestaña: si el contenido estaba atenuado (v360Dim,
-    // opacidad .32), reanudar el fundido de "página nueva" (v316Fade) reinicia la animación
-    // desde opacidad 0 — el filtro CSS a keyframes ignora la opacidad actual — así que
-    // durante una fracción de segundo la pantalla parpadeaba a transparente del todo antes
-    // de volver a aparecer, dando esa sensación de tirón. Si veníamos de estar atenuados,
-    // basta con quitar la atenuación: la transición suave de opacidad de #content ya lleva
-    // de .32 a 1 sin pasar por 0. Solo usamos el fundido "desde cero" cuando no había
-    // atenuación previa (p.ej. la primera pantalla que se pinta).
-    var wasDimmed=el.classList.contains('v360Dim');
-    el.classList.remove('v360Dim');
-    el.classList.remove('v316Fade');
-    if(!wasDimmed){
-      void el.offsetWidth;
-      el.classList.add('v316Fade');
-    }
+    clearTimeout(el._v363SafetyTimer);
+    el.classList.remove('v363Dim');
     if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
   };
   var raf=null;
   var mo=new MutationObserver(function(){
     if(raf)cancelAnimationFrame(raf);
     raf=requestAnimationFrame(function(){
-      // V355 · si lo que se acaba de pintar es solo el aviso "Cargando…" (transitorio,
-      // desaparece solo en cuanto llegan los datos), no lo hacemos fundir: así solo hay
-      // un fundido por cambio de pantalla en vez de dos seguidos (el "saltito" doble).
-      // Mientras tanto seguimos con el fondo atenuado + icono (V361), sin tocarlos.
-      if(el.querySelector('.v316LoadingWrap')){el.classList.remove('v316Fade');return}
-      // Contenido definitivo: quitamos el atenuado y el icono superpuesto, y fundimos.
+      // Si lo que se acaba de pintar es solo el aviso "Cargando…" (transitorio, desaparece
+      // solo en cuanto llegan los datos), seguimos esperando sin tocar la opacidad todavía.
+      if(el.querySelector('.v316LoadingWrap'))return;
       window.v360FinishLoad();
     });
   });
@@ -2164,7 +2143,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="364";
+const APP_VERSION="365";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2677,25 +2656,19 @@ function render(){
   var v316OrigRender=render;
   var v316ReduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   render=function(){
-    var el=document.getElementById("content"),overlay=document.getElementById("v360LoadOverlay");
-    // V361 · en vez de fundir a negro y vaciar la pantalla anterior mientras se piden los datos
-    // de la nueva (lo que dejaba un hueco en blanco, o la pantalla anterior "colgada" a toda
-    // opacidad si la vista no ponía su propio "Cargando…"), la dejamos de fondo atenuada y
-    // ponemos un icono grande encima. El contenido anterior desaparece de golpe cuando lo
-    // sustituye el definitivo, no antes — así nunca hay un hueco vacío ni una recarga fantasma.
+    var el=document.getElementById("content");
+    // V364 · #content baja un poco de opacidad (transición CSS continua, ver arriba) mientras
+    // se piden los datos de la vista nueva, y sube sola en cuanto el contenido definitivo está
+    // listo (ver el observer de más arriba). Nada de icono superpuesto ni de animación por
+    // keyframes: solo esa transición, para que nunca haya un salto ni un parpadeo a transparente.
     if(!v316ReduceMotion&&el&&el.firstElementChild){
-      el.classList.remove("v316Fade");
-      el.classList.add("v360Dim");
-      if(overlay){
-        clearTimeout(overlay._v360Timer);
-        overlay._v360Timer=setTimeout(function(){overlay.classList.add("show")},220);
-      }
-      // V362 · red de seguridad: si la vista actual deja el contenido final en un div
-      // interno (en vez de en #content directamente) el observer nunca ve esa mutación
-      // final y el atenuado/icono se quedarían enganchados. Forzamos que desaparezcan
-      // solos pasado un tiempo, aunque ninguna vista debería tardar tanto en cargar.
-      clearTimeout(el._v360SafetyTimer);
-      el._v360SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},4000);
+      el.classList.add("v363Dim");
+      // Red de seguridad: si la vista actual deja el contenido final en un div interno (en vez
+      // de en #content directamente) el observer nunca ve esa mutación final y el atenuado se
+      // quedaría enganchado. Forzamos que desaparezca solo pasado un tiempo, aunque ninguna
+      // vista debería tardar tanto en cargar.
+      clearTimeout(el._v363SafetyTimer);
+      el._v363SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},4000);
     }
     v316OrigRender();
   };
