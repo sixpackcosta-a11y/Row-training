@@ -492,7 +492,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 </style>
 
 <style id="v154css">
-.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .22s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .12s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
+.refreshHeadV159{margin-left:8px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative}.refreshHeadV159.hidden,.notifyHeadV104.hidden{display:none}.refreshHeadV159.is-refreshing{animation:v154spin .8s linear infinite}@keyframes v154spin{to{transform:rotate(360deg)}}.v316LoadingWrap{display:inline-flex;align-items:center;gap:9px}.v316BoatTrack{position:relative;width:64px;height:20px;overflow:hidden;flex:0 0 auto}.v316BoatTrack:before{content:"";position:absolute;left:0;right:0;bottom:3px;height:1px;background:var(--border)}.v316Boat{position:absolute;top:-1px;left:0;font-size:19px;line-height:1;display:inline-block;animation:v316BoatGlide 1.7s linear infinite}@keyframes v316BoatGlide{0%{transform:translateX(-26px)}100%{transform:translateX(74px)}}#content.v316Fade{animation:v316FadeIn .32s ease}@keyframes v316FadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}#content.v316FadeOut{animation:v316FadeOutKf .16s ease forwards}@keyframes v316FadeOutKf{to{opacity:0;transform:translateY(-8px)}}@media(prefers-reduced-motion:reduce){#content.v316Fade,#content.v316FadeOut{animation:none}.v316Boat{animation:none}}
 .v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
 .v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
@@ -505,8 +505,6 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 body.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 #nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:env(safe-area-inset-bottom);z-index:60;display:flex;justify-content:space-around;gap:2px;background:#17191ccc;border:1px solid #ffffff1a;border-radius:999px;padding:5px 6px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);transform-origin:center bottom;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
 #nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
-@keyframes v350FadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-#content.v350Fade{animation:v350FadeIn .22s ease}
 .v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:6px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
 .v330NavBtn.active{background:#2563eb;color:#fff}
 .v330NavIcon{line-height:1}
@@ -2119,7 +2117,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="352";
+const APP_VERSION="353";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2598,8 +2596,6 @@ function v330RenderBottomNav(){
   navEl.querySelectorAll('.v330NavBtn').forEach(btn=>btn.onclick=()=>{
     if(v330GroupForTab(tab)===btn.dataset.group)return;
     tab=btn.dataset.default;draw();render();
-    const c=document.getElementById('content');
-    if(c){c.classList.remove('v350Fade');void c.offsetWidth;c.classList.add('v350Fade')}
   });
 }
 function v330InjectSubTabs(){
@@ -2638,7 +2634,7 @@ function render(){
     if(!v316ReduceMotion&&el&&el.firstElementChild){
       el.classList.remove("v316Fade");
       el.classList.add("v316FadeOut");
-      setTimeout(function(){el.classList.remove("v316FadeOut");v316OrigRender()},110);
+      setTimeout(function(){el.classList.remove("v316FadeOut");v316OrigRender()},160);
     }else{
       v316OrigRender();
     }
