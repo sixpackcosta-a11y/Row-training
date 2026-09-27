@@ -495,9 +495,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v325EmojiPicker.hidden{display:none}
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
-#app.v330HasBottomNav main{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
-#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:var(--header-bg);border:1px solid #ffffff22;border-radius:999px;padding:6px 4px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
-#nav.v330BottomNav.v339Shrink{opacity:.88}
+#app.v330HasBottomNav main{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+#nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:calc(6px + env(safe-area-inset-bottom));z-index:60;display:flex;justify-content:space-around;gap:2px;background:var(--header-bg);border:1px solid #ffffff22;border-radius:999px;padding:6px 4px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
+#nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
 .v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:9px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
 .v330NavBtn.active{background:rgba(37,99,235,.18);color:#5b9dff}
 .v330NavIcon{line-height:1}
@@ -2109,7 +2109,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="340";
+const APP_VERSION="342";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2387,19 +2387,11 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
   document.addEventListener('touchend',()=>{if(armed){tip.textContent='Actualizando…';setTimeout(refreshAppV159,80)}else tip.classList.remove('show');startY=null;armed=false}, {passive:true});
 })();
 
-// V340 · el menú flotante se encoge un poco al bajar y vuelve a su tamaño al subir (estilo Instagram),
-// y además se corrige con la API VisualViewport: en Safari/iOS, cuando la barra de direcciones se
-// oculta al hacer scroll, el viewport "visual" (lo que realmente se ve) y el viewport de "layout"
-// (con el que se calcula position:fixed) dejan de coincidir durante un instante, y el menú fijo se
-// queda anclado a donde estaba el fondo ANTES de que la barra se ocultara — es decir, a mitad de
-// pantalla en vez de pegado abajo del todo. Compensamos ese hueco a mano con un translateY.
-(function v340FixIOSBottomBar(){
-  const vv=window.visualViewport;
+// V341 · el menú flotante se encoge un poco al bajar y vuelve a su tamaño al subir (estilo Instagram).
+// (Se probó también compensar el hueco de la barra de direcciones de Safari con VisualViewport,
+// pero el cálculo empujaba el menú hacia arriba incluso en reposo y empeoraba las cosas — retirado.)
+(function v341ScrollShrinkNav(){
   let lastY=window.scrollY,ticking=false,shrunk=false;
-  function gap(){
-    if(!vv)return 0;
-    return Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));
-  }
   function apply(){
     ticking=false;
     const navEl=document.getElementById('nav');
@@ -2408,12 +2400,8 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
     if(dy>3&&y>30&&!shrunk){navEl.classList.add('v339Shrink');shrunk=true}
     else if((dy<-3||y<=30)&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false}
     lastY=y;
-    const g=gap(),scalePart=shrunk?' scale(.86)':'';
-    navEl.style.transform=g>0?`translateZ(0) translateY(-${g}px)${scalePart}`:`translateZ(0)${scalePart}`;
   }
-  function schedule(){if(!ticking){ticking=true;requestAnimationFrame(apply)}}
-  window.addEventListener('scroll',schedule,{passive:true});
-  if(vv){vv.addEventListener('resize',schedule);vv.addEventListener('scroll',schedule)}
+  window.addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(apply)}},{passive:true});
 })();
 
 window.addEventListener("pagehide",()=>{
