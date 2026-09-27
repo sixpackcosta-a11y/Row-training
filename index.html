@@ -624,6 +624,10 @@ function applyThemeV299(mode){
   var mo=new MutationObserver(function(){
     if(raf)cancelAnimationFrame(raf);
     raf=requestAnimationFrame(function(){
+      // V355 · si lo que se acaba de pintar es solo el aviso "Cargando…" (transitorio,
+      // desaparece solo en cuanto llegan los datos), no lo hacemos fundir: así solo hay
+      // un fundido por cambio de pantalla en vez de dos seguidos (el "saltito" doble).
+      if(el.querySelector('.v316LoadingWrap')){el.classList.remove('v316Fade');return}
       el.classList.remove('v316Fade');
       void el.offsetWidth;
       el.classList.add('v316Fade');
@@ -2117,7 +2121,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="355";
+const APP_VERSION="356";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
