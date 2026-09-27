@@ -501,8 +501,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v330NavBtn.active{background:rgba(37,99,235,.18);color:#5b9dff}
 .v330NavIcon{line-height:1}
 .v330NavBtn .nBadge{position:absolute;top:1px;right:22%;min-width:16px;height:16px;border-radius:99px;background:#ef4444;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
-.v334MsgBellBtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
-.v334MsgBellBtn .nBadge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
+.v334MsgBellBtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 13px 8px 11px;border-radius:999px;border:1.5px solid #2563eb;background:var(--accent-tint);color:var(--text);font-weight:700;font-size:13px}
+html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
+.v334MsgBellBtn .nBadge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;padding:0 4px}
 .v334MsgBellBtn .nBadge.hidden{display:none}
 .v330SubTabs{display:flex;gap:6px;margin:0 0 10px;overflow-x:auto}
 .v330SubTab{flex:0 0 auto;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600}
@@ -2107,7 +2108,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="335";
+const APP_VERSION="336";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4972,8 +4973,8 @@ function v334UpdateMensajesBellBadge(){
 }
 async function messagesView(){
   if(!currentTeamCode){content.innerHTML=`<div class="card"><h2>💬 ${v311T('nav_mensajes')}</h2><p class="muted">${v311T('necesitas_equipo_msg')}</p></div>`;return}
-  const bellHtml=currentMode==='athlete'?`<button type="button" id="v334MsgBellBtn" class="v334MsgBellBtn" aria-label="Notificaciones" title="Notificaciones">${v332Icon('campana',20)}<span id="v334MsgBellBadge" class="nBadge hidden">0</span></button>`:'';
-  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h2 style="margin:0">${v311T('mensajes_con_entrenador')}</h2>${bellHtml}</div><div id="v300ChatContainer"></div></div>`;
+  const bellHtml=currentMode==='athlete'?`<button type="button" id="v334MsgBellBtn" class="v334MsgBellBtn" aria-label="${v311T('avisos_btn')}" title="${v311T('avisos_btn')}">${v332Icon('campana',18)}<span>${v311T('avisos_btn')}</span><span id="v334MsgBellBadge" class="nBadge hidden">0</span></button>`:'';
+  content.innerHTML=`<div class="card"><h2 style="margin:0 0 10px">${v311T('mensajes_con_entrenador')}</h2>${bellHtml?`<div style="margin-bottom:12px">${bellHtml}</div>`:''}<div id="v300ChatContainer"></div></div>`;
   document.getElementById('v334MsgBellBtn')?.addEventListener('click',openNotificationsV104);
   v334UpdateMensajesBellBadge();
   const container=document.getElementById('v300ChatContainer');
@@ -7758,7 +7759,7 @@ const V311_DICT={
     registrar_gym:'Registrar GYM',abrir_ergdata:'Abrir en ErgData',registrar_manual:'Registrar manualmente',
     idioma:'Idioma',ver_entrenamiento:'Ver entrenamiento',todos_label:'Todos',al_dia:'✅ Al día: no hay entrenamientos GYM/ERGO pendientes hasta hoy.',
     sesion_mar:'🚣 Sesión de mar',cargando_plan:'Cargando planificación…',hoy_tag:'HOY',
-    nav_hoy:'Hoy',nav_semana:'Semana',nav_mes:'Mes',nav_biblioteca:'Biblioteca ERGO',nav_hist:'Historial',nav_mensajes:'Mensajes',nav_perfil:'Perfil',nav_ayuda:'Ayuda',nav_salir:'Salir',nav_trabajo:'Trabajo',nav_actividad:'Actividad',nav_yo:'Yo',nav_ajustes:'Ajustes',    cargando_semana:'Cargando semana…',descanso_sin_sesion:'Descanso · sin sesión planificada',calculando_cumplimiento:'Calculando cumplimiento…',
+    nav_hoy:'Hoy',nav_semana:'Semana',nav_mes:'Mes',nav_biblioteca:'Biblioteca ERGO',nav_hist:'Historial',nav_mensajes:'Mensajes',nav_perfil:'Perfil',nav_ayuda:'Ayuda',nav_salir:'Salir',nav_trabajo:'Trabajo',nav_actividad:'Actividad',nav_yo:'Yo',nav_ajustes:'Ajustes',avisos_btn:'Avisos',    cargando_semana:'Cargando semana…',descanso_sin_sesion:'Descanso · sin sesión planificada',calculando_cumplimiento:'Calculando cumplimiento…',
     no_se_pudo_cargar_semana:'No se pudo cargar la semana.',reintentar:'Reintentar',contenido_reservado:'Contenido reservado para entrenador',
     toca_ver_detalle:'Toca para ver detalle',pendiente_status:'Pendiente',completada_status:'Completada ✓',sin_completar_status:'⚠ Sin completar',
     sin_sesiones_gym_ergo:'Sin sesiones GYM/ERGO',no_se_pudo_calcular_cumplimiento:'No se pudo calcular el cumplimiento semanal.',sesiones_completadas:'sesiones completadas',
@@ -7832,7 +7833,7 @@ const V311_DICT={
     registrar_gym:'Log GYM',abrir_ergdata:'Open in ErgData',registrar_manual:'Log manually',
     idioma:'Language',ver_entrenamiento:'View training',todos_label:'All',al_dia:'✅ All caught up: no pending GYM/ERGO sessions up to today.',
     sesion_mar:'🚣 Sea session',cargando_plan:'Loading training plan…',hoy_tag:'TODAY',
-    nav_hoy:'Today',nav_semana:'Week',nav_mes:'Month',nav_biblioteca:'ERGO Library',nav_hist:'History',nav_mensajes:'Messages',nav_perfil:'Profile',nav_ayuda:'Help',nav_salir:'Log out',nav_trabajo:'Training',nav_actividad:'Activity',nav_yo:'Me',nav_ajustes:'Settings',
+    nav_hoy:'Today',nav_semana:'Week',nav_mes:'Month',nav_biblioteca:'ERGO Library',nav_hist:'History',nav_mensajes:'Messages',nav_perfil:'Profile',nav_ayuda:'Help',nav_salir:'Log out',nav_trabajo:'Training',nav_actividad:'Activity',nav_yo:'Me',nav_ajustes:'Settings',avisos_btn:'Alerts',
     cargando_semana:'Loading week…',descanso_sin_sesion:'Rest · no session planned',calculando_cumplimiento:'Calculating compliance…',
     no_se_pudo_cargar_semana:'Could not load the week.',reintentar:'Retry',contenido_reservado:'Content reserved for the coach',
     toca_ver_detalle:'Tap to see detail',pendiente_status:'Pending',completada_status:'Completed ✓',sin_completar_status:'⚠ Not completed',
@@ -7907,7 +7908,7 @@ const V311_DICT={
     registrar_gym:'GYM registreren',abrir_ergdata:'Openen in ErgData',registrar_manual:'Handmatig registreren',
     idioma:'Taal',ver_entrenamiento:'Training bekijken',todos_label:'Alle',al_dia:'✅ Helemaal bij: geen openstaande GYM/ERGO-sessies tot vandaag.',
     sesion_mar:'🚣 Zeetraining',cargando_plan:'Trainingsschema laden…',hoy_tag:'VANDAAG',
-    nav_hoy:'Vandaag',nav_semana:'Week',nav_mes:'Maand',nav_biblioteca:'ERGO-bibliotheek',nav_hist:'Geschiedenis',nav_mensajes:'Berichten',nav_perfil:'Profiel',nav_ayuda:'Help',nav_salir:'Uitloggen',nav_trabajo:'Training',nav_actividad:'Activiteit',nav_yo:'Ik',nav_ajustes:'Instellingen',
+    nav_hoy:'Vandaag',nav_semana:'Week',nav_mes:'Maand',nav_biblioteca:'ERGO-bibliotheek',nav_hist:'Geschiedenis',nav_mensajes:'Berichten',nav_perfil:'Profiel',nav_ayuda:'Help',nav_salir:'Uitloggen',nav_trabajo:'Training',nav_actividad:'Activiteit',nav_yo:'Ik',nav_ajustes:'Instellingen',avisos_btn:'Meldingen',
     cargando_semana:'Week laden…',descanso_sin_sesion:'Rust · geen sessie gepland',calculando_cumplimiento:'Naleving berekenen…',
     no_se_pudo_cargar_semana:'De week kon niet worden geladen.',reintentar:'Opnieuw proberen',contenido_reservado:'Inhoud voorbehouden aan de trainer',
     toca_ver_detalle:'Tik voor details',pendiente_status:'In behandeling',completada_status:'Voltooid ✓',sin_completar_status:'⚠ Niet voltooid',
