@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="409";
+const APP_VERSION="410";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3979,7 +3979,13 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
     const teamUsers=new Set([...(memberQ.error?[]:(memberQ.data||[])).map(x=>String(x.user_id)),...profiles.filter(p=>String(p.team_code||'')===String(team)).map(p=>String(p.user_id))]);
     workoutRows=mergeById(workDateQ.error?[]:(workDateQ.data||[]),workAssignedQ.error?[]:(workAssignedQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
     c2Rows=mergeById(c2DateQ.error?[]:(c2DateQ.data||[]),c2AssignedQ.error?[]:(c2AssignedQ.data||[])).filter(x=>teamUsers.has(String(x.user_id)));
-    const workoutIds=workoutRows.map(x=>Number(x.id)).filter(Number.isFinite);
+    // V410 · ENCONTRADO EL BUG REAL: workout_logs.id no es un entero simple, así que Number(x.id)
+    // devolvía NaN para TODAS las filas y Number.isFinite las descartaba todas — workoutIds
+    // quedaba vacío y la consulta de gym_exercise_results/ergo_results de más abajo ni se
+    // ejecutaba. Por eso en Semana ningún remero mostraba pesos/ejercicios de GYM aunque sí los
+    // hubiera guardado (se veían bien en Análisis de remeros, que no hace este cast). Se usa el id
+    // tal cual, igual que ya se hace en otro sitio de la app (línea ~3000, workoutRows.map(w=>w.id)).
+    const workoutIds=workoutRows.map(x=>x.id).filter(id=>id!=null);
     if(workoutIds.length){
       const [gq,eq]=await Promise.all([
         sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,weight_kg,reps,perceived_difficulty,note,created_at').in('workout_id',workoutIds).order('created_at'),
