@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="432";
+const APP_VERSION="433";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4599,7 +4599,11 @@ function v112C2TenthsText(v){
 }
 function v144C2ForDisplay(result){
   const raw=result?.raw_result||{},workout=raw.workout||{},parts=workout.intervals||workout.splits||raw.intervals||raw.splits||[],excluded=new Set((result?.excluded_splits||[]).map(Number));
-  if(!Array.isArray(parts)||!parts.length)return result;
+  // V433 · ErgData/Concept2 usa "0" (no null/vacío) para decir "sin pulsómetro emparejado" tanto en
+  // el resumen como en cada parcial. Si no se trata como "sin dato" aquí, ese 0 se acaba leyendo como
+  // una FC real bajísima más adelante (p.ej. la comparativa por zona lo marcaba como "por debajo de
+  // zona" en vez de "sin FC registrada").
+  if(!Array.isArray(parts)||!parts.length)return {...result,avg_hr:result.avg_hr||null,max_hr:result.max_hr||null};
   const included=parts.filter((p,i)=>!excluded.has(i)),time=included.reduce((n,p)=>n+(Number(p.time)||0)/10,0),distance=included.reduce((n,p)=>n+(Number(p.distance)||0),0),spm=time?included.reduce((n,p)=>n+(Number(p.stroke_rate??p.spm)||0)*((Number(p.time)||0)/10),0)/time:null;
   // V430 · la FC media/máxima que trae el resumen del resultado a veces no cuadra con los parciales
   // (o llega a 0 aunque sí hay pulsaciones registradas por parcial), así que si hay FC por parcial se
@@ -4623,7 +4627,7 @@ function v112C2PartialsHtml(result){
   // del parcial o la máxima, según lo que trajera ErgData) mezclando conceptos distintos. Ahora se
   // muestran los dos valores por separado -- media y máxima -- para poder ver si ha sabido controlar
   // el esfuerzo dentro de cada parcial, no solo en el total.
-  return `<details class="c2Partials"><summary>${t('ver_parcial')} ${parts.length} ${parts.length===1?t('parcial_word'):t('parciales_word')}${excluded.size?` · ${excluded.size} ${excluded.size===1?t('oculto_word'):t('ocultos_word')}`:''}</summary><div class="info"><b>${t('total_original_ergdata')}</b> ${original.distance_m??'—'} m · ${original.time_formatted||'—'} · /500 ${original.pace_500_seconds?fmtMetricSeconds(Number(original.pace_500_seconds)):'—'} · ${original.spm??'—'} ppm<br><small>${t('resumen_exterior_nota')}</small></div>${parts.map((p,i)=>{const dist=Number(p.distance),seconds=p.time==null?null:Number(p.time)/10,partPace=seconds&&dist?seconds*500/dist:null,hrAvg=p.heart_rate?.average??p.heart_rate?.avg??null,hrMax=p.heart_rate?.max||null,isExcluded=excluded.has(i);return `<div class="seaResultRow ${isExcluded?'muted':''}"><b>${t('parcial_n_word')} ${i+1}${isExcluded?' · '+t('oculto_del_analisis'):''}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>${t('tiempo_label')}</small>${v112C2TenthsText(p.time)}</div><div class="seaResultMetric"><small>${t('metros_label')}</small>${Number.isFinite(dist)?dist:'—'}</div><div class="seaResultMetric"><small>${t('ritmo_500_label')}</small>${fmtMetricSeconds(partPace)}</div><div class="seaResultMetric"><small>${t('ppm_label')}</small>${p.stroke_rate??p.spm??'—'}</div><div class="seaResultMetric"><small>${t('fc_media')}</small>${hrAvg??'—'}</div><div class="seaResultMetric"><small>${t('fc_maxima_corta')}</small>${hrMax??'—'}</div>${p.rest_time!=null?`<div class="seaResultMetric"><small>${t('descanso_label')}</small>${v112C2TenthsText(p.rest_time)}</div>`:''}</div><button type="button" class="v143ToggleSplit" data-result="${result.id}" data-index="${i}" data-excluded="${isExcluded?'1':'0'}">${isExcluded?t('incluir_analisis'):t('ocultar_analisis')}</button></div>`}).join('')}</details>`;
+  return `<details class="c2Partials"><summary>${t('ver_parcial')} ${parts.length} ${parts.length===1?t('parcial_word'):t('parciales_word')}${excluded.size?` · ${excluded.size} ${excluded.size===1?t('oculto_word'):t('ocultos_word')}`:''}</summary><div class="info"><b>${t('total_original_ergdata')}</b> ${original.distance_m??'—'} m · ${original.time_formatted||'—'} · /500 ${original.pace_500_seconds?fmtMetricSeconds(Number(original.pace_500_seconds)):'—'} · ${original.spm??'—'} ppm<br><small>${t('resumen_exterior_nota')}</small></div>${parts.map((p,i)=>{const dist=Number(p.distance),seconds=p.time==null?null:Number(p.time)/10,partPace=seconds&&dist?seconds*500/dist:null,hrAvg=(p.heart_rate?.average??p.heart_rate?.avg)||null,hrMax=p.heart_rate?.max||null,isExcluded=excluded.has(i);return `<div class="seaResultRow ${isExcluded?'muted':''}"><b>${t('parcial_n_word')} ${i+1}${isExcluded?' · '+t('oculto_del_analisis'):''}</b><div class="seaResultMetrics"><div class="seaResultMetric"><small>${t('tiempo_label')}</small>${v112C2TenthsText(p.time)}</div><div class="seaResultMetric"><small>${t('metros_label')}</small>${Number.isFinite(dist)?dist:'—'}</div><div class="seaResultMetric"><small>${t('ritmo_500_label')}</small>${fmtMetricSeconds(partPace)}</div><div class="seaResultMetric"><small>${t('ppm_label')}</small>${p.stroke_rate??p.spm??'—'}</div><div class="seaResultMetric"><small>${t('fc_media')}</small>${hrAvg??'—'}</div><div class="seaResultMetric"><small>${t('fc_maxima_corta')}</small>${hrMax??'—'}</div>${p.rest_time!=null?`<div class="seaResultMetric"><small>${t('descanso_label')}</small>${v112C2TenthsText(p.rest_time)}</div>`:''}</div><button type="button" class="v143ToggleSplit" data-result="${result.id}" data-index="${i}" data-excluded="${isExcluded?'1':'0'}">${isExcluded?t('incluir_analisis'):t('ocultar_analisis')}</button></div>`}).join('')}</details>`;
 }
 
 function v124ErgoSplitsArray(result){if(Array.isArray(result?.splits))return result.splits;if(typeof result?.splits==='string'){try{const x=JSON.parse(result.splits);return Array.isArray(x)?x:[]}catch(e){return[]}}return[]}
@@ -5162,8 +5166,11 @@ function v300GetSplits(row){
     if(!Array.isArray(parts))return[];
     return parts.map(p=>{
       const dist=Number(p.distance),seconds=p.time==null?null:Number(p.time)/10,pace=seconds&&dist?seconds*500/dist:null;
-      const spm=p.stroke_rate??p.spm??null,hr=p.heart_rate?.average??p.heart_rate?.ending??p.heart_rate?.max??null;
-      return{pace_500_seconds:pace,spm:spm!=null?Number(spm):null,avg_hr:hr!=null?Number(hr):null};
+      const spm=p.stroke_rate??p.spm??null;
+      // V433 · ErgData usa 0 para "sin pulsómetro", no null -- si se deja pasar tal cual, ese 0 se
+      // toma más adelante como una FC real (ver v144C2ForDisplay más arriba).
+      const hrRaw=p.heart_rate?.average??p.heart_rate?.ending??p.heart_rate?.max,hr=(hrRaw!=null&&Number(hrRaw)>0)?Number(hrRaw):null;
+      return{pace_500_seconds:pace,spm:spm!=null?Number(spm):null,avg_hr:hr};
     }).filter(x=>x.pace_500_seconds);
   }
   return v124ErgoSplitsArray(row._raw).map(p=>({pace_500_seconds:p.pace_500_seconds!=null?Number(p.pace_500_seconds):null,spm:p.spm!=null?Number(p.spm):null,avg_hr:p.avg_hr!=null?Number(p.avg_hr):null})).filter(x=>x.pace_500_seconds);
