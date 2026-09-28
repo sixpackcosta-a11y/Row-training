@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="437";
+const APP_VERSION="439";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7942,10 +7942,18 @@ async function results(){
   // V434 · se separa el dibujo del canvas (v434DrawCompareCanvas) de lo que se hace con él, para
   // poder reutilizar exactamente el mismo dibujo tanto para la imagen suelta (aquí) como para cada
   // página del PDF con varios ejercicios (v434ExportComparePdf).
-  async function v434DrawCompareCanvas(opts){
-    const {list,subtitleLine,valueHeader,rowDetail,rowValue,shareTitle}=opts;
+  // V439 · forceHeight: cuando el PDF mete varias páginas (varios ejercicios y/o varios órdenes),
+  // todas comparten la misma altura de página (la de la que más filas tiene) en vez de que cada una
+  // tenga su propio tamaño -- así no "salta" el zoom al pasar de página en el visor del móvil. El
+  // hueco sobrante en las páginas más cortas queda en blanco antes del pie.
+  // pdfOrderNote: chip que dice "Ejercicio X/Y · Filtro X/Y: <orden>" para que se note claramente,
+  // dentro de un PDF con varias páginas, cuáles son variaciones (distinto orden) del MISMO ejercicio.
+  async function v434DrawCompareCanvas(opts,forceHeight){
+    const {list,subtitleLine,valueHeader,rowDetail,rowValue,shareTitle,pdfOrderNote}=opts;
     const logo=await v273LoadImage('assets/club-pedregalejo.png');
-    const W=900,rowH=64,bannerH=110,subH=120,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
+    const noteH=pdfOrderNote?24:0;
+    const W=900,rowH=64,bannerH=110,subH=120+noteH,headerH=bannerH+subH,footerH=36;
+    const contentH=headerH+list.length*rowH+footerH,H=forceHeight&&forceHeight>contentH?forceHeight:contentH;
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
     const ctx=canvas.getContext('2d');
     ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
@@ -7969,6 +7977,13 @@ async function results(){
     ctx.fillStyle='#475569';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(subtitleLine,28,bannerH+68);
     ctx.strokeStyle='#dbe3ec';ctx.beginPath();ctx.moveTo(28,bannerH+86);ctx.lineTo(W-28,bannerH+86);ctx.stroke();
+    if(pdfOrderNote){
+      const chipY=bannerH+88,chipH=18,chipW=ctx.measureText(pdfOrderNote).width+20;
+      ctx.font='700 12px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      const w=ctx.measureText(pdfOrderNote).width+20;
+      ctx.fillStyle='#dbeafe';ctx.beginPath();ctx.roundRect?ctx.roundRect(28,chipY,w,chipH,9):ctx.rect(28,chipY,w,chipH);ctx.fill();
+      ctx.fillStyle='#1d4ed8';ctx.fillText(pdfOrderNote,38,chipY+13);
+    }
     ctx.fillStyle='#64748b';ctx.font='700 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText('PUESTO',28,headerH-20);ctx.fillText('REMERO',110,headerH-20);ctx.fillText('DETALLE',480,headerH-20);ctx.fillText(valueHeader,W-160,headerH-20);
     list.forEach((r,i)=>{
@@ -7999,15 +8014,25 @@ async function results(){
   // V434 · exportar a PDF la comparativa de varios (o todos) los ejercicios de golpe, en vez de tener
   // que exportar la imagen de uno en uno. Cada ejercicio elegido se dibuja igual que la imagen suelta
   // (mismos filtros: métrica y orden que estén activos en pantalla) y se mete como una página del PDF.
+  // V439 · altura de contenido de una sección SIN dibujarla (misma fórmula que usa
+  // v434DrawCompareCanvas), para poder calcular de antemano la altura máxima entre todas las páginas
+  // del PDF y forzar que todas compartan esa misma altura de página.
+  function v439SectionContentHeight(section){
+    const noteH=section.pdfOrderNote?24:0,rowH=64,bannerH=110,subH=120+noteH,footerH=36;
+    return bannerH+subH+section.list.length*rowH+footerH;
+  }
   async function v434ExportComparePdf(sections,filename){
     if(!sections.length)return alert('Elige al menos un ejercicio para el PDF.');
     const withData=sections.filter(s=>s.list.length);
     if(!withData.length)return alert('Ninguno de los ejercicios elegidos tiene datos para comparar todavía.');
     const {jsPDF}=window.jspdf||{};
     if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
+    // V439 · todas las páginas del PDF salen con la misma altura (la de la página con más filas), para
+    // que no cambien de tamaño al pasar de una a otra.
+    const pageH=Math.max(...withData.map(v439SectionContentHeight));
     let doc=null;
     for(const section of withData){
-      const canvas=await v434DrawCompareCanvas(section);
+      const canvas=await v434DrawCompareCanvas(section,pageH);
       const img=canvas.toDataURL('image/png');
       if(!doc)doc=new jsPDF({unit:'px',format:[canvas.width,canvas.height],hotfixes:['px_scaling']});
       else doc.addPage([canvas.width,canvas.height]);
@@ -8027,7 +8052,11 @@ async function results(){
   function v434OpenPdfExportModal(exercises,modeOptions,activeModeKey,buildSection,filename,title){
     if(!exercises.length)return alert('No hay ejercicios con datos para exportar.');
     const layer=document.createElement('div');layer.className='modalBack';
-    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" ${m.key===activeModeKey?'checked':''}><span>${esc(m.label)}</span></label>`).join('')}</div>`:'';
+    // V438 · antes las etiquetas iban en fila (flex-wrap) y en móvil, al partirse el texto largo
+    // ("Por FC en zona") en varias líneas, el checkbox se quedaba centrado en medio del texto -- se
+    // veía descolocado. En columna, cada opción ocupa su propia línea y el checkbox queda siempre
+    // arriba, alineado con la primera línea del texto.
+    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" style="margin-top:3px;flex-shrink:0" ${m.key===activeModeKey?'checked':''}><span>${esc(m.label)}</span></label>`).join('')}</div>`:'';
     layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${esc(title)}</h2><button type="button" class="v434Close">Cerrar</button></div><p class="muted" style="margin-top:0">Elige qué ejercicios incluir.</p>${modesHtml}<h3 style="margin:10px 0 4px">Ejercicios</h3><div class="v225PendingList">${exercises.map((e,i)=>`<label class="last" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfPick" data-i="${i}" checked><span>${esc(e.label)} <small class="muted">(${e.athletesWithData})</small></span></label>`).join('')}</div><div class="actions" style="margin-top:10px"><button type="button" class="v434Close">Cancelar</button><button type="button" id="v434PdfGo" class="primary">📄 Generar PDF</button></div><div id="v434PdfStatus" class="muted"></div></div>`;
     document.body.appendChild(layer);
     layer.querySelectorAll('.v434Close').forEach(b=>b.onclick=()=>layer.remove());
@@ -8040,8 +8069,23 @@ async function results(){
       const status=layer.querySelector('#v434PdfStatus'),goBtn=layer.querySelector('#v434PdfGo'),total=picked.length*pickedModes.length;
       status.textContent=`Generando PDF (${total} página${total===1?'':'s'})…`;goBtn.disabled=true;
       try{
+        // V439 · cuando hay más de una página, cada una lleva un chip "Ejercicio X/Y · Filtro X/Y:
+        // <orden>" para que se note a simple vista, dentro del PDF, cuáles páginas son el mismo
+        // ejercicio con distinto orden (antes solo se distinguían leyendo el subtítulo pequeño).
         const sections=[];
-        picked.forEach(e=>pickedModes.forEach(m=>sections.push(buildSection(e.key,m))));
+        picked.forEach((e,ei)=>{
+          pickedModes.forEach((mKey,mi)=>{
+            const sec=buildSection(e.key,mKey);
+            if(picked.length>1||pickedModes.length>1){
+              const modeLabel=modeOptions.find(mo=>mo.key===mKey)?.label||mKey;
+              const parts=[];
+              if(picked.length>1)parts.push(`Ejercicio ${ei+1}/${picked.length}`);
+              if(pickedModes.length>1)parts.push(`Filtro ${mi+1}/${pickedModes.length}: ${modeLabel}`);
+              sec.pdfOrderNote=parts.join(' · ');
+            }
+            sections.push(sec);
+          });
+        });
         await v434ExportComparePdf(sections,filename);
         layer.remove();
       }catch(err){
