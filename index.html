@@ -224,7 +224,12 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V60 · registro, altas y guía */
 .loginActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .registerCard{max-width:720px;margin:12px auto}.inviteTeam{background:#fff8db;border:1px solid #efd36d;border-radius:7px;padding:11px;margin:10px 0;color:#0b1830}
-.modalBack{position:fixed;inset:0;background:#07162fcc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.modalCard{width:min(680px,100%);max-height:90vh;overflow:auto;background:var(--surface);color:var(--text);border-radius:11px;padding:20px;box-shadow:0 20px 60px #0005}.guideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.guideStep{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface-2)}.guideStep b{display:block;margin-bottom:5px}.regBadge{display:inline-flex;min-width:22px;height:22px;border-radius:99px;background:#b42318;color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 6px}.requestCard{border:1px solid var(--border);border-radius:8px;padding:14px;margin:10px 0}.requestHead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.requestActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.inviteLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inviteLink{border:1px solid var(--border);border-radius:7px;padding:10px;background:var(--surface-2)}.pendingHero{text-align:center;padding:24px 10px}.pendingHero .bigIcon{font-size:48px}.statusPill{display:inline-block;border-radius:999px;padding:6px 10px;background:#fff8db;border:1px solid #efd36d;font-weight:800;color:#0b1830}.copyOk{background:#eaf8ef!important;color:#0b1830}.publicGuide{max-width:860px;margin:12px auto}
+.modalBack{position:fixed;inset:0;background:#07162fcc;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+/* V425 · sin -webkit-overflow-scrolling:touch, en iOS el scroll dentro de un contenedor "overflow:auto"
+   que vive dentro de un position:fixed (como este modal) no siempre responde al dedo, sobre todo si
+   el contenido crece después de abrirse (como al leer el OCR). Con overscroll-behavior:contain el
+   scroll del modal ya no "se escapa" hacia la página de detrás. */
+.modalCard{width:min(680px,100%);max-height:90vh;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--surface);color:var(--text);border-radius:11px;padding:20px;box-shadow:0 20px 60px #0005}.guideSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.guideStep{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface-2)}.guideStep b{display:block;margin-bottom:5px}.regBadge{display:inline-flex;min-width:22px;height:22px;border-radius:99px;background:#b42318;color:#fff;align-items:center;justify-content:center;font-size:12px;font-weight:800;padding:0 6px}.requestCard{border:1px solid var(--border);border-radius:8px;padding:14px;margin:10px 0}.requestHead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.requestActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.inviteLinks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.inviteLink{border:1px solid var(--border);border-radius:7px;padding:10px;background:var(--surface-2)}.pendingHero{text-align:center;padding:24px 10px}.pendingHero .bigIcon{font-size:48px}.statusPill{display:inline-block;border-radius:999px;padding:6px 10px;background:#fff8db;border:1px solid #efd36d;font-weight:800;color:#0b1830}.copyOk{background:#eaf8ef!important;color:#0b1830}.publicGuide{max-width:860px;margin:12px auto}
 @media(max-width:650px){.guideSteps,.inviteLinks{grid-template-columns:1fr}.requestHead{flex-direction:column}}
 /* V63 · recuperación de contraseña */
 .authSubcard{max-width:620px;margin:12px auto}.authHint{background:#eef6ff;border:1px solid #c9def6;border-radius:7px;padding:11px;margin:10px 0;color:#0b1830}.linkButton{background:transparent;border:0;color:#0b5ed7;text-decoration:underline;padding:8px 0;font-weight:700;cursor:pointer}.passwordRules{font-size:.9rem;color:var(--text-muted);margin:6px 0 12px}
@@ -2237,7 +2242,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="424";
+const APP_VERSION="425";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5033,7 +5038,18 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
       st.innerHTML=`<span class="ocrDetectedV124">${applied} fila${applied===1?'':'s'} aplicada${applied===1?'':'s'}.</span> <small class="muted">Revisa los campos antes de guardar.</small>`;
     };
   }
-  const ocrBtn=layer.querySelector('#v174OCR');if(ocrBtn)ocrBtn.onclick=async()=>{const st=layer.querySelector('#v174OCRStatus');ocrBtn.disabled=true;try{st.textContent='Leyendo…';let rows=[];for(const url of (ergoRow._photo_urls||[])){const r=await Tesseract.recognize(url,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1'});const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}if(!rows.length)throw new Error('No se detectaron filas válidas.');v265ShowErgoOcrMap(rows,st)}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
+  const ocrBtn=layer.querySelector('#v174OCR');if(ocrBtn)ocrBtn.onclick=async()=>{const st=layer.querySelector('#v174OCRStatus');ocrBtn.disabled=true;try{st.textContent='Leyendo…';let rows=[];for(const url of (ergoRow._photo_urls||[])){
+      // V425 · la pantalla del PM5 solo tiene dígitos, ":" y "." (más alguna letra de cabecera que no
+      // hace falta leer bien, porque el parser solo mira números y tiempos); limitar el alfabeto que
+      // Tesseract intenta reconocer reduce confusiones típicas (ej. "8"↔"B", "0"↔"O", "1"↔"I").
+      const r=await Tesseract.recognize(url,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1',tessedit_char_whitelist:'0123456789:.,- '});
+      const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}
+    // V425 · v124OCRRows prueba a unir cada línea con hasta 2 siguientes antes de acertar con una,
+    // así que la misma fila de la foto podía colar dos veces (una sola línea Y esa misma línea unida
+    // a la de al lado, ambas con los mismos números). v124ApplyOCR (la lectura del propio remero) ya
+    // quitaba estos duplicados por distancia+tiempo+ritmo; aquí faltaba el mismo filtro.
+    const seenRows=new Set();rows=rows.filter(x=>{const k=`${x.distance_m}|${x.time_text}|${x.pace_text}`;if(seenRows.has(k))return false;seenRows.add(k);return true});
+    if(!rows.length)throw new Error('No se detectaron filas válidas.');v265ShowErgoOcrMap(rows,st)}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
   layer.querySelector('#v154Save').onclick=async()=>{
     const b=layer.querySelector('#v154Save');b.disabled=true;b.textContent='Guardando…';
     try{
