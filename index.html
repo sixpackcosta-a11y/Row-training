@@ -321,7 +321,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v201Uses{margin-top:16px}.v201Uses summary{cursor:pointer}.v201UseList{margin-top:10px;display:grid;gap:7px}.v201UseRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #dbe3ee}.v201UseRow:first-child{border-top:0}.v201UseRow button{white-space:nowrap}@media(max-width:600px){.v201UseRow{align-items:flex-start}.v201UseRow button{padding:7px 9px}}
 .v202UseSummary{margin-top:10px;padding:9px 10px;border:1px solid #d9e7f6;background:var(--surface);border-radius:6px;font-size:.82rem}.v202UseSummary.isEmpty{background:var(--surface-2);border-color:#e5eaf0;color:var(--text-muted)}.v202UseTitle{font-weight:850;margin-bottom:5px}.v202UseDates{display:flex;gap:6px;flex-wrap:wrap}.v202UseChip{padding:5px 7px!important;font-size:.74rem!important;background:var(--surface)!important;color:var(--text)!important;border:1px solid #cddff1!important}.v202UseMore{font-size:.74rem;color:var(--text-muted);align-self:center}.v202UsePending{color:var(--text-muted)}.libraryCard .v202UseSummary{margin-bottom:8px}.v206UseHead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.v206UseTeam{max-width:220px;padding:5px 8px!important;font-size:.78rem!important;background:var(--surface)}.v201UseRow[data-team]{transition:.15s}
 
-.v208GlobalUseBar{display:flex;justify-content:flex-end;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #e4ebf4}.v208GlobalUseFilter{display:flex;align-items:center;gap:10px;margin:0;font-weight:700}.v208GlobalUseFilter span{font-size:13px}.v208GlobalUseFilter select{min-width:180px}@media(max-width:700px){.v208GlobalUseBar{justify-content:stretch}.v208GlobalUseFilter{width:100%;align-items:flex-start;flex-direction:column}.v208GlobalUseFilter select{width:100%}}
+/* V424 · antes esta barra iba a la derecha, con margen y borde superior propios (mucho alto para un
+   único selector); ahora va a la izquierda, sin separador, y el <select> lleva menos padding para
+   quedar más bajo. */
+.v208GlobalUseBar{display:flex;justify-content:flex-start;align-items:center;margin-top:8px}.v208GlobalUseFilter{display:flex;align-items:center;gap:8px;margin:0;font-weight:700}.v208GlobalUseFilter span{font-size:13px}.v208GlobalUseFilter select{min-width:180px;padding-top:6px;padding-bottom:6px;margin:0}@media(max-width:700px){.v208GlobalUseFilter{flex-wrap:wrap}.v208GlobalUseFilter select{min-width:0;flex:1}}
 
 .weekHasResultsV209{box-shadow:inset 0 0 0 1px #b8dfc5;background:var(--surface)!important}
 
@@ -1089,7 +1092,11 @@ function v208ApplyGlobalUseTeam(team){
   document.querySelectorAll('.v201ErgoUses,.v202CardUses,#v201GymUses,#v202GymSessionUses,#v201MarUses,#v202MarSessionUses').forEach(h=>{if(typeof h._v208Render==='function')h._v208Render(v208GlobalUseTeam)});
 }
 function libraryNavHtml(){
-  return `<div class="card"><div class="librarySectionHead"><div><h2 style="margin:0">Biblioteca de entrenamientos</h2><p class="muted" style="margin:5px 0 0">Prepara y edita contenidos sin asignarlos todavía a ningún día.</p></div><div class="libraryTop"><button data-libsec="ERGO" class="${coachLibrarySection==='ERGO'?'active':''}">ERGO</button><button data-libsec="MAR" class="${coachLibrarySection==='MAR'?'active':''}">MAR</button><button data-libsec="GYM" class="${coachLibrarySection==='GYM'?'active':''}">GYM</button><button data-libsec="MIX" class="${coachLibrarySection==='MIX'?'active':''}">COMBINADOS</button></div></div><div class="v208GlobalUseBar">${v208LibraryUseGlobalFilterHtml()}</div></div>`;
+  // V424 · quitado el <h2> "Biblioteca de entrenamientos": los botones ERGO/MAR/GYM/COMBINADOS ya
+  // dejan claro dónde está (mismo criterio aplicado antes en Análisis). El selector "Mostrar uso en
+  // planificación" pasa a la izquierda y en una línea compacta en vez de su propia barra ancha con
+  // borde superior, que ocupaba mucho alto para lo que aporta.
+  return `<div class="card"><div class="librarySectionHead"><p class="muted" style="margin:0">Prepara y edita contenidos sin asignarlos todavía a ningún día.</p><div class="libraryTop" style="margin-bottom:0"><button data-libsec="ERGO" class="${coachLibrarySection==='ERGO'?'active':''}">ERGO</button><button data-libsec="MAR" class="${coachLibrarySection==='MAR'?'active':''}">MAR</button><button data-libsec="GYM" class="${coachLibrarySection==='GYM'?'active':''}">GYM</button><button data-libsec="MIX" class="${coachLibrarySection==='MIX'?'active':''}">COMBINADOS</button></div></div><div class="v208GlobalUseBar">${v208LibraryUseGlobalFilterHtml()}</div></div>`;
 }
 function wireLibraryNav(){document.querySelectorAll('[data-libsec]').forEach(b=>b.onclick=()=>{coachLibrarySection=b.dataset.libsec;coachLibraryView()});const g=document.getElementById('v208GlobalUseTeam');if(g)g.onchange=()=>v208ApplyGlobalUseTeam(g.value)}
 function stripLibraryPrefix(name){return String(name||'').replace(/^(SESIÓN|SESION|CALENTAMIENTO|RECUPERACIÓN|RECUPERACION|VUELTA A LA CALMA|TRABAJO|EJERCICIO)\s*·\s*/i,'').trim()}
@@ -2230,7 +2237,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="422";
+const APP_VERSION="424";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5197,7 +5204,7 @@ function v300ShowPoint(chartId,groupIndex,pointIndex){
   const teamCode=v300PendingTeam[chartId]||currentTeamCode||'';
   v300OpenResultComments(point._kind,point._raw,point.user_id,teamCode,group[0],point.workout_date);
 }
-function v300OpenResultComments(kind,raw,userId,teamCode,title,dateStr){
+function v300OpenResultComments(kind,raw,userId,teamCode,title,dateStr,editCtx){
   let body='';
   if(kind==='concept2'){
     const d=v144C2ForDisplay(raw);
@@ -5207,11 +5214,20 @@ function v300OpenResultComments(kind,raw,userId,teamCode,title,dateStr){
   }
   const resultId=raw?.id;
   body+=`<div class="complianceResultBlockV237" id="v300CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>${v316Loading()}</small></p></div>`;
+  // V423 · botón "Editar" para registros manuales de ERGO desde este mismo popup: reutiliza el editor
+  // que ya existe (v154EditManualErgo) para corregir un dato mal introducido a mano, en vez de tener
+  // que ir a buscarlo en la ficha del remero. Solo aparece si quien abre el popup pasa editCtx (kind
+  // 'manual' con el workout_log correspondiente); ErgData/Concept2 no se puede editar aquí.
+  const canEdit=kind==='manual'&&editCtx?.workout;
   const layer=document.createElement('div');layer.className='modalBack';
-  layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(title||'Resultado ERGO')}</h2><div class="muted">${dateStr?esc(shortDateES(String(dateStr).slice(0,10))):''}</div></div><button type="button" class="v300CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
+  layer.innerHTML=`<div class="modalCard complianceResultModalV237"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(title||'Resultado ERGO')}</h2><div class="muted">${dateStr?esc(shortDateES(String(dateStr).slice(0,10))):''}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${canEdit?'<button type="button" class="v300EditResult">✏️ Editar</button>':''}<button type="button" class="v300CloseDetail">Cerrar</button></div></div>${body}<div class="actions"><button type="button" class="v300CloseDetail primary">Cerrar</button></div></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  if(canEdit){
+    const editBtn=layer.querySelector('.v300EditResult');
+    if(editBtn)editBtn.onclick=()=>{layer.remove();v154EditManualErgo(editCtx.workout,raw,userId,teamCode,editCtx.onSaved||(()=>{}))};
+  }
   if(resultId==null)return;
   const resultKind=kind;
   const box=layer.querySelector('#v300CommentsBox');
@@ -5516,7 +5532,10 @@ async function v300CheckNewComments(){
 let v300ChartCounter=0;const v300PendingCharts={};const v300PendingMetric={};const v300PendingTeam={};
 function v300BuildPaceRows(c2Rows,ergoRows,workoutsForUser){
   const workoutsById=new Map((workoutsForUser||[]).map(w=>[String(w.id),w]));
-  const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
+  // V423 · el "NaN/9" seguía saliendo en algunas filas: workout_date de concept2_results también
+  // puede venir con hora incluida (no solo el de los registros manuales, ya arreglado abajo). Mismo
+  // recorte a "YYYY-MM-DD" aquí para que shortDateES no reciba nunca el timestamp completo.
+  const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date?String(r.workout_date).slice(0,10):null,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
   const manual=(ergoRows||[]).map(e=>{
     const w=workoutsById.get(String(e.workout_id));if(!w)return null;
     // V421 · performed_at/created_at son timestamps completos ("2026-09-11T08:12:00Z"); shortDateES
@@ -7644,7 +7663,14 @@ async function results(){
     // comparando.
     box.querySelectorAll('.v417CompareRow').forEach((el,i)=>{
       const r=list[i];if(!r)return;
-      el.onclick=()=>{const v=valueFor(r);v300OpenResultComments(v._kind,v._raw,r.p.user_id,team,`${exLabel||'Ejercicio'} · ${r.p.full_name||'Sin nombre'}`,v.workout_date)};
+      el.onclick=()=>{
+        const v=valueFor(r);
+        // V423 · si el registro es manual (no ErgData), se puede corregir ahí mismo con "✏️ Editar" —
+        // hace falta el workout_log al que pertenece, que no viaja en el pace row pero sí su id
+        // (v._raw.workout_id).
+        const workout=v._kind==='manual'?workouts.find(w=>String(w.id)===String(v._raw.workout_id)):null;
+        v300OpenResultComments(v._kind,v._raw,r.p.user_id,team,`${exLabel||'Ejercicio'} · ${r.p.full_name||'Sin nombre'}`,v.workout_date,workout?{workout,onSaved:()=>renderComparison()}:null);
+      };
     });
     box.querySelector('#v417ErgoPicker').onchange=(e)=>{v417SelectedErgoKey=e.target.value;renderComparison()};
     box.querySelectorAll('.v417SortBtn').forEach(b=>b.onclick=()=>{v417SortMode=b.dataset.mode;renderComparison()});
