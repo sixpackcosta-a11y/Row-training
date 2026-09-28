@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="391";
+const APP_VERSION="392";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3872,7 +3872,7 @@ async function coachWeekView(){
   // Semana, pero mostrando solo ese día, sin el resto de la semana ni la navegación de semanas.
   const focusDate=coachWeekFocusDate&&coachWeekFocusDate>=start&&coachWeekFocusDate<=end?coachWeekFocusDate:null;
   content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDayBackV387" style="margin-bottom:10px">← Volver</button><div class="todayHero"><div><h2>${shortDateES(focusDate)}</h2><p class="muted">${esc(teamLabel(team))}</p></div></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`:`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
-  document.getElementById('coachDayBackV387')?.addEventListener('click',()=>{coachWeekFocusDate=null;tab='mes';draw();render()});
+  document.getElementById('coachDayBackV387')?.addEventListener('click',()=>{coachWeekFocusDate=null;coachMonthView()});
   const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
   const crewMapV309=await v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
@@ -6319,7 +6319,9 @@ async function renderCoachMonth(){
   monthArea.innerHTML=`<div class="info"><b>${seasonPhaseForDate(start)}</b> · GYM ${counts('GYM')} · ERGO ${counts('ERG')} · MAR ${counts('MAR')} · DESC ${counts('DESC')} · Competiciones ${comps.length}</div>${calendarCellsHtml(ym,sessions,comps,[],'edit',[])}`;
   // V387 · pinchar un día en Mes muestra SOLO ese día, con la misma tarjeta de Semana (Ver
   // detalle/Editar/Mover/Duplicar/Eliminar/Registrar MAR), no la semana completa ni Planificación.
-  monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;tab='semana';draw();render()});
+  // V392 · sin cambiar de pestaña: se queda en "Mes" (tab no se toca), solo se sustituye el
+  // contenido por la tarjeta de ese día; el botón Volver reconstruye el calendario de Mes.
+  monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;coachWeekView()});
   // V390 · quitado el listado de "Resultados MAR del equipo": duplicaba lo que ya hace Análisis MAR,
   // y en Mes no aportaba nada que no estuviera ya ahí.
 }
