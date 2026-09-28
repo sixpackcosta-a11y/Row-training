@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="420";
+const APP_VERSION="421";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5514,7 +5514,11 @@ function v300BuildPaceRows(c2Rows,ergoRows,workoutsForUser){
   const c2tagged=(c2Rows||[]).map(r=>({pace_500_seconds:r.pace_500_seconds,distance_m:r.distance_m,workout_date:r.workout_date,training_session_id:r.training_session_id,hidden:r.hidden,user_id:r.user_id,_manual:false,_kind:'concept2',_raw:r}));
   const manual=(ergoRows||[]).map(e=>{
     const w=workoutsById.get(String(e.workout_id));if(!w)return null;
-    return{pace_500_seconds:e.pace_500_seconds,distance_m:e.distance_m,workout_date:w.performed_at||w.created_at||w.session_date||null,training_session_id:w.training_session_id||null,hidden:!!w.hidden,user_id:w.user_id,_manual:true,_kind:'manual',_raw:e};
+    // V421 · performed_at/created_at son timestamps completos ("2026-09-11T08:12:00Z"); shortDateES
+    // espera solo "YYYY-MM-DD" y si le llega el timestamp entero el día sale NaN ("NaN/9"). Se recorta
+    // aquí, en el origen común de estas fechas, en vez de en cada sitio que las pinta.
+    const rawDate=w.performed_at||w.created_at||w.session_date||null;
+    return{pace_500_seconds:e.pace_500_seconds,distance_m:e.distance_m,workout_date:rawDate?String(rawDate).slice(0,10):null,training_session_id:w.training_session_id||null,hidden:!!w.hidden,user_id:w.user_id,_manual:true,_kind:'manual',_raw:e};
   }).filter(x=>x&&x.workout_date&&x.pace_500_seconds);
   const all=[...c2tagged,...manual];
   const bySession=new Map(),loose=[];
@@ -7584,7 +7588,10 @@ async function results(){
         ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),
         workouts.filter(w=>String(w.user_id)===String(p.user_id))
       );
-      paceRows.filter(r=>r.training_session_id&&r.pace_500_seconds&&r.workout_date).forEach(r=>{
+      // V421 · descarta ritmos imposibles (p.ej. un dato mal introducido a mano que sale como
+      // "0:03/500m"): por debajo de 60s/500m no hay ningún registro real de remo, y ese tipo de
+      // valor disparaba también el W/kg a números absurdos.
+      paceRows.filter(r=>r.training_session_id&&r.pace_500_seconds&&Number(r.pace_500_seconds)>=60&&r.workout_date).forEach(r=>{
         const rawTitle=titleMap.get(String(r.training_session_id))||'Pieza sin nombre';
         const key=v300NormalizeExerciseKey(rawTitle)||rawTitle.toLowerCase();
         if(!exerciseMap[key])exerciseMap[key]={label:rawTitle,labelCounts:{}};
@@ -7622,9 +7629,16 @@ async function results(){
     const options=exercises.map(e=>`<option value="${esc(e.key)}" ${e.key===v417SelectedErgoKey?'selected':''}>${esc(e.label)} (${e.athletesWithData})</option>`).join('');
     const rowHtml=(r,i)=>{
       const v=valueFor(r),wkg=wkgFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'más reciente':'mejor marca';
-      return `<div class="last" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}${r.n>1?` · ${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}${mode==='wkg'?` · ${secondsToTime(v.pace_500_seconds)}/500m`:(wkg!=null?` · ${wkg.toFixed(2)} W/kg`:'')}</small></div><div style="text-align:right;font-weight:800;white-space:nowrap">${mode==='wkg'?(wkg!=null?`${wkg.toFixed(2)} W/kg`:'—'):secondsToTime(v.pace_500_seconds)+'/500m'}<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
+      return `<div class="last v417CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}${r.n>1?` · ${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}${mode==='wkg'?` · ${secondsToTime(v.pace_500_seconds)}/500m`:(wkg!=null?` · ${wkg.toFixed(2)} W/kg`:'')}</small></div><div style="text-align:right;font-weight:800;white-space:nowrap">${mode==='wkg'?(wkg!=null?`${wkg.toFixed(2)} W/kg`:'—'):secondsToTime(v.pace_500_seconds)+'/500m'}<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
     };
-    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha.</small></p>`;
+    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha. Pulsa un remero para ver el detalle de su registro.</small></p>`;
+    // V421 · al pulsar un remero se abre el mismo popup de detalle (+ comentarios) que ya usa el
+    // gráfico de evolución individual, con el registro concreto (ErgData o manual) que se le está
+    // comparando.
+    box.querySelectorAll('.v417CompareRow').forEach((el,i)=>{
+      const r=list[i];if(!r)return;
+      el.onclick=()=>{const v=valueFor(r);v300OpenResultComments(v._kind,v._raw,r.p.user_id,team,`${exLabel||'Ejercicio'} · ${r.p.full_name||'Sin nombre'}`,v.workout_date)};
+    });
     box.querySelector('#v417ErgoPicker').onchange=(e)=>{v417SelectedErgoKey=e.target.value;renderComparison()};
     box.querySelectorAll('.v417SortBtn').forEach(b=>b.onclick=()=>{v417SortMode=b.dataset.mode;renderComparison()});
     box.querySelectorAll('.v417MetricBtn').forEach(b=>b.onclick=()=>{v417CompareMetric=b.dataset.metric;renderComparison()});
@@ -7743,12 +7757,19 @@ async function results(){
     const options=exercises.map(e=>`<option value="${esc(e.key)}" ${e.key===v416SelectedGymKey?'selected':''}>${esc(e.label)} (${e.athletesWithData})</option>`).join('');
     const rowHtml=(r,i)=>{
       const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'más reciente':'mejor marca';
-      return `<div class="last" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v._date)} · ${v300FeelLabel(v.perceived_difficulty)}${v.reps!=null?` · ${v.reps} rep`:''}${r.n>1?` · ${otherLabel}: ${other.weight_kg} kg (${shortDateES(other._date)})`:''}</small></div><div style="text-align:right;font-weight:800;white-space:nowrap">${v.weight_kg} kg<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
+      return `<div class="last v416CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v._date)} · ${v300FeelLabel(v.perceived_difficulty)}${v.reps!=null?` · ${v.reps} rep`:''}${r.n>1?` · ${otherLabel}: ${other.weight_kg} kg (${shortDateES(other._date)})`:''}</small></div><div style="text-align:right;font-weight:800;white-space:nowrap">${v.weight_kg} kg<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
     };
-    box.innerHTML=`<label>Ejercicio<select id="v416GymPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v416MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v416MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v416SortBtn ${dir==='desc'?'active':''}" data-dir="desc">Mayor a menor</button><button type="button" class="v416SortBtn ${dir==='asc'?'active':''}" data-dir="asc">Menor a mayor</button><button type="button" id="v416ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene peso registrado para este ejercicio todavía.</div>'}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su peso más reciente.':'Se compara el peso más reciente de cada remero en este ejercicio; si tiene más de un registro se indica también su mejor marca.'}</small></p>`;
+    box.innerHTML=`<label>Ejercicio<select id="v416GymPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v416MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v416MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v416SortBtn ${dir==='desc'?'active':''}" data-dir="desc">Mayor a menor</button><button type="button" class="v416SortBtn ${dir==='asc'?'active':''}" data-dir="asc">Menor a mayor</button><button type="button" id="v416ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene peso registrado para este ejercicio todavía.</div>'}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su peso más reciente.':'Se compara el peso más reciente de cada remero en este ejercicio; si tiene más de un registro se indica también su mejor marca.'} Pulsa un remero para ver el detalle de su registro.</small></p>`;
     box.querySelector('#v416GymPicker').onchange=(e)=>{v416SelectedGymKey=e.target.value;renderComparison()};
     box.querySelectorAll('.v416SortBtn').forEach(b=>b.onclick=()=>{v416SortDir=b.dataset.dir;renderComparison()});
     box.querySelectorAll('.v416MetricBtn').forEach(b=>b.onclick=()=>{v416CompareMetric=b.dataset.metric;renderComparison()});
+    // V421 · al pulsar un remero se abre un detalle del registro de GYM concreto (peso, reps,
+    // sensación, nota y la sesión a la que pertenece); no hay tabla de comentarios para GYM como sí
+    // la hay para ERGO, así que aquí es un popup propio en vez de reutilizar v300OpenResultComments.
+    box.querySelectorAll('.v416CompareRow').forEach((el,i)=>{
+      const r=list[i];if(!r)return;
+      el.onclick=()=>{const v=valueFor(r);v421ShowGymDetail(v,r.p.full_name,exLabel)};
+    });
     const exLabel=exercises.find(e=>e.key===v416SelectedGymKey)?.label||'';
     const exportBtn=box.querySelector('#v416ExportBtn');
     if(exportBtn)exportBtn.onclick=()=>v419ExportCompareImage({
@@ -7760,6 +7781,18 @@ async function results(){
       filename:`comparativa-gym-${team}.png`,
       shareTitle:`Comparativa GYM · ${exLabel}`
     });
+  }
+  // V421 · popup simple de detalle para un registro de GYM (peso/reps/sensación/nota concretos),
+  // con la sesión a la que pertenece el entrenamiento si la tiene; sin comentarios (esa tabla solo
+  // existe para ERGO en este momento).
+  function v421ShowGymDetail(entry,athleteName,exerciseLabel){
+    const w=workouts.find(x=>String(x.id)===String(entry.workout_id));
+    const session=w?sessions.find(s=>String(s.id)===String(w.training_session_id)):null;
+    const layer=document.createElement('div');layer.className='modalBack';
+    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(exerciseLabel||entry.exercise_name||'Ejercicio')}</h2><div class="muted">${esc(athleteName||'Sin nombre')} · ${shortDateES(entry._date)}</div></div><button type="button" class="v421CloseDetail">Cerrar</button></div><div class="complianceResultBlockV237"><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Peso</small>${entry.weight_kg!=null?entry.weight_kg+' kg':'—'}</div><div class="complianceResultMetricV237"><small>Repeticiones</small>${entry.reps??'—'}</div><div class="complianceResultMetricV237"><small>Sensación</small>${v300FeelLabel(entry.perceived_difficulty)}</div></div>${entry.note?`<p><b>Nota del ejercicio:</b> ${esc(entry.note)}</p>`:''}${session?.title?`<p class="muted"><small>Sesión: ${esc(session.title)} · ${shortDateES(session.session_date)}</small></p>`:''}${w?.notes?`<p><b>Notas del entrenamiento:</b> ${esc(w.notes)}</p>`:''}</div><div class="actions"><button type="button" class="v421CloseDetail primary">Cerrar</button></div></div>`;
+    document.body.appendChild(layer);
+    layer.querySelectorAll('.v421CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
+    layer.onclick=e=>{if(e.target===layer)layer.remove()};
   }
   // v272: dibuja el ranking en un <canvas> propio (sin depender de librerías externas) y lo comparte/descarga
   // como PNG, para poder pasarlo por WhatsApp u otro sitio tal cual se ve en la app.
