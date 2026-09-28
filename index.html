@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="447";
+const APP_VERSION="449";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8042,6 +8042,68 @@ async function results(){
     const noteH=section.pdfOrderNote?24:0,rowH=64,bannerH=110,subH=120+noteH,footerH=36;
     return bannerH+subH+section.list.length*rowH+footerH;
   }
+  // V449 · el PDF salía pesadísimo (V447) y luego, al intentar comprimirlo, corrupto/recortado (V448).
+  // Las dos veces la causa era la misma: rasterizar la página en un <canvas> y meter esa imagen dentro
+  // del PDF (jsPDF no la trata bien: unas veces la deja sin comprimir de verdad, otras la incrusta mal
+  // formada). La solución de fondo es no usar ninguna imagen: esta función dibuja la página
+  // DIRECTAMENTE con texto y rectángulos vectoriales del propio jsPDF, calcado al diseño del canvas
+  // (mismas coordenadas en px, que es la unidad del documento) pero sin rasterizar nada. Así cada
+  // página pesa solo lo que pesa su texto (unos pocos KB, nada de MB) y es inmune a cualquier bug de
+  // codificación de imagen -- de regalo, el texto queda nítido a cualquier zoom y es seleccionable /
+  // buscable dentro del PDF, cosa que una captura nunca da.
+  // setFontSize/getTextWidth de jsPDF trabajan siempre en PUNTOS, pase lo que pase con la unidad del
+  // documento -- de ahí el ×0.75 (1px a 96dpi = 0.75pt a 72dpi) en px2pt.
+  function v449DrawComparePdfPage(doc,opts,forceHeight){
+    const {list,subtitleLine,valueHeader,rowDetail,rowValue,shareTitle,pdfOrderNote}=opts;
+    const hex=h=>{const n=parseInt(h.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255]};
+    const px2pt=px=>px*0.75;
+    const noteH=pdfOrderNote?24:0;
+    const W=900,rowH=64,bannerH=110,subH=120+noteH,headerH=bannerH+subH,footerH=36;
+    const contentH=headerH+list.length*rowH+footerH,H=forceHeight&&forceHeight>contentH?forceHeight:contentH;
+    doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');
+    doc.setFillColor(...hex('#07162f'));doc.rect(0,0,W,bannerH,'F');
+    const textX=28;
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(px2pt(26));
+    doc.text('Club de Remo Pedregalejo',textX,44);
+    doc.setFont('helvetica','normal');doc.setFontSize(px2pt(18));
+    doc.text(String(shareTitle||''),textX,70);
+    doc.setFontSize(px2pt(15));
+    doc.text(v273FullDateES(localISODate()),textX,92);
+    if(valueHeader){
+      const bigLabel=valueHeader==='RITMO/500'?'TIEMPO/500':valueHeader;
+      doc.setFont('helvetica','bold');doc.setFontSize(px2pt(30));
+      doc.text(bigLabel,W-28,58,{align:'right'});
+    }
+    doc.setFillColor(...hex('#f4f7fb'));doc.rect(0,bannerH,W,subH,'F');
+    doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(24));
+    doc.text(String(teamLabel(team)||'').replace(/&amp;/g,'&'),28,bannerH+38);
+    doc.setTextColor(...hex('#475569'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(16));
+    doc.text(String(subtitleLine||''),28,bannerH+68);
+    doc.setDrawColor(...hex('#dbe3ec'));doc.line(28,bannerH+86,W-28,bannerH+86);
+    if(pdfOrderNote){
+      doc.setFont('helvetica','bold');doc.setFontSize(px2pt(12));
+      const w=doc.getTextWidth(pdfOrderNote)+20;
+      doc.setFillColor(...hex('#dbeafe'));doc.roundedRect(28,bannerH+88,w,18,9,9,'F');
+      doc.setTextColor(...hex('#1d4ed8'));doc.text(pdfOrderNote,38,bannerH+101);
+    }
+    doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(15));
+    doc.text('PUESTO',28,headerH-20);doc.text('REMERO',110,headerH-20);doc.text('DETALLE',480,headerH-20);doc.text(String(valueHeader||''),W-160,headerH-20);
+    list.forEach((r,i)=>{
+      const y=headerH+i*rowH;
+      if(i%2===1){doc.setFillColor(...hex('#f6f9fc'));doc.rect(0,y,W,rowH,'F')}
+      doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(22));
+      doc.text(String(i+1),28,y+38);
+      doc.text(String(r.p.full_name||'Sin nombre').slice(0,26),110,y+38);
+      doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(15));
+      const detail=rowDetail(r)||{};
+      doc.text(String(detail.line1||''),480,y+30);
+      doc.text(String(detail.line2||''),480,y+50);
+      doc.setTextColor(...hex('#07162f'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(22));
+      doc.text(String(rowValue(r)),W-160,y+38);
+    });
+    doc.setTextColor(...hex('#94a3b8'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(13));
+    doc.text(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
+  }
   async function v434ExportComparePdf(sections,filename){
     if(!sections.length)return alert('Elige al menos un ejercicio para el PDF.');
     const withData=sections.filter(s=>s.list.length);
@@ -8050,20 +8112,13 @@ async function results(){
     if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
     // V439 · todas las páginas del PDF salen con la misma altura (la de la página con más filas), para
     // que no cambien de tamaño al pasar de una a otra.
-    // V447 · el PDF salía pesadísimo (30+ MB con pocas páginas). Causa: jsPDF, al meter una imagen
-    // PNG, no la recomprime -- la vuelca casi tal cual dentro del PDF, y el PNG que saca el canvas
-    // (sin pérdida, pensado para foto/imagen suelta) es muy pesado para una página de texto/tabla. En
-    // JPEG con calidad alta la imagen ya sale comprimida de por sí y jsPDF simplemente la incrusta, sin
-    // perder legibilidad (el fondo es blanco liso, no hay transparencia que perder).
-    const pageH=Math.max(...withData.map(v439SectionContentHeight));
+    const W=900,pageH=Math.max(...withData.map(v439SectionContentHeight));
     let doc=null;
-    for(const section of withData){
-      const canvas=await v434DrawCompareCanvas(section,pageH);
-      const img=canvas.toDataURL('image/jpeg',0.92);
-      if(!doc)doc=new jsPDF({unit:'px',format:[canvas.width,canvas.height],hotfixes:['px_scaling'],compress:true});
-      else doc.addPage([canvas.width,canvas.height]);
-      doc.addImage(img,'JPEG',0,0,canvas.width,canvas.height);
-    }
+    withData.forEach(section=>{
+      if(!doc)doc=new jsPDF({unit:'px',format:[W,pageH],hotfixes:['px_scaling'],compress:true});
+      else doc.addPage([W,pageH]);
+      v449DrawComparePdfPage(doc,section,pageH);
+    });
     doc.save(filename);
   }
   // V434 · modal de selección de ejercicios para el PDF conjunto: por defecto todos marcados, se
