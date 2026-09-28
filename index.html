@@ -2256,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="459";
+const APP_VERSION="460";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5775,6 +5775,12 @@ async function v457LoadGymTagsMap(){
   }catch(e){console.warn('No se pudo cargar la biblioteca de GYM para los iconos de zona',e)}
 }
 const V457_ZONE_LABEL={piernas:'Piernas',posterior:'Cadena posterior',tiron:'Tirón · espalda/bíceps',empuje:'Empuje · pecho/hombro/tríceps',core:'Core / estabilidad',agarre:'Agarre · manos/antebrazos',potencia:'Potencia'};
+// V460 · en las tablas de ejercicios el pill llevaba la etiqueta larga completa (p.ej. "Agarre ·
+// manos/antebrazos") dentro de la misma celda que el nombre del ejercicio, así que según lo larga
+// que fuera la etiqueta de cada fila el nombre del ejercicio empezaba en una columna distinta (se veía
+// descuadrado, ver captura). Con una etiqueta corta y un ancho fijo para el pill, todas las filas quedan
+// alineadas -- la etiqueta larga se sigue viendo en el tooltip (title).
+const V457_ZONE_SHORT={piernas:'Piernas',posterior:'Post.',tiron:'Tirón',empuje:'Empuje',core:'Core',agarre:'Agarre',potencia:'Potencia'};
 // Orden de prioridad cuando un ejercicio tiene varias etiquetas a la vez (p.ej. "Farmer carry" es
 // agarre+core, "Pallof press" es empuje+core): se elige la más específica/representativa primero,
 // no la primera que aparezca en el array -- "posterior" y "agarre" antes que "piernas" o "core", y
@@ -5808,7 +5814,7 @@ function v454BodyPartInfo(name){
 // pantalla Biblioteca -- solo se le pone un tamaño fijo pequeño para usarlo aquí como icono suelto.
 function v454BodySvg(part){return bodyZoneSvgV90(part).replace('<svg ','<svg style="width:13px;height:19px;display:block" ')}
 function v454BodyPartEmoji(name){const info=v454BodyPartInfo(name);return info?info.label:''}
-function v454BodyPartIconHtml(name){const info=v454BodyPartInfo(name);return info?`<span title="${info.label}" style="display:inline-flex;align-items:center;gap:5px;margin-right:6px;padding:1px 8px 1px 4px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;vertical-align:middle;background:#eef2f7;color:#334155">${v454BodySvg(info.part)}${info.label}</span>`:''}
+function v454BodyPartIconHtml(name){const info=v454BodyPartInfo(name);return info?`<span title="${info.label}" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;width:72px;flex:0 0 72px;margin-right:8px;padding:1px 6px 1px 4px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;background:#eef2f7;color:#334155">${v454BodySvg(info.part)}${V457_ZONE_SHORT[info.part]||info.label}</span>`:''}
 function v300FeelColor(f){return f==='easy'?'#16a34a':f==='hard'?'#dc2626':'#2563eb'}
 function v300GymWeightSvg(rows,opts={}){
   const limit=opts.limit||20;
