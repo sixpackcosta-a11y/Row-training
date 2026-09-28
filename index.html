@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="411";
+const APP_VERSION="412";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3679,7 +3679,11 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
     const editableTeams=teams.filter(t=>t.is_active&&(isGlobalCoach||editableTeamCodes().includes(t.code)));
     const teamRows=editableTeams.map(t=>{
       const isR=members.some(m=>m.team_code===t.code&&m.is_rower!==false),role=roles.find(r=>r.team_code===t.code)?.staff_role||'';
-      return `<div class="staffPerson" style="margin-bottom:10px"><b>${esc(t.name)}</b><div class="plannerGrid" style="margin-top:8px"><label class="keepLogin"><input type="checkbox" class="v168Rower" data-team="${esc(t.code)}" ${isR?'checked':''}> Remero</label><label>Rol técnico<select class="v168Staff" data-team="${esc(t.code)}"><option value="" ${!role?'selected':''}>Sin rol técnico</option><option value="coach" ${role==='coach'?'selected':''}>Entrenador</option><option value="assistant" ${role==='assistant'?'selected':''}>Ayudante</option></select></label></div></div>`;
+      // V412 · cuando alguien deja un equipo, sus GYM/ERGO antiguos de ese equipo se seguían viendo
+      // en el histórico (correcto: no se borran solos), pero antes solo se podían ocultar uno a
+      // uno desde Historial. Se añade aquí un ocultar/mostrar EN BLOQUE de todo su historial de
+      // GYM/ERGO en ese equipo concreto, independiente de si sigue marcado como Remero o no.
+      return `<div class="staffPerson" style="margin-bottom:10px"><b>${esc(t.name)}</b><div class="plannerGrid" style="margin-top:8px"><label class="keepLogin"><input type="checkbox" class="v168Rower" data-team="${esc(t.code)}" ${isR?'checked':''}> Remero</label><label>Rol técnico<select class="v168Staff" data-team="${esc(t.code)}"><option value="" ${!role?'selected':''}>Sin rol técnico</option><option value="coach" ${role==='coach'?'selected':''}>Entrenador</option><option value="assistant" ${role==='assistant'?'selected':''}>Ayudante</option></select></label></div><div class="staffActions" style="margin-top:8px"><button type="button" class="v412BulkHist" data-team="${esc(t.code)}" data-mode="hide">Ocultar todo su historial GYM/ERGO aquí</button><button type="button" class="v412BulkHist" data-team="${esc(t.code)}" data-mode="show">Volver a mostrarlo</button><span class="muted v412BulkStatus" data-team="${esc(t.code)}"></span></div></div>`;
     }).join('');
     modal.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>Editar persona</h2><button type="button" class="v168Close">Cerrar</button></div>
       <p class="muted">El mismo editor se usa desde Equipo y desde Análisis.</p>
@@ -3690,6 +3694,25 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
       ${isGlobalCoach&&uid!==currentUser?.id?`<div style="margin-top:18px;padding:14px;border:1px solid #efb8b8;border-radius:7px;background:#fff7f7;color:#0b1830"><b>Eliminar de Row Training</b><p class="muted" style="margin:5px 0 10px">Elimina la cuenta completa para que no siga apareciendo como persona sin equipo. No es lo mismo que quitarla de un equipo.</p><button type="button" id="v168Delete" style="background:#8f1d1d;color:white">Eliminar usuario de la app</button></div>`:''}</div>`;
     modal.querySelectorAll('.v168Close').forEach(b=>b.onclick=()=>modal.remove());
     modal.querySelector('#v168CalcZones').onclick=()=>{const z=karvonenZones(Number(modal.querySelector('#v168Max').value),Number(modal.querySelector('#v168Rest').value));if(!z)return alert('Introduce FC máxima y FC de reposo válidas.');Object.entries(z).forEach(([k,v])=>{modal.querySelector('#v168_'+k+'_min').value=v.min;modal.querySelector('#v168_'+k+'_max').value=v.max})};
+    modal.querySelectorAll('.v412BulkHist').forEach(btn=>btn.onclick=async()=>{
+      const teamCode=btn.dataset.team,hide=btn.dataset.mode==='hide',teamName=editableTeams.find(t=>t.code===teamCode)?.name||teamCode;
+      if(!confirm(`${hide?'¿Ocultar':'¿Volver a mostrar'} TODO el historial de GYM/ERGO de esta persona en ${teamName}?\n\nAfecta a todos sus registros ya realizados en ese equipo (no solo a uno). Se puede deshacer volviendo a pulsar aquí.`))return;
+      const statusEl=modal.querySelector(`.v412BulkStatus[data-team="${CSS.escape(teamCode)}"]`);if(statusEl)statusEl.textContent='Aplicando…';
+      btn.disabled=true;
+      try{
+        const sq=await sb.from('training_sessions').select('id').eq('team_code',teamCode);if(sq.error)throw sq.error;
+        const sessionIds=(sq.data||[]).map(x=>x.id);
+        if(!sessionIds.length){if(statusEl)statusEl.textContent='No hay sesiones de este equipo.';btn.disabled=false;return}
+        const [wq,cq]=await Promise.all([
+          sb.from('workout_logs').update({hidden:hide}).eq('user_id',uid).in('training_session_id',sessionIds).select('id'),
+          sb.from('concept2_results').update({hidden:hide}).eq('user_id',uid).in('training_session_id',sessionIds).select('id')
+        ]);
+        if(wq.error)throw wq.error;if(cq.error)throw cq.error;
+        const n=(wq.data?.length||0)+(cq.data?.length||0);
+        if(statusEl)statusEl.textContent=n?`${hide?'Ocultados':'Mostrados'} ${n} registro${n===1?'':'s'} ✓`:'No había registros que cambiar.';
+      }catch(e){if(statusEl)statusEl.textContent='Error: '+e.message}
+      btn.disabled=false;
+    });
     modal.querySelector('#v168Save').onclick=async()=>{const b=modal.querySelector('#v168Save'),st=modal.querySelector('#v168Status');b.disabled=true;st.textContent='Guardando…';try{
       const profilePayload={full_name:modal.querySelector('#v168Name').value.trim()||null,gender:modal.querySelector('#v168Gender').value||null,birth_date:modal.querySelector('#v168Birth').value||null,height_cm:modal.querySelector('#v168Height').value?Number(modal.querySelector('#v168Height').value):null,updated_at:new Date().toISOString()};
       const q1=await sb.from('profiles').update(profilePayload).eq('user_id',uid);if(q1.error)throw q1.error;
