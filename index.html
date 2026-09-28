@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="390";
+const APP_VERSION="391";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2706,23 +2706,48 @@ function v330RenderBottomNav(){
     coachWeekFocusDate=null;tab=btn.dataset.default;draw();render();
   });
 }
+// V391 · barra de accesos de "Más" unificada: antes vivía solo dentro de Perfil (fila de botones
+// embebida) y por separado como v389MasBar solo para Equipo/Sistema. Ahora es un único componente
+// que se inyecta igual en Perfil/Equipo/Sistema, con el botón de la pantalla activa marcado.
+function v390MasBarHtml(activeTab){
+  const items=[
+    ['perfil','Perfil','perfil'],
+    ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo']]:[]),
+    ['__settings__','Ajustes','ajustes'],
+    ['ayuda','Ayuda','ayuda'],
+    ...(isGlobalCoach?[['sistema','Sistema','sistema']]:[]),
+    ['__logout__','Salir','salir']
+  ];
+  const navTabs=['perfil','equipo','sistema','ayuda'];
+  return `<div class="card v330ProfileQuickActions v390MasBar">${items.map(([action,label,icon])=>{
+    const isActive=navTabs.includes(action)&&action===activeTab;
+    const badge=(action==='equipo'&&pendingRegistrationCount)?`<span class="nBadge">${pendingRegistrationCount>9?'9+':pendingRegistrationCount}</span>`:'';
+    return `<button type="button" class="v390MasBtn ${isActive?'active':''}" data-action="${action}">${v332Icon(icon)}${esc(label)}${badge}</button>`;
+  }).join('')}</div>`;
+}
+function v390BindMasBar(root){
+  root.querySelectorAll('.v390MasBtn').forEach(btn=>btn.onclick=()=>{
+    const a=btn.dataset.action;
+    if(a==='__settings__')return v300OpenSettingsMenu();
+    if(a==='__logout__')return sb.auth.signOut().then(()=>location.reload());
+    tab=a;draw();render();
+  });
+}
 function v330InjectSubTabs(){
   // V378 · el entrenador también tiene sub-pestañas dentro de "Trabajo" y "Actividad" (antes solo
   // el remero). V379 · Trabajo = Hoy/Semana/Mes/Registro MAR; Actividad = Planificación/Análisis/Biblioteca.
   if(!((currentMode==='athlete'&&currentTeamCode)||currentMode==='staff'))return;
   const group=v330GroupForTab(tab);
-  // V389 · "Más" (Equipo/Sistema) también necesita esta barra fija arriba: al entrar en Equipo o
-  // Sistema desde Perfil, la fila de accesos rápidos (que solo vive en la propia pantalla de
-  // Perfil) desaparecía y no quedaba ningún camino visible de vuelta salvo el botón "Más" de abajo.
-  if(currentMode==='staff'&&group==='yo'&&(tab==='equipo'||tab==='sistema')){
+  // V391 · "Más" (Perfil/Equipo/Sistema) usa la barra compartida v390MasBarHtml/v390BindMasBar,
+  // fija arriba en las tres pantallas, con el botón activo marcado según dónde esté el entrenador.
+  if(currentMode==='staff'&&group==='yo'&&(tab==='perfil'||tab==='equipo'||tab==='sistema')){
     const el=document.getElementById('content');
-    if(!el||!el.firstElementChild||el.querySelector('.v389MasBar'))return;
-    const items=[['perfil','Perfil'],['equipo','Equipo'],...(isGlobalCoach?[['sistema','Sistema']]:[])];
-    const bar=document.createElement('div');
-    bar.className='v330SubTabs v389MasBar';
-    bar.innerHTML=items.map(([t,label])=>`<button type="button" class="v330SubTab ${tab===t?'active':''}" data-t="${t}">${esc(label)}</button>`).join('');
+    if(!el||!el.firstElementChild||el.querySelector('.v390MasBar'))return;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=v390MasBarHtml(tab);
+    const bar=wrap.firstElementChild;
     el.insertBefore(bar,el.firstChild);
-    bar.querySelectorAll('.v330SubTab').forEach(btn=>btn.onclick=()=>{tab=btn.dataset.t;draw();render()});
+    v390BindMasBar(bar);
     return;
   }
   if(group!=='trabajo'&&group!=='actividad')return;
@@ -5771,18 +5796,10 @@ async function staffProfileViewV167(){
   if(error){content.innerHTML=`<div class="card"><h2>Mi perfil</h2><p>${esc(error.message)}</p></div>`;return}
   const {data:rm}=await sb.from('rower_team_memberships').select('team_code,is_rower').eq('user_id',currentUser.id).eq('is_rower',true);
   const isRower=!!(rm||[]).length;
-  // V378 · misma fila de accesos rápidos que ya tiene el remero en su Perfil (Ajustes/Ayuda/Salir,
-  // más Sistema para el admin), para que el entrenador no dependa del menú hamburguesa para esto
-  // ahora que la navegación inferior le oculta ese botón.
-  // V379 · el botón inferior "Más" agrupa Equipo, Sistema y esta pantalla de Perfil, así que Equipo
-  // se añade aquí como acceso rápido (con el mismo aviso de altas pendientes que antes tenía su
-  // propio botón de barra inferior).
-  content.innerHTML=`<div class="card v330ProfileQuickActions">${hasAnyCoachTeam()?`<button type="button" id="v330OpenEquipo">${v332Icon('equipo')}Equipo${pendingRegistrationCount?`<span class="nBadge">${pendingRegistrationCount>9?'9+':pendingRegistrationCount}</span>`:''}</button>`:''}<button type="button" id="v330OpenSettings">${v332Icon('ajustes')}Ajustes</button><button type="button" id="v330OpenHelp">${v332Icon('ayuda')}Ayuda</button>${isGlobalCoach?`<button type="button" id="v330OpenSystem">${v332Icon('sistema')}Sistema</button>`:''}<button type="button" id="v330LogOut">${v332Icon('salir')}Salir</button></div><div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
-  document.getElementById('v330OpenEquipo')?.addEventListener('click',()=>{tab='equipo';draw();render()});
-  document.getElementById('v330OpenSettings')?.addEventListener('click',()=>v300OpenSettingsMenu());
-  document.getElementById('v330OpenHelp')?.addEventListener('click',()=>{tab='ayuda';draw();render()});
-  document.getElementById('v330OpenSystem')?.addEventListener('click',()=>{tab='sistema';draw();render()});
-  document.getElementById('v330LogOut')?.addEventListener('click',()=>{sb.auth.signOut().then(()=>location.reload())});
+  // V391 · la fila de accesos rápidos ahora es una barra compartida (v390MasBarHtml/v390BindMasBar)
+  // que se inyecta igual en Perfil, Equipo y Sistema, con el botón activo marcado según la pantalla.
+  content.innerHTML=`${v390MasBarHtml('perfil')}<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
+  v390BindMasBar(content);
   v167SaveStaffProfile.onclick=async()=>{
     const b=v167SaveStaffProfile,st=v167StaffProfileStatus;b.disabled=true;b.textContent='Guardando…';
     const q=await sb.from('profiles').update({full_name:v167StaffName.value.trim(),gender:v167StaffGender.value||null,height_cm:v167StaffHeight.value?Number(v167StaffHeight.value):null,birth_date:v167StaffBirth.value||null,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
