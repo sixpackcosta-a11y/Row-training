@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="452";
+const APP_VERSION="453";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8290,8 +8290,13 @@ async function results(){
   function v421ShowGymDetail(entry,athleteName,exerciseLabel){
     const w=workouts.find(x=>String(x.id)===String(entry.workout_id));
     const session=w?sessions.find(s=>String(s.id)===String(w.training_session_id)):null;
+    // V453 · además del ejercicio concreto pulsado, se muestran TODOS los ejercicios de ese mismo
+    // entrenamiento (mismo workout_id), para que el entrenador vea de un vistazo a qué sesión
+    // pertenecía y qué más hizo el remero ese día, sin tener que ir a buscarlo en el historial.
+    const siblings=w?(gym||[]).filter(g=>String(g.workout_id)===String(w.id)).slice().sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||''))):[];
+    const siblingsHtml=siblings.length?`<div class="complianceResultBlockV237"><b>Ejercicios de ese entrenamiento${w?.session_code&&!session?` (${esc(w.session_code)})`:''}</b><div class="exerciseTable" style="margin-top:8px">${siblings.map(s=>`<div class="exerciseRow" style="${String(s.id)===String(entry.id)?'font-weight:800':''}"><div>${esc(s.exercise_name||'Ejercicio')}</div><div>${s.weight_kg??'—'} kg</div><div>${v300FeelLabel(s.perceived_difficulty)}</div></div>`).join('')}</div></div>`:'';
     const layer=document.createElement('div');layer.className='modalBack';
-    const body=`<div class="complianceResultBlockV237"><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Peso</small>${entry.weight_kg!=null?entry.weight_kg+' kg':'—'}</div><div class="complianceResultMetricV237"><small>Repeticiones</small>${entry.reps??'—'}</div><div class="complianceResultMetricV237"><small>Sensación</small>${v300FeelLabel(entry.perceived_difficulty)}</div></div>${entry.note?`<p><b>Nota del ejercicio:</b> ${esc(entry.note)}</p>`:''}${session?.title?`<p class="muted"><small>Sesión: ${esc(session.title)} · ${shortDateES(session.session_date)}</small></p>`:''}${w?.notes?`<p><b>Notas del entrenamiento:</b> ${esc(w.notes)}</p>`:''}</div><div class="complianceResultBlockV237" id="v421CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>${v316Loading()}</small></p></div>`;
+    const body=`<div class="complianceResultBlockV237"><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Peso</small>${entry.weight_kg!=null?entry.weight_kg+' kg':'—'}</div><div class="complianceResultMetricV237"><small>Repeticiones</small>${entry.reps??'—'}</div><div class="complianceResultMetricV237"><small>Sensación</small>${v300FeelLabel(entry.perceived_difficulty)}</div></div>${entry.note?`<p><b>Nota del ejercicio:</b> ${esc(entry.note)}</p>`:''}${session?.title?`<p class="muted"><small>Sesión: ${esc(session.title)} · ${shortDateES(session.session_date)}</small></p>`:(w?.is_additional?'<p class="muted"><small>Entrenamiento adicional, no forma parte del plan.</small></p>':'')}${w?.notes?`<p><b>Notas del entrenamiento:</b> ${esc(w.notes)}</p>`:''}</div>${siblingsHtml}<div class="complianceResultBlockV237" id="v421CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>${v316Loading()}</small></p></div>`;
     layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(exerciseLabel||entry.exercise_name||'Ejercicio')}</h2><div class="muted">${esc(athleteName||'Sin nombre')} · ${shortDateES(entry._date)}</div></div><button type="button" class="v421CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v421CloseDetail primary">Cerrar</button></div></div>`;
     document.body.appendChild(layer);
     layer.querySelectorAll('.v421CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
