@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="428";
+const APP_VERSION="429";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4691,13 +4691,34 @@ function v124OCRRows(text){
       if(!times.length) continue;
       const withoutTimes=line.replace(timeRe,' ');
       const nums=[...withoutTimes.matchAll(/\b\d{2,5}\b/g)].map(x=>Number(x[0]));
-      const distance=nums.find(n=>n>=100&&n<=50000);
-      if(!distance) continue;
+      const distIdx=nums.findIndex(n=>n>=100&&n<=50000);
+      if(distIdx===-1) continue;
+      const distance=nums[distIdx];
       const time=times[0];
       const pace=times.slice(1).find(x=>{const sec=v124OCRTimeSeconds(x);return sec>=45&&sec<=360})||'';
-      const spm=nums.find(n=>n>=12&&n<=60)||'';
-      const hrs=nums.filter(n=>n!==distance&&n>=70&&n<=230&&n!==spm);
-      parsed={distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:hrs[0]||'',max_hr:hrs.length>1?Math.max(...hrs):'',rest_text:''};
+      // V428: la pantalla "Tabla de intervalos" del PM5 añade columnas de Watios/Cal/Cal·h entre la
+      // distancia y la FC/s·m (Tiempo · Distancia · Ritmo · Watios · Cal · Cal/h · FC · s/m). Con solo
+      // el rango numérico (12-60 para ppm, 70-230 para FC) los watios se confundían con el ppm y las
+      // calorías con la FC media. Cuando hay 4 o 5 números después de la distancia (ese patrón con
+      // watios+cal+cal/h) el s/m es SIEMPRE el último número de la fila y la FC, si aparece, el
+      // penúltimo; si la pantalla no trae esas columnas (formato simple, 2-3 números), se sigue
+      // usando el rango numérico de antes.
+      const trailing=nums.slice(distIdx+1);
+      let spm='',avgHr='',maxHr='';
+      if(trailing.length>=4){
+        const lastN=trailing[trailing.length-1];
+        if(lastN>=12&&lastN<=60)spm=lastN;
+        if(trailing.length>=5){
+          const prevN=trailing[trailing.length-2];
+          if(prevN>=70&&prevN<=230)avgHr=prevN;
+        }
+      }else{
+        const rest=nums.filter(n=>n!==distance);
+        spm=rest.find(n=>n>=12&&n<=60)||'';
+        const hrs=rest.filter(n=>n!==spm&&n>=70&&n<=230);
+        avgHr=hrs[0]||'';maxHr=hrs.length>1?Math.max(...hrs):'';
+      }
+      parsed={distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:avgHr,max_hr:maxHr,rest_text:''};
       break;
     }
     if(parsed) rows.push(parsed);
