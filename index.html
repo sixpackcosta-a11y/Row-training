@@ -433,7 +433,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .complianceSubBodyV176{padding:10px 8px!important}
 }
 .v240ReviewBanner{background:#fff8e8;border:1px solid #edc36b;border-radius:7px;padding:10px 12px;margin:8px 0 12px;color:#0b1830}.v240ReviewBanner .staffActions{margin-top:8px}.v240ReviewBanner button{font-size:.82rem;padding:8px 10px}
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
 .rowerTeamSwitch{margin-top:6px;max-width:250px;background:var(--surface);color:var(--text);border-radius:9px;padding:6px 8px}.libraryCard{transition:.15s ease}.libraryAccordion[open]>.libraryCards{padding:12px}.gymLegendV90{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.zoneLegendItem{display:flex!important;align-items:center;gap:8px!important;padding:7px 9px!important}.zoneLegendItem svg{width:30px;height:42px;flex:0 0 auto}.zoneBase{fill:#e9eef5;stroke:#8aa0b8;stroke-width:1.5}.zoneHi{fill:#ffb24a;opacity:.9}.libraryCard.detailCard{padding:18px}.libraryAccordion[open] summary{background:var(--surface-2)}.rowerMemberships{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.membershipTag{display:inline-flex;align-items:center;gap:7px;background:#edf4fb;border:1px solid #d6e2ee;border-radius:6px;padding:7px 9px;color:#0b1830}.raceSim{border-left:5px solid #f59e0b;background:#fff8ea;color:#0b1830}.seasonNotice{background:#fff8e7;border:1px solid #f3d28f;border-radius:7px;padding:10px 12px;margin:10px 0;color:#0b1830}
@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="433";
+const APP_VERSION="435";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7812,7 +7812,7 @@ async function results(){
       return `<div class="last v417CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}${r.n>1?` · ${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}${mode==='wkg'?` · ${secondsToTime(v.pace_500_seconds)}/500m`:(wkg!=null?` · ${wkg.toFixed(2)} W/kg`:'')}</small><br>${zoneBadgeHtml(info)}</div><div style="text-align:right;font-weight:800;white-space:nowrap">${mode==='wkg'?(wkg!=null?`${wkg.toFixed(2)} W/kg`:'—'):secondsToTime(v.pace_500_seconds)+'/500m'}<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
     };
     const zoneNote=sessionZone?'':' Esta sesión no indica una zona de FC en el título (UT2/UT1/AT/TR/AN), así que "Por FC en zona" no puede valorar cercanía a zona aquí — solo se ve la FC de cada uno.';
-    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" class="v417SortBtn ${mode==='fc'?'active':''}" data-mode="fc">Por FC en zona</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha.${zoneNote} Pulsa un remero para ver el detalle de su registro.</small></p>`;
+    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" class="v417SortBtn ${mode==='fc'?'active':''}" data-mode="fc">Por FC en zona</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button><button type="button" id="v417ExportPdfBtn">📄 PDF de varios ejercicios</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha.${zoneNote} Pulsa un remero para ver el detalle de su registro.</small></p>`;
     // V421 · al pulsar un remero se abre el mismo popup de detalle (+ comentarios) que ya usa el
     // gráfico de evolución individual, con el registro concreto (ErgData o manual) que se le está
     // comparando.
@@ -7831,7 +7831,48 @@ async function results(){
     box.querySelectorAll('.v417SortBtn').forEach(b=>b.onclick=()=>{v417SortMode=b.dataset.mode;renderComparison()});
     box.querySelectorAll('.v417MetricBtn').forEach(b=>b.onclick=()=>{v417CompareMetric=b.dataset.metric;renderComparison()});
     const exportBtn=box.querySelector('#v417ExportBtn');
-    if(exportBtn)exportBtn.onclick=()=>v419ExportCompareImage({
+    if(exportBtn)exportBtn.onclick=()=>v419ExportCompareImage(v417ErgoExportSection(ats,exercises,athleteRows,v417SelectedErgoKey,metric,mode));
+    // V434 · PDF con varios (o todos) los ejercicios de ERGO de golpe, con la métrica y el orden
+    // (resultado / W·kg / FC en zona) que estén seleccionados ahora mismo.
+    const exportPdfBtn=box.querySelector('#v417ExportPdfBtn');
+    if(exportPdfBtn)exportPdfBtn.onclick=()=>v434OpenPdfExportModal(exercises,[{key:'result',label:'Por resultado'},{key:'wkg',label:'Por W/kg'},{key:'fc',label:'Por FC en zona'}],mode,(key,m)=>v417ErgoExportSection(ats,exercises,athleteRows,key,metric,m),`comparativa-ergo-${team}.pdf`,'Exportar PDF · ERGO');
+  }
+  // V434 · misma comparativa de ERGO de arriba pero para un ejercicio (key) y unos filtros
+  // (metric/mode) cualquiera, no solo los seleccionados en pantalla -- la reutilizan tanto el botón
+  // de imagen suelta como el PDF conjunto, que recorre varios ejercicios con el mismo criterio.
+  function v417ErgoExportSection(ats,exercises,athleteRows,key,metric,mode){
+    const byAthlete=athleteRows.get(key)||new Map();
+    const weightByUser=new Map(ats.map(p=>[String(p.user_id),latestMetric(p.user_id)?.weight_kg]));
+    const metricByUser=new Map(ats.map(p=>[String(p.user_id),latestMetric(p.user_id)]));
+    const exLabel=exercises.find(e=>e.key===key)?.label||'';
+    const sessionZone=v300ExtractZone(exLabel);
+    const rows=ats.map(p=>{
+      const entries=(byAthlete.get(String(p.user_id))||[]).slice().sort((a,b)=>String(b.workout_date).localeCompare(String(a.workout_date)));
+      if(!entries.length)return null;
+      const latest=entries[0],best=entries.reduce((m,e)=>Number(e.pace_500_seconds)<Number(m.pace_500_seconds)?e:m,entries[0]);
+      const weight=weightByUser.get(String(p.user_id));
+      const wkgForE=(e)=>{const w=v309WattsFromPace500(Number(e.pace_500_seconds));return (w&&weight)?w/weight:null};
+      return {p,latest,best,n:entries.length,latestWkg:wkgForE(latest),bestWkg:wkgForE(best)};
+    }).filter(Boolean);
+    const valueFor=r=>metric==='best'?r.best:r.latest;
+    const wkgFor=r=>metric==='best'?r.bestWkg:r.latestWkg;
+    const zoneInfoFor=r=>{
+      const v=valueFor(r),rm=v300ResultMetrics(v),m=metricByUser.get(String(r.p.user_id)),zone=sessionZone;
+      const zoneMin=zone&&m?Number(m[zone.toLowerCase()+'_min']):null,zoneMax=zone&&m?Number(m[zone.toLowerCase()+'_max']):null;
+      let status;
+      if(rm.avg_hr==null)status='missing';
+      else if(!zone||!zoneMin||!zoneMax)status='nozone';
+      else if(rm.avg_hr>zoneMax)status='over';
+      else if(rm.avg_hr<zoneMin)status='under';
+      else status='in';
+      return {avg_hr:rm.avg_hr,max_hr:rm.max_hr,zone,zoneMin,zoneMax,status};
+    };
+    const zoneDeviation=info=>info.status==='in'?0:info.status==='over'?info.avg_hr-info.zoneMax:info.status==='under'?info.zoneMin-info.avg_hr:null;
+    let list;
+    if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
+    else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return 0;if(da==null)return 1;if(db==null)return -1;return da-db});
+    else list=rows.slice().sort((a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds));
+    return {
       list,
       subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${mode==='wkg'?'Ordenado por W/kg':mode==='fc'?'Ordenado por cercanía a zona de FC':'Ordenado por resultado'}`,
       valueHeader:mode==='wkg'?'W/KG':mode==='fc'?'FC':'RITMO/500',
@@ -7839,14 +7880,16 @@ async function results(){
       rowValue:(r)=>mode==='wkg'?(wkgFor(r)!=null?`${wkgFor(r).toFixed(2)}`:'—'):mode==='fc'?(zoneInfoFor(r).avg_hr??'—'):secondsToTime(valueFor(r).pace_500_seconds),
       filename:`comparativa-ergo-${team}.png`,
       shareTitle:`Comparativa ERGO · ${exLabel}`
-    });
+    };
   }
   // V419: exportación de imagen genérica para las comparativas de equipo (GYM y ERGO), reutilizando
   // el mismo estilo visual que v272ExportRankingImage (ranking del test) pero parametrizado para no
   // duplicar el dibujo del canvas en cada comparativa nueva.
-  async function v419ExportCompareImage(opts){
-    const {list,subtitleLine,valueHeader,rowDetail,rowValue,filename,shareTitle}=opts;
-    if(!list.length)return alert('No hay datos para exportar.');
+  // V434 · se separa el dibujo del canvas (v434DrawCompareCanvas) de lo que se hace con él, para
+  // poder reutilizar exactamente el mismo dibujo tanto para la imagen suelta (aquí) como para cada
+  // página del PDF con varios ejercicios (v434ExportComparePdf).
+  async function v434DrawCompareCanvas(opts){
+    const {list,subtitleLine,valueHeader,rowDetail,rowValue,shareTitle}=opts;
     const logo=await v273LoadImage('assets/club-pedregalejo.png');
     const W=900,rowH=64,bannerH=110,subH=120,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
@@ -7889,9 +7932,68 @@ async function results(){
     });
     ctx.fillStyle='#94a3b8';ctx.font='400 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
+    return canvas;
+  }
+  async function v419ExportCompareImage(opts){
+    const {list,filename,shareTitle}=opts;
+    if(!list.length)return alert('No hay datos para exportar.');
+    const canvas=await v434DrawCompareCanvas(opts);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!blob)return alert('No se pudo generar la imagen.');
     v277ShowRankingPreview(blob,filename,shareTitle);
+  }
+  // V434 · exportar a PDF la comparativa de varios (o todos) los ejercicios de golpe, en vez de tener
+  // que exportar la imagen de uno en uno. Cada ejercicio elegido se dibuja igual que la imagen suelta
+  // (mismos filtros: métrica y orden que estén activos en pantalla) y se mete como una página del PDF.
+  async function v434ExportComparePdf(sections,filename){
+    if(!sections.length)return alert('Elige al menos un ejercicio para el PDF.');
+    const withData=sections.filter(s=>s.list.length);
+    if(!withData.length)return alert('Ninguno de los ejercicios elegidos tiene datos para comparar todavía.');
+    const {jsPDF}=window.jspdf||{};
+    if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
+    let doc=null;
+    for(const section of withData){
+      const canvas=await v434DrawCompareCanvas(section);
+      const img=canvas.toDataURL('image/png');
+      if(!doc)doc=new jsPDF({unit:'px',format:[canvas.width,canvas.height],hotfixes:['px_scaling']});
+      else doc.addPage([canvas.width,canvas.height]);
+      doc.addImage(img,'PNG',0,0,canvas.width,canvas.height);
+    }
+    doc.save(filename);
+  }
+  // V434 · modal de selección de ejercicios para el PDF conjunto: por defecto todos marcados, se
+  // puede desmarcar los que no interesen. buildSection(key,modeKey) debe devolver las mismas opciones
+  // que ya usa cada comparativa para exportar una imagen suelta de ese ejercicio con ese orden
+  // concreto (list/subtitleLine/etc.).
+  // V435 · además de elegir ejercicios, se puede elegir más de un orden a la vez (p.ej. "Por
+  // resultado" Y "Por FC en zona"): por cada combinación de ejercicio marcado × orden marcado sale
+  // una página en el mismo PDF, agrupadas por ejercicio. modeOptions es la lista de órdenes
+  // disponibles ([{key,label}]) y activeModeKey el que está seleccionado ahora mismo en pantalla (el
+  // único marcado por defecto, para no disparar el número de páginas sin que lo pidan).
+  function v434OpenPdfExportModal(exercises,modeOptions,activeModeKey,buildSection,filename,title){
+    if(!exercises.length)return alert('No hay ejercicios con datos para exportar.');
+    const layer=document.createElement('div');layer.className='modalBack';
+    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" ${m.key===activeModeKey?'checked':''}><span>${esc(m.label)}</span></label>`).join('')}</div>`:'';
+    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${esc(title)}</h2><button type="button" class="v434Close">Cerrar</button></div><p class="muted" style="margin-top:0">Elige qué ejercicios incluir.</p>${modesHtml}<h3 style="margin:10px 0 4px">Ejercicios</h3><div class="v225PendingList">${exercises.map((e,i)=>`<label class="last" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfPick" data-i="${i}" checked><span>${esc(e.label)} <small class="muted">(${e.athletesWithData})</small></span></label>`).join('')}</div><div class="actions" style="margin-top:10px"><button type="button" class="v434Close">Cancelar</button><button type="button" id="v434PdfGo" class="primary">📄 Generar PDF</button></div><div id="v434PdfStatus" class="muted"></div></div>`;
+    document.body.appendChild(layer);
+    layer.querySelectorAll('.v434Close').forEach(b=>b.onclick=()=>layer.remove());
+    layer.onclick=e=>{if(e.target===layer)layer.remove()};
+    layer.querySelector('#v434PdfGo').onclick=async()=>{
+      const picked=[...layer.querySelectorAll('.v434PdfPick:checked')].map(cb=>exercises[Number(cb.dataset.i)]);
+      const pickedModes=modeOptions.length>1?[...layer.querySelectorAll('.v434PdfMode:checked')].map(cb=>cb.value):[activeModeKey];
+      if(!picked.length)return alert('Elige al menos un ejercicio.');
+      if(!pickedModes.length)return alert('Elige al menos un orden.');
+      const status=layer.querySelector('#v434PdfStatus'),goBtn=layer.querySelector('#v434PdfGo'),total=picked.length*pickedModes.length;
+      status.textContent=`Generando PDF (${total} página${total===1?'':'s'})…`;goBtn.disabled=true;
+      try{
+        const sections=[];
+        picked.forEach(e=>pickedModes.forEach(m=>sections.push(buildSection(e.key,m))));
+        await v434ExportComparePdf(sections,filename);
+        layer.remove();
+      }catch(err){
+        status.textContent='No se pudo generar el PDF: '+(err.message||err);goBtn.disabled=false;
+      }
+    };
   }
   // V416 · comparativa de GYM del equipo: para un ejercicio elegido, el peso más reciente (y la
   // mejor marca, si hay más de un registro) de cada remero del equipo, para poder comparar entre
@@ -7946,7 +8048,7 @@ async function results(){
       const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'más reciente':'mejor marca';
       return `<div class="last v416CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v._date)} · ${v300FeelLabel(v.perceived_difficulty)}${v.reps!=null?` · ${v.reps} rep`:''}${r.n>1?` · ${otherLabel}: ${other.weight_kg} kg (${shortDateES(other._date)})`:''}</small></div><div style="text-align:right;font-weight:800;white-space:nowrap">${v.weight_kg} kg<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
     };
-    box.innerHTML=`<label>Ejercicio<select id="v416GymPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v416MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v416MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v416SortBtn ${dir==='desc'?'active':''}" data-dir="desc">Mayor a menor</button><button type="button" class="v416SortBtn ${dir==='asc'?'active':''}" data-dir="asc">Menor a mayor</button><button type="button" id="v416ExportBtn">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene peso registrado para este ejercicio todavía.</div>'}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su peso más reciente.':'Se compara el peso más reciente de cada remero en este ejercicio; si tiene más de un registro se indica también su mejor marca.'} Pulsa un remero para ver el detalle de su registro.</small></p>`;
+    box.innerHTML=`<label>Ejercicio<select id="v416GymPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v416MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v416MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v416SortBtn ${dir==='desc'?'active':''}" data-dir="desc">Mayor a menor</button><button type="button" class="v416SortBtn ${dir==='asc'?'active':''}" data-dir="asc">Menor a mayor</button><button type="button" id="v416ExportBtn">📤 Exportar imagen</button><button type="button" id="v416ExportPdfBtn">📄 PDF de varios ejercicios</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene peso registrado para este ejercicio todavía.</div>'}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su peso más reciente.':'Se compara el peso más reciente de cada remero en este ejercicio; si tiene más de un registro se indica también su mejor marca.'} Pulsa un remero para ver el detalle de su registro.</small></p>`;
     box.querySelector('#v416GymPicker').onchange=(e)=>{v416SelectedGymKey=e.target.value;renderComparison()};
     box.querySelectorAll('.v416SortBtn').forEach(b=>b.onclick=()=>{v416SortDir=b.dataset.dir;renderComparison()});
     box.querySelectorAll('.v416MetricBtn').forEach(b=>b.onclick=()=>{v416CompareMetric=b.dataset.metric;renderComparison()});
@@ -7958,7 +8060,27 @@ async function results(){
     });
     const exLabel=exercises.find(e=>e.key===v416SelectedGymKey)?.label||'';
     const exportBtn=box.querySelector('#v416ExportBtn');
-    if(exportBtn)exportBtn.onclick=()=>v419ExportCompareImage({
+    if(exportBtn)exportBtn.onclick=()=>v419ExportCompareImage(v416ExportSection(ats,exercises,athleteRows,v416SelectedGymKey,metric,dir));
+    // V434 · PDF con varios (o todos) los ejercicios de GYM de golpe, con la métrica y el orden que
+    // estén seleccionados ahora mismo -- se puede elegir un subconjunto en el propio diálogo.
+    const exportPdfBtn=box.querySelector('#v416ExportPdfBtn');
+    if(exportPdfBtn)exportPdfBtn.onclick=()=>v434OpenPdfExportModal(exercises,[{key:'desc',label:'Mayor a menor'},{key:'asc',label:'Menor a mayor'}],dir,(key,m)=>v416ExportSection(ats,exercises,athleteRows,key,metric,m),`comparativa-gym-${team}.pdf`,'Exportar PDF · GYM');
+  }
+  // V434 · misma comparativa que arriba pero para un ejercicio (key) y unos filtros (metric/dir)
+  // cualquiera, no solo los seleccionados en pantalla -- así la puede reutilizar tanto el botón de
+  // imagen suelta como el PDF conjunto, que recorre varios ejercicios con el mismo criterio.
+  function v416ExportSection(ats,exercises,athleteRows,key,metric,dir){
+    const byAthlete=athleteRows.get(key)||new Map();
+    const rows=ats.map(p=>{
+      const entries=(byAthlete.get(String(p.user_id))||[]).slice().sort((a,b)=>b._date.localeCompare(a._date));
+      if(!entries.length)return null;
+      const latest=entries[0],best=entries.reduce((m,e)=>Number(e.weight_kg)>Number(m.weight_kg)?e:m,entries[0]);
+      return {p,latest,best,n:entries.length};
+    }).filter(Boolean);
+    const valueFor=r=>metric==='best'?r.best:r.latest;
+    const list=rows.slice().sort((a,b)=>{const av=Number(valueFor(a).weight_kg),bv=Number(valueFor(b).weight_kg);return dir==='asc'?av-bv:bv-av});
+    const exLabel=exercises.find(e=>e.key===key)?.label||'';
+    return {
       list,
       subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${dir==='asc'?'Menor a mayor':'Mayor a menor'}`,
       valueHeader:'PESO',
@@ -7966,7 +8088,7 @@ async function results(){
       rowValue:(r)=>`${valueFor(r).weight_kg} kg`,
       filename:`comparativa-gym-${team}.png`,
       shareTitle:`Comparativa GYM · ${exLabel}`
-    });
+    };
   }
   // V421 · popup simple de detalle para un registro de GYM (peso/reps/sensación/nota concretos),
   // con la sesión a la que pertenece el entrenamiento si la tiene.
