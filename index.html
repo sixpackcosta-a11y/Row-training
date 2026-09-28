@@ -665,6 +665,9 @@ function applyThemeV299(mode){
 <div id="publicGuide" class="card publicGuide hidden"></div>
 <div id="app" class="hidden"><div id="content"></div><div id="v366LoadOverlay" class="v366Overlay"><div class="v366OverlayIcon">🚣</div></div></div></main>
 </div><nav id="nav"></nav>
+<!-- V442 · versión siempre visible (esquina, discreta) para poder confirmar de un vistazo si el
+     navegador está sirviendo la última build o una cacheada -->
+<div id="appVersionLabel" style="position:fixed;left:6px;bottom:4px;font-size:10px;color:#94a3b8;opacity:.6;z-index:5;pointer-events:none"></div>
 <script>
 // v266b: watchdog totalmente independiente del resto del código de la app. Si por lo que sea
 // (librería externa que no carga, error en el script principal) la app se queda colgada en
@@ -2245,8 +2248,8 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="441";
-const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
+const APP_VERSION="443";
+const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7788,12 +7791,16 @@ async function results(){
       return {avg_hr:rm.avg_hr,max_hr:rm.max_hr,zone,zoneMin,zoneMax,status};
     };
     const zoneDeviation=info=>info.status==='in'?0:info.status==='over'?info.avg_hr-info.zoneMax:info.status==='under'?info.zoneMin-info.avg_hr:null;
+    // V443 · junto a la zona (UT2/UT1/...) se muestra también el rango de pulsaciones de ESE remero
+    // para esa zona (es personal, según su FC máx/reposo) -- así se ve de un vistazo si el rango en sí
+    // tiene sentido, no solo si está dentro o fuera.
+    const zoneRangeTxt=info=>(info.zoneMin&&info.zoneMax)?` (${Math.round(info.zoneMin)}-${Math.round(info.zoneMax)})`:'';
     const zoneBadgeHtml=info=>{
       const pill=(bg,color,text)=>`<span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${color}">${text}</span>`;
       if(info.status==='missing')return pill('#fef3c7','#92400e','⚠️ Sin FC registrada');
-      if(info.status==='over')return pill('#fee2e2','#b91c1c',`🔺 FC ${info.avg_hr} · ${info.avg_hr-info.zoneMax} por encima de ${info.zone}`);
-      if(info.status==='under')return pill('#e0e7ff','#3730a3',`🔻 FC ${info.avg_hr} · ${info.zoneMin-info.avg_hr} por debajo de ${info.zone}`);
-      if(info.status==='in')return pill('#dcfce7','#166534',`✅ FC ${info.avg_hr} en zona ${info.zone}`);
+      if(info.status==='over')return pill('#fee2e2','#b91c1c',`🔺 FC ${info.avg_hr} · ${info.avg_hr-info.zoneMax} por encima de ${info.zone}${zoneRangeTxt(info)}`);
+      if(info.status==='under')return pill('#e0e7ff','#3730a3',`🔻 FC ${info.avg_hr} · ${info.zoneMin-info.avg_hr} por debajo de ${info.zone}${zoneRangeTxt(info)}`);
+      if(info.status==='in')return pill('#dcfce7','#166534',`✅ FC ${info.avg_hr} en zona ${info.zone}${zoneRangeTxt(info)}`);
       return pill('#f1f5f9','#475569',`FC ${info.avg_hr}`);
     };
     // V436 · misma idea que la de FC, pero para la palada (ppm): el objetivo es un número exacto que
@@ -7935,7 +7942,7 @@ async function results(){
       list,
       subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${mode==='wkg'?'Ordenado por W/kg':mode==='fc'?'Ordenado por cercanía a zona de FC':mode==='ppm'?'Ordenado por cercanía a ppm objetivo':'Ordenado por resultado'}`,
       valueHeader:mode==='wkg'?'W/KG':mode==='fc'?'FC':mode==='ppm'?'PPM':'RITMO/500',
-      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} · ${info.avg_hr-info.zoneMax} por encima de ${info.zone}`:info.status==='under'?`${info.avg_hr} · ${info.zoneMin-info.avg_hr} por debajo de ${info.zone}`:info.status==='in'?`${info.avg_hr} · en zona ${info.zone}`:`${info.avg_hr}`}}if(mode==='ppm'){const info=ppmInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin ppm registrado':info.status==='over'?`${info.spm} ppm · por encima del objetivo (${info.target})`:info.status==='under'?`${info.spm} ppm · por debajo del objetivo (${info.target})`:info.status==='in'?`${info.spm} ppm · exacto en el objetivo`:`${info.spm} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
+      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r),rng=(info.zoneMin&&info.zoneMax)?` (${Math.round(info.zoneMin)}-${Math.round(info.zoneMax)})`:'';return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} · ${info.avg_hr-info.zoneMax} por encima de ${info.zone}${rng}`:info.status==='under'?`${info.avg_hr} · ${info.zoneMin-info.avg_hr} por debajo de ${info.zone}${rng}`:info.status==='in'?`${info.avg_hr} · en zona ${info.zone}${rng}`:`${info.avg_hr}`}}if(mode==='ppm'){const info=ppmInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin ppm registrado':info.status==='over'?`${info.spm} ppm · por encima del objetivo (${info.target})`:info.status==='under'?`${info.spm} ppm · por debajo del objetivo (${info.target})`:info.status==='in'?`${info.spm} ppm · exacto en el objetivo`:`${info.spm} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
       rowValue:(r)=>mode==='wkg'?(wkgFor(r)!=null?`${wkgFor(r).toFixed(2)}`:'—'):mode==='fc'?(zoneInfoFor(r).avg_hr??'—'):mode==='ppm'?(ppmInfoFor(r).spm??'—'):secondsToTime(valueFor(r).pace_500_seconds),
       filename:`comparativa-ergo-${team}.png`,
       shareTitle:`Comparativa ERGO · ${exLabel}`
@@ -7976,6 +7983,15 @@ async function results(){
     ctx.fillText(shareTitle,textX,70);
     ctx.font='400 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.globalAlpha=.85;
     ctx.fillText(v273FullDateES(localISODate()),textX,92);ctx.globalAlpha=1;
+    // V443 · qué se está comparando (FC / PPM / W/KG / TIEMPO·500) en grande arriba a la derecha, para
+    // que se vea de un vistazo sin tener que leer el subtítulo pequeño de debajo.
+    if(valueHeader){
+      const bigLabel=valueHeader==='RITMO/500'?'TIEMPO/500':valueHeader;
+      ctx.textAlign='right';
+      ctx.fillStyle='#ffffff';ctx.font='800 30px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
+      ctx.fillText(bigLabel,W-28,58);
+      ctx.textAlign='left';
+    }
     ctx.fillStyle='#f4f7fb';ctx.fillRect(0,bannerH,W,subH);
     ctx.fillStyle='#0b1b35';ctx.font='700 24px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+38);
