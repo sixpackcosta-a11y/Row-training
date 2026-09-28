@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="394";
+const APP_VERSION="395";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3876,12 +3876,16 @@ async function coachWeekView(){
   const focusDate=coachWeekFocusDate&&coachWeekFocusDate>=start&&coachWeekFocusDate<=end?coachWeekFocusDate:null;
   // V394 · desde "Mes" el día se abre en un popup encima del calendario (coachDayModalV394),
   // sin tocar #content: el calendario de Mes queda intacto detrás y "Cerrar" solo quita el popup.
+  // V395 · en el popup de un solo día no tiene sentido la auditoría de asignaciones ERGO (es una
+  // revisión de TODO el equipo/semana), así que se omite del todo: sin su consulta de 91 días,
+  // sin el posible segundo viaje por sesiones "no encontradas" y sin pintarla. Menos carga = más rápido.
+  const isDayModal=!!(focusDate&&coachDayModalV394);
   let coachDayModalEl=null;
-  if(focusDate&&coachDayModalV394){
+  if(isDayModal){
     document.querySelectorAll('.v394DayModalBack').forEach(x=>x.remove());
     coachDayModalEl=document.createElement('div');
     coachDayModalEl.className='modalBack v394DayModalBack';
-    coachDayModalEl.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${shortDateES(focusDate)}</h2><button type="button" id="coachDayBackV387">Cerrar</button></div><p class="muted" style="margin-top:0">${esc(teamLabel(team))}</p><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
+    coachDayModalEl.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${shortDateES(focusDate)}</h2><button type="button" id="coachDayBackV387">Cerrar</button></div><p class="muted" style="margin-top:0">${esc(teamLabel(team))}</p><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
     document.body.appendChild(coachDayModalEl);
     coachDayModalEl.onclick=e=>{if(e.target===coachDayModalEl){coachDayModalEl.remove();coachWeekFocusDate=null;coachDayModalV394=false}};
   }else{
@@ -3892,13 +3896,15 @@ async function coachWeekView(){
     if(coachDayModalEl){coachDayModalEl.remove();coachDayModalV394=false}
     else coachMonthView();
   });
-  const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
+  const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),isDayModal?Promise.resolve({data:[],error:null}):sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
-  const crewMapV309=await v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
-  sessions.forEach(x=>{if(x.session_type==='MAR')x.crew=crewMapV309.get(String(x.id))||null});
   let auditPlans=auditPlansQ.error?sessions.filter(x=>x.session_type==='ERG'):(auditPlansQ.data||[]);
   const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],sessionIds=sessions.map(x=>Number(x.id)).filter(Number.isFinite);
-  let seaRows=[],workoutRows=[],gymRows=[],manualErgoRows=[],c2Rows=[],profiles=[];
+  let seaRows=[],workoutRows=[],gymRows=[],manualErgoRows=[],c2Rows=[],profiles=[],crewMapV309;
+  // V395 · el mapa de tripulaciones (MAR) antes se pedía en su propio viaje de red, ANTES del resto,
+  // aunque no dependía de ese resultado. Ahora va en paralelo con el resto de consultas de la
+  // semana (o se resuelve solo, si no hay sesiones) para ahorrar una ida y vuelta completa.
+  const crewMapPromise=v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
   if(sessionIds.length){
     /* V219: la semana del entrenador necesita también resultados todavía sin training_session_id.
        Se cargan por fecha y después se limitan a los remeros del equipo. Así el contador y
@@ -3908,7 +3914,8 @@ async function coachWeekView(){
        2) resultados con training_session_id de una sesión de ESTA semana, aunque se realizaran otro día.
        La segunda consulta es imprescindible cuando el entrenador mueve manualmente un ErgData
        (p. ej. realizado el 10/9 pero asignado al entrenamiento planificado del 1/9). */
-    const [seaQ,workDateQ,workAssignedQ,c2DateQ,c2AssignedQ,profQ,memberQ]=await Promise.all([
+    const [crewMap,seaQ,workDateQ,workAssignedQ,c2DateQ,c2AssignedQ,profQ,memberQ]=await Promise.all([
+      crewMapPromise,
       sb.from('sea_results').select('id,training_session_id,exercise_name,distance_m,time_text,pace_500_text,spm,rpe,notes,created_at').in('training_session_id',sessionIds).order('created_at'),
       sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').gte('session_date',start).lte('session_date',end).or('hidden.is.false,hidden.is.null').order('created_at'),
       sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,notes,created_at,hidden').in('training_session_id',sessionIds).or('hidden.is.false,hidden.is.null').order('created_at'),
@@ -3917,6 +3924,7 @@ async function coachWeekView(){
       sb.from('profiles').select('user_id,full_name,team_code'),
       sb.from('rower_team_memberships').select('user_id,team_code').eq('team_code',team)
     ]);
+    crewMapV309=crewMap;
     seaRows=seaQ.error?[]:(seaQ.data||[]);profiles=profQ.error?[]:(profQ.data||[]);
     const mergeById=(...lists)=>{const m=new Map();lists.flat().forEach(x=>{if(x&&x.id!=null)m.set(String(x.id),x)});return [...m.values()]};
     const teamUsers=new Set([...(memberQ.error?[]:(memberQ.data||[])).map(x=>String(x.user_id)),...profiles.filter(p=>String(p.team_code||'')===String(team)).map(p=>String(p.user_id))]);
@@ -3930,10 +3938,15 @@ async function coachWeekView(){
       ]);
       gymRows=gq.error?[]:(gq.data||[]);manualErgoRows=eq.error?[]:(eq.data||[]);
     }
+  }else{
+    crewMapV309=await crewMapPromise;
   }
+  sessions.forEach(x=>{if(x.session_type==='MAR')x.crew=crewMapV309.get(String(x.id))||null});
   // V230 · resolver SIEMPRE las sesiones referenciadas explícitamente por ErgData, aunque
   // estén fuera de la semana/rango cargado. Un training_session_id existente nunca debe
   // presentarse como "Sin asignar" solo porque la sesión no estaba en auditPlans.
+  // V395 · esta resolución solo alimenta la auditoría ERGO, que en el popup de un día no se pinta.
+  if(!isDayModal){
   const referencedAuditIds=[...new Set(c2Rows.map(r=>r.training_session_id).filter(Boolean).map(String))];
   const knownAuditIds=new Set(auditPlans.map(s=>String(s.id)));
   const missingAuditIds=referencedAuditIds.filter(id=>!knownAuditIds.has(id));
@@ -3944,6 +3957,7 @@ async function coachWeekView(){
       aq.data.forEach(x=>m.set(String(x.id),x));
       auditPlans=[...m.values()];
     }
+  }
   }
   const nameFor=uid=>profiles.find(p=>String(p.user_id)===String(uid))?.full_name||'Remero';
   /* V221 · corrige la carga de Concept2 en Semana: V220 pedía la columna inexistente raw_data,
