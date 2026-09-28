@@ -2071,7 +2071,7 @@ async function openNotificationsV104(){
 
 let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],rowerTeamCodes=[],currentMode="athlete";
 let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false,plannerTargetSessionId=null;
-let coachSelectedTeam=null,coachWeekStart="2026-08-31",coachWeekFocusDate=null;
+let coachSelectedTeam=null,coachWeekStart="2026-08-31",coachWeekFocusDate=null,coachDayModalV394=false;
 let workoutNotificationAthleteV129=null;
 let v300PendingCommentOpen=null;
 let v300PendingMessageRower=null;
@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="393";
+const APP_VERSION="394";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3874,8 +3874,24 @@ async function coachWeekView(){
   // V387 · desde "Mes" se puede pedir un día concreto (coachWeekFocusDate): misma tarjeta que
   // Semana, pero mostrando solo ese día, sin el resto de la semana ni la navegación de semanas.
   const focusDate=coachWeekFocusDate&&coachWeekFocusDate>=start&&coachWeekFocusDate<=end?coachWeekFocusDate:null;
-  content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDayBackV387" style="margin-bottom:10px">← Volver</button><div class="todayHero"><div><h2>${shortDateES(focusDate)}</h2><p class="muted">${esc(teamLabel(team))}</p></div></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`:`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
-  document.getElementById('coachDayBackV387')?.addEventListener('click',()=>{coachWeekFocusDate=null;coachMonthView()});
+  // V394 · desde "Mes" el día se abre en un popup encima del calendario (coachDayModalV394),
+  // sin tocar #content: el calendario de Mes queda intacto detrás y "Cerrar" solo quita el popup.
+  let coachDayModalEl=null;
+  if(focusDate&&coachDayModalV394){
+    document.querySelectorAll('.v394DayModalBack').forEach(x=>x.remove());
+    coachDayModalEl=document.createElement('div');
+    coachDayModalEl.className='modalBack v394DayModalBack';
+    coachDayModalEl.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${shortDateES(focusDate)}</h2><button type="button" id="coachDayBackV387">Cerrar</button></div><p class="muted" style="margin-top:0">${esc(teamLabel(team))}</p><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
+    document.body.appendChild(coachDayModalEl);
+    coachDayModalEl.onclick=e=>{if(e.target===coachDayModalEl){coachDayModalEl.remove();coachWeekFocusDate=null;coachDayModalV394=false}};
+  }else{
+    content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDayBackV387" style="margin-bottom:10px">← Volver</button><div class="todayHero"><div><h2>${shortDateES(focusDate)}</h2><p class="muted">${esc(teamLabel(team))}</p></div></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`:`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
+  }
+  document.getElementById('coachDayBackV387')?.addEventListener('click',()=>{
+    coachWeekFocusDate=null;
+    if(coachDayModalEl){coachDayModalEl.remove();coachDayModalV394=false}
+    else coachMonthView();
+  });
   const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
   const crewMapV309=await v307FetchCrewMap(sessions.filter(x=>x.session_type==='MAR').map(x=>x.id));
@@ -6333,7 +6349,7 @@ async function renderCoachMonth(){
   // detalle/Editar/Mover/Duplicar/Eliminar/Registrar MAR), no la semana completa ni Planificación.
   // V392 · sin cambiar de pestaña: se queda en "Mes" (tab no se toca), solo se sustituye el
   // contenido por la tarjeta de ese día; el botón Volver reconstruye el calendario de Mes.
-  monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;coachWeekView()});
+  monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;coachDayModalV394=true;coachWeekView()});
   // V390 · quitado el listado de "Resultados MAR del equipo": duplicaba lo que ya hace Análisis MAR,
   // y en Mes no aportaba nada que no estuviera ya ahí.
 }
