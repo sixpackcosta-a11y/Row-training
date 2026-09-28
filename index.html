@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="406";
+const APP_VERSION="409";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2740,9 +2740,15 @@ function v330RenderBottomNav(){
 // embebida) y por separado como v389MasBar solo para Equipo/Sistema. Ahora es un único componente
 // que se inyecta igual en Perfil/Equipo/Sistema, con el botón de la pantalla activa marcado.
 function v390MasBarHtml(activeTab){
+  // V409 · desde que "Más" sustituyó al menú hamburguesa (que sí incluía "Cambiar a modo
+  // remero/entrenador" vía v300NavItems), quien es entrenador Y remero a la vez se quedó sin
+  // ninguna forma de cambiar de modo: el hamburguesa está oculto en modo staff y el único camino
+  // indirecto era el botón "Editar datos deportivos en modo remero" de Perfil (que ni siquiera
+  // existe en modo remero para volver). Se añade aquí un botón explícito y simétrico.
   const items=[
     ['perfil','Perfil','perfil'],
     ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo']]:[]),
+    ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Modo remero':'Modo entrenador','compass']]:[]),
     ['__settings__','Ajustes','ajustes'],
     ['ayuda','Ayuda','ayuda'],
     ...(isGlobalCoach?[['sistema','Sistema','sistema']]:[]),
@@ -2760,6 +2766,7 @@ function v390BindMasBar(root){
     const a=btn.dataset.action;
     if(a==='__settings__')return v300OpenSettingsMenu();
     if(a==='__logout__')return sb.auth.signOut().then(()=>location.reload());
+    if(a==='__switchmode__')return switchModeV73(currentMode==='staff'?'athlete':'staff');
     tab=a;draw();render();
   });
 }
@@ -3130,7 +3137,14 @@ async function v307OpenSeatPicker(position,onSave,teamCode=null,assignments=[]){
   });
 }
 function gymExercisesFromContent(content){
-  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{let [label,value]=readableLabel(line);if(!label){label=line;value=''}return [label,value]}).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(label)).map(([label,value])=>({name:label,dose:value}));
+  // V407 · readableLabel() devuelve label="" cuando la línea no tiene separador "·" o ":" (p.ej.
+  // "Sentadilla búlgara 4x10 cada pierna" escrita tal cual, sin ese separador). El filtro
+  // "label &&..." descartaba esas líneas POR COMPLETO en vez de tratarlas como un ejercicio sin
+  // dosis aparte, así que ese ejercicio nunca generaba su campo de "Peso (kg)" para el remero, que
+  // acababa escribiendo el peso a mano en la nota de la sesión (o del entrenador, en el registro
+  // manual del staff) en vez de quedar guardado como dato estructurado.
+  const raw=String(content||'').replace(/\\n/g,'\n');
+  return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{const [label,value]=readableLabel(line);const name=(label||value||'').trim();return {name,dose:label?value:''}}).filter(e=>e.name&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(e.name));
 }
 async function staffGymResultForm(session,team,date,backFn){
   const athletes=await staffAthletesForTeam(team);if(!athletes.length)return alert('No hay remeros asignados a este equipo.');const exercises=gymExercisesFromContent(session?.content);
@@ -4025,12 +4039,19 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
     const type=s.session_type==='GYM'?'GYM':'ERG';
     const logs=workoutRows.filter(w=>!w.hidden&&v153ResultType(w)===type&&String(weekPlanForResultV222(w,'workout')?.id||'')===sid);
     const c2=type==='ERG'?c2Rows.filter(r=>!r.hidden&&String(weekPlanForResultV222(r,'concept2')?.id||'')===sid):[];
-    /* Un remero cuenta una sola vez. Si existen manual + ErgData para el mismo remero,
-       se conserva ErgData para la vista porque contiene los parciales más completos. */
-    const byUser=new Map();
-    logs.forEach(r=>byUser.set(String(r.user_id),{kind:'workout',row:r}));
-    c2.forEach(r=>byUser.set(String(r.user_id),{kind:'concept2',row:r}));
-    return {sea:[],logs:[...byUser.values()].filter(x=>x.kind==='workout').map(x=>x.row),c2:[...byUser.values()].filter(x=>x.kind==='concept2').map(x=>x.row)};
+    /* V408 · el Map anterior guardaba solo UN registro "workout" por remero (el último iterado se
+       comía a los demás), así que si un remero guardaba dos registros para la misma sesión (el
+       normal + otro con "Guardar otro registro" para apuntar ejercicios adicionales), el modal de
+       Semana solo mostraba uno de los dos — normalmente el que menos ejercicios/pesos tenía,
+       porque era el guardado más reciente. Ahora se agrupan por remero pero se conservan TODOS sus
+       registros manuales; solo se sigue prefiriendo ErgData sobre un registro manual de ERGO
+       cuando existen ambos para el mismo remero (ErgData trae los parciales más completos). */
+    const workoutsByUser=new Map();
+    logs.forEach(r=>{const k=String(r.user_id);(workoutsByUser.get(k)||workoutsByUser.set(k,[]).get(k)).push(r)});
+    const c2ByUser=new Map(c2.map(r=>[String(r.user_id),r]));
+    const finalLogs=[];
+    workoutsByUser.forEach((arr,uid)=>{if(type==='ERG'&&c2ByUser.has(uid))return;finalLogs.push(...arr)});
+    return {sea:[],logs:finalLogs,c2:[...c2ByUser.values()]};
   };
   const resultCountFor=s=>{const rows=resultRowsForSessionV220(s);return s.session_type==='MAR'?rows.sea.length:rows.logs.length+rows.c2.length};
   const compact=x=>{const lines=String(x.content||'').split(/\n+/).map(z=>z.trim()).filter(Boolean);const dur=(lines.find(z=>/DURACI[ÓO]N (OBJETIVO|ESTIMADA)/i.test(z))||'').replace(/^.*?·\s*/,'');const obj=(lines.find(z=>/^OBJETIVO/i.test(z))||'').replace(/^.*?·\s*/,'');const load=(lines.find(z=>/^CARGA/i.test(z))||'').replace(/^.*?·\s*/,'');const work=lines.filter(z=>!/^(CALENTAMIENTO|RECUPERACI[ÓO]N|VUELTA A LA CALMA|OBJETIVO|CARGA|DURACI[ÓO]N)/i.test(z)).slice(0,2);return `<div class="weekMeta">${dur?`<span>⏱ ${esc(dur)}</span>`:''}${obj?`<span>🎯 ${esc(obj)}</span>`:''}${load?`<span>⚙ ${esc(load)}</span>`:''}</div>${work.length?`<div class="weekKey">${work.map(z=>esc(z)).join('<br>')}</div>`:''}`};
@@ -4152,7 +4173,10 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
     if(x.session_type==='MAR'){
       body=sea.length?v112SeaResultsDetailHtml(sea,x.crew,x.id,true):(v307CrewBoatHtml(x.crew,x.id,true)+'<p class="muted">No hay resultados MAR registrados.</p>');
     }else{
-      const manualHtml=logs.map(w=>{const gs=gymRows.filter(g=>String(g.workout_id)===String(w.id)),es=manualErgoRows.filter(e=>String(e.workout_id)===String(w.id));return `<section class="last"><b>${esc(nameFor(w.user_id))}</b> · ${String(w.session_type||'').toUpperCase()}${w.notes?`<br><small>${esc(w.notes)}</small>`:''}${gs.length?`<div style="margin-top:8px">${gs.map(g=>`<div><b>${esc(g.exercise_name||'Ejercicio')}</b>${g.weight_kg!=null?` · ${g.weight_kg} kg`:''}${g.reps!=null?` · ${g.reps} rep`:''}${g.perceived_difficulty?` · ${esc(g.perceived_difficulty)}`:''}${g.note?`<br><small>${esc(g.note)}</small>`:''}</div>`).join('')}</div>`:''}${es.length?es.map(e=>`<div style="margin-top:8px"><b>ERGO manual</b> · ${e.distance_m??'—'} m · ${e.time_seconds!=null?fmtMetricSeconds(Number(e.time_seconds)):'—'} · /500 ${e.pace_500_seconds!=null?fmtMetricSeconds(Number(e.pace_500_seconds)):'—'} · ${e.spm??'—'} ppm${e.rpe?` · RPE ${e.rpe}`:''}${v124ManualPartialsHtml(e)}</div>`).join(''):''}</section>`}).join('');
+      // V407 · si el registro es GYM y no hay ni ejercicios estructurados (gs) ni nota, lo decimos
+      // explícitamente en vez de dejar la fila en blanco: antes parecía que faltaba el peso por un
+      // fallo de la app, cuando en realidad el remero completó la sesión sin rellenar ese detalle.
+      const manualHtml=logs.map(w=>{const gs=gymRows.filter(g=>String(g.workout_id)===String(w.id)),es=manualErgoRows.filter(e=>String(e.workout_id)===String(w.id)),isGym=String(w.session_type||'').toUpperCase()==='GYM';return `<section class="last"><b>${esc(nameFor(w.user_id))}</b> · ${String(w.session_type||'').toUpperCase()}${w.notes?`<br><small>${esc(w.notes)}</small>`:''}${gs.length?`<div style="margin-top:8px">${gs.map(g=>`<div><b>${esc(g.exercise_name||'Ejercicio')}</b>${g.weight_kg!=null?` · ${g.weight_kg} kg`:''}${g.reps!=null?` · ${g.reps} rep`:''}${g.perceived_difficulty?` · ${esc(g.perceived_difficulty)}`:''}${g.note?`<br><small>${esc(g.note)}</small>`:''}</div>`).join('')}</div>`:(isGym?'<p class="muted" style="margin:6px 0 0">Marcado como completado, sin peso/ejercicios detallados.</p>':'')}${es.length?es.map(e=>`<div style="margin-top:8px"><b>ERGO manual</b> · ${e.distance_m??'—'} m · ${e.time_seconds!=null?fmtMetricSeconds(Number(e.time_seconds)):'—'} · /500 ${e.pace_500_seconds!=null?fmtMetricSeconds(Number(e.pace_500_seconds)):'—'} · ${e.spm??'—'} ppm${e.rpe?` · RPE ${e.rpe}`:''}${v124ManualPartialsHtml(e)}</div>`).join(''):''}</section>`}).join('');
       const c2Html=c2.map(r=>`<section class="last"><b>${esc(nameFor(r.user_id))}</b> · Concept2 / ErgData<br>${r.distance_m??'—'} m · ${r.time_formatted||'—'} · /500 ${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'} · ${r.spm??'—'} ppm${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}</section>`).join('');
       body=(manualHtml||c2Html)?`${manualHtml}${c2Html}`:'<p class="muted">No hay resultados registrados para esta sesión.</p>';
     }
