@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="446";
+const APP_VERSION="447";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8050,14 +8050,19 @@ async function results(){
     if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
     // V439 · todas las páginas del PDF salen con la misma altura (la de la página con más filas), para
     // que no cambien de tamaño al pasar de una a otra.
+    // V447 · el PDF salía pesadísimo (30+ MB con pocas páginas). Causa: jsPDF, al meter una imagen
+    // PNG, no la recomprime -- la vuelca casi tal cual dentro del PDF, y el PNG que saca el canvas
+    // (sin pérdida, pensado para foto/imagen suelta) es muy pesado para una página de texto/tabla. En
+    // JPEG con calidad alta la imagen ya sale comprimida de por sí y jsPDF simplemente la incrusta, sin
+    // perder legibilidad (el fondo es blanco liso, no hay transparencia que perder).
     const pageH=Math.max(...withData.map(v439SectionContentHeight));
     let doc=null;
     for(const section of withData){
       const canvas=await v434DrawCompareCanvas(section,pageH);
-      const img=canvas.toDataURL('image/png');
-      if(!doc)doc=new jsPDF({unit:'px',format:[canvas.width,canvas.height],hotfixes:['px_scaling']});
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      if(!doc)doc=new jsPDF({unit:'px',format:[canvas.width,canvas.height],hotfixes:['px_scaling'],compress:true});
       else doc.addPage([canvas.width,canvas.height]);
-      doc.addImage(img,'PNG',0,0,canvas.width,canvas.height);
+      doc.addImage(img,'JPEG',0,0,canvas.width,canvas.height);
     }
     doc.save(filename);
   }
