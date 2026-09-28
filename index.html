@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="412";
+const APP_VERSION="413";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -3700,16 +3700,25 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
       const statusEl=modal.querySelector(`.v412BulkStatus[data-team="${CSS.escape(teamCode)}"]`);if(statusEl)statusEl.textContent='Aplicando…';
       btn.disabled=true;
       try{
+        // V413 · la actualización directa a la tabla (update de "hidden") choca con los permisos
+        // del entrenador (RLS): "Error: permission denied for table concept2_results". El botón
+        // individual "Ocultar" de cada registro ya funcionaba porque pasa por /api/workout-assign
+        // (con permisos elevados en el servidor) en vez de tocar la tabla directamente. El bloque
+        // hace lo mismo: reúne todos los registros y llama a ese mismo endpoint uno por uno.
         const sq=await sb.from('training_sessions').select('id').eq('team_code',teamCode);if(sq.error)throw sq.error;
         const sessionIds=(sq.data||[]).map(x=>x.id);
         if(!sessionIds.length){if(statusEl)statusEl.textContent='No hay sesiones de este equipo.';btn.disabled=false;return}
         const [wq,cq]=await Promise.all([
-          sb.from('workout_logs').update({hidden:hide}).eq('user_id',uid).in('training_session_id',sessionIds).select('id'),
-          sb.from('concept2_results').update({hidden:hide}).eq('user_id',uid).in('training_session_id',sessionIds).select('id')
+          sb.from('workout_logs').select('id,training_session_id').eq('user_id',uid).in('training_session_id',sessionIds),
+          sb.from('concept2_results').select('id,training_session_id').eq('user_id',uid).in('training_session_id',sessionIds)
         ]);
         if(wq.error)throw wq.error;if(cq.error)throw cq.error;
-        const n=(wq.data?.length||0)+(cq.data?.length||0);
-        if(statusEl)statusEl.textContent=n?`${hide?'Ocultados':'Mostrados'} ${n} registro${n===1?'':'s'} ✓`:'No había registros que cambiar.';
+        const rows=[...(wq.data||[]).map(r=>({kind:'workout',id:r.id,sessionId:r.training_session_id})),...(cq.data||[]).map(r=>({kind:'concept2',id:r.id,sessionId:r.training_session_id}))];
+        if(!rows.length){if(statusEl)statusEl.textContent='No había registros que cambiar.';btn.disabled=false;return}
+        const {data:{session}}=await sb.auth.getSession();
+        const results=await Promise.all(rows.map(r=>fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({kind:r.kind,source_id:r.id,training_session_id:r.sessionId,athlete_user_id:uid,action:hide?'hide':'unhide'})}).then(res=>res.ok).catch(()=>false)));
+        const okCount=results.filter(Boolean).length,errCount=results.length-okCount;
+        if(statusEl)statusEl.textContent=`${hide?'Ocultados':'Mostrados'} ${okCount} de ${rows.length} registro${rows.length===1?'':'s'}${errCount?` · ${errCount} con error`:' ✓'}`;
       }catch(e){if(statusEl)statusEl.textContent='Error: '+e.message}
       btn.disabled=false;
     });
