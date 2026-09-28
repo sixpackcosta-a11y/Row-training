@@ -2225,7 +2225,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="414";
+const APP_VERSION="415";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7381,7 +7381,10 @@ async function coachSeaResultsView(){
   if(r!=="coach")return;
   const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const nowSea=new Date(), currentSeaMonth=`${nowSea.getFullYear()}-${String(nowSea.getMonth()+1).padStart(2,'0')}`; let selected=[],monthFilter=SEASON_MONTHS.includes(currentSeaMonth)?currentSeaMonth:'all';
-  content.innerHTML=`<div class="card"><div class="viewToggle"><button class="active">MAR · Equipo</button><button id="analysisAthletes">Remeros</button></div><h2>Análisis MAR · Equipo</h2><p class="muted">Aquí solo aparecen sesiones de mar. Cada tarjeta muestra sus ejercicios; puedes seleccionar sesiones de fechas distintas y Row Training compara únicamente los ejercicios que se repiten.</p><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Periodo<select id="seaPeriod">${monthOptions(monthFilter)}<option value="all" ${monthFilter==='all'?'selected':''}>Toda la temporada</option></select></label></div><div class="actions"><button id="clearSeaSelection">Limpiar selección</button><span id="seaSelectionInfo" class="muted"></span></div><div id="seaCal"></div><h3>Comparación seleccionada</h3><div id="seaCompare"></div><h3>Evolución automática de ejercicios repetidos</h3><div id="seaAuto"></div></div>`;
+  // V415 · se quita el texto explicativo bajo el título (mismo criterio que en Hoy/Semana/Mes: la
+  // pestaña activa "MAR · Equipo" ya deja claro dónde está, y el resto de controles quedan más
+  // arriba, sin ese hueco de por medio).
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button class="active">MAR · Equipo</button><button id="analysisAthletes">Remeros</button></div><h2 style="margin-bottom:10px">Análisis MAR · Equipo</h2><div class="plannerGrid"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Periodo<select id="seaPeriod">${monthOptions(monthFilter)}<option value="all" ${monthFilter==='all'?'selected':''}>Toda la temporada</option></select></label></div><div class="actions"><button id="clearSeaSelection">Limpiar selección</button><span id="seaSelectionInfo" class="muted"></span></div><div id="seaCal"></div><h3>Comparación seleccionada</h3><div id="seaCompare"></div><h3>Evolución automática de ejercicios repetidos</h3><div id="seaAuto"></div></div>`;
   document.getElementById('analysisAthletes').onclick=()=>results();
   const teamSel=document.getElementById('seaResTeam'),periodSel=document.getElementById('seaPeriod'),cal=document.getElementById('seaCal'),cmp=document.getElementById('seaCompare'),auto=document.getElementById('seaAuto'),info=document.getElementById('seaSelectionInfo');
   if(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))teamSel.value=coachSelectedTeam;
