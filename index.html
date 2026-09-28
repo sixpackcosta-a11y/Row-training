@@ -2195,7 +2195,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="395";
+const APP_VERSION="396";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4101,6 +4101,13 @@ async function coachWeekView(){
   };
   renderAudit();
   coachWeekArea.innerHTML=`<div class="coachWeekGrid">${days.map((lab,i)=>{const ds=addDaysISO(start,i);if(focusDate&&ds!==focusDate)return '';const xs=sessions.filter(x=>x.session_date===ds),races=comps.filter(x=>x.competition_date===ds);return `<section class="coachWeekDay"><div class="coachWeekDayHead"><b>${lab}</b><strong>${shortDateES(ds)}</strong></div>${races.map(c=>`<div class="miniSess race">🏁 ${esc(c.name)}</div>`).join('')}${xs.length?xs.map(x=>{const rc=resultCountFor(x),has=rc>0,hasCrew=x.session_type==='MAR'&&v307NormalizeCrew(x.crew).assignments.length>0,showResultsBtn=has||hasCrew;return `<div class="weekSess ${x.session_type==='MAR'?'seaCard':''} ${has?'weekHasResultsV209':''}"><div class="weekSessTitle"><span class="tag">${x.session_type}</span><b>${esc(x.title)}</b>${sessionTargetsV249(x).length?`<span class="tag" style="background:#fff4d6;color:#8a5a00" title="Sesión dirigida solo a estas personas">👤 ${sessionTargetsV249(x).length} remero${sessionTargetsV249(x).length===1?'':'s'}</span>`:''}${has?`<span class="tag" style="background:#e8f7ed;color:#17633a">✓ ${rc} resultado${rc===1?'':'s'}</span>`:''}${hasCrew?'<span class="tag" style="background:#eaf7fb;color:#0369a1">🚣 Tripulación</span>':''}</div>${compact(x)}<div class="actions"><button class="weekDetailSession" data-id="${x.id}">Ver detalle</button>${showResultsBtn?`<button class="weekViewResultsV209 primary" data-id="${x.id}">${has?'Ver resultados':'Ver tripulación'}</button>`:''}${canEdit?`<button class="weekEditSession" data-date="${ds}" data-id="${x.id}">Editar</button><button class="weekMoveSession" data-id="${x.id}" data-date="${ds}">Mover</button><button class="weekDupSession" data-id="${x.id}" data-date="${ds}">Duplicar</button><button class="weekDelSession dangerBtn" data-id="${x.id}" data-date="${ds}">Eliminar</button>`:''}${x.session_type==='MAR'?`<button class="weekSeaResult ${has?'':'primary'}" data-id="${x.id}" data-date="${ds}">${has?'Editar resultados MAR':'Registrar MAR'}</button>`:''}</div></div>`}).join(''):'<p class="muted weekEmpty">Sin sesión</p>'}${canEdit?`<button type="button" class="weekEdit" data-date="${ds}">+ Añadir sesión</button>`:''}</section>`}).join('')}</div>`;
+  // V396 · el contenido final de Semana se pinta en el div interno #coachWeekArea, no en #content
+  // directamente, así que el observer que reinyecta la barra Hoy/Semana/Mes/Registro MAR no lo ve
+  // (solo vigila los hijos directos de #content). Además, cambiar de equipo o de semana llama a
+  // coachWeekView() directamente (sin pasar por render()), así que tampoco se arma la red de
+  // seguridad de 4s. Sin este aviso explícito la barra podía quedarse sin pintar hasta volver a
+  // entrar en la pestaña desde el menú/barra inferior.
+  if(typeof v360FinishLoad==='function')v360FinishLoad();
   const showDetail=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>${esc(x.title)}</h2><button class="closeWeekDetail">Cerrar</button></div>${trainingContentHtml(x.content)}<div class="actions"><button class="closeWeekDetail primary">Cerrar</button></div></div>`;document.body.appendChild(d);d.querySelectorAll('.closeWeekDetail').forEach(b=>b.onclick=()=>d.remove());d.onclick=e=>{if(e.target===d)d.remove()}};
   const showResultsV209=id=>{const x=sessions.find(z=>z.id===Number(id));if(!x)return;const matched=resultRowsForSessionV220(x),sea=matched.sea,logs=matched.logs,c2=matched.c2;let body='';
     if(x.session_type==='MAR'){
@@ -6366,6 +6373,10 @@ async function renderCoachMonth(){
   monthArea.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(b.dataset.date);coachWeekFocusDate=b.dataset.date;coachDayModalV394=true;coachWeekView()});
   // V390 · quitado el listado de "Resultados MAR del equipo": duplicaba lo que ya hace Análisis MAR,
   // y en Mes no aportaba nada que no estuviera ya ahí.
+  // V396 · mismo aviso explícito que en Semana: el contenido final va en el div interno #monthArea,
+  // y cambiar de equipo/mes llama a renderCoachMonth() directamente (sin pasar por render()), así
+  // que sin esto la barra Hoy/Semana/Mes/Registro MAR podía quedarse sin pintar.
+  if(typeof v360FinishLoad==='function')v360FinishLoad();
 }
 function seasonExportTeamCodesV170(){
   if(isGlobalCoach)return coachTeams.length?coachTeams:TEAM_OPTIONS.map(t=>t[0]);
