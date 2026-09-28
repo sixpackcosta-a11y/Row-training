@@ -1887,6 +1887,25 @@ async function enablePushV104(){
   localStorage.setItem('rowtraining_push_enabled_v104','1');return true;
 }
 async function pushStatusV104(){if(!('Notification' in window)||!('serviceWorker' in navigator)||Notification.permission!=='granted')return false;try{const reg=await navigator.serviceWorker.getRegistration();return !!(reg&&await reg.pushManager.getSubscription())}catch(e){return false}}
+// V400 · apagar el push SOLO en este dispositivo, desde dentro de la app (antes solo se podía
+// desde los ajustes del propio telefono/navegador). Se desuscribe la suscripcion push de este
+// navegador; el aviso al servidor es best-effort (si no lo soporta, el push simplemente empieza
+// a fallar al entregarse aqui, que ya se tolera en el envio de notificaciones).
+async function disablePushV104(){
+  try{
+    const reg=await navigator.serviceWorker.getRegistration();
+    const sub=reg&&await reg.pushManager.getSubscription();
+    if(sub){
+      try{
+        const {data:{session}}=await sb.auth.getSession();
+        await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session?.access_token||'')},body:JSON.stringify({action:'unsubscribe',endpoint:sub.endpoint})});
+      }catch(e){}
+      await sub.unsubscribe();
+    }
+  }catch(e){}
+  localStorage.removeItem('rowtraining_push_enabled_v104');
+  return true;
+}
 async function syncExistingPushV109(){
   if(!currentUser||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator))return false;
   try{
@@ -2036,11 +2055,12 @@ async function openNotificationsV104(){
  const unreadCount=appNotificationsV104.filter(n=>!n.is_read).length;
  const readCount=appNotificationsV104.filter(n=>n.is_read).length;
  const listHtml=visible.length?visible.map(n=>`<div class="notifyItemV104 ${n.is_read?'':'unread'}" data-id="${esc(String(n.id))}" data-url="${esc(n.url||'')}"><div class="notifyTopV104"><b>${esc(n.title)}</b><div style="display:flex;gap:8px;align-items:center"><small class="muted">${new Date(n.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small><button type="button" class="deleteNotifV225" data-id="${esc(String(n.id))}" aria-label="Eliminar notificación" title="Eliminar" style="padding:4px 8px;min-width:auto">🗑️</button></div></div>${n.body?`<div style="margin-top:5px">${esc(n.body)}</div>`:''}</div>`).join(''):`<div class="info">${filter==='unread'?'No tienes notificaciones sin leer.':'No tienes notificaciones.'}</div>`;
- panel.innerHTML=`<div class="notifyCardV104"><div class="notifyTopV104"><div><h2 style="margin:0">🔔 Notificaciones</h2><p class="muted" style="margin:4px 0 0">Avisos de Row Training y nuevas altas.</p></div><button id="closeNotifV104">✕</button></div><div class="pushStateV104"><span class="pushDotV104 ${on?'on':''}"></span><b>${on?'Push activado en este dispositivo':'Push no activado'}</b><div class="muted" style="margin-top:4px">${on?'Recibirás avisos aunque Row Training no esté abierta.':'Actívalo para recibir avisos de nuevas altas y cambios importantes.'}</div></div><div class="notifyActionsV104">${on?'<button id="testPushBtnV104">Enviar prueba</button>':'<button id="enablePushBtnV104" class="primary">Activar notificaciones</button>'}<button id="markAllV104">Marcar todo leído${unreadCount?` (${unreadCount})`:''}</button>${readCount?'<button id="deleteReadV225">Eliminar leídas</button>':''}</div><div style="display:flex;gap:8px;margin:12px 0"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button></div>${notifyComposerHtmlV110()}<hr>${listHtml}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
+ panel.innerHTML=`<div class="notifyCardV104"><div class="notifyTopV104"><div><h2 style="margin:0">🔔 Notificaciones</h2><p class="muted" style="margin:4px 0 0">Avisos de Row Training y nuevas altas.</p></div><button id="closeNotifV104">✕</button></div><div class="pushStateV104"><span class="pushDotV104 ${on?'on':''}"></span><b>${on?'Push activado en este dispositivo':'Push no activado'}</b><div class="muted" style="margin-top:4px">${on?'Recibirás avisos aunque Row Training no esté abierta.':'Actívalo para recibir avisos de nuevas altas y cambios importantes.'}</div></div><div class="notifyActionsV104">${on?'<button id="testPushBtnV104">Enviar prueba</button><button id="disablePushBtnV104">Desactivar en este dispositivo</button>':'<button id="enablePushBtnV104" class="primary">Activar notificaciones</button>'}<button id="markAllV104">Marcar todo leído${unreadCount?` (${unreadCount})`:''}</button>${readCount?'<button id="deleteReadV225">Eliminar leídas</button>':''}</div><div style="display:flex;gap:8px;margin:12px 0"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button></div>${notifyComposerHtmlV110()}<hr>${listHtml}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
  panel.onclick=e=>{if(e.target===panel)panel.remove()};
  panel.querySelector('#closeNotifV104')?.addEventListener('click',()=>panel.remove());
  panel.querySelector('#enablePushBtnV104')?.addEventListener('click',async()=>{if(await enablePushV104())openNotificationsV104()});
  panel.querySelector('#testPushBtnV104')?.addEventListener('click',testPushV104);
+ panel.querySelector('#disablePushBtnV104')?.addEventListener('click',async()=>{if(!confirm('¿Desactivar las notificaciones push en este dispositivo?\n\nSolo afecta a este dispositivo. Tus otros dispositivos (si los tienes con push activado) seguirán recibiendo avisos.'))return;const btn=panel.querySelector('#disablePushBtnV104');if(btn){btn.disabled=true;btn.textContent='Desactivando…'}await disablePushV104();openNotificationsV104();});
  panel.querySelector('#filterAllV225')?.addEventListener('click',()=>{localStorage.setItem(filterKey,'all');openNotificationsV104()});
  panel.querySelector('#filterUnreadV225')?.addEventListener('click',()=>{localStorage.setItem(filterKey,'unread');openNotificationsV104()});
  panel.querySelector('#markAllV104')?.addEventListener('click',async()=>{
@@ -2199,7 +2219,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="399";
+const APP_VERSION="400";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
