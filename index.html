@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="435";
+const APP_VERSION="436";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7753,6 +7753,9 @@ async function results(){
     const metricByUser=new Map(ats.map(p=>[String(p.user_id),latestMetric(p.user_id)]));
     const exLabel=exercises.find(e=>e.key===v417SelectedErgoKey)?.label||'';
     const sessionZone=v300ExtractZone(exLabel);
+    // V436 · comparativa por cercanía a las paladas (ppm) objetivo de la sesión, si el título trae un
+    // "@20" o similar (mismo patrón que ya usa el análisis individual para la palada).
+    const sessionTargetPpm=v300ExtractTargetPpm(exLabel);
     // V420 · el mismo dato (más reciente o mejor marca, elegido con el toggle) se usa a la vez para
     // ordenar, para el número grande de la derecha y para el W/kg — antes el número de la derecha
     // siempre era el más reciente aunque debajo se mostrara la mejor marca, lo que parecía un error
@@ -7793,10 +7796,39 @@ async function results(){
       if(info.status==='in')return pill('#dcfce7','#166534',`✅ FC ${info.avg_hr} en zona ${info.zone}`);
       return pill('#f1f5f9','#475569',`FC ${info.avg_hr}`);
     };
+    // V436 · misma idea que la de FC, pero para la palada (ppm): el objetivo es un número exacto que
+    // sale del título ("@20"), no un rango personal, así que la cercanía es simplemente la diferencia
+    // con ese número.
+    const ppmInfoFor=r=>{
+      const v=valueFor(r),rm=v300ResultMetrics(v),target=sessionTargetPpm;
+      let status;
+      if(rm.spm==null)status='missing';
+      else if(!target)status='notarget';
+      else if(rm.spm>target)status='over';
+      else if(rm.spm<target)status='under';
+      else status='in';
+      return {spm:rm.spm,target,status};
+    };
+    const ppmDeviation=info=>info.status==='in'?0:info.status==='over'||info.status==='under'?Math.abs(info.spm-info.target):null;
+    const ppmBadgeHtml=info=>{
+      const pill=(bg,color,text)=>`<span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${color}">${text}</span>`;
+      if(info.status==='missing')return pill('#fef3c7','#92400e','⚠️ Sin ppm registrado');
+      if(info.status==='over')return pill('#fee2e2','#b91c1c',`🔺 ${info.spm} ppm · ${info.spm-info.target} por encima del objetivo (${info.target})`);
+      if(info.status==='under')return pill('#e0e7ff','#3730a3',`🔻 ${info.spm} ppm · ${info.target-info.spm} por debajo del objetivo (${info.target})`);
+      if(info.status==='in')return pill('#dcfce7','#166534',`✅ ${info.spm} ppm · exacto en el objetivo`);
+      return pill('#f1f5f9','#475569',`${info.spm} ppm`);
+    };
     let list;
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
     else if(mode==='fc')list=rows.slice().sort((a,b)=>{
       const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));
+      if(da==null&&db==null)return 0;
+      if(da==null)return 1;
+      if(db==null)return -1;
+      return da-db;
+    });
+    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{
+      const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));
       if(da==null&&db==null)return 0;
       if(da==null)return 1;
       if(db==null)return -1;
@@ -7809,10 +7841,15 @@ async function results(){
       if(mode==='fc'){
         return `<div class="last v417CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m${wkg!=null?` · ${wkg.toFixed(2)} W/kg`:''}</small></div><div style="text-align:right">${zoneBadgeHtml(info)}</div></div>`;
       }
+      if(mode==='ppm'){
+        const pinfo=ppmInfoFor(r);
+        return `<div class="last v417CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m${wkg!=null?` · ${wkg.toFixed(2)} W/kg`:''}</small></div><div style="text-align:right">${ppmBadgeHtml(pinfo)}</div></div>`;
+      }
       return `<div class="last v417CompareRow" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}${r.n>1?` · ${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}${mode==='wkg'?` · ${secondsToTime(v.pace_500_seconds)}/500m`:(wkg!=null?` · ${wkg.toFixed(2)} W/kg`:'')}</small><br>${zoneBadgeHtml(info)}</div><div style="text-align:right;font-weight:800;white-space:nowrap">${mode==='wkg'?(wkg!=null?`${wkg.toFixed(2)} W/kg`:'—'):secondsToTime(v.pace_500_seconds)+'/500m'}<br><small class="muted" style="font-weight:400">${metric==='best'?'mejor marca':'más reciente'}</small></div></div>`;
     };
     const zoneNote=sessionZone?'':' Esta sesión no indica una zona de FC en el título (UT2/UT1/AT/TR/AN), así que "Por FC en zona" no puede valorar cercanía a zona aquí — solo se ve la FC de cada uno.';
-    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" class="v417SortBtn ${mode==='fc'?'active':''}" data-mode="fc">Por FC en zona</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button><button type="button" id="v417ExportPdfBtn">📄 PDF de varios ejercicios</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha.${zoneNote} Pulsa un remero para ver el detalle de su registro.</small></p>`;
+    const ppmNote=sessionTargetPpm?'':' Esta sesión no indica un ppm objetivo (p.ej. "@20") en el título, así que "Por ppm objetivo" no puede valorar cercanía aquí — solo se ve el ppm de cada uno.';
+    box.innerHTML=`<label>Ejercicio<select id="v417ErgoPicker">${options}</select></label><div class="v225PendingToolbar"><button type="button" class="v417MetricBtn ${metric==='latest'?'active':''}" data-metric="latest">Más reciente</button><button type="button" class="v417MetricBtn ${metric==='best'?'active':''}" data-metric="best">Mejor marca</button></div><div class="v225PendingToolbar"><button type="button" class="v417SortBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v417SortBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button><button type="button" class="v417SortBtn ${mode==='fc'?'active':''}" data-mode="fc">Por FC en zona</button><button type="button" class="v417SortBtn ${mode==='ppm'?'active':''}" data-mode="ppm">Por ppm objetivo</button><button type="button" id="v417ExportBtn">📤 Exportar imagen</button><button type="button" id="v417ExportPdfBtn">📄 PDF de varios ejercicios</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):`<div class="info">Nadie tiene resultado${mode==='wkg'?' con peso corporal guardado':''} para este ejercicio todavía.</div>`}</div><p class="muted"><small>${metric==='best'?'Se compara la mejor marca de cada remero en este ejercicio; si tiene más de un registro se indica también su ritmo más reciente.':'Se compara el ritmo más reciente de cada remero en este ejercicio (asignado a la misma sesión planificada por el club); si tiene más de un registro se indica también su mejor marca.'} El W/kg usa el último peso corporal guardado en su ficha.${zoneNote}${ppmNote} Pulsa un remero para ver el detalle de su registro.</small></p>`;
     // V421 · al pulsar un remero se abre el mismo popup de detalle (+ comentarios) que ya usa el
     // gráfico de evolución individual, con el registro concreto (ErgData o manual) que se le está
     // comparando.
@@ -7835,7 +7872,7 @@ async function results(){
     // V434 · PDF con varios (o todos) los ejercicios de ERGO de golpe, con la métrica y el orden
     // (resultado / W·kg / FC en zona) que estén seleccionados ahora mismo.
     const exportPdfBtn=box.querySelector('#v417ExportPdfBtn');
-    if(exportPdfBtn)exportPdfBtn.onclick=()=>v434OpenPdfExportModal(exercises,[{key:'result',label:'Por resultado'},{key:'wkg',label:'Por W/kg'},{key:'fc',label:'Por FC en zona'}],mode,(key,m)=>v417ErgoExportSection(ats,exercises,athleteRows,key,metric,m),`comparativa-ergo-${team}.pdf`,'Exportar PDF · ERGO');
+    if(exportPdfBtn)exportPdfBtn.onclick=()=>v434OpenPdfExportModal(exercises,[{key:'result',label:'Por resultado'},{key:'wkg',label:'Por W/kg'},{key:'fc',label:'Por FC en zona'},{key:'ppm',label:'Por ppm objetivo'}],mode,(key,m)=>v417ErgoExportSection(ats,exercises,athleteRows,key,metric,m),`comparativa-ergo-${team}.pdf`,'Exportar PDF · ERGO');
   }
   // V434 · misma comparativa de ERGO de arriba pero para un ejercicio (key) y unos filtros
   // (metric/mode) cualquiera, no solo los seleccionados en pantalla -- la reutilizan tanto el botón
@@ -7868,16 +7905,29 @@ async function results(){
       return {avg_hr:rm.avg_hr,max_hr:rm.max_hr,zone,zoneMin,zoneMax,status};
     };
     const zoneDeviation=info=>info.status==='in'?0:info.status==='over'?info.avg_hr-info.zoneMax:info.status==='under'?info.zoneMin-info.avg_hr:null;
+    const sessionTargetPpm=v300ExtractTargetPpm(exLabel);
+    const ppmInfoFor=r=>{
+      const v=valueFor(r),rm=v300ResultMetrics(v),target=sessionTargetPpm;
+      let status;
+      if(rm.spm==null)status='missing';
+      else if(!target)status='notarget';
+      else if(rm.spm>target)status='over';
+      else if(rm.spm<target)status='under';
+      else status='in';
+      return {spm:rm.spm,target,status};
+    };
+    const ppmDeviation=info=>info.status==='in'?0:info.status==='over'||info.status==='under'?Math.abs(info.spm-info.target):null;
     let list;
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
     else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return 0;if(da==null)return 1;if(db==null)return -1;return da-db});
+    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));if(da==null&&db==null)return 0;if(da==null)return 1;if(db==null)return -1;return da-db});
     else list=rows.slice().sort((a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds));
     return {
       list,
-      subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${mode==='wkg'?'Ordenado por W/kg':mode==='fc'?'Ordenado por cercanía a zona de FC':'Ordenado por resultado'}`,
-      valueHeader:mode==='wkg'?'W/KG':mode==='fc'?'FC':'RITMO/500',
-      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} ppm · por encima de ${info.zone}`:info.status==='under'?`${info.avg_hr} ppm · por debajo de ${info.zone}`:info.status==='in'?`${info.avg_hr} ppm · en zona ${info.zone}`:`${info.avg_hr} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
-      rowValue:(r)=>mode==='wkg'?(wkgFor(r)!=null?`${wkgFor(r).toFixed(2)}`:'—'):mode==='fc'?(zoneInfoFor(r).avg_hr??'—'):secondsToTime(valueFor(r).pace_500_seconds),
+      subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${mode==='wkg'?'Ordenado por W/kg':mode==='fc'?'Ordenado por cercanía a zona de FC':mode==='ppm'?'Ordenado por cercanía a ppm objetivo':'Ordenado por resultado'}`,
+      valueHeader:mode==='wkg'?'W/KG':mode==='fc'?'FC':mode==='ppm'?'PPM':'RITMO/500',
+      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} ppm · por encima de ${info.zone}`:info.status==='under'?`${info.avg_hr} ppm · por debajo de ${info.zone}`:info.status==='in'?`${info.avg_hr} ppm · en zona ${info.zone}`:`${info.avg_hr} ppm`}}if(mode==='ppm'){const info=ppmInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin ppm registrado':info.status==='over'?`${info.spm} ppm · por encima del objetivo (${info.target})`:info.status==='under'?`${info.spm} ppm · por debajo del objetivo (${info.target})`:info.status==='in'?`${info.spm} ppm · exacto en el objetivo`:`${info.spm} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
+      rowValue:(r)=>mode==='wkg'?(wkgFor(r)!=null?`${wkgFor(r).toFixed(2)}`:'—'):mode==='fc'?(zoneInfoFor(r).avg_hr??'—'):mode==='ppm'?(ppmInfoFor(r).spm??'—'):secondsToTime(valueFor(r).pace_500_seconds),
       filename:`comparativa-ergo-${team}.png`,
       shareTitle:`Comparativa ERGO · ${exLabel}`
     };
