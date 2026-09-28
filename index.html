@@ -2219,7 +2219,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="400";
+const APP_VERSION="401";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2841,7 +2841,11 @@ async function staffTodayView(){
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
   const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
   const sessions=ss.data||[],comps=cc.data||[];
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2><p class="muted">${canEdit?'Entrenador: puedes editar la planificación y registrar datos.':'Ayudante: puedes registrar datos. La planificación es de solo lectura.'}</p></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label>Equipo<select id="staffTodayTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button id="staffGoWeek" type="button">Ver semana</button></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  // V402 · se quita el texto explicativo bajo el título (Entrenador/Ayudante: ...) y se compacta
+// la fila Equipo/Ver semana: antes "Equipo" (texto suelto de un <label> en línea, sin hueco fijo)
+// quedaba pegado al borde del select en pantallas estrechas. Ahora ambos controles van en fila
+// con separación fija y el selector se queda con un ancho propio en vez de estirarse.
+content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;flex:1;min-width:160px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button id="staffGoWeek" type="button">Ver semana</button></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
   document.getElementById('staffGoWeek')?.addEventListener('click',()=>{coachWeekFocusDate=null;tab='semana';draw();render()});
 }
@@ -5339,9 +5343,15 @@ async function messagesView(){
 }
 async function coachMessagesView(){
   const teams=staffViewTeamCodes();
-  if(!teams.length){content.innerHTML='<div class="card"><h2>💬 Mensajes</h2><p class="muted">No tienes ningún equipo asignado.</p></div>';return}
+  // V401 · desde que "Más" dejó de mostrar la campana de notificaciones para el entrenador (se
+  // ocultó junto al menú hamburguesa al pasar a la barra inferior), no quedaba ningún camino para
+  // abrir el panel de notificaciones (altas pendientes, avisos, activar/desactivar push...). Se
+  // añade aquí, en Mensajes, con el mismo contador de no leídas que ya usaba la barra inferior.
+  const notifBtnHtml=`<button type="button" id="v401OpenNotifBtn" style="position:relative">🔔 Notificaciones${v334UnreadNotifCount?`<span style="position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px">${v334UnreadNotifCount>9?'9+':v334UnreadNotifCount}</span>`:''}</button>`;
+  if(!teams.length){content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><p class="muted">No tienes ningún equipo asignado.</p></div>`;document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;return}
   const initialFilter=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:'all';
-  content.innerHTML=`<div class="card"><h2>💬 Mensajes</h2><label>Equipo<select id="msgTeamFilter"><option value="all" ${initialFilter==='all'?'selected':''}>Todos mis equipos</option>${teams.map(t=>`<option value="${t}" ${t===initialFilter?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
+  content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><label>Equipo<select id="msgTeamFilter"><option value="all" ${initialFilter==='all'?'selected':''}>Todos mis equipos</option>${teams.map(t=>`<option value="${t}" ${t===initialFilter?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
+  document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;
   const teamSel=document.getElementById('msgTeamFilter'),box=document.getElementById('v300MsgInbox');
 
   const loadInbox=async()=>{
