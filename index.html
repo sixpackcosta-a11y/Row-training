@@ -2219,7 +2219,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="401";
+const APP_VERSION="403";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2841,13 +2841,11 @@ async function staffTodayView(){
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
   const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
   const sessions=ss.data||[],comps=cc.data||[];
-  // V402 · se quita el texto explicativo bajo el título (Entrenador/Ayudante: ...) y se compacta
-// la fila Equipo/Ver semana: antes "Equipo" (texto suelto de un <label> en línea, sin hueco fijo)
-// quedaba pegado al borde del select en pantallas estrechas. Ahora ambos controles van en fila
-// con separación fija y el selector se queda con un ancho propio en vez de estirarse.
-content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:8px;flex:1;min-width:160px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button id="staffGoWeek" type="button">Ver semana</button></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  // V403 · se quita el botón "Ver semana" (la barra Hoy/Semana/Mes/Registro MAR de arriba ya
+  // permite ir a Semana, era redundante) y el selector de Equipo sube justo debajo del título,
+  // en su propia fila compacta, en vez de compartir hueco con un botón.
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
-  document.getElementById('staffGoWeek')?.addEventListener('click',()=>{coachWeekFocusDate=null;tab='semana';draw();render()});
 }
 async function staffRegisterView(){
   const teams=staffViewTeamCodes();
@@ -3917,7 +3915,10 @@ async function coachWeekView(){
     document.body.appendChild(coachDayModalEl);
     coachDayModalEl.onclick=e=>{if(e.target===coachDayModalEl){coachDayModalEl.remove();coachWeekFocusDate=null;coachDayModalV394=false}};
   }else{
-    content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDayBackV387" style="margin-bottom:10px">← Volver</button><div class="todayHero"><div><h2>${shortDateES(focusDate)}</h2><p class="muted">${esc(teamLabel(team))}</p></div></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`:`<div class="card"><div class="todayHero"><div><h2>Semana del entrenador</h2><p class="muted">Vista general compacta. Las sesiones ya registradas permiten abrir sus resultados desde aquí.</p></div><label>Equipo<select id="coachWeekTeam">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
+    // V403 · se quita el título "Semana del entrenador" y su subtítulo: la barra de arriba (Hoy/
+// Semana/Mes/Registro MAR) ya marca en qué vista se está, así que ese texto solo ocupaba
+// espacio sin aportar nada. Mismo tratamiento compacto que en Hoy para el selector de Equipo.
+content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDayBackV387" style="margin-bottom:10px">← Volver</button><div class="todayHero"><div><h2>${shortDateES(focusDate)}</h2><p class="muted">${esc(teamLabel(team))}</p></div></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`:`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><label style="display:flex;align-items:center;gap:8px;max-width:280px"><span style="flex-shrink:0">Equipo</span><select id="coachWeekTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${esc(teamLabel(t))}</option>`).join('')}</select></label></div><div class="coachMonthBar"><button id="coachWeekPrev">← Semana</button><div class="monthTitle">${shortDateES(start)} – ${shortDateES(end)}</div><button id="coachWeekNext">Semana →</button></div><div id="coachWeekAuditV228"></div><div id="coachWeekArea"><p class="muted">${v316Loading()}</p></div></div>`;
   }
   document.getElementById('coachDayBackV387')?.addEventListener('click',()=>{
     coachWeekFocusDate=null;
@@ -6388,7 +6389,9 @@ async function coachSeaResultsView(){
 async function coachMonthView(){
   if(r!=='coach')return; const allowed=TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0]));
   const now=localISODate().slice(0,7); // V379 · antes fijo en "2026-09"; ahora usa el mes actual real.
-  content.innerHTML=`<div class="card"><h2>Visión mensual</h2><div class="plannerGrid"><label>Equipo<select id="monthTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Mes<input id="monthPick" type="month" value="${now}"></label></div><button id="loadMonth" class="primary">Ver mes</button><div id="monthArea"></div></div>`;
+  // V403 · se quita el título "Visión mensual" (la barra de arriba ya marca que se está en Mes)
+  // y se compacta hacia arriba el selector de equipo/mes, mismo criterio que en Hoy y Semana.
+  content.innerHTML=`<div class="card"><div class="plannerGrid" style="margin-bottom:10px"><label>Equipo<select id="monthTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Mes<input id="monthPick" type="month" value="${now}"></label></div><button id="loadMonth" class="primary">Ver mes</button><div id="monthArea"></div></div>`;
   if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
 }
 async function renderCoachMonth(){
