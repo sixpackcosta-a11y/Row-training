@@ -667,7 +667,7 @@ function applyThemeV299(mode){
 </div><nav id="nav"></nav>
 <!-- V442 · versión siempre visible (esquina, discreta) para poder confirmar de un vistazo si el
      navegador está sirviendo la última build o una cacheada -->
-<div id="appVersionLabel" style="position:fixed;left:6px;bottom:4px;font-size:10px;color:#94a3b8;opacity:.6;z-index:5;pointer-events:none"></div>
+<div id="appVersionLabel" style="position:fixed;left:6px;bottom:4px;font-size:10px;font-weight:700;color:#fff;background:#07162f;opacity:.85;padding:2px 6px;border-radius:6px;z-index:100000;pointer-events:none"></div>
 <script>
 // v266b: watchdog totalmente independiente del resto del código de la app. Si por lo que sea
 // (librería externa que no carga, error en el script principal) la app se queda colgada en
@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="444";
+const APP_VERSION="445";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
