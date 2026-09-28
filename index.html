@@ -3130,7 +3130,7 @@ async function v307OpenSeatPicker(position,onSave,teamCode=null,assignments=[]){
   });
 }
 function gymExercisesFromContent(content){
-  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>readableLabel(line)).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(label)).map(([label,value])=>({name:label,dose:value}));
+  const raw=String(content||'').replace(/\\n/g,'\n');return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{let [label,value]=readableLabel(line);if(!label){label=line;value=''}return [label,value]}).filter(([label])=>label&&!/duración|calentamiento|vuelta a la calma|objetivo|carga|cardio|progresión|progresion/i.test(label)).map(([label,value])=>({name:label,dose:value}));
 }
 async function staffGymResultForm(session,team,date,backFn){
   const athletes=await staffAthletesForTeam(team);if(!athletes.length)return alert('No hay remeros asignados a este equipo.');const exercises=gymExercisesFromContent(session?.content);
