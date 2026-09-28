@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="449";
+const APP_VERSION="450";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8038,71 +8038,78 @@ async function results(){
   // V439 · altura de contenido de una sección SIN dibujarla (misma fórmula que usa
   // v434DrawCompareCanvas), para poder calcular de antemano la altura máxima entre todas las páginas
   // del PDF y forzar que todas compartan esa misma altura de página.
-  function v439SectionContentHeight(section){
-    const noteH=section.pdfOrderNote?24:0,rowH=64,bannerH=110,subH=120+noteH,footerH=36;
-    return bannerH+subH+section.list.length*rowH+footerH;
-  }
-  // V449 · el PDF salía pesadísimo (V447) y luego, al intentar comprimirlo, corrupto/recortado (V448).
-  // Las dos veces la causa era la misma: rasterizar la página en un <canvas> y meter esa imagen dentro
-  // del PDF (jsPDF no la trata bien: unas veces la deja sin comprimir de verdad, otras la incrusta mal
-  // formada). La solución de fondo es no usar ninguna imagen: esta función dibuja la página
-  // DIRECTAMENTE con texto y rectángulos vectoriales del propio jsPDF, calcado al diseño del canvas
-  // (mismas coordenadas en px, que es la unidad del documento) pero sin rasterizar nada. Así cada
-  // página pesa solo lo que pesa su texto (unos pocos KB, nada de MB) y es inmune a cualquier bug de
-  // codificación de imagen -- de regalo, el texto queda nítido a cualquier zoom y es seleccionable /
-  // buscable dentro del PDF, cosa que una captura nunca da.
-  // setFontSize/getTextWidth de jsPDF trabajan siempre en PUNTOS, pase lo que pase con la unidad del
-  // documento -- de ahí el ×0.75 (1px a 96dpi = 0.75pt a 72dpi) en px2pt.
-  function v449DrawComparePdfPage(doc,opts,forceHeight){
+  // V450 · dos bugs de golpe en V449:
+  // 1) Algunos títulos de sesión llevan emoji o comillas/rayas "raras" (tecleadas desde el móvil). Las
+  //    fuentes base de jsPDF (helvetica) solo soportan Latin-1 -- cualquier carácter fuera de ese rango
+  //    sale corrupto Y descoloca el ancho de TODO el texto que viene detrás (de ahí el "Ø>Ýê" y el
+  //    espaciado gigante). v450SafePdfText quita esos caracteres antes de dibujar nada.
+  // 2) La página tenía un tamaño "a medida" del contenido (900×lo que hiciera falta), casi cuadrado.
+  //    Algunos visores de PDF en el móvil (vista previa de WhatsApp/Fotos/iOS) generan la miniatura
+  //    asumiendo una hoja con proporción de documento normal, y recortan lo que no encaja en ese hueco
+  //    -- de ahí el "cortado", en la imagen Y en la versión vectorial, con page-size distinto cada vez.
+  //    Ahora la página es SIEMPRE A4 vertical (595×842pt, universal) y el alto de cada fila se encoge
+  //    lo que haga falta para que quepan todos los remeros en una sola página -- nunca se puede salir.
+  function v439SectionContentHeight(section){return 0}
+  function v450SafePdfText(s){return String(s==null?'':s).replace(/[^\x00-\xFF]/g,'').replace(/\s+/g,' ').trim()}
+  function v449DrawComparePdfPage(doc,opts){
     const {list,subtitleLine,valueHeader,rowDetail,rowValue,shareTitle,pdfOrderNote}=opts;
     const hex=h=>{const n=parseInt(h.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255]};
-    const px2pt=px=>px*0.75;
-    const noteH=pdfOrderNote?24:0;
-    const W=900,rowH=64,bannerH=110,subH=120+noteH,headerH=bannerH+subH,footerH=36;
-    const contentH=headerH+list.length*rowH+footerH,H=forceHeight&&forceHeight>contentH?forceHeight:contentH;
-    doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');
-    doc.setFillColor(...hex('#07162f'));doc.rect(0,0,W,bannerH,'F');
-    const textX=28;
-    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(px2pt(26));
-    doc.text('Club de Remo Pedregalejo',textX,44);
-    doc.setFont('helvetica','normal');doc.setFontSize(px2pt(18));
-    doc.text(String(shareTitle||''),textX,70);
-    doc.setFontSize(px2pt(15));
-    doc.text(v273FullDateES(localISODate()),textX,92);
+    const t=v450SafePdfText;
+    const PW=595,PH=842,M=28;
+    const noteH=pdfOrderNote?16:0;
+    const bannerH=60,subH=56+noteH,footerH=20;
+    const headerY=M+bannerH+subH;
+    const avail=PH-headerY-footerH-M;
+    const rowH=Math.max(1,Math.min(26,list.length?avail/list.length:26));
+    const xNum=M,xName=M+34,xDetail=M+210,xValueRight=PW-M;
+    doc.setFillColor(255,255,255);doc.rect(0,0,PW,PH,'F');
+    doc.setFillColor(...hex('#07162f'));doc.rect(0,0,PW,bannerH,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(16);
+    doc.text('Club de Remo Pedregalejo',M,26);
+    doc.setFont('helvetica','normal');doc.setFontSize(11);
+    doc.text(t(shareTitle),M,41);
+    doc.setFontSize(9);
+    doc.text(t(v273FullDateES(localISODate())),M,53);
     if(valueHeader){
       const bigLabel=valueHeader==='RITMO/500'?'TIEMPO/500':valueHeader;
-      doc.setFont('helvetica','bold');doc.setFontSize(px2pt(30));
-      doc.text(bigLabel,W-28,58,{align:'right'});
+      doc.setFont('helvetica','bold');doc.setFontSize(18);
+      doc.text(t(bigLabel),PW-M,33,{align:'right'});
     }
-    doc.setFillColor(...hex('#f4f7fb'));doc.rect(0,bannerH,W,subH,'F');
-    doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(24));
-    doc.text(String(teamLabel(team)||'').replace(/&amp;/g,'&'),28,bannerH+38);
-    doc.setTextColor(...hex('#475569'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(16));
-    doc.text(String(subtitleLine||''),28,bannerH+68);
-    doc.setDrawColor(...hex('#dbe3ec'));doc.line(28,bannerH+86,W-28,bannerH+86);
+    doc.setFillColor(...hex('#f4f7fb'));doc.rect(0,bannerH,PW,subH,'F');
+    doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(14);
+    doc.text(t(String(teamLabel(team)||'').replace(/&amp;/g,'&')),M,bannerH+20);
+    doc.setTextColor(...hex('#475569'));doc.setFont('helvetica','normal');doc.setFontSize(9);
+    doc.text(t(subtitleLine),M,bannerH+34,{maxWidth:PW-2*M});
+    doc.setDrawColor(...hex('#dbe3ec'));doc.line(M,bannerH+subH-14,PW-M,bannerH+subH-14);
     if(pdfOrderNote){
-      doc.setFont('helvetica','bold');doc.setFontSize(px2pt(12));
-      const w=doc.getTextWidth(pdfOrderNote)+20;
-      doc.setFillColor(...hex('#dbeafe'));doc.roundedRect(28,bannerH+88,w,18,9,9,'F');
-      doc.setTextColor(...hex('#1d4ed8'));doc.text(pdfOrderNote,38,bannerH+101);
+      const note=t(pdfOrderNote);
+      doc.setFont('helvetica','bold');doc.setFontSize(8);
+      const w=doc.getTextWidth(note)+14;
+      doc.setFillColor(...hex('#dbeafe'));doc.roundedRect(M,bannerH+subH-11,w,14,6,6,'F');
+      doc.setTextColor(...hex('#1d4ed8'));doc.text(note,M+7,bannerH+subH-1);
     }
-    doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(15));
-    doc.text('PUESTO',28,headerH-20);doc.text('REMERO',110,headerH-20);doc.text('DETALLE',480,headerH-20);doc.text(String(valueHeader||''),W-160,headerH-20);
+    doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.text('PUESTO',xNum,headerY-6);doc.text('REMERO',xName,headerY-6);doc.text('DETALLE',xDetail,headerY-6);doc.text(t(valueHeader),xValueRight,headerY-6,{align:'right'});
+    const nameFont=rowH<20?9:11,detailFont=rowH<20?7:8,valueFont=rowH<20?10:12;
     list.forEach((r,i)=>{
-      const y=headerH+i*rowH;
-      if(i%2===1){doc.setFillColor(...hex('#f6f9fc'));doc.rect(0,y,W,rowH,'F')}
-      doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(22));
-      doc.text(String(i+1),28,y+38);
-      doc.text(String(r.p.full_name||'Sin nombre').slice(0,26),110,y+38);
-      doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(15));
+      const y=headerY+i*rowH;
+      if(i%2===1){doc.setFillColor(...hex('#f6f9fc'));doc.rect(0,y,PW,rowH,'F')}
+      doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(nameFont);
+      doc.text(String(i+1),xNum,y+rowH/2+3);
+      doc.text(t(String(r.p.full_name||'Sin nombre').slice(0,28)),xName,y+rowH/2+3);
+      doc.setTextColor(...hex('#64748b'));doc.setFont('helvetica','normal');doc.setFontSize(detailFont);
       const detail=rowDetail(r)||{};
-      doc.text(String(detail.line1||''),480,y+30);
-      doc.text(String(detail.line2||''),480,y+50);
-      doc.setTextColor(...hex('#07162f'));doc.setFont('helvetica','bold');doc.setFontSize(px2pt(22));
-      doc.text(String(rowValue(r)),W-160,y+38);
+      if(rowH<20){
+        doc.text(t([detail.line1,detail.line2].filter(Boolean).join(' · ')),xDetail,y+rowH/2+2.5,{maxWidth:xValueRight-xDetail-60});
+      }else{
+        doc.text(t(detail.line1),xDetail,y+rowH/2-1);
+        doc.text(t(detail.line2),xDetail,y+rowH/2+9);
+      }
+      doc.setTextColor(...hex('#07162f'));doc.setFont('helvetica','bold');doc.setFontSize(valueFont);
+      doc.text(t(String(rowValue(r))),xValueRight,y+rowH/2+3,{align:'right'});
     });
-    doc.setTextColor(...hex('#94a3b8'));doc.setFont('helvetica','normal');doc.setFontSize(px2pt(13));
-    doc.text(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
+    doc.setTextColor(...hex('#94a3b8'));doc.setFont('helvetica','normal');doc.setFontSize(8);
+    doc.text(t(`Generado el ${shortDateES(localISODate())} - Row Training`),M,PH-M+10);
   }
   async function v434ExportComparePdf(sections,filename){
     if(!sections.length)return alert('Elige al menos un ejercicio para el PDF.');
@@ -8110,14 +8117,11 @@ async function results(){
     if(!withData.length)return alert('Ninguno de los ejercicios elegidos tiene datos para comparar todavía.');
     const {jsPDF}=window.jspdf||{};
     if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
-    // V439 · todas las páginas del PDF salen con la misma altura (la de la página con más filas), para
-    // que no cambien de tamaño al pasar de una a otra.
-    const W=900,pageH=Math.max(...withData.map(v439SectionContentHeight));
     let doc=null;
     withData.forEach(section=>{
-      if(!doc)doc=new jsPDF({unit:'px',format:[W,pageH],hotfixes:['px_scaling'],compress:true});
-      else doc.addPage([W,pageH]);
-      v449DrawComparePdfPage(doc,section,pageH);
+      if(!doc)doc=new jsPDF({unit:'pt',format:'a4',compress:true});
+      else doc.addPage('a4');
+      v449DrawComparePdfPage(doc,section);
     });
     doc.save(filename);
   }
