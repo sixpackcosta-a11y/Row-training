@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="426";
+const APP_VERSION="427";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -4634,6 +4634,43 @@ function v124ManualErgoHtml(e){
 }
 async function v124HydrateErgoPhotos(rows){const all=[...new Set((rows||[]).flatMap(x=>Array.isArray(x.photo_paths)?x.photo_paths:[]).filter(Boolean))];if(!all.length)return rows||[];try{const q=await sb.storage.from('ergo-media').createSignedUrls(all,3600);if(q.error)throw q.error;const map=new Map((q.data||[]).map(x=>[x.path,x.signedUrl||x.signedURL]));(rows||[]).forEach(x=>{x._photo_urls=(Array.isArray(x.photo_paths)?x.photo_paths:[]).map(p=>map.get(p)).filter(Boolean)})}catch(e){console.warn('No se pudieron abrir las fotos ERGO',e)}return rows||[]}
 
+// V427 · en la pantalla de intervalos del PM5/ErgData, la fila resaltada (el parcial que estaba
+// seleccionado al hacer la foto) tiene menos contraste que el resto y Tesseract la pierde entera
+// (ni siquiera detecta los dígitos, así que esa fila ni aparece como candidata). Se pasa la foto por
+// un canvas primero: a blanco y negro y estirando el contraste al máximo rango disponible, para que
+// esa fila resaltada quede tan legible como las demás antes de dársela a Tesseract.
+function v427PreprocessOcrImage(url){
+  return new Promise(resolve=>{
+    try{
+      const img=new Image();img.crossOrigin='anonymous';
+      img.onload=()=>{
+        try{
+          const scale=img.width<1400?2:1;
+          const canvas=document.createElement('canvas');
+          canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+          const ctx=canvas.getContext('2d');
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          const frame=ctx.getImageData(0,0,canvas.width,canvas.height),px=frame.data;
+          let min=255,max=0;
+          const gray=new Uint8ClampedArray(px.length/4);
+          for(let i=0,j=0;i<px.length;i+=4,j++){
+            const g=0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];
+            gray[j]=g;if(g<min)min=g;if(g>max)max=g;
+          }
+          const range=(max-min)||1;
+          for(let i=0,j=0;i<px.length;i+=4,j++){
+            const v=Math.round((gray[j]-min)*255/range);
+            px[i]=px[i+1]=px[i+2]=v;
+          }
+          ctx.putImageData(frame,0,0);
+          resolve(canvas);
+        }catch(e){resolve(url)} // lienzo "manchado" por CORS u otro fallo: se sigue con la foto original
+      };
+      img.onerror=()=>resolve(url);
+      img.src=url;
+    }catch(e){resolve(url)}
+  });
+}
 function v124OCRTimeSeconds(v){return timeTextToSeconds(String(v||'').replace(',','.'))}
 function v124OCRRows(text){
   // V176: parser tolerante para pantallas Concept2 PM3/PM5. OCR suele confundir : , . y separar columnas.
@@ -5045,7 +5082,10 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
       // V425 · la pantalla del PM5 solo tiene dígitos, ":" y "." (más alguna letra de cabecera que no
       // hace falta leer bien, porque el parser solo mira números y tiempos); limitar el alfabeto que
       // Tesseract intenta reconocer reduce confusiones típicas (ej. "8"↔"B", "0"↔"O", "1"↔"I").
-      const r=await Tesseract.recognize(url,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1',tessedit_char_whitelist:'0123456789:.,- '});
+      // V427 · antes de leerla, la foto pasa por v427PreprocessOcrImage para que la fila del parcial
+      // resaltado (menos contraste que el resto en la pantalla de intervalos) no se pierda entera.
+      const pre=await v427PreprocessOcrImage(url);
+      const r=await Tesseract.recognize(pre,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1',tessedit_char_whitelist:'0123456789:.,- '});
       const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}
     // V425 · v124OCRRows prueba a unir cada línea con hasta 2 siguientes antes de acertar con una,
     // así que la misma fila de la foto podía colar dos veces (una sola línea Y esa misma línea unida
