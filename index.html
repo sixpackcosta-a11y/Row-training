@@ -2175,7 +2175,15 @@ function workoutRowIcon(label,cls){
   if(cls==="warm")return "🔥";
   if(cls==="cool")return "🧊";
   if(cls==="recovery")return "💤";
-  if(cls==="work")return "💪";
+  // V459 · esta lista viene del texto de la sesión planificada (no de gym_exercise_results), así
+  // que cada línea de ejercicio ("REMO SENTADO EN POLEA · 2×10...") llevaba el mismo 💪 genérico
+  // sin importar el ejercicio -- se ve raro al lado de la comparativa, donde el mismo nombre ya
+  // lleva su icono de zona correcto. Se reutiliza el mismo clasificador aquí también.
+  if(cls==="work"){
+    const info=v454BodyPartInfo(label);
+    if(info)return v454BodySvg(info.part);
+    return "💪";
+  }
   return "📌";
 }
 function makePyramidLinear(value){
@@ -2248,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="456";
+const APP_VERSION="459";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -2366,6 +2374,10 @@ async function startApp(){
   else coachTeams=staffViewTeamCodes();
   if(hasAnyCoachTeam())await loadPendingRegistrationCount();
   await loadRegistrationState();
+  // V459 · se lanza en segundo plano (sin esperar) para que el mapa de etiquetas de la biblioteca
+  // esté listo cuanto antes, lo pida la pantalla que lo pida -- si alguna pantalla dibuja un icono
+  // de zona ANTES de que termine, v454BodyPartInfo ya tiene su propio respaldo por palabras clave.
+  v457LoadGymTagsMap();
   const saved=localStorage.getItem(`rowtraining_mode_${user.id}`);
   currentMode=(saved==="athlete"&&hasRowerMode())?"athlete":(saved==="staff"&&hasStaffMode())?"staff":hasStaffMode()?"staff":"athlete";
   r=currentMode==="staff"?"coach":"athlete";
@@ -5745,45 +5757,58 @@ function v300BuildGymGroups(gymRowsForUser,workoutsAll){
   });
 }
 function v300FeelLabel(f){return f==='easy'?'Fácil':f==='hard'?'Duro':'Bien'}
-// V454 · icono orientativo de la parte del cuerpo que trabaja un ejercicio de GYM, a partir de
-// palabras clave en su nombre (texto libre, no hay una lista cerrada de ejercicios). Es una
-// clasificación aproximada -- si algún ejercicio sale mal etiquetado o sin icono, se puede afinar
-// añadiendo la palabra que falte a la lista de abajo.
-// V456 · los emojis (V454/V455) no representaban bien la zona del cuerpo. En vez de eso, se dibuja
-// un muñeco muy simple (cabeza/tronco/brazos/piernas) con SOLO la zona correspondiente coloreada y
-// el resto en gris -- así se ve literalmente qué parte del cuerpo es, sin tener que interpretar un
-// símbolo. "Espalda" colorea el tronco entero (torso visto de detrás, con la línea de la columna) y
-// "Pecho"/"Core" colorean solo la mitad de arriba o de abajo del tronco, para distinguirse.
-function v454BodyPartInfo(name){
-  const t=v300NormGymName(name);if(!t)return null;
-  const groups=[
-    ['piernas','Piernas','#dcfce7','#166534',/sentadilla|zancada|prensa|peso muerto|femoral|cuadriceps|gemelo|hip thrust|step ?up|puente|sumo|bulgara|aductor|abductor|gluteo/],
-    ['espalda','Espalda','#dbeafe','#1d4ed8',/remo|jalon|dominada|pull.?up|superman|face pull|\blat\b/],
-    ['pecho','Pecho','#ffe4e6','#be123c',/press banca|press pecho|apertura|fondos|flexion|push.?up|\bpecho\b/],
-    ['hombros','Hombros','#ede9fe','#6d28d9',/press de hombro|press hombro|press militar|elevacion lateral|elevacion frontal|pajaro|arnold|encogimiento|\bhombro/],
-    ['core','Core','#fef9c3','#854d0e',/plancha|abdominal|crunch|pallof|oblicuo|rotacion|twist|\bcore\b/],
-    ['brazos','Brazos','#fee2e2','#b91c1c',/biceps|triceps|curl|martillo|frances/]
-  ];
-  for(const [part,label,bg,color,re] of groups){if(re.test(t))return {part,label,bg,color}}
+// V454-456 · primeros intentos: adiviné la zona del cuerpo por palabras clave del nombre, con mi
+// propia lista de emojis/iconos, inventada desde cero.
+// V457 · eso duplicaba (y podía contradecir) un sistema que la app YA tenía: la biblioteca de GYM
+// (pantalla "Biblioteca") clasifica cada ejercicio en zonas (piernas/cadena posterior/tirón-espalda/
+// empuje-pecho-hombro/core/agarre/potencia) con su propio dibujo de muñeco (bodyZoneSvgV90), y cada
+// ejercicio puede tener etiquetas puestas a mano por el entrenador (más fiable que adivinar). Ahora
+// se reutiliza EXACTAMENTE ese sistema en vez de uno paralelo: si el nombre coincide con un ejercicio
+// de la biblioteca, se usan sus etiquetas reales; si no (p.ej. algo escrito a mano en "+Entrenamiento
+// adicional"), se cae al mismo cálculo por palabras clave que ya usa la propia biblioteca para sus
+// ejercicios sin etiquetar (gymTagsForExercise), no uno mío distinto.
+let v457GymTagsByName=new Map();
+async function v457LoadGymTagsMap(){
+  try{
+    const lib=await loadGymExerciseLibrary();
+    v457GymTagsByName=new Map(lib.map(x=>[v300NormGymName(x.name),(x.tags?.length?x.tags:gymTagsForExercise(x))]));
+  }catch(e){console.warn('No se pudo cargar la biblioteca de GYM para los iconos de zona',e)}
+}
+const V457_ZONE_LABEL={piernas:'Piernas',posterior:'Cadena posterior',tiron:'Tirón · espalda/bíceps',empuje:'Empuje · pecho/hombro/tríceps',core:'Core / estabilidad',agarre:'Agarre · manos/antebrazos',potencia:'Potencia'};
+// Orden de prioridad cuando un ejercicio tiene varias etiquetas a la vez (p.ej. "Farmer carry" es
+// agarre+core, "Pallof press" es empuje+core): se elige la más específica/representativa primero,
+// no la primera que aparezca en el array -- "posterior" y "agarre" antes que "piernas" o "core", y
+// "empuje" la última (es la etiqueta que más falsos positivos da, porque la palabra "press" también
+// sale en ejercicios de core como el Pallof press).
+const V457_ZONE_PRIORITY=['posterior','agarre','core','piernas','potencia','tiron','empuje'];
+// El regex de la biblioteca (gymTagsForExercise) está pensado sobre todo como apoyo de los ejercicios
+// YA catalogados (la mayoría llevan etiqueta puesta a mano); para algo escrito libremente por una
+// remera -- p.ej. "Hombros mancuernas pájaros" -- no reconoce ni "hombro" ni "pájaro" y se queda sin
+// clasificar. Este es un fallback SOLO para el icono (no toca la función compartida ni afecta a la
+// pantalla Biblioteca), con las palabras sueltas de zona del cuerpo más habituales.
+function v457FreeTextZone(name){
+  const t=v300NormGymName(name);
+  if(/hombro/.test(t))return 'empuje';
+  if(/pecho/.test(t))return 'empuje';
+  if(/espalda|dorsal/.test(t))return 'tiron';
+  if(/tricep/.test(t))return 'empuje';
+  if(/bicep/.test(t))return 'tiron';
+  if(/pierna|cuadricep/.test(t))return 'piernas';
+  if(/abdomen|abdominal/.test(t))return 'core';
   return null;
 }
-// Muñeco de 24×28: cabeza siempre gris (de contexto), y cada bloque del cuerpo (hombros, torso
-// arriba/abajo, brazos, piernas) en gris salvo el que toque, que se pinta con `accent`.
-function v454BodySvg(part,accent){
-  const g='#cbd5e1',c=(on)=>on?accent:g;
-  const spine=part==='espalda'?`<line x1="12" y1="7.2" x2="12" y2="16.3" stroke="#fff" stroke-width=".7"/>`:'';
-  return `<svg width="15" height="17" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`+
-    `<circle cx="12" cy="3" r="2.6" fill="${g}"/>`+
-    `<circle cx="6.7" cy="7.8" r="2.1" fill="${c(part==='hombros')}"/><circle cx="17.3" cy="7.8" r="2.1" fill="${c(part==='hombros')}"/>`+
-    `<rect x="4.3" y="9" width="2.4" height="10" rx="1.2" fill="${c(part==='brazos')}"/><rect x="17.3" y="9" width="2.4" height="10" rx="1.2" fill="${c(part==='brazos')}"/>`+
-    `<rect x="8.3" y="6.5" width="7.4" height="5" rx="2" fill="${c(part==='pecho'||part==='espalda')}"/>`+
-    `<rect x="8.6" y="11.3" width="6.8" height="5.7" rx="2" fill="${c(part==='core'||part==='espalda')}"/>`+
-    spine+
-    `<rect x="8.6" y="17.3" width="3" height="9.7" rx="1.5" fill="${c(part==='piernas')}"/><rect x="12.4" y="17.3" width="3" height="9.7" rx="1.5" fill="${c(part==='piernas')}"/>`+
-  `</svg>`;
+function v454BodyPartInfo(name){
+  const key=v300NormGymName(name);if(!key)return null;
+  const tags=v457GymTagsByName.get(key)||gymTagsForExercise({name});
+  let part=V457_ZONE_PRIORITY.find(z=>(tags||[]).includes(z));
+  if(!part)part=v457FreeTextZone(name);
+  return part?{part,label:V457_ZONE_LABEL[part]}:null;
 }
+// Mismo dibujo (bodyZoneSvgV90) y mismos colores (.zoneBase/.zoneHi, ya definidos en el CSS) que la
+// pantalla Biblioteca -- solo se le pone un tamaño fijo pequeño para usarlo aquí como icono suelto.
+function v454BodySvg(part){return bodyZoneSvgV90(part).replace('<svg ','<svg style="width:13px;height:19px;display:block" ')}
 function v454BodyPartEmoji(name){const info=v454BodyPartInfo(name);return info?info.label:''}
-function v454BodyPartIconHtml(name){const info=v454BodyPartInfo(name);return info?`<span title="${info.label}" style="display:inline-flex;align-items:center;gap:4px;margin-right:6px;padding:1px 7px 1px 4px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;vertical-align:middle;background:${info.bg};color:${info.color}">${v454BodySvg(info.part,info.color)}${info.label}</span>`:''}
+function v454BodyPartIconHtml(name){const info=v454BodyPartInfo(name);return info?`<span title="${info.label}" style="display:inline-flex;align-items:center;gap:5px;margin-right:6px;padding:1px 8px 1px 4px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;vertical-align:middle;background:#eef2f7;color:#334155">${v454BodySvg(info.part)}${info.label}</span>`:''}
 function v300FeelColor(f){return f==='easy'?'#16a34a':f==='hard'?'#dc2626':'#2563eb'}
 function v300GymWeightSvg(rows,opts={}){
   const limit=opts.limit||20;
@@ -5905,6 +5930,8 @@ async function history(opts={}){
     concept2Status().catch(()=>({connected:false}))
   ]);
   if(tab!=="hist") return; // evita que una carga antigua pise Perfil u otra pantalla
+  await v457LoadGymTagsMap();
+  if(tab!=="hist") return;
   const err=e1||e2||e3||e4||e5||e6;
   if(err){content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2><p>${err.message}</p></div>`;return}
   await v124HydrateErgoPhotos(ergo||[]);
@@ -7662,6 +7689,7 @@ async function results(){
   const err=pr.error||mt.error||wo.error||gy.error||er.error||c2.error||ss.error;if(err){content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaErr">MAR · Equipo</button><button class="active">Remeros</button></div><p>${esc(err.message)}</p></div>`;const b=document.getElementById('analysisSeaErr');if(b)b.onclick=()=>coachSeaResultsView();return}
   const profiles=pr.data||[],metrics=mt.data||[],workouts=wo.data||[],gym=gy.data||[],ergo=er.data||[],c2rows=c2.data||[],sessions=ss.data||[],memberships=rm.error?[]:(rm.data||[]),concept2Statuses=cx?.error?[]:(cx?.data||[]),concept2StatusMap=new Map(concept2Statuses.map(x=>[String(x.user_id),x]));
   await v124HydrateErgoPhotos(ergo);
+  await v457LoadGymTagsMap();
   let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete=workoutNotificationAthleteV129||'',complianceMode='week',monthStart=localISODate().slice(0,7)+'-01',v269RankMode='result',v276SelectedTestId='latest',v416SelectedGymKey='',v417SelectedErgoKey='',v416SortDir='desc',v417SortMode='result',v416CompareMetric='latest',v417CompareMetric='latest';
   const monthEndV151=(start)=>{const d=new Date(start+'T12:00:00');d.setMonth(d.getMonth()+1);d.setDate(0);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
   const addMonthsV151=(start,n)=>{const d=new Date(start+'T12:00:00');d.setMonth(d.getMonth()+n);d.setDate(1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`};
