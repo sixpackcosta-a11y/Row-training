@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="439";
+const APP_VERSION="440";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8056,7 +8056,7 @@ async function results(){
     // ("Por FC en zona") en varias líneas, el checkbox se quedaba centrado en medio del texto -- se
     // veía descolocado. En columna, cada opción ocupa su propia línea y el checkbox queda siempre
     // arriba, alineado con la primera línea del texto.
-    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" style="margin-top:3px;flex-shrink:0" ${m.key===activeModeKey?'checked':''}><span>${esc(m.label)}</span></label>`).join('')}</div>`:'';
+    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" style="margin-top:3px;flex-shrink:0" ${m.key===activeModeKey?'checked':''}><span style="flex:1;min-width:0">${esc(m.label)}</span></label>`).join('')}</div>`:'';
     layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${esc(title)}</h2><button type="button" class="v434Close">Cerrar</button></div><p class="muted" style="margin-top:0">Elige qué ejercicios incluir.</p>${modesHtml}<h3 style="margin:10px 0 4px">Ejercicios</h3><div class="v225PendingList">${exercises.map((e,i)=>`<label class="last" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfPick" data-i="${i}" checked><span>${esc(e.label)} <small class="muted">(${e.athletesWithData})</small></span></label>`).join('')}</div><div class="actions" style="margin-top:10px"><button type="button" class="v434Close">Cancelar</button><button type="button" id="v434PdfGo" class="primary">📄 Generar PDF</button></div><div id="v434PdfStatus" class="muted"></div></div>`;
     document.body.appendChild(layer);
     layer.querySelectorAll('.v434Close').forEach(b=>b.onclick=()=>layer.remove());
