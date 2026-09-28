@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="436";
+const APP_VERSION="437";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7819,17 +7819,20 @@ async function results(){
       return pill('#f1f5f9','#475569',`${info.spm} ppm`);
     };
     let list;
+    // V437 · a quien no tiene FC (o ppm) registrada, dentro de ese grupo "sin dato" se le ordena por
+    // ritmo (mejor a peor), no por el orden en que salían de la consulta -- antes ese orden era
+    // arbitrario y parecía aleatorio.
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
     else if(mode==='fc')list=rows.slice().sort((a,b)=>{
       const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));
-      if(da==null&&db==null)return 0;
+      if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
       if(da==null)return 1;
       if(db==null)return -1;
       return da-db;
     });
     else if(mode==='ppm')list=rows.slice().sort((a,b)=>{
       const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));
-      if(da==null&&db==null)return 0;
+      if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
       if(da==null)return 1;
       if(db==null)return -1;
       return da-db;
@@ -7918,15 +7921,16 @@ async function results(){
     };
     const ppmDeviation=info=>info.status==='in'?0:info.status==='over'||info.status==='under'?Math.abs(info.spm-info.target):null;
     let list;
+    // V437 · igual que en la vista en pantalla: dentro del grupo "sin dato" se ordena por ritmo.
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
-    else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return 0;if(da==null)return 1;if(db==null)return -1;return da-db});
-    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));if(da==null&&db==null)return 0;if(da==null)return 1;if(db==null)return -1;return da-db});
+    else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);if(da==null)return 1;if(db==null)return -1;return da-db});
+    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);if(da==null)return 1;if(db==null)return -1;return da-db});
     else list=rows.slice().sort((a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds));
     return {
       list,
       subtitleLine:`${exLabel} · ${metric==='best'?'Mejor marca':'Más reciente'} · ${mode==='wkg'?'Ordenado por W/kg':mode==='fc'?'Ordenado por cercanía a zona de FC':mode==='ppm'?'Ordenado por cercanía a ppm objetivo':'Ordenado por resultado'}`,
       valueHeader:mode==='wkg'?'W/KG':mode==='fc'?'FC':mode==='ppm'?'PPM':'RITMO/500',
-      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} ppm · por encima de ${info.zone}`:info.status==='under'?`${info.avg_hr} ppm · por debajo de ${info.zone}`:info.status==='in'?`${info.avg_hr} ppm · en zona ${info.zone}`:`${info.avg_hr} ppm`}}if(mode==='ppm'){const info=ppmInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin ppm registrado':info.status==='over'?`${info.spm} ppm · por encima del objetivo (${info.target})`:info.status==='under'?`${info.spm} ppm · por debajo del objetivo (${info.target})`:info.status==='in'?`${info.spm} ppm · exacto en el objetivo`:`${info.spm} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
+      rowDetail:(r)=>{const v=valueFor(r),other=metric==='best'?r.latest:r.best,otherLabel=metric==='best'?'Más reciente':'Mejor';if(mode==='fc'){const info=zoneInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin FC registrada':info.status==='over'?`${info.avg_hr} · ${info.avg_hr-info.zoneMax} por encima de ${info.zone}`:info.status==='under'?`${info.avg_hr} · ${info.zoneMin-info.avg_hr} por debajo de ${info.zone}`:info.status==='in'?`${info.avg_hr} · en zona ${info.zone}`:`${info.avg_hr}`}}if(mode==='ppm'){const info=ppmInfoFor(r);return{line1:`${shortDateES(v.workout_date)} · ${secondsToTime(v.pace_500_seconds)}/500m`,line2:info.status==='missing'?'Sin ppm registrado':info.status==='over'?`${info.spm} ppm · por encima del objetivo (${info.target})`:info.status==='under'?`${info.spm} ppm · por debajo del objetivo (${info.target})`:info.status==='in'?`${info.spm} ppm · exacto en el objetivo`:`${info.spm} ppm`}}return {line1:`${shortDateES(v.workout_date)}${v.distance_m?` · ${v.distance_m} m`:''}`,line2:r.n>1?`${otherLabel}: ${secondsToTime(other.pace_500_seconds)}/500m (${shortDateES(other.workout_date)})`:''}},
       rowValue:(r)=>mode==='wkg'?(wkgFor(r)!=null?`${wkgFor(r).toFixed(2)}`:'—'):mode==='fc'?(zoneInfoFor(r).avg_hr??'—'):mode==='ppm'?(ppmInfoFor(r).spm??'—'):secondsToTime(valueFor(r).pace_500_seconds),
       filename:`comparativa-ergo-${team}.png`,
       shareTitle:`Comparativa ERGO · ${exLabel}`
