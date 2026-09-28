@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="445";
+const APP_VERSION="446";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -8073,17 +8073,16 @@ async function results(){
   function v434OpenPdfExportModal(exercises,modeOptions,activeModeKey,buildSection,filename,title){
     if(!exercises.length)return alert('No hay ejercicios con datos para exportar.');
     const layer=document.createElement('div');layer.className='modalBack';
-    // V438 · antes las etiquetas iban en fila (flex-wrap) y en móvil, al partirse el texto largo
-    // ("Por FC en zona") en varias líneas, el checkbox se quedaba centrado en medio del texto -- se
-    // veía descolocado.
-    // V444 · el "display:flex;flex-direction:column" que se puso en V438 para arreglarlo NO estira
-    // los hijos al ancho completo en Safari/iOS (bug conocido de flexbox en columna en WebKit) -- cada
-    // <label> se quedaba con el ancho justo de su contenido y el texto se salía por la derecha sin
-    // envolver, en vez de una etiqueta por línea. Se cambia a "display:grid" (el mismo patrón que ya
-    // usa la lista de "Ejercicios" de aquí abajo, que nunca tuvo este problema) porque grid sí estira
-    // los hijos de forma fiable en todos los navegadores.
-    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:grid;gap:8px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" style="margin-top:3px;flex-shrink:0" ${m.key===activeModeKey?'checked':''}><span style="flex:1;min-width:0">${esc(m.label)}</span></label>`).join('')}</div>`:'';
-    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${esc(title)}</h2><button type="button" class="v434Close">Cerrar</button></div><p class="muted" style="margin-top:0">Elige qué ejercicios incluir.</p>${modesHtml}<h3 style="margin:10px 0 4px">Ejercicios</h3><div class="v225PendingList">${exercises.map((e,i)=>`<label class="last" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfPick" data-i="${i}" checked><span>${esc(e.label)} <small class="muted">(${e.athletesWithData})</small></span></label>`).join('')}</div><div class="actions" style="margin-top:10px"><button type="button" class="v434Close">Cancelar</button><button type="button" id="v434PdfGo" class="primary">📄 Generar PDF</button></div><div id="v434PdfStatus" class="muted"></div></div>`;
+    // V445 · CAUSA REAL encontrada probando el modal real en un navegador (no una reproducción
+    // simplificada): la app tiene una regla global "input,textarea{width:100%}" para que los campos de
+    // texto ocupen todo el ancho de su celda. Para checkboxes normalmente eso no se nota porque el
+    // checkbox se ENCOGE (flex-shrink:1 por defecto) hasta su tamaño real dentro de la fila flex. Pero
+    // aquí, para alinear el checkbox arriba del todo (V438), se le puso "flex-shrink:0" -- y eso le
+    // impedía encogerse desde ese ancho "fantasma" del 100%, comiéndose casi toda la fila y dejando
+    // 0px para el texto (de ahí que el texto apareciera cortado/desplazado a la derecha). El arreglo de
+    // verdad es fijar "width:auto" explícito en el propio checkbox, no tocar el contenedor.
+    const modesHtml=modeOptions.length>1?`<h3 style="margin:10px 0 4px">Orden a incluir</h3><p class="muted" style="margin:0 0 6px"><small>Si marcas más de uno, cada ejercicio sale una vez por cada orden marcado.</small></p><div style="display:grid;gap:8px;margin-bottom:10px">${modeOptions.map(m=>`<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfMode" value="${esc(m.key)}" style="width:auto;flex-shrink:0;margin-top:3px" ${m.key===activeModeKey?'checked':''}><span style="flex:1;min-width:0">${esc(m.label)}</span></label>`).join('')}</div>`:'';
+    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2 style="margin-bottom:2px">${esc(title)}</h2><button type="button" class="v434Close">Cerrar</button></div><p class="muted" style="margin-top:0">Elige qué ejercicios incluir.</p>${modesHtml}<h3 style="margin:10px 0 4px">Ejercicios</h3><div class="v225PendingList">${exercises.map((e,i)=>`<label class="last" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" class="v434PdfPick" data-i="${i}" style="width:auto;flex-shrink:0" checked><span>${esc(e.label)} <small class="muted">(${e.athletesWithData})</small></span></label>`).join('')}</div><div class="actions" style="margin-top:10px"><button type="button" class="v434Close">Cancelar</button><button type="button" id="v434PdfGo" class="primary">📄 Generar PDF</button></div><div id="v434PdfStatus" class="muted"></div></div>`;
     document.body.appendChild(layer);
     layer.querySelectorAll('.v434Close').forEach(b=>b.onclick=()=>layer.remove());
     layer.onclick=e=>{if(e.target===layer)layer.remove()};
