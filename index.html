@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="427";
+const APP_VERSION="428";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7856,8 +7856,7 @@ async function results(){
     box.querySelectorAll('.v416SortBtn').forEach(b=>b.onclick=()=>{v416SortDir=b.dataset.dir;renderComparison()});
     box.querySelectorAll('.v416MetricBtn').forEach(b=>b.onclick=()=>{v416CompareMetric=b.dataset.metric;renderComparison()});
     // V421 · al pulsar un remero se abre un detalle del registro de GYM concreto (peso, reps,
-    // sensación, nota y la sesión a la que pertenece); no hay tabla de comentarios para GYM como sí
-    // la hay para ERGO, así que aquí es un popup propio en vez de reutilizar v300OpenResultComments.
+    // sensación, nota y la sesión a la que pertenece), con comentarios (V428).
     box.querySelectorAll('.v416CompareRow').forEach((el,i)=>{
       const r=list[i];if(!r)return;
       el.onclick=()=>{const v=valueFor(r);v421ShowGymDetail(v,r.p.full_name,exLabel)};
@@ -7875,16 +7874,43 @@ async function results(){
     });
   }
   // V421 · popup simple de detalle para un registro de GYM (peso/reps/sensación/nota concretos),
-  // con la sesión a la que pertenece el entrenamiento si la tiene; sin comentarios (esa tabla solo
-  // existe para ERGO en este momento).
+  // con la sesión a la que pertenece el entrenamiento si la tiene.
+  // V428 · se añaden comentarios, reutilizando la misma tabla de comentarios de ERGO
+  // (ergo_result_comments) con result_kind='gym' y result_id=<id del registro de gym>: la tabla
+  // ya es genérica (no tiene nada específico de ERGO salvo el nombre), así que no hace falta tabla
+  // ni endpoint nuevos.
   function v421ShowGymDetail(entry,athleteName,exerciseLabel){
     const w=workouts.find(x=>String(x.id)===String(entry.workout_id));
     const session=w?sessions.find(s=>String(s.id)===String(w.training_session_id)):null;
     const layer=document.createElement('div');layer.className='modalBack';
-    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(exerciseLabel||entry.exercise_name||'Ejercicio')}</h2><div class="muted">${esc(athleteName||'Sin nombre')} · ${shortDateES(entry._date)}</div></div><button type="button" class="v421CloseDetail">Cerrar</button></div><div class="complianceResultBlockV237"><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Peso</small>${entry.weight_kg!=null?entry.weight_kg+' kg':'—'}</div><div class="complianceResultMetricV237"><small>Repeticiones</small>${entry.reps??'—'}</div><div class="complianceResultMetricV237"><small>Sensación</small>${v300FeelLabel(entry.perceived_difficulty)}</div></div>${entry.note?`<p><b>Nota del ejercicio:</b> ${esc(entry.note)}</p>`:''}${session?.title?`<p class="muted"><small>Sesión: ${esc(session.title)} · ${shortDateES(session.session_date)}</small></p>`:''}${w?.notes?`<p><b>Notas del entrenamiento:</b> ${esc(w.notes)}</p>`:''}</div><div class="actions"><button type="button" class="v421CloseDetail primary">Cerrar</button></div></div>`;
+    const body=`<div class="complianceResultBlockV237"><div class="complianceResultGridV237"><div class="complianceResultMetricV237"><small>Peso</small>${entry.weight_kg!=null?entry.weight_kg+' kg':'—'}</div><div class="complianceResultMetricV237"><small>Repeticiones</small>${entry.reps??'—'}</div><div class="complianceResultMetricV237"><small>Sensación</small>${v300FeelLabel(entry.perceived_difficulty)}</div></div>${entry.note?`<p><b>Nota del ejercicio:</b> ${esc(entry.note)}</p>`:''}${session?.title?`<p class="muted"><small>Sesión: ${esc(session.title)} · ${shortDateES(session.session_date)}</small></p>`:''}${w?.notes?`<p><b>Notas del entrenamiento:</b> ${esc(w.notes)}</p>`:''}</div><div class="complianceResultBlockV237" id="v421CommentsBox"><div><b>💬 Comentarios</b></div><p class="muted"><small>${v316Loading()}</small></p></div>`;
+    layer.innerHTML=`<div class="modalCard"><div class="modalTitle"><div><h2 style="margin-bottom:4px">${esc(exerciseLabel||entry.exercise_name||'Ejercicio')}</h2><div class="muted">${esc(athleteName||'Sin nombre')} · ${shortDateES(entry._date)}</div></div><button type="button" class="v421CloseDetail">Cerrar</button></div>${body}<div class="actions"><button type="button" class="v421CloseDetail primary">Cerrar</button></div></div>`;
     document.body.appendChild(layer);
     layer.querySelectorAll('.v421CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
     layer.onclick=e=>{if(e.target===layer)layer.remove()};
+    const resultId=entry?.id;
+    if(resultId==null)return;
+    const userId=entry.user_id,teamCode=team;
+    const box=layer.querySelector('#v421CommentsBox');
+    const renderComments=async()=>{
+      if(!box.isConnected)return;
+      const comments=await v300FetchComments('gym',resultId);
+      const listHtml=comments.length?comments.map(c=>{
+        const who=c.created_by===currentUser.id?'Tú':(c.created_by===userId?'El remero':'Entrenador');
+        return `<div class="last"><small class="muted"><b>${esc(who)}</b> · ${esc(shortDateES(String(c.created_at).slice(0,10)))}</small><br>${esc(c.comment)}</div>`;
+      }).join(''):'<p class="muted">Aún no hay comentarios de este registro.</p>';
+      const formHtml=`<div style="margin-top:10px"><textarea id="v421CommentInput" rows="2" placeholder="Escribe un comentario para este registro…" style="width:100%"></textarea><div class="actions" style="margin-top:6px"><button type="button" id="v421CommentSave">Guardar comentario</button></div></div>`;
+      box.innerHTML=`<div><b>💬 Comentarios</b></div>${listHtml}${formHtml}`;
+      const saveBtn=box.querySelector('#v421CommentSave');
+      saveBtn.onclick=async()=>{
+        const ta=box.querySelector('#v421CommentInput'),text=ta.value.trim();if(!text)return;
+        saveBtn.disabled=true;
+        const{error}=await v300SaveComment('gym',resultId,userId,teamCode,text);
+        if(error){alert(error.message);saveBtn.disabled=false;return}
+        await renderComments();
+      };
+    };
+    renderComments();
   }
   // v272: dibuja el ranking en un <canvas> propio (sin depender de librerías externas) y lo comparte/descarga
   // como PNG, para poder pasarlo por WhatsApp u otro sitio tal cual se ve en la app.
