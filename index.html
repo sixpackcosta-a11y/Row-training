@@ -2245,7 +2245,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="440";
+const APP_VERSION="441";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent=APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -7819,23 +7819,25 @@ async function results(){
       return pill('#f1f5f9','#475569',`${info.spm} ppm`);
     };
     let list;
-    // V437 · a quien no tiene FC (o ppm) registrada, dentro de ese grupo "sin dato" se le ordena por
-    // ritmo (mejor a peor), no por el orden en que salían de la consulta -- antes ese orden era
-    // arbitrario y parecía aleatorio.
+    // V437/V440 · el ritmo (mejor a peor) hace de segundo criterio de orden en todo momento dentro de
+    // este mismo modo: tanto para desempatar a quien tiene la MISMA cercanía a zona/objetivo (incluida
+    // la gente "exacto en el objetivo", que todos parten con desvío 0), como para ordenar entre sí a
+    // quien no tiene FC/ppm registrado -- antes ahí el orden era arbitrario.
+    const paceCmp=(a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
     else if(mode==='fc')list=rows.slice().sort((a,b)=>{
       const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));
-      if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
+      if(da==null&&db==null)return paceCmp(a,b);
       if(da==null)return 1;
       if(db==null)return -1;
-      return da-db;
+      return da!==db?da-db:paceCmp(a,b);
     });
     else if(mode==='ppm')list=rows.slice().sort((a,b)=>{
       const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));
-      if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
+      if(da==null&&db==null)return paceCmp(a,b);
       if(da==null)return 1;
       if(db==null)return -1;
-      return da-db;
+      return da!==db?da-db:paceCmp(a,b);
     });
     else list=rows.slice().sort((a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds));
     const options=exercises.map(e=>`<option value="${esc(e.key)}" ${e.key===v417SelectedErgoKey?'selected':''}>${esc(e.label)} (${e.athletesWithData})</option>`).join('');
@@ -7921,10 +7923,13 @@ async function results(){
     };
     const ppmDeviation=info=>info.status==='in'?0:info.status==='over'||info.status==='under'?Math.abs(info.spm-info.target):null;
     let list;
-    // V437 · igual que en la vista en pantalla: dentro del grupo "sin dato" se ordena por ritmo.
+    // V437/V440 · igual que en la vista en pantalla: el ritmo desempata tanto entre quien tiene la
+    // MISMA cercanía a zona/objetivo (incluido el desvío 0 de "exacto") como entre quien no tiene
+    // FC/ppm registrado.
+    const paceCmp=(a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);
     if(mode==='wkg')list=rows.filter(r=>wkgFor(r)!=null).sort((a,b)=>wkgFor(b)-wkgFor(a));
-    else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);if(da==null)return 1;if(db==null)return -1;return da-db});
-    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));if(da==null&&db==null)return Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds);if(da==null)return 1;if(db==null)return -1;return da-db});
+    else if(mode==='fc')list=rows.slice().sort((a,b)=>{const da=zoneDeviation(zoneInfoFor(a)),db=zoneDeviation(zoneInfoFor(b));if(da==null&&db==null)return paceCmp(a,b);if(da==null)return 1;if(db==null)return -1;return da!==db?da-db:paceCmp(a,b)});
+    else if(mode==='ppm')list=rows.slice().sort((a,b)=>{const da=ppmDeviation(ppmInfoFor(a)),db=ppmDeviation(ppmInfoFor(b));if(da==null&&db==null)return paceCmp(a,b);if(da==null)return 1;if(db==null)return -1;return da!==db?da-db:paceCmp(a,b)});
     else list=rows.slice().sort((a,b)=>Number(valueFor(a).pace_500_seconds)-Number(valueFor(b).pace_500_seconds));
     return {
       list,
