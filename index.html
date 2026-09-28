@@ -2248,7 +2248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="451";
+const APP_VERSION="452";
 const appVersionLabel=document.getElementById("appVersionLabel");if(appVersionLabel)appVersionLabel.textContent="v"+APP_VERSION;
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
@@ -5966,7 +5966,11 @@ async function history(opts={}){
 async function v290OpenAdditionalModal(onDone){
   const library=await loadErgoLibrary().catch(()=>[]);
   const layer=document.createElement('div');layer.style.cssText='position:fixed;inset:0;background:rgba(7,22,47,.58);z-index:9999;display:grid;place-items:center;padding:18px;overflow:auto';
-  const gymRowHtml=(i)=>`<div class="plannerGrid v290GymRow" data-i="${i}"><label>Ejercicio<input class="v290GymName" placeholder="Ej. Sentadilla, remo en banco, bici…"></label><label>Peso (kg, opcional)<input class="v290GymWeight" type="number" step="0.5" min="0"></label><label>Sensación<select class="v290GymFeel"><option value="ok" selected>Bien</option><option value="easy">Fácil</option><option value="hard">Duro</option></select></label></div>`;
+  // V452 · el valor "ok" para "Bien" no coincide con lo que exige la base de datos (easy/good/hard,
+  // igual que en el resto de formularios de GYM), así que cualquier ejercicio dejado en "Bien" hacía
+  // fallar el guardado de TODOS los ejercicios de ese entrenamiento adicional (el entrenamiento en sí
+  // sí se creaba, por eso se veía "GYM adicional" pero sin ningún ejercicio dentro).
+  const gymRowHtml=(i)=>`<div class="plannerGrid v290GymRow" data-i="${i}"><label>Ejercicio<input class="v290GymName" placeholder="Ej. Sentadilla, remo en banco, bici…"></label><label>Peso (kg, opcional)<input class="v290GymWeight" type="number" step="0.5" min="0"></label><label>Sensación<select class="v290GymFeel"><option value="good" selected>Bien</option><option value="easy">Fácil</option><option value="hard">Duro</option></select></label></div>`;
   layer.innerHTML=`<div class="card assignCardV151" style="max-width:560px"><h2>+ Entrenamiento adicional</h2><p class="muted">Trabajo por tu cuenta, fuera de lo planificado. No cuenta para el cumplimiento del plan, pero si repites un ejercicio ya hecho, sí entra en tus gráficas de evolución.</p>
   <div class="plannerGrid"><label>Tipo<select id="v290Type"><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label><label>Fecha<input id="v290Date" type="date" value="${localISODate()}"></label></div>
   <div id="v290GymArea"><h3 style="margin-bottom:6px">Ejercicios</h3><div id="v290GymRows">${[0,1,2].map(gymRowHtml).join('')}</div><button id="v290AddGymRow" type="button">+ Añadir ejercicio</button><label style="display:block;margin-top:10px">Notas<textarea id="v290GymNote" rows="2" placeholder="Opcional"></textarea></label></div>
