@@ -2255,7 +2255,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="474";
+const APP_VERSION="476";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3142,10 +3142,12 @@ async function v307InjectCrewPhysicals(container,rawCrew,sessionId,teamCode){
     const s=stats.get(String(uid)),age=ageByUser.get(String(uid));
     return (s?.wkg!=null&&age!=null)?v470AgeAdjustedWkg(s.wkg,age):null;
   };
+  // V476 · aquí no hay una distancia de prueba real (es un entrenamiento, no una competición), así que
+  // se muestran los dos valores oficiales de la tabla (700 m y 3000 m) en vez de asumir uno solo.
   const handicapLine=ages.length?(()=>{
     const avgAge=Math.round((ages.reduce((a,b)=>a+b,0)/ages.length)*10)/10;
-    const secs=v464HandicapSeconds('far',avgAge);
-    return `<div>🏁 <b>Hándicap FAR</b> · edad media ${avgAge} años → ${secs>0?`+${secs}" a 700 m`:'sin hándicap (0")'}${missingAges?` <span style="color:#b45309">⚠ ${missingAges} sin fecha de nacimiento (no cuenta)</span>`:''}</div>`;
+    const fmt=(dist)=>{const secs=v464HandicapSeconds('far',avgAge,dist);return secs>0?`+${secs}"`:secs<0?`${secs}" (bono)`:'0"'};
+    return `<div>🏁 <b>Hándicap FAR</b> · edad media ${avgAge} años → ${fmt(700)} a 700 m · ${fmt(3000)} a 3000 m${missingAges?` <span style="color:#b45309">⚠ ${missingAges} sin fecha de nacimiento (no cuenta)</span>`:''}</div>`;
   })():'';
   const seatEls=container.querySelectorAll(`.v307CrewBoat[data-session="${sessionId}"] .v307SeatPhys`);
   seatEls.forEach(el=>{
@@ -7175,22 +7177,41 @@ async function individualPlanEditorV249(){
 // momento solo está la tabla "General" (FAR); la de Jábega se añadirá más adelante -- por eso ya
 // aparece en el selector pero deshabilitada.
 const V465_HANDICAP_BASE_AGE=30;
+// V475 · corregido con la tabla oficial real (Anexo 1 de la FAR, "Hándicap veteranos"): el CERO está en
+// los 70 años (a esa edad el hándicap es el tiempo real, sin nada que sumar), no en los 30 como se
+// implementó al principio. Por cada año por DEBAJO de 70 se suman 0,5″ a 700 m -- a 30 años son +20,0″,
+// a 46 años +12,0″, a 45 años +12,5″... la tabla es perfectamente lineal en ese tramo (30-70) y esta
+// fórmula reproduce exactamente esos valores. Con la fórmula antigua, una tripulación de 53,8 años
+// daba +11,9″ cuando en realidad (y según una regata real de Barbate con ese hándicap oficial) le
+// corresponden unos +8,1″ -- la tabla real lo confirma: 0,5×(70-53,8)=8,1.
+const V475_HANDICAP_ZERO_AGE=70;
+// V476 · el Anexo 1 trae DOS columnas, 700 m y 3000 m -- no es la misma tabla escalada por la distancia
+// sin más (3000/700 = 4,2857…) sino un factor propio, 4,28, que reproduce exactamente los valores
+// oficiales de la segunda columna (comprobado con varias filas de la tabla real: 45 años → 12,5″ a
+// 700 m y 53,50″ a 3000 m = 12,5×4,28). Solo se admiten estas dos distancias porque son las únicas que
+// trae la tabla oficial.
+const V476_HANDICAP_DISTANCE_FACTOR={700:1,3000:4.28};
 const V464_HANDICAP_TYPES=[['','Sin hándicap'],['far','General · Hándicap veteranos (FAR)'],['jabega','Jábega (próximamente)']];
-function v464HandicapSeconds(type,ownAge){
+function v464HandicapSeconds(type,ownAge,distanceM){
   if(type!=='far')return null;
   ownAge=Number(ownAge);
   if(!Number.isFinite(ownAge))return null;
-  return Math.max(0,Math.round((ownAge-V465_HANDICAP_BASE_AGE)*0.5*10)/10);
+  const factor=V476_HANDICAP_DISTANCE_FACTOR[Number(distanceM)]??V476_HANDICAP_DISTANCE_FACTOR[700];
+  return Math.round((V475_HANDICAP_ZERO_AGE-ownAge)*0.5*factor*10)/10;
 }
 // V470 · W/kg ajustado por edad, calculado bien (conversión física, no una suma directa de cosas con
-// unidades distintas). La tabla de la FAR da 0,5" de hándicap por año por encima de 30, sobre 700 m.
-// La física de remo (la misma relación vatios=2,80/ritmo³ que ya usa la app) dice que el tiempo de una
-// prueba cambia, en proporción, 1/3 de lo que cambia la potencia -- así que esos 0,5"/año, para poder
-// convertirlos en un % de potencia, hay que compararlos con el tiempo real que se tarda en hacer esos
-// 700 m (no vale sumarlos directamente al W/kg, son unidades distintas). Como referencia se usa el
-// tiempo real (sin hándicap) de la tripulación del club en Barbate 2025: 3:38,39 (218,39 s) a 700 m.
-// Con un % en vez de segundos ya no hace falta repartir entre 8 remeras -- un % de potencia vale igual
-// para una remera sola que para las 8 juntas.
+// unidades distintas). Aquí NO se usa el hándicap absoluto de v464HandicapSeconds (los segundos que se
+// suman al tiempo real, con el cero en los 70 años -- ver V475) sino el CRÉDITO relativo de cada edad
+// frente a los 30 años (el suelo de la categoría veterana): ese crédito es, por la propia tabla de la
+// FAR, exactamente 0,5″/año por encima de 30 (a los 30 el hándicap absoluto es el máximo de la tabla,
+// 20,0″; a más edad ese hándicap absoluto baja 0,5″ por año, así que la ventaja GANADA frente a tener
+// 30 años es justo esos mismos 0,5″/año). La física de remo (la misma relación vatios=2,80/ritmo³ que ya
+// usa la app) dice que el tiempo de una prueba cambia, en proporción, 1/3 de lo que cambia la potencia
+// -- así que esos 0,5"/año de crédito, para poder convertirlos en un % de potencia, hay que compararlos
+// con el tiempo real que se tarda en hacer esos 700 m (no vale sumarlos directamente al W/kg, son
+// unidades distintas). Como referencia se usa el tiempo real (sin hándicap) de la tripulación del club
+// en Barbate 2025: 3:38,39 (218,39 s) a 700 m. Con un % en vez de segundos ya no hace falta repartir
+// entre 8 remeras -- un % de potencia vale igual para una remera sola que para las 8 juntas.
 // V471 · media de los dos tiempos reales del club en Barbate 2025 (3:38,39 y 4:31,61, mismo hándicap
 // +8,05" en ambos = misma tripulación en dos carreras del mismo día, con el mar muy distinto). La
 // variación entre los dos apenas cambia el resultado final (el W/kg ajustado se mueve ~0,02 sobre un
@@ -7229,8 +7250,10 @@ function v465AgeHandicapLine(wkg,age,team){
 function v464HandicapSummary(c){
   if(!c||!c.handicap_type)return '';
   if(c.handicap_type==='far'&&c.handicap_own_age!=null){
-    const secs=c.handicap_seconds??v464HandicapSeconds('far',c.handicap_own_age);
-    return `🏁 Hándicap FAR: edad media del bote ${c.handicap_own_age} años → <b>+${secs}"</b> a 700 m`;
+    const dist=c.handicap_distance_m??700;
+    const secs=c.handicap_seconds??v464HandicapSeconds('far',c.handicap_own_age,dist);
+    const secsTxt=secs>0?`+${secs}"`:secs<0?`${secs}" (bono)`:'sin hándicap (0")';
+    return `🏁 Hándicap FAR: edad media del bote ${c.handicap_own_age} años → <b>${secsTxt}</b> a ${dist} m`;
   }
   return '';
 }
@@ -7248,6 +7271,7 @@ function raceEditor(){
  <div class="card" style="background:var(--surface-2)"><h3 style="margin-top:0">Hándicap por edad (opcional)</h3>
    <label>Tipo de hándicap<select id="raceHandicapType">${V464_HANDICAP_TYPES.map(([v,l])=>`<option value="${v}" ${v==='jabega'?'disabled':''}>${esc(l)}</option>`).join('')}</select></label>
    <div id="raceHandicapBox" hidden>
+     <label>Distancia de la prueba<select id="raceHandicapDistance"><option value="700">700 m</option><option value="3000">3000 m</option></select></label>
      <div class="muted" style="margin:6px 0">Marca las remeras que van en este bote para calcular la edad media automáticamente.</div>
      <div id="raceHandicapRoster">Cargando remeras…</div>
      <div id="raceHandicapPreview" class="info"></div>
@@ -7262,16 +7286,21 @@ function raceEditor(){
    if(!checked.length||ages.length!==checked.length)return null;
    return Math.round((ages.reduce((a,b)=>a+b,0)/ages.length)*10)/10;
  };
+ // V476 · la tabla oficial trae hándicap para 700 m y para 3000 m -- se deja elegir cuál es la
+ // distancia real de la prueba en vez de asumir siempre 700 m.
  const updateHandicapPreview=()=>{
    const type=raceHandicapType.value;
    raceHandicapBox.hidden=type!=='far';
    if(type!=='far'){raceHandicapPreview.textContent='';return}
+   const dist=Number(raceHandicapDistance.value)||700;
    const avgAge=currentAvgAge();
    if(avgAge==null){raceHandicapPreview.innerHTML='Marca las remeras del bote (con fecha de nacimiento guardada en su perfil) para calcular el hándicap.';return}
-   const secs=v464HandicapSeconds(type,avgAge);
-   raceHandicapPreview.innerHTML=`Edad media del bote: <b>${avgAge} años</b><br>${secs>0?`Hándicap: <b>+${secs}"</b> a 700 m (se suman a vuestro tiempo real en la llegada).`:'Por debajo de la edad base (30 años): sin hándicap (0").'}`;
+   const secs=v464HandicapSeconds(type,avgAge,dist);
+   const secsHtml=secs>0?`Hándicap: <b>+${secs}"</b> a ${dist} m (se suman a vuestro tiempo real en la llegada).`:secs<0?`Hándicap: <b>${secs}"</b> a ${dist} m (bono, se restan de vuestro tiempo real).`:'Edad tope de la tabla (70 años): sin hándicap (0").';
+   raceHandicapPreview.innerHTML=`Edad media del bote: <b>${avgAge} años</b><br>${secsHtml}`;
  };
  raceHandicapType.onchange=updateHandicapPreview;
+ raceHandicapDistance.onchange=updateHandicapPreview;
  v465RowersForTeam(team).then(rows=>{
    roster=rows;
    raceHandicapRoster.innerHTML=rows.length?`<div class="rosterCheckList">${rows.map(r=>`<label class="keepLogin"><input type="checkbox" class="raceHandicapRower" value="${r.user_id}">${esc(r.full_name||'Sin nombre')}${r.birth_date?'':' <small class="muted">(sin fecha de nacimiento)</small>'}</label>`).join('')}</div>`:'<p class="muted">No hay remeras en este equipo todavía.</p>';
@@ -7281,13 +7310,14 @@ function raceEditor(){
    const base={name:raceName.value.trim()||'Competición',competition_date:date,team_codes:[team],priority:racePriority.value,notes:raceNotes.value.trim()};
    const type=raceHandicapType.value;
    const avgAge=type==='far'?currentAvgAge():null;
-   const extra=(type&&avgAge!=null)?{handicap_type:type,handicap_own_age:avgAge,handicap_seconds:v464HandicapSeconds(type,avgAge)}:{};
+   const dist=Number(raceHandicapDistance?.value)||700;
+   const extra=(type&&avgAge!=null)?{handicap_type:type,handicap_own_age:avgAge,handicap_distance_m:dist,handicap_seconds:v464HandicapSeconds(type,avgAge,dist)}:{};
    let q=await sb.from('competitions').insert({...base,...extra});
    // V464 · si todavía no se han creado las columnas de hándicap en Supabase, no se bloquea la
    // creación de la competición -- se reintenta sin esas columnas y se avisa para añadirlas.
    if(q.error&&Object.keys(extra).length&&/column .* does not exist/i.test(q.error.message||'')){
      q=await sb.from('competitions').insert(base);
-     if(!q.error)alert('Se ha guardado la competición, pero falta preparar la base de datos para guardar el hándicap (columnas handicap_type, handicap_own_age, handicap_seconds en la tabla competitions). Avisa para dejarlo listo.');
+     if(!q.error)alert('Se ha guardado la competición, pero falta preparar la base de datos para guardar el hándicap (columnas handicap_type, handicap_own_age, handicap_distance_m, handicap_seconds en la tabla competitions). Avisa para dejarlo listo.');
    }
    if(q.error)alert(q.error.message);else renderPlanDay();
  };
