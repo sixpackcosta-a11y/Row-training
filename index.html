@@ -2255,7 +2255,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="473";
+const APP_VERSION="474";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2914,7 +2914,7 @@ async function staffRegisterView(){
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     xs.forEach(x=>{
       const boat=staffRegArea.querySelector(`.v307CrewBoat[data-session="${x.id}"]`);
-      if(boat){const card=boat.closest('.card');v307BindCrewBoat(card,x,t,load);v307InjectCrewPhysicals(card,x.crew,x.id)}
+      if(boat){const card=boat.closest('.card');v307BindCrewBoat(card,x,t,load);v307InjectCrewPhysicals(card,x.crew,x.id,t)}
     });
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   }
@@ -3004,7 +3004,7 @@ function v280PacingComment(splits){
   if(diff>0)return `Salió fuerte y remató más despacio: +${diffAbs.toFixed(1)} s/500m en la 2ª mitad (positive split). Puede repartir mejor el esfuerzo.`;
   return `De menos a más: ${diffAbs.toFixed(1)} s/500m más rápido en la 2ª mitad (negative split). Buena gestión del esfuerzo.`;
 }
-async function v310CrewPhysicalStats(userIds){
+async function v310CrewPhysicalStats(userIds,teamCode){
   const result=new Map();
   const ids=[...new Set((userIds||[]).filter(Boolean).map(String))];
   if(!ids.length)return result;
@@ -3022,7 +3022,17 @@ async function v310CrewPhysicalStats(userIds){
     let testSessionIds=new Set();
     if(sessionIds.length){
       const sQ=await sb.from('training_sessions').select('id,title').in('id',sessionIds);
-      (sQ.data||[]).forEach(s=>{if(/test/i.test(String(s.title||'')))testSessionIds.add(String(s.id))});
+      // V474 · si se conoce la categoría del bote, el test tiene que ser además de la distancia que le
+      // toca (1000 m veteranas/veteranos, 2000 m senior) -- si no se conoce la categoría, se mantiene el
+      // comportamiento anterior (cualquier test) para no romper nada.
+      const reqDist=teamCode?v474TestDistanceForTeam(teamCode):null;
+      const reqDistRe=reqDist?new RegExp(String(reqDist)):null;
+      (sQ.data||[]).forEach(s=>{
+        const title=String(s.title||'');
+        if(!/test/i.test(title))return;
+        if(reqDistRe&&!reqDistRe.test(title))return;
+        testSessionIds.add(String(s.id));
+      });
     }
     const testByUser=new Map();
     c2Rows.forEach(r=>{
@@ -3112,17 +3122,26 @@ function v307BindCrewBoat(container,session,teamCode,afterSave){
   };
   if(seatsSel)seatsSel.onchange=saveConfig;
 }
-async function v307InjectCrewPhysicals(container,rawCrew,sessionId){
+async function v307InjectCrewPhysicals(container,rawCrew,sessionId,teamCode){
   const box=container.querySelector(`.v307CrewSummary[data-session="${sessionId}"]`);
   if(!box)return;
   const crew=v307NormalizeCrew(rawCrew);
   const userIds=crew.assignments.filter(c=>c.user_id).map(c=>c.user_id);
   // V465 · el hándicap FAR se muestra en CUALQUIER entrenamiento con tripulación montada (no solo en
   // competiciones), igual que ya se hace con el peso/W-kg del bote -- misma tripulación, mismo cálculo.
-  const [stats,agesQ]=await Promise.all([v310CrewPhysicalStats(userIds),userIds.length?sb.from('profiles').select('user_id,birth_date').in('user_id',[...new Set(userIds.map(String))]):Promise.resolve({data:[]})]);
+  // V474 · el W/kg (y el IEP que sale de él) usa el test de la distancia que le toca a esta categoría
+  // (1000 m veteranas/veteranos, 2000 m senior), no "cualquier test" reciente del remero.
+  const [stats,agesQ]=await Promise.all([v310CrewPhysicalStats(userIds,teamCode),userIds.length?sb.from('profiles').select('user_id,birth_date').in('user_id',[...new Set(userIds.map(String))]):Promise.resolve({data:[]})]);
   if(!container.isConnected)return;
-  const ages=(agesQ.data||[]).map(p=>ageFromBirthV103(p.birth_date)).filter(a=>a!=null);
+  const ageByUser=new Map((agesQ.data||[]).map(p=>[String(p.user_id),ageFromBirthV103(p.birth_date)]));
+  const ages=[...ageByUser.values()].filter(a=>a!=null);
   const missingAges=[...new Set(userIds.map(String))].length-ages.length;
+  const isVetTeam=teamCode?v465IsVeteranTeam(teamCode):false;
+  const iepFor=uid=>{
+    if(!isVetTeam)return null;
+    const s=stats.get(String(uid)),age=ageByUser.get(String(uid));
+    return (s?.wkg!=null&&age!=null)?v470AgeAdjustedWkg(s.wkg,age):null;
+  };
   const handicapLine=ages.length?(()=>{
     const avgAge=Math.round((ages.reduce((a,b)=>a+b,0)/ages.length)*10)/10;
     const secs=v464HandicapSeconds('far',avgAge);
@@ -3130,22 +3149,25 @@ async function v307InjectCrewPhysicals(container,rawCrew,sessionId){
   })():'';
   const seatEls=container.querySelectorAll(`.v307CrewBoat[data-session="${sessionId}"] .v307SeatPhys`);
   seatEls.forEach(el=>{
-    const s=stats.get(String(el.dataset.user));
+    const uid=el.dataset.user;
+    const s=stats.get(String(uid));
     if(!s){el.textContent='';return}
-    el.textContent=`${s.weight!=null?`${s.weight} kg`:'—'}${s.wkg!=null?` · ${s.wkg.toFixed(2)} W/kg`:''}`;
+    const idx=iepFor(uid);
+    el.textContent=`${s.weight!=null?`${s.weight} kg`:'—'}${s.wkg!=null?` · ${s.wkg.toFixed(2)} W/kg`:''}${idx!=null?` · 🏁 IEP ${idx.toFixed(2)}`:''}`;
   });
   const bandStats=side=>{
     const seats=crew.assignments.filter(c=>c.user_id&&((side==='babor')===(Number(c.position)%2===1)));
     const weights=seats.map(c=>stats.get(String(c.user_id))?.weight).filter(w=>w!=null);
     const wkgs=seats.map(c=>stats.get(String(c.user_id))?.wkg).filter(w=>w!=null);
-    return {n:seats.length,totalKg:weights.length?weights.reduce((a,b)=>a+b,0):null,avgWkg:wkgs.length?wkgs.reduce((a,b)=>a+b,0)/wkgs.length:null,missingWeight:seats.length-weights.length,missingWkg:seats.length-wkgs.length};
+    const ieps=seats.map(c=>iepFor(c.user_id)).filter(v=>v!=null);
+    return {n:seats.length,totalKg:weights.length?weights.reduce((a,b)=>a+b,0):null,avgWkg:wkgs.length?wkgs.reduce((a,b)=>a+b,0)/wkgs.length:null,avgIep:ieps.length?ieps.reduce((a,b)=>a+b,0)/ieps.length:null,missingWeight:seats.length-weights.length,missingWkg:seats.length-wkgs.length};
   };
   const est=bandStats('estribor'),bab=bandStats('babor');
   const line=(label,s)=>{
     const warnings=[];
     if(s.missingWeight)warnings.push(`${s.missingWeight} sin peso`);
     if(s.missingWkg)warnings.push(`${s.missingWkg} sin test`);
-    return `<div><b>${label}</b> · ${s.n} remero${s.n===1?'':'s'}${s.totalKg!=null?` · ${s.totalKg.toFixed(1)} kg total`:''}${s.avgWkg!=null?` · ${s.avgWkg.toFixed(2)} W/kg medio`:''}${warnings.length?` · <span style="color:#b45309">⚠ ${warnings.join(', ')} (no cuenta en el total)</span>`:''}</div>`;
+    return `<div><b>${label}</b> · ${s.n} remero${s.n===1?'':'s'}${s.totalKg!=null?` · ${s.totalKg.toFixed(1)} kg total`:''}${s.avgWkg!=null?` · ${s.avgWkg.toFixed(2)} W/kg medio`:''}${s.avgIep!=null?` · 🏁 IEP medio ${s.avgIep.toFixed(2)}`:''}${warnings.length?` · <span style="color:#b45309">⚠ ${warnings.join(', ')} (no cuenta en el total)</span>`:''}</div>`;
   };
   box.innerHTML=(est.n||bab.n)?`${line('Estribor',est)}${line('Babor',bab)}${handicapLine}`:'<span class="muted">Sin remeros registrados con peso/test todavía.</span>';
 }
@@ -3489,10 +3511,10 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const refreshCrewV307=()=>{
     content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id,false,team);
     v307BindCrewBoat(content,session,team,refreshCrewV307);
-    v307InjectCrewPhysicals(content,session.crew,session.id);
+    v307InjectCrewPhysicals(content,session.crew,session.id,team);
   };
   v307BindCrewBoat(content,session,team,refreshCrewV307);
-  v307InjectCrewPhysicals(content,session.crew,session.id);
+  v307InjectCrewPhysicals(content,session.crew,session.id,team);
   document.querySelectorAll('.seaSeriesInputRowV137').forEach(bindSeaSeriesRowV137);
   function bindBlockButtonsV186(scope=document){
     scope.querySelectorAll('.addSeaSeriesV137').forEach(btn=>btn.onclick=()=>addSeaSeriesRowV137(Number(btn.dataset.blockIndex)));
@@ -4260,7 +4282,7 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
       const c2Html=c2.map(r=>`<section class="last"><b>${esc(nameFor(r.user_id))}</b> · Concept2 / ErgData<br>${r.distance_m??'—'} m · ${r.time_formatted||'—'} · /500 ${r.pace_500_seconds!=null?fmtMetricSeconds(Number(r.pace_500_seconds)):'—'} · ${r.spm??'—'} ppm${typeof v112C2PartialsHtml==='function'?v112C2PartialsHtml(r):''}</section>`).join('');
       body=(manualHtml||c2Html)?`${manualHtml}${c2Html}`:'<p class="muted">No hay resultados registrados para esta sesión.</p>';
     }
-    const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard" style="max-width:900px"><div class="modalTitle"><div><h2 style="margin-bottom:4px">Resultados · ${esc(x.title)}</h2><div class="muted">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</div></div><button class="closeWeekResultsV209">Cerrar</button></div>${body}<div class="actions"><button class="closeWeekResultsV209 primary">Cerrar</button></div></div>`;document.body.appendChild(d);if(x.session_type==='MAR')v307InjectCrewPhysicals(d,x.crew,x.id);
+    const d=document.createElement('div');d.className='modalBack';d.innerHTML=`<div class="modalCard" style="max-width:900px"><div class="modalTitle"><div><h2 style="margin-bottom:4px">Resultados · ${esc(x.title)}</h2><div class="muted">${shortDateES(x.session_date)} · ${esc(teamLabel(x.team_code))}</div></div><button class="closeWeekResultsV209">Cerrar</button></div>${body}<div class="actions"><button class="closeWeekResultsV209 primary">Cerrar</button></div></div>`;document.body.appendChild(d);if(x.session_type==='MAR')v307InjectCrewPhysicals(d,x.crew,x.id,x.team_code);
     d.querySelectorAll('.closeWeekResultsV209').forEach(b=>b.onclick=()=>d.remove());
     /* V222: los botones de parciales dentro del modal Semana antes se dibujaban pero no tenían evento. */
     d.querySelectorAll('.v143ToggleSplit').forEach(button=>button.onclick=()=>{
@@ -7176,6 +7198,10 @@ function v464HandicapSeconds(type,ownAge){
 const V470_REF_700M_SECONDS=(218.39+271.61)/2; // 245 s
 const V470_RATE_PER_YEAR=(3*0.5)/V470_REF_700M_SECONDS; // fracción de potencia por año por encima de 30
 function v465IsVeteranTeam(team){return team==='veteranas'||team==='veteranos_m'}
+// V474 · qué distancia de test (1000/2000 m) le toca a cada categoría, para que el W/kg (y por tanto el
+// IEP) de las tripulaciones salga siempre del test correcto de su categoría y no de "cualquier test"
+// reciente del remero (que podía venir de otra distancia si ha cambiado de equipo, por ejemplo).
+function v474TestDistanceForTeam(team){return v465IsVeteranTeam(team)?1000:2000}
 function v470AgeAdjustedWkg(wkg,age){
   if(wkg==null||age==null)return null;
   const years=Math.max(0,Number(age)-V465_HANDICAP_BASE_AGE);
@@ -7737,7 +7763,7 @@ async function coachSeaResultsView(){
     cal.innerHTML=v79SeaSessionListHtml(all.sessions,all.results,selected,monthFilter);
     const chosenRows=all.results.filter(r=>selected.includes(String(r.training_session_id)));
     cmp.innerHTML=compareSeaHtml(chosenRows); const periodRows=monthFilter==='all'?all.results:all.results.filter(r=>String(r.session?.session_date||'').startsWith(monthFilter)); auto.innerHTML=autoRepeatedHtml(periodRows); info.textContent=selected.length?`${selected.length} sesión${selected.length===1?'':'es'} seleccionada${selected.length===1?'':'s'}`:'Ninguna sesión seleccionada';
-    cal.querySelectorAll('.viewSeaResults').forEach(b=>{if(!b.dataset.labelV310)b.dataset.labelV310=b.textContent;b.onclick=()=>{const detail=b.closest('.seaSessionPick')?.querySelector('.seaResultsDetail');if(!detail)return;const opening=detail.hidden;detail.hidden=!opening;b.textContent=opening?'Ocultar resultados':b.dataset.labelV310;b.setAttribute('aria-expanded',String(opening));if(opening){detail.scrollIntoView({behavior:'smooth',block:'nearest'});if(!detail.dataset.physLoadedV310){detail.dataset.physLoadedV310='1';const s=all.sessions.find(x=>String(x.id)===String(b.dataset.session));if(s)v307InjectCrewPhysicals(detail,s.crew,s.id)}}}});
+    cal.querySelectorAll('.viewSeaResults').forEach(b=>{if(!b.dataset.labelV310)b.dataset.labelV310=b.textContent;b.onclick=()=>{const detail=b.closest('.seaSessionPick')?.querySelector('.seaResultsDetail');if(!detail)return;const opening=detail.hidden;detail.hidden=!opening;b.textContent=opening?'Ocultar resultados':b.dataset.labelV310;b.setAttribute('aria-expanded',String(opening));if(opening){detail.scrollIntoView({behavior:'smooth',block:'nearest'});if(!detail.dataset.physLoadedV310){detail.dataset.physLoadedV310='1';const s=all.sessions.find(x=>String(x.id)===String(b.dataset.session));if(s)v307InjectCrewPhysicals(detail,s.crew,s.id,teamSel.value)}}}});
     cal.querySelectorAll('.selectSeaSession').forEach(b=>b.onclick=()=>{const id=String(b.dataset.session);selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];load()});
     cal.querySelectorAll('.deleteSeaResults').forEach(b=>b.onclick=async()=>{const id=String(b.dataset.session),rr=all.results.filter(x=>String(x.training_session_id)===id);if(!rr.length)return;if(!confirm(`¿Eliminar los ${rr.length} resultados MAR de ${shortDateES(b.dataset.date)}?\n\nSe borra solo el registro de resultados, no la planificación de la sesión.`))return;b.disabled=true;b.textContent='Eliminando…';const q=await sb.from('sea_results').delete().eq('training_session_id',Number(id));if(q.error){alert('No se pudieron eliminar: '+q.error.message);b.disabled=false;b.textContent='Eliminar resultados';return}selected=selected.filter(x=>x!==id);await load()});
     cal.querySelectorAll('.editSeaResults').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.session),teamSel.value,b.dataset.date,coachSeaResultsView));
