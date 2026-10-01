@@ -22,6 +22,7 @@ html[data-theme="dark"] .card,html[data-theme="dark"] details,html[data-theme="d
 html[data-theme="dark"] .muted{color:var(--text-muted)}
 html[data-theme="dark"] img{opacity:.92}
 html[data-theme="dark"] .workoutRow{background:var(--surface-2)!important}
+html[data-theme="dark"] .notifyItemV104.unread{background:#17304f!important;border-color:#2f6fd1!important;color:var(--text)!important}
 
 
 
@@ -2255,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="477";
+const APP_VERSION="478";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
