@@ -513,6 +513,21 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .assignChoiceV151 details summary{font-size:.9rem}
   .assignCardV151 .staffActions{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 14px;z-index:5}
 }
+/* V490 · en móvil se acumulaba demasiado padding lateral anidado (main > .card > .coachAnalysisSectionBodyV123 >
+   .libraryCard > .info), dejando el texto apelotonado en una columna estrecha con mucho hueco a los lados.
+   Se recorta ese padding en cascada en pantallas pequeñas para recuperar ancho real de lectura. */
+@media(max-width:600px){
+  main{padding:6px}
+  header{padding:14px 10px}
+  .card{padding:10px}
+  .card .card{padding:8px}
+  .coachAnalysisSectionBodyV123{padding:6px 0 10px!important}
+  .libraryCard{padding:9px}
+  .libraryCard.detailCard{padding:10px!important}
+  .info{padding:10px}
+  .ex{padding:10px}
+  .target,.last{padding:8px}
+}
 @media(max-width:390px){
   .monthSummaryV151{grid-template-columns:1fr}
   .complianceCalendarScrollV151 .complianceTableV100 th:first-child,
@@ -2256,7 +2271,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="489";
+const APP_VERSION="490";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
