@@ -2375,7 +2375,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="520";
+const APP_VERSION="521";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8139,7 +8139,7 @@ function sessionEditor(x=null){
   <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid"><label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}"></label></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
-  <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No, solo este día</option><option value="yes">Sí, aplicar también a otros días ya planificados</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted"><small>Se convierten en evento, con estas mismas opciones, las sesiones del mismo tipo que ya estén planificadas en esos días hasta esa fecha.</small></p></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No periódico (solo este día)</option><option value="yes" id="seRepeatYesOpt">Periódico</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted" id="seRepeatSummary"></p></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Más ajustes</div><div class="plannerGrid"><label>Límite de participantes<input id="seMax" type="number" min="1" placeholder="Ninguno" value="${x?.max_participants??''}"></label><label id="sessResponseDeadlineWrap">Plazo límite de respuesta<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label><label>Recordatorio automático<select id="seRem">${[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']].map(([v,l])=>`<option value="${v}" ${String(x?.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="seDef"><option value="">Sin respuesta</option><option value="in" ${x?.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat)<select id="seChat"><option value="1" ${x?.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x?.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="seVis"><option value="all" ${x?.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x?.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div></div>
  </div>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
@@ -8204,12 +8204,25 @@ function sessionEditor(x=null){
  function v517SyncEventOpts(){const box=document.getElementById('sessEventOpts');if(box)box.style.display=(['MAR','GYM'].includes(sessType.value)&&document.getElementById('sessIsEvent')?.checked)?'block':'none'}
  let seCoverUrl=x?.cover_url||null,seCoverFile=null,seEndTouched=!!x?.end_time;
  const seDaySel=new Set([new Date(date+'T12:00:00').getDay()]);
- function v517PaintDays(){const box=document.getElementById('seDays');if(!box)return;const names=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];box.innerHTML=names.map(([d,l])=>`<button type="button" class="v513Chip${seDaySel.has(d)?' on':''}" data-d="${d}">${l}</button>`).join('');box.querySelectorAll('.v513Chip').forEach(b=>b.onclick=()=>{const d=Number(b.dataset.d);if(seDaySel.has(d)){if(seDaySel.size>1)seDaySel.delete(d)}else seDaySel.add(d);v517PaintDays()})}
+ // V521 · texto que explica en claro qué va a pasar ("todos los domingos de MAR ya planificados…").
+ function v521RepeatSummary(){
+   const names={1:'lunes',2:'martes',3:'miércoles',4:'jueves',5:'viernes',6:'sábados',0:'domingos'};
+   const order=[1,2,3,4,5,6,0].filter(d=>seDaySel.has(d)).map(d=>names[d]);
+   const days=order.length>1?order.slice(0,-1).join(', ')+' y '+order[order.length-1]:order[0]||'';
+   const tipo=sessType.value==='MAR'?'MAR':'GYM';
+   const opt=document.getElementById('seRepeatYesOpt');if(opt)opt.textContent=`Periódico (todos los ${days} de ${tipo})`;
+   const until=document.getElementById('seUntil')?.value;
+   const box=document.getElementById('seRepeatSummary');
+   if(box)box.innerHTML=`<small>Al guardar, también se convierten en evento —con estas mismas opciones— todas las sesiones de <b>${tipo}</b> de este equipo que ya estén planificadas los <b>${days}</b> hasta el <b>${until?shortDateES(until):'—'}</b>. Cada una mantiene su título y contenido. Las que se planifiquen más adelante habrá que convertirlas aparte.</small>`;
+ }
+ function v517PaintDays(){const box=document.getElementById('seDays');if(!box)return;const names=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];box.innerHTML=names.map(([d,l])=>`<button type="button" class="v513Chip${seDaySel.has(d)?' on':''}" data-d="${d}">${l}</button>`).join('');box.querySelectorAll('.v513Chip').forEach(b=>b.onclick=()=>{const d=Number(b.dataset.d);if(seDaySel.has(d)){if(seDaySel.size>1)seDaySel.delete(d)}else seDaySel.add(d);v517PaintDays()});v521RepeatSummary()}
  setTimeout(()=>{
    document.getElementById('sessIsEvent')?.addEventListener('change',v517SyncEventOpts);
    const st=document.getElementById('seTime'),en=document.getElementById('seEnd');
    if(st&&en){en.oninput=()=>{seEndTouched=true};st.onchange=()=>{if(st.value&&(!seEndTouched||!en.value)){en.value=v514ShiftTime(st.value,60);seEndTouched=false}}}
    const rp=document.getElementById('seRepeat');if(rp)rp.onchange=()=>{document.getElementById('seRepeatBox').style.display=rp.value?'block':'none';v517PaintDays()};
+   const un=document.getElementById('seUntil');if(un)un.onchange=v521RepeatSummary;
+   sessType.addEventListener('change',v521RepeatSummary);v521RepeatSummary();
    const ci=document.getElementById('seCoverInput');if(ci)ci.onchange=()=>{const f=ci.files?.[0];if(!f)return;seCoverFile=f;document.getElementById('seCoverPrev').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="">`;document.getElementById('seCoverRemove').classList.remove('hidden')};
    const cr=document.getElementById('seCoverRemove');if(cr)cr.onclick=()=>{seCoverFile=null;seCoverUrl=null;ci.value='';document.getElementById('seCoverPrev').innerHTML='<span class="muted">Sin imagen</span>';cr.classList.add('hidden')};
    v517SyncEventOpts();
