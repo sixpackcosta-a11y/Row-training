@@ -524,7 +524,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 /* V506 · pantalla de detalle de un evento de la Vista general, superpuesta a pantalla completa (como
    al tocar un evento en Spond) en vez de desplegarse in-situ. */
 .v503DetailBack{padding:0;align-items:stretch}.v503DetailCard{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;padding:14px}.v503DetailBackBtn{border:none;background:transparent;font-weight:700;font-size:15px;padding:6px 0;color:var(--text)}
-.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}.v493SumRow.active{background:var(--surface-2);border-radius:7px}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}/* V506fix · "lo que está seleccionado no se ve bien, letra en blanco": .v493SumRow comparte la clase
+   "active" con la regla genérica de botones (.active{background:#07162f;color:white}), así que la
+   fila seleccionada heredaba texto blanco sobre el fondo claro de aquí. Se fija el color explícito. */
+.v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
 .v493SumPanel .rosterPerson{gap:10px}.v505PersonStatus{margin:0;padding:5px 7px;font-size:.78rem;max-width:132px}
@@ -2361,7 +2364,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="509";
+const APP_VERSION="510";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3533,80 +3536,124 @@ async function v499ApplyDefaultSubstitute(team,kind,eventId){
     await sb.from('session_rsvp').upsert(payload,{onConflict});
   }catch(e){}
 }
+// V502/V503/V506 · helpers compartidos por la Vista general y la vista normal de un equipo. Desde
+// v506 las dos usan el mismo estilo de fila resumen + pantalla de detalle aparte ("en la visión de
+// un equipo solo lo pondría como en el general: vista resumida y abrir detalle en pantalla aparte"
+// — antes la vista normal mostraba las tarjetas completas directamente en la lista).
+function v503RelativeOpensLabel(opensAt){
+  const hours=Math.round((opensAt-new Date())/3600000);
+  if(hours<=0)return 'Se abre en breve';
+  if(hours<48)return `La invitación se enviará en ${hours} hora${hours===1?'':'s'}`;
+  return `La invitación se enviará en ${Math.round(hours/24)} días`;
+}
+function v503WeekLabel(d,todayMon){
+  const mon=mondayOfISO(d),diffWeeks=Math.round((new Date(mon+'T12:00:00')-new Date(todayMon+'T12:00:00'))/(7*86400000));
+  if(diffWeeks===0)return 'Esta semana';
+  if(diffWeeks===1)return 'La próxima semana';
+  if(diffWeeks<0)return 'Semana pasada';
+  return `Semana del ${v495EventDateLabel(mon).replace(/^\S+\s*/,'')}`;
+}
+function v503OverviewRowHtml(ev,clash){
+  const tc=v502TeamColor(ev._viewTeam);
+  const d=new Date(ev.event_date+'T12:00:00');
+  const monthAbbr=new Intl.DateTimeFormat('es-ES',{month:'short',timeZone:'UTC'}).format(d).replace('.','').toUpperCase();
+  const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
+  const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
+  const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
+  return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
+}
+// V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
+// y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
+// también la vista normal de un solo equipo.
+function v503GroupedRowsHtml(evs){
+  const sorted=[...evs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))||String(a.event_time||'').localeCompare(String(b.event_time||'')));
+  const dateTeams=new Map();
+  sorted.forEach(ev=>{if(!dateTeams.has(ev.event_date))dateTeams.set(ev.event_date,new Set());dateTeams.get(ev.event_date).add(ev._viewTeam)});
+  const todayMon=mondayOfISO(localISODate());
+  let lastWeek=null,rows='';
+  sorted.forEach(ev=>{
+    const wl=v503WeekLabel(ev.event_date,todayMon);
+    if(wl!==lastWeek){rows+=`<h3 class="v503WeekHead">${esc(wl)}</h3>`;lastWeek=wl}
+    rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1);
+  });
+  return rows;
+}
+function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
+  return events.map(ev=>{
+    const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),counts={in:0,out:0,pending:0};
+    roster.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else counts.pending++});
+    return {...ev,_viewTeam:viewTeam,_counts:counts};
+  });
+}
+// V499 · "Avisar a los que faltan por confirmar" — antes solo vivía cableado dentro de la lista plana
+// de tarjetas de la vista normal; ahora hace falta también dentro de la pantalla de detalle.
+function v499WireRemindButton(root,team){
+  root.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{
+    const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;
+    b.disabled=true;b.textContent='Avisando…';
+    try{
+      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/',type:'training'});
+      b.textContent='Aviso enviado ✓';
+    }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}
+  });
+}
+// V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
+// in-situ. La usan la Vista general (canEdit=false, siempre de solo lectura) y ahora también la vista
+// normal de un equipo (canEdit=true: desde aquí sí se puede editar/eliminar y usar el sustituto
+// puntual, cosas que en la Vista general se siguen dejando solo para "la vista normal de ESE equipo").
+async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange){
+  document.querySelectorAll('.v503DetailBack').forEach(x=>x.remove());
+  const layer=document.createElement('div');layer.className='modalBack v503DetailBack';
+  layer.innerHTML=`<div class="modalCard v503DetailCard"><div class="modalTitle"><button type="button" class="v503DetailBackBtn">← Volver</button></div><div class="v503DetailBody">${v316Loading('Cargando…')}</div></div>`;
+  document.body.appendChild(layer);
+  const close=()=>layer.remove();
+  layer.querySelector('.v503DetailBackBtn').onclick=close;
+  layer.onclick=e=>{if(e.target===layer)close()};
+  const body=layer.querySelector('.v503DetailBody');
+  // V506 · tras confirmar/cambiar algo dentro del detalle, se refresca tanto el propio detalle como
+  // la lista de fondo (para que sus contadores ✅/❓/❌ no se queden desactualizados detrás).
+  const reopen=()=>{if(afterChange)afterChange();v503OpenEventDetail(tc,kind,id,canEdit,afterChange)};
+  try{
+    const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
+    const ev2=events2.find(e=>e.kind===kind&&e.id===id);
+    if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
+    const roster2=v499MergeRoster(rowersOnly2,staffList2);
+    const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
+    const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
+    body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,canEdit,staffList2);
+    v495WireRsvpButtons(body,reopen);
+    v495WireEventChatAccordions(body);
+    v493WireRsvpSummaryTabs(body,reopen);
+    v499WireRemindButton(body,tc);
+    if(canEdit){
+      v499WireSubstituteBoxes(body,reopen);
+      body.querySelectorAll('.v498EditEvent').forEach(b=>{b.onclick=()=>{
+        const formBox=document.getElementById('v497ClubEventForm');
+        if(!formBox)return;
+        close();
+        if(b.dataset.kind==='club_event')v498RenderClubEventForm(formBox,tc,ev2,afterChange);else v498RenderCompetitionForm(formBox,ev2,afterChange);
+        formBox.scrollIntoView({behavior:'smooth',block:'start'});
+      }});
+      body.querySelectorAll('.v498DeleteEvent').forEach(b=>{b.onclick=async()=>{
+        if(!confirm('¿Eliminar? Se perderán también las confirmaciones y el chat asociados.'))return;
+        b.disabled=true;
+        const q=await sb.from(V498_TABLE_BY_KIND[b.dataset.kind]).delete().eq('id',Number(b.dataset.id));
+        if(q.error){alert(q.error.message);b.disabled=false;return}
+        close();
+        if(afterChange)afterChange();
+      }});
+    }
+  }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
+}
 async function coachEventsView(){
   const teams=staffViewTeamCodes();
   if(!teams.length)return staffTodayView();
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
   coachSelectedTeam=team;
-  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias (sesiones de mar o gimnasio que marques como tal al crearlas/editarlas), competiciones y eventos propios. Todo el equipo ve aquí quién ha confirmado.</p><label id="eventsTeamSelWrap">Equipo<select id="eventsTeamSel">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${teams.length>1?`<label class="inlineCheck"><input type="checkbox" id="v502OverviewToggle"> <span>🗓️ Vista general — todos tus equipos a la vez, para ver si se pisan en horarios</span></label>`:''}<button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  content.innerHTML=`<div class="card"><h2>Eventos</h2><label id="eventsTeamSelWrap">Equipo<select id="eventsTeamSel">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${teams.length>1?`<label class="inlineCheck"><input type="checkbox" id="v502OverviewToggle"> <span>🗓️ Vista general — todos tus equipos a la vez, para ver si se pisan en horarios</span></label>`:''}<button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   v497NewClubEvent.onclick=()=>v498RenderClubEventForm(document.getElementById('v497ClubEventForm'),eventsTeamSel.value,null,load);
   // V502 · "los entrenadores deberían poder ver todos los eventos de los otros equipos también,
-  // para saber si se pisan en horarios. Pero en visión general deberían estar plegados los eventos"
-  // — vista de solo lectura con TODOS los equipos a la vez, cada evento plegado por defecto (se
-  // despliega para ver/gestionar el detalle completo de ese equipo).
-  // V503 · "algo así" (con captura de la pantalla de inicio de Spond como referencia): agrupado por
-  // semana ("Esta semana"/"La próxima semana"/...), bloque de fecha grande, punto de color del
-  // equipo, y contador ✅/❓/❌ visible sin desplegar — o, si aún no se puede confirmar, cuándo se
-  // enviará la invitación. Se despliega para ver/confirmar el detalle completo.
-  function v503RelativeOpensLabel(opensAt){
-    const hours=Math.round((opensAt-new Date())/3600000);
-    if(hours<=0)return 'Se abre en breve';
-    if(hours<48)return `La invitación se enviará en ${hours} hora${hours===1?'':'s'}`;
-    return `La invitación se enviará en ${Math.round(hours/24)} días`;
-  }
-  function v503WeekLabel(d,todayMon){
-    const mon=mondayOfISO(d),diffWeeks=Math.round((new Date(mon+'T12:00:00')-new Date(todayMon+'T12:00:00'))/(7*86400000));
-    if(diffWeeks===0)return 'Esta semana';
-    if(diffWeeks===1)return 'La próxima semana';
-    if(diffWeeks<0)return 'Semana pasada';
-    return `Semana del ${v495EventDateLabel(mon).replace(/^\S+\s*/,'')}`;
-  }
-  // V506 · "no puedes simular el mismo estilo, ocupando todo el ancho y no desplegando sino pasando
-  // a otra pantalla" (captura de la Vista general real de Spond, donde cada fila es de ancho
-  // completo, el título nunca se corta/salta de línea, y tocarla abre una pantalla aparte en vez de
-  // desplegarse in-situ). Se cambia de <details> a un botón que abre v503OpenEventDetail (pantalla
-  // completa superpuesta, con botón "Volver"), y el título pasa a una sola línea con "…" en vez de
-  // envolver a varias.
-  function v503OverviewRowHtml(ev,clash){
-    const tc=v502TeamColor(ev._viewTeam);
-    const d=new Date(ev.event_date+'T12:00:00');
-    const monthAbbr=new Intl.DateTimeFormat('es-ES',{month:'short',timeZone:'UTC'}).format(d).replace('.','').toUpperCase();
-    const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
-    const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
-    const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
-    // V506 · "en vista general aparece la hora y el día (martes, jueves…), lo quiero lo más parecido
-    // posible a Spond" — se separa en dos líneas, como en la captura de Spond: título solo, luego
-    // "domingo: 8:15" en su propia línea, y el equipo+tipo debajo de esa.
-    return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
-  }
-  // V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
-  // in-situ. Reutiliza exactamente la misma carga de datos que antes vivía en el handler de
-  // "toggle" del <details>.
-  async function v503OpenEventDetail(tc,kind,id){
-    document.querySelectorAll('.v503DetailBack').forEach(x=>x.remove());
-    const layer=document.createElement('div');layer.className='modalBack v503DetailBack';
-    layer.innerHTML=`<div class="modalCard v503DetailCard"><div class="modalTitle"><button type="button" class="v503DetailBackBtn">← Volver</button></div><div class="v503DetailBody">${v316Loading('Cargando…')}</div></div>`;
-    document.body.appendChild(layer);
-    const close=()=>layer.remove();
-    layer.querySelector('.v503DetailBackBtn').onclick=close;
-    layer.onclick=e=>{if(e.target===layer)close()};
-    const body=layer.querySelector('.v503DetailBody');
-    try{
-      const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
-      const ev2=events2.find(e=>e.kind===kind&&e.id===id);
-      if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
-      const roster2=v499MergeRoster(rowersOnly2,staffList2);
-      const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
-      const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
-      // V502 · solo lectura + confirmar asistencia desde aquí (RSVP/chat); editar/eliminar y el
-      // sustituto puntual se hacen desde la vista normal de ESE equipo, para no complicar esta
-      // vista pensada solo para detectar solapes de horario de un vistazo.
-      body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,false);
-      v495WireRsvpButtons(body,()=>v503OpenEventDetail(tc,kind,id));
-      v495WireEventChatAccordions(body);
-      v493WireRsvpSummaryTabs(body);
-    }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
-  }
+  // para saber si se pisan en horarios" — vista de solo lectura con TODOS los equipos a la vez.
   async function loadOverview(){
     const area=document.getElementById('eventsArea');
     document.getElementById('v497ClubEventForm').classList.add('hidden');
@@ -3620,36 +3667,24 @@ async function coachEventsView(){
         const [rowersOnly,staffList]=await Promise.all([staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
         const roster=v499MergeRoster(rowersOnly,staffList);
         const statusByEvent=await v495RsvpStatusMapsForEvents(events,tc);
-        return {tc,events,roster,statusByEvent};
+        return v503CountsForEvents(events,roster,statusByEvent,tc);
       }));
     }catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
     if(tab!=='eventos'||currentMode!=='staff')return;
-    const all=[];
-    perTeam.forEach(({tc,events,roster,statusByEvent})=>events.forEach(ev=>{
-      const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),counts={in:0,out:0,pending:0};
-      roster.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else counts.pending++});
-      all.push({...ev,_viewTeam:tc,_counts:counts});
-    }));
+    const all=perTeam.flat();
     if(!all.length){area.innerHTML='<div class="info">No hay convocatorias ni competiciones próximas en ninguno de tus equipos.</div>';return}
-    all.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))||String(a.event_time||'').localeCompare(String(b.event_time||'')));
-    const dateTeams=new Map();
-    all.forEach(ev=>{if(!dateTeams.has(ev.event_date))dateTeams.set(ev.event_date,new Set());dateTeams.get(ev.event_date).add(ev._viewTeam)});
     const legend=`<div class="v502Legend">${visibleTeams.map(tc=>{const c=v502TeamColor(tc);return `<span class="tag" style="background:${c.bg};color:${c.text}">${esc(teamLabel(tc))}</span>`}).join('')}</div>`;
-    const todayMon=mondayOfISO(localISODate());
-    let lastWeek=null,rows='';
-    all.forEach(ev=>{
-      const wl=v503WeekLabel(ev.event_date,todayMon);
-      if(wl!==lastWeek){rows+=`<h3 class="v503WeekHead">${esc(wl)}</h3>`;lastWeek=wl}
-      rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1);
-    });
-    area.innerHTML=legend+rows;
-    area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id)));
+    area.innerHTML=legend+v503GroupedRowsHtml(all);
+    area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,loadOverview));
   }
   document.getElementById('v502OverviewToggle')?.addEventListener('change',function(){
     document.getElementById('eventsTeamSelWrap').classList.toggle('hidden',this.checked);
     v497NewClubEvent.classList.toggle('hidden',this.checked);
     if(this.checked)loadOverview();else load();
   });
+  // V506 · "en la visión de un equipo solo lo pondría como en el general: vista resumida y abrir
+  // detalle en pantalla aparte" — mismo estilo de fila que la Vista general (antes mostraba aquí las
+  // tarjetas completas, una tras otra, directamente en la lista).
   async function load(){
     const t=eventsTeamSel.value;coachSelectedTeam=t;
     const area=document.getElementById('eventsArea');
@@ -3661,27 +3696,10 @@ async function coachEventsView(){
     roster=v499MergeRoster(rowersOnly,staffList);
     if(tab!=='eventos'||currentMode!=='staff')return;
     const statusByEvent=await v495RsvpStatusMapsForEvents(events,t);
-    area.innerHTML=events.length?events.map(ev=>v495EventCardHtml(ev,roster,statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),currentUser?(statusByEvent.get(`${ev.kind}_${ev.id}`)?.get(String(currentUser.id))||null):null,t,true,true,staffList)).join(''):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
-    v495WireRsvpButtons(area,load);
-    v495WireEventChatAccordions(area);
-    v493WireRsvpSummaryTabs(area,load);
-    v499WireSubstituteBoxes(area,load);
+    const withCounts=v503CountsForEvents(events,roster,statusByEvent,t);
+    area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
+    area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load));
     events.forEach(ev=>v498TryClaimAndNotify(ev,t));
-    area.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;b.disabled=true;b.textContent='Avisando…';try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[t]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/',type:'training'});b.textContent='Aviso enviado ✓'}catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}});
-    area.querySelectorAll('.v498EditEvent').forEach(b=>b.onclick=()=>{
-      const kind=b.dataset.kind,id=Number(b.dataset.id),ev=events.find(e=>e.kind===kind&&e.id===id);
-      if(!ev)return;
-      const formBox=document.getElementById('v497ClubEventForm');
-      if(kind==='club_event')v498RenderClubEventForm(formBox,t,ev,load);else v498RenderCompetitionForm(formBox,ev,load);
-      formBox.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-    area.querySelectorAll('.v498DeleteEvent').forEach(b=>b.onclick=async()=>{
-      if(!confirm('¿Eliminar? Se perderán también las confirmaciones y el chat asociados.'))return;
-      b.disabled=true;
-      const q=await sb.from(V498_TABLE_BY_KIND[b.dataset.kind]).delete().eq('id',Number(b.dataset.id));
-      if(q.error){alert(q.error.message);b.disabled=false;return}
-      load();
-    });
   }
   eventsTeamSel.onchange=load;
   load();
