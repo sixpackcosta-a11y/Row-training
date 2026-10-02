@@ -2256,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="481";
+const APP_VERSION="483";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7875,7 +7875,7 @@ function zonesCompactV103(m){if(!m)return 'Pendiente';return ['UT2','UT1','AT','
 async function results(){
   content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">Remeros</button></div><p class="muted">${v316Loading()}</p></div>`;
   const visibleTeams=(currentMode==='staff'&&!isGlobalCoach)?editableTeamCodes():TEAM_OPTIONS.map(x=>x[0]);
-  const [pr,mt,wo,gy,er,c2,ss,rm,cx]=await Promise.all([
+  const [pr,mt,wo,gy,er,c2,ss,rm,cx,ms]=await Promise.all([
     sb.from('profiles').select('user_id,full_name,height_cm,birth_date,team_code').order('full_name'),
     sb.from('athlete_metrics').select('*').order('recorded_at',{ascending:false}),
     sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,performed_at,status,effort,feeling,notes,created_at,hidden,is_additional').order('created_at',{ascending:false}),
@@ -7884,10 +7884,16 @@ async function results(){
     sb.from('concept2_results').select('*').order('workout_date',{ascending:false}),
     sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content,target_user_ids').in('team_code',visibleTeams).gte('session_date','2026-08-31').lte('session_date','2027-05-31').in('session_type',['GYM','ERG']).order('session_date'),
     sb.from('rower_team_memberships').select('user_id,team_code,is_rower').eq('is_rower',true),
-    sb.rpc('concept2_connection_status_v103')
+    sb.rpc('concept2_connection_status_v103'),
+    sb.from('training_sessions').select('id,team_code,session_date,title').in('team_code',visibleTeams).gte('session_date','2026-08-31').lte('session_date','2027-05-31').eq('session_type','MAR').order('session_date')
   ]);
   const err=pr.error||mt.error||wo.error||gy.error||er.error||c2.error||ss.error;if(err){content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaErr">MAR · Equipo</button><button class="active">Remeros</button></div><p>${esc(err.message)}</p></div>`;const b=document.getElementById('analysisSeaErr');if(b)b.onclick=()=>coachSeaResultsView();return}
   const profiles=pr.data||[],metrics=mt.data||[],workouts=wo.data||[],gym=gy.data||[],ergo=er.data||[],c2rows=c2.data||[],sessions=ss.data||[],memberships=rm.error?[]:(rm.data||[]),concept2Statuses=cx?.error?[]:(cx?.data||[]),concept2StatusMap=new Map(concept2Statuses.map(x=>[String(x.user_id),x]));
+  // V479 · sesiones MAR de los equipos visibles + tripulación de cada una (tabla mar_crew), para poder
+  // calcular la asistencia a mar de cada remera a partir de en cuántas tripulaciones aparece (dato que
+  // ya introduce el entrenador al asignar los puestos del bote en cada entreno de mar, no uno nuevo).
+  const marSessions=ms?.error?[]:(ms?.data||[]);
+  const marCrewMap=await v307FetchCrewMap(marSessions.map(s=>s.id));
   await v124HydrateErgoPhotos(ergo);
   await v457LoadGymTagsMap();
   let team=(coachSelectedTeam&&visibleTeams.includes(coachSelectedTeam))?coachSelectedTeam:(visibleTeams[0]||''),weekStart=mondayOfISO(localISODate()),selectedAthlete=workoutNotificationAthleteV129||'',complianceMode='week',monthStart=localISODate().slice(0,7)+'-01',v269RankMode='result',v276SelectedTestId='latest',v416SelectedGymKey='',v417SelectedErgoKey='',v416SortDir='desc',v417SortMode='result',v416CompareMetric='latest',v417CompareMetric='latest';
@@ -8987,6 +8993,105 @@ async function results(){
     candidates.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
     return candidates[0];
   }
+  // V479 · igual que v309FindLatestTestPower pero devuelve TODOS los test del remero en la temporada
+  // (no solo el último), filtrados a la distancia correcta de su categoría (1000 m veteranas/veteranos,
+  // 2000 m senior) igual que ya se hace para las tripulaciones en v474TestDistanceForTeam, para poder
+  // dibujar la evolución completa en vez de un único punto.
+  function v479AllTestPowers(userId,sessions,c2rows,ergo,workouts,teamCode){
+    const reqDist=v474TestDistanceForTeam(teamCode),reqDistRe=new RegExp(String(reqDist));
+    const testSessionIds=new Set((sessions||[]).filter(s=>/test/i.test(String(s.title||''))&&reqDistRe.test(String(s.title||''))).map(s=>String(s.id)));
+    if(!testSessionIds.size)return [];
+    const candidates=[];
+    (c2rows||[]).forEach(r=>{
+      if(String(r.user_id)!==String(userId))return;
+      if(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(r))return;
+      if(!r.training_session_id||!testSessionIds.has(String(r.training_session_id)))return;
+      if(r.pace_500_seconds)candidates.push({date:String(r.workout_date||'').slice(0,10),pace:Number(r.pace_500_seconds),distance:r.distance_m,source:'ErgData'});
+    });
+    const testWorkouts=(workouts||[]).filter(w=>String(w.user_id)===String(userId)&&w.training_session_id&&testSessionIds.has(String(w.training_session_id)));
+    const testWorkoutIds=new Set(testWorkouts.map(w=>String(w.id)));
+    (ergo||[]).forEach(e=>{
+      if(!testWorkoutIds.has(String(e.workout_id)))return;
+      const w=testWorkouts.find(x=>String(x.id)===String(e.workout_id));
+      const secs=timeTextToSeconds(e.time_text);
+      if(secs&&e.distance_m)candidates.push({date:String(w?.session_date||'').slice(0,10),pace:secs*500/e.distance_m,distance:e.distance_m,source:'Manual'});
+    });
+    const byDate=new Map();
+    candidates.forEach(c=>{if(!c.date)return;const ex=byDate.get(c.date);if(!ex||(ex.source==='Manual'&&c.source==='ErgData'))byDate.set(c.date,c)});
+    return [...byDate.values()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  }
+  function ageFromBirthAtV479(birth,atISODate){
+    if(!birth||!atISODate)return null;
+    const d=new Date(String(birth)+'T12:00:00'),t=new Date(String(atISODate)+'T12:00:00');
+    if(Number.isNaN(d.getTime())||Number.isNaN(t.getTime()))return null;
+    let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;
+    return a>=0?a:null;
+  }
+  function v479TestEvolutionSvg(points,showIep){
+    const data=points.filter(p=>p.wkg!=null);
+    if(data.length<2)return '<p class="muted">Necesitas al menos 2 tests con W/kg calculado para ver la evolución.</p>';
+    const W=600,H=230,padL=44,padR=16,padT=22,padB=34;
+    const series1=data.map(d=>d.wkg),series2=showIep?data.map(d=>d.iep):[];
+    const allVals=showIep?[...series1,...series2.filter(v=>v!=null)]:series1;
+    const minV=Math.min(...allVals),maxV=Math.max(...allVals),span=(maxV-minV)||1;
+    const xAt=i=>padL+(W-padL-padR)*(data.length===1?0:i/(data.length-1));
+    const yAt=v=>padT+(H-padT-padB)*((maxV-v)/span);
+    const mkPath=(vals)=>vals.map((v,i)=>v==null?null:{x:xAt(i),y:yAt(v)}).filter(Boolean).map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' ');
+    const wkgCircles=data.map((d,i)=>`<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(d.wkg).toFixed(1)}" r="6" fill="#2563eb"><title>${esc(shortDateES(d.date))} · ${d.wkg.toFixed(2)} W/kg</title></circle>`).join('');
+    const iepCircles=showIep?data.map((d,i)=>d.iep!=null?`<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(d.iep).toFixed(1)}" r="6" fill="#087f8c"><title>${esc(shortDateES(d.date))} · ${d.iep.toFixed(2)} IEP</title></circle>`:'').join(''):'';
+    const firstLabel=esc(shortDateES(data[0].date)),lastLabel=esc(shortDateES(data[data.length-1].date));
+    const legend=showIep?`<p class="muted"><small><span style="color:#2563eb">●</span> W/kg · <span style="color:#087f8c">●</span> IEP (ajustado por edad)</small></p>`:'';
+    return `<div class="v300ChartWrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit">
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#c8d4e2"/>
+      <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#c8d4e2"/>
+      <text x="${padL-6}" y="${padT+10}" font-size="11" fill="#64748b" text-anchor="end">${maxV.toFixed(2)}</text>
+      <text x="${padL-6}" y="${H-padB}" font-size="11" fill="#64748b" text-anchor="end">${minV.toFixed(2)}</text>
+      <path d="${mkPath(series1)}" fill="none" stroke="#2563eb" stroke-width="2"/>
+      ${showIep?`<path d="${mkPath(series2)}" fill="none" stroke="#087f8c" stroke-width="2" stroke-dasharray="4 3"/>`:''}
+      ${wkgCircles}${iepCircles}
+      <text x="${padL}" y="${H-8}" font-size="11" fill="#64748b">${firstLabel}</text>
+      <text x="${W-padR}" y="${H-8}" font-size="11" fill="#64748b" text-anchor="end">${lastLabel}</text>
+    </svg>${legend}</div>`;
+  }
+  function v479TestEvolutionCardHtml(userId,sessions,c2rows,ergo,workouts,weightKg,birthDate,teamCode){
+    const all=v479AllTestPowers(userId,sessions,c2rows,ergo,workouts,teamCode);
+    const showIep=v465IsVeteranTeam(teamCode);
+    const points=all.map(t=>{
+      const watts=v309WattsFromPace500(t.pace),wkg=(watts&&weightKg)?watts/weightKg:null;
+      const age=ageFromBirthAtV479(birthDate,t.date);
+      const iep=showIep?v470AgeAdjustedWkg(wkg,age):null;
+      return {date:t.date,wkg,iep};
+    });
+    const valid=points.filter(p=>p.wkg!=null);
+    if(!valid.length)return '<p class="muted">Aún no hay ningún test de esta remera con peso registrado como para calcular W/kg.</p>';
+    if(valid.length<2)return `<p class="muted">Solo hay 1 test con W/kg calculado hasta ahora (${esc(shortDateES(valid[0].date))} · ${valid[0].wkg.toFixed(2)} W/kg${showIep&&valid[0].iep!=null?` · ${valid[0].iep.toFixed(2)} IEP`:''}). Hace falta un segundo test para dibujar la evolución.</p>`;
+    const first=valid[0],last=valid[valid.length-1],deltaWkg=last.wkg-first.wkg,deltaIep=showIep&&last.iep!=null&&first.iep!=null?last.iep-first.iep:null;
+    const summary=`<p class="muted"><small>De ${esc(shortDateES(first.date))} a ${esc(shortDateES(last.date))}: ${deltaWkg>=0?'+':''}${deltaWkg.toFixed(2)} W/kg${deltaIep!=null?` · ${deltaIep>=0?'+':''}${deltaIep.toFixed(2)} IEP`:''}. El peso usado para todos los puntos es el peso corporal más reciente registrado (no se guarda un histórico de peso por fecha), así que es una estimación.</small></p>`;
+    return summary+v479TestEvolutionSvg(valid,showIep);
+  }
+  // V479 · asistencia a mar: no hay un registro de "asistencia" como tal, pero cada tripulación que el
+  // entrenador asigna en un entrenamiento de mar (tabla mar_crew, mismo dato que ya usan v307CrewBoatHtml
+  // y el hándicap FAR de tripulación) dice quién ha ido ese día. Contamos solo las sesiones de mar que
+  // tienen tripulación asignada (si no se ha rellenado, no sabemos si fue o no, así que no cuenta ni a
+  // favor ni en contra) frente a cuántas de esas aparece esta remera.
+  function v479MarAttendanceForUser(userId,teamMarSessions,crewMap){
+    const rows=(teamMarSessions||[]).map(s=>{
+      const crew=v307NormalizeCrew(crewMap.get(String(s.id)));
+      const hasCrew=crew.assignments.some(a=>a.user_id||a.guest_name);
+      const inCrew=crew.assignments.some(a=>String(a.user_id)===String(userId));
+      return {hasCrew,inCrew};
+    });
+    const withCrew=rows.filter(r=>r.hasCrew);
+    return {attended:withCrew.filter(r=>r.inCrew).length,total:withCrew.length,totalSessions:rows.length};
+  }
+  function v479SeasonSummaryHtml(userId,gymRows,teamMarSessions,crewMap){
+    const gymForUser=(gymRows||[]).filter(g=>String(g.user_id)===String(userId));
+    const totalGym=gymForUser.length,distinctGym=new Set(gymForUser.map(g=>v300NormGymName(g.exercise_name))).size;
+    const att=v479MarAttendanceForUser(userId,teamMarSessions,crewMap);
+    const attText=att.total?`${att.attended}/${att.total}`:'—';
+    const attNote=att.total?'entrenos de mar con tripulación asignada':(att.totalSessions?'Aún no hay tripulaciones asignadas en ningún entreno de mar de este equipo':'Sin entrenos de mar registrados todavía');
+    return `<div class="profileMetricCardV103" style="margin-bottom:16px"><div class="profileMetricGridV103"><span><b>Asistencia a mar</b>${attText}<br><small class="muted">${esc(attNote)}</small></span><span><b>Ejercicios de GYM registrados</b>${totalGym}</span><span><b>Ejercicios distintos trabajados</b>${distinctGym}</span></div></div>`;
+  }
   function renderClient(){
     // Antes de reconstruir el HTML, recordamos si el remero tenía estos paneles abiertos, para no plegarlos al cambiar de semana/mes.
     teamBox.querySelectorAll('[data-v300key]').forEach(d=>{v300PanelOpen[d.dataset.v300key]=!!d.open});
@@ -9030,7 +9135,7 @@ async function results(){
     const testPower=v309FindLatestTestPower(p.user_id,sessions,c2rows,ergo,workouts);
     const testWatts=testPower?v309WattsFromPace500(testPower.pace):null;
     const testWkg=(testWatts&&mm?.weight_kg)?(testWatts/mm.weight_kg):null;
-    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><details class="athleteProfileToggleV306" ${v300PanelOpen.profile?'open':''}><summary>Ver datos físicos y zonas de FC</summary><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div><div><small>W/kg (último test)</small><b>${testWkg?testWkg.toFixed(2):'—'}</b>${testPower?`<br><small class="muted">${shortDateES(testPower.date)} · ${testPower.distance??'—'} m</small>`:!mm?.weight_kg&&testWatts?'<br><small class="muted">Falta el peso</small>':''}${testWkg!=null?`<br><small class="muted">${esc(v280WkgTargetComment(testWkg,team)||'')}</small>`:''}${testPower?.splits?.length?(()=>{const pc=v280PacingComment(testPower.splits);return pc?`<br><small class="muted">${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(testWkg,age,team)?`<br><small class="muted">🏁 ${v465AgeHandicapLine(testWkg,age,team)}</small>`:''}</div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}</details><div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)&&!v161Concept2EffectiveHidden(x)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions),mm,team)}<h3 style="margin-top:20px">Evolución de peso (GYM)</h3>${v390GymEvolutionCardHtml(gym.filter(g=>String(g.user_id)===String(p.user_id)),workouts)}</section></section>`;
+    detail.innerHTML=`<section class="athleteDetailCard"><div class="athleteHead"><div><h3 style="margin:0">${esc(p.full_name||'Sin nombre')}</h3><div class="muted">${esc(teamLabel(team))}</div><div class="athleteErgStatusV103">${ergDataStatusHtmlV103(p.user_id,concept2StatusMap,false)}</div></div><button id="editProfileV103">Editar perfil</button></div><details class="athleteProfileToggleV306" ${v300PanelOpen.profile?'open':''}><summary>Ver datos físicos y zonas de FC</summary><div class="athleteProfileSummaryV103"><div><small>Edad</small><b>${age??'Pendiente'}${age!=null?' años':''}</b></div><div><small>Altura</small><b>${p.height_cm??'Pendiente'}${p.height_cm?' cm':''}</b></div><div><small>Peso</small><b>${mm?.weight_kg??'Pendiente'}${mm?.weight_kg?' kg':''}</b></div><div><small>FC reposo / máx</small><b>${mm?`${mm.resting_hr??'—'} / ${mm.max_hr??'—'}`:'Pendiente'}</b></div><div><small>W/kg (último test)</small><b>${testWkg?testWkg.toFixed(2):'—'}</b>${testPower?`<br><small class="muted">${shortDateES(testPower.date)} · ${testPower.distance??'—'} m</small>`:!mm?.weight_kg&&testWatts?'<br><small class="muted">Falta el peso</small>':''}${testWkg!=null?`<br><small class="muted">${esc(v280WkgTargetComment(testWkg,team)||'')}</small>`:''}${testPower?.splits?.length?(()=>{const pc=v280PacingComment(testPower.splits);return pc?`<br><small class="muted">${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(testWkg,age,team)?`<br><small class="muted">🏁 ${v465AgeHandicapLine(testWkg,age,team)}</small>`:''}</div></div>${mm?`<div class="info"><b>Zonas FC:</b> UT2 ${mm.ut2_min??'—'}–${mm.ut2_max??'—'} · UT1 ${mm.ut1_min??'—'}–${mm.ut1_max??'—'} · AT ${mm.at_min??'—'}–${mm.at_max??'—'} · TR ${mm.tr_min??'—'}–${mm.tr_max??'—'} · AN ${mm.an_min??'—'}–${mm.an_max??'—'}</div>`:'<div class="info">Datos de FC pendientes de completar.</div>'}</details><div id="athleteProfileEditorV103"></div><div class="athleteWeekSummary"><div class="athleteWeekNavV151">${complianceMode==='month'?`<button id="backToMonthTeamV170" type="button">← Volver al equipo</button><strong>${esc(monthLabelV151(monthStart))}</strong>`:`<button id="athletePrevWeekV151" type="button">← Semana</button><strong>${shortDateES(weekStart)} – ${shortDateES(end)}</strong><button id="athleteNextWeekV151" type="button">Semana →</button>`}</div>${v79ComplianceHtml(comp,true)}</div>${pendingBanner}<div class="v225AthleteTabs"><button type="button" id="v225TabPending" class="active">Pendientes <span>${v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows).length}</span></button><button type="button" id="v225TabHistory">Historial</button><button type="button" id="v225TabCharts">Gráficas</button></div><section id="v225PanePending" class="v225AthletePane v225PendingSection"><div class="v225PendingHeading"><h3>Entrenamientos pendientes</h3><small>GYM y ERGO planificados hasta hoy que aún no constan como realizados.</small></div><div id="v225CoachPendingList">${v225PendingHtml(v225PendingPlansForAthlete(p.user_id,team,sessions,workouts,c2rows),'coach')}</div></section><section id="v225PaneHistory" class="v225AthletePane" hidden><h3 id="v150AthleteHistory">Historial del remero</h3>${v79AthleteWorkoutHtml(p,workouts,gym,ergo,c2rows,sessions,team,mm,!!concept2StatusMap.get(String(p.user_id))?.connected)}</section><section id="v225PaneCharts" class="v225AthletePane" hidden><h3>Resumen de temporada</h3>${v479SeasonSummaryHtml(p.user_id,gym,marSessions.filter(s=>s.team_code===team),marCrewMap)}<h3>${v472IepTapHtml('IEP')} / W-kg a lo largo de la temporada</h3>${v479TestEvolutionCardHtml(p.user_id,sessions,c2rows,ergo,workouts,mm?.weight_kg,p.birth_date,team)}<h3 style="margin-top:20px">Evolución de ritmo (ERGO)</h3>${v300EvolutionCardHtml(v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(p.user_id)&&!v161Concept2EffectiveHidden(x)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(p.user_id))),workouts.filter(w=>String(w.user_id)===String(p.user_id))),v300TitleMapFromSessions(sessions),mm,team)}<h3 style="margin-top:20px">Evolución de peso (GYM)</h3>${v390GymEvolutionCardHtml(gym.filter(g=>String(g.user_id)===String(p.user_id)),workouts)}</section></section>`;
     const athleteProfileToggle=detail.querySelector('.athleteProfileToggleV306');if(athleteProfileToggle)athleteProfileToggle.addEventListener('toggle',()=>{v300PanelOpen.profile=athleteProfileToggle.open});
     const backToMonthTeamV170=detail.querySelector('#backToMonthTeamV170');if(backToMonthTeamV170)backToMonthTeamV170.onclick=()=>{athleteSection.open=false;document.getElementById('complianceSectionV123').open=true;document.getElementById('complianceSectionV123').scrollIntoView({behavior:'smooth',block:'start'})};const athletePrevWeekV151=detail.querySelector('#athletePrevWeekV151'),athleteNextWeekV151=detail.querySelector('#athleteNextWeekV151');if(athletePrevWeekV151)athletePrevWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,-7);complianceMode='week';renderClient();athleteSection.open=true};if(athleteNextWeekV151)athleteNextWeekV151.onclick=()=>{weekStart=addDaysISO(weekStart,7);complianceMode='week';renderClient();athleteSection.open=true};
     detail.querySelectorAll('.v154CoachEditErgo').forEach(button=>button.onclick=()=>{const w=workouts.find(x=>String(x.id)===String(button.dataset.workout)),e=ergo.find(x=>String(x.id)===String(button.dataset.ergo));v154EditManualErgo(w,e,p.user_id,team,()=>{renderClient();athleteSection.open=true})});
