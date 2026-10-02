@@ -2256,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="485";
+const APP_VERSION="486";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9123,16 +9123,19 @@ async function results(){
     tracked.forEach(([,arr])=>{const d=Number(arr[arr.length-1].pace_500_seconds)-Number(arr[0].pace_500_seconds);if(d<-0.5)up++;else if(d>0.5)down++;else flat++});
     return {tracked:tracked.length,up,down,flat};
   }
-  function v479OverallAssessmentHtml(marAtt,gymRowsForUser,workoutsAll,paceRows,titleMap,testWkgDelta){
+  // V481 · los datos de la valoración (líneas + veredicto, en texto plano, cada línea con su "etiqueta:
+  // resto") se calculan una sola vez aquí y los reutilizan tanto la tarjeta en pantalla (HTML) como el
+  // texto para copiar y el PDF para exportar, para que los tres sitios digan siempre lo mismo.
+  function v479AssessmentData(marAtt,gymRowsForUser,workoutsAll,paceRows,titleMap,testWkgDelta){
     const gymT=v479GymTrendSummary(gymRowsForUser,workoutsAll),ergoT=v479ErgoTrendSummary(paceRows,titleMap);
-    const pieces=[];
+    const lines=[];
     if(marAtt.total){
       const pct=Math.round(100*marAtt.attended/marAtt.total),label=pct>=90?'excelente':pct>=75?'buena':pct>=50?'irregular':'baja';
-      pieces.push(`<b>Asistencia a mar ${label} (${pct}%)</b>: en la tripulación de ${marAtt.attended} de ${marAtt.total} entrenos de mar con tripulación asignada.`);
-    }else pieces.push('Sin datos de asistencia a mar todavía (no hay tripulaciones asignadas en este equipo).');
-    pieces.push(gymT.tracked?`<b>GYM</b>: de ${gymT.tracked} ejercicio${gymT.tracked===1?'':'s'} con al menos 2 registros, sube peso en ${gymT.up}, se mantiene en ${gymT.flat} y baja en ${gymT.down}${gymT.totalLogged?` (${gymT.totalLogged} registros en total)`:''}.`:'<b>GYM</b>: todavía no hay suficientes registros repetidos del mismo ejercicio como para ver tendencia.');
-    pieces.push(ergoT.tracked?`<b>ERGO</b>: de ${ergoT.tracked} ejercicio${ergoT.tracked===1?'':'s'} repetido${ergoT.tracked===1?'':'s'}, mejora el ritmo en ${ergoT.up}, se mantiene en ${ergoT.flat} y empeora en ${ergoT.down}.`:'<b>ERGO</b>: todavía no hay suficientes repeticiones del mismo ejercicio como para ver tendencia.');
-    if(testWkgDelta!=null)pieces.push(`<b>Test de control</b>: ${testWkgDelta>=0?'+':''}${testWkgDelta.toFixed(2)} W/kg desde el primer test registrado.`);
+      lines.push(`Asistencia a mar ${label} (${pct}%): en la tripulación de ${marAtt.attended} de ${marAtt.total} entrenos de mar con tripulación asignada.`);
+    }else lines.push('Asistencia a mar: sin datos todavía (no hay tripulaciones asignadas en este equipo).');
+    lines.push(gymT.tracked?`GYM: de ${gymT.tracked} ejercicio${gymT.tracked===1?'':'s'} con al menos 2 registros, sube peso en ${gymT.up}, se mantiene en ${gymT.flat} y baja en ${gymT.down}${gymT.totalLogged?` (${gymT.totalLogged} registros en total)`:''}.`:'GYM: todavía no hay suficientes registros repetidos del mismo ejercicio como para ver tendencia.');
+    lines.push(ergoT.tracked?`ERGO: de ${ergoT.tracked} ejercicio${ergoT.tracked===1?'':'s'} repetido${ergoT.tracked===1?'':'s'}, mejora el ritmo en ${ergoT.up}, se mantiene en ${ergoT.flat} y empeora en ${ergoT.down}.`:'ERGO: todavía no hay suficientes repeticiones del mismo ejercicio como para ver tendencia.');
+    if(testWkgDelta!=null)lines.push(`Test de control: ${testWkgDelta>=0?'+':''}${testWkgDelta.toFixed(2)} W/kg desde el primer test registrado.`);
     const attPct=marAtt.total?Math.round(100*marAtt.attended/marAtt.total):null,physUp=gymT.up+ergoT.up,physDown=gymT.down+ergoT.down,hasPhysData=gymT.tracked||ergoT.tracked;
     let verdict;
     if(attPct!=null&&attPct<60&&physUp>physDown)verdict='A pesar de progresar físicamente, la asistencia irregular a mar es lo más a vigilar.';
@@ -9140,7 +9143,12 @@ async function results(){
     else if(hasPhysData&&physUp>physDown&&(attPct==null||attPct>=70))verdict='Buen momento general: progresa físicamente y mantiene buena regularidad.';
     else if(!hasPhysData&&!marAtt.total)verdict='Todavía hay muy pocos datos registrados como para sacar una valoración fiable.';
     else verdict='Datos mixtos — conviene mirar el detalle por ejercicio para entender mejor su evolución.';
-    return `<div class="info" style="margin-bottom:16px"><p style="margin:0 0 8px">${pieces.join('<br>')}</p><p style="margin:0"><b>Valoración:</b> ${esc(verdict)}</p><p class="muted" style="margin:8px 0 0"><small>Valoración automática a partir de los datos registrados (reglas simples, no sustituye tu criterio).</small></p></div>`;
+    return {lines,verdict};
+  }
+  function v479OverallAssessmentHtml(marAtt,gymRowsForUser,workoutsAll,paceRows,titleMap,testWkgDelta){
+    const {lines,verdict}=v479AssessmentData(marAtt,gymRowsForUser,workoutsAll,paceRows,titleMap,testWkgDelta);
+    const piecesHtml=lines.map(l=>{const i=l.indexOf(':');return i>0?`<b>${esc(l.slice(0,i))}</b>${esc(l.slice(i))}`:esc(l)});
+    return `<div class="info" style="margin-bottom:16px"><p style="margin:0 0 8px">${piecesHtml.join('<br>')}</p><p style="margin:0"><b>Valoración:</b> ${esc(verdict)}</p><p class="muted" style="margin:8px 0 0"><small>Valoración automática a partir de los datos registrados (reglas simples, no sustituye tu criterio).</small></p></div>`;
   }
   // V480 · caja de nota editable del entrenador, para añadir sus propios comentarios a la valoración
   // automática (p.ej. matices que los datos no recogen: lesión reciente, motivo de una baja, contexto
@@ -9159,17 +9167,62 @@ async function results(){
       const gymForUser=gym.filter(g=>String(g.user_id)===String(a.user_id));
       const paceRows=v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(a.user_id)&&!v161Concept2EffectiveHidden(x)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(a.user_id))),workouts.filter(w=>String(w.user_id)===String(a.user_id)));
       const wkgDelta=v479TestWkgDeltaFor(a.user_id,sessions,c2rows,ergo,workouts,latestMetric(a.user_id)?.weight_kg,team);
-      return {a,marAtt,gymForUser,paceRows,wkgDelta};
+      const data=v479AssessmentData(marAtt,gymForUser,workouts,paceRows,titleMap,wkgDelta);
+      return {a,marAtt,gymForUser,paceRows,wkgDelta,data};
     });
-    box.innerHTML=`<div class="actions" style="margin-bottom:12px"><button id="v480CopyAssessments" type="button">Copiar listado</button></div><div class="libraryCards">${rows.map(r=>`<article class="libraryCard"><h3 style="margin:0 0 8px">${esc(r.a.full_name||'Sin nombre')}</h3>${v479OverallAssessmentHtml(r.marAtt,r.gymForUser,workouts,r.paceRows,titleMap,r.wkgDelta)}</article>`).join('')||'<div class="info">No hay remeros en este equipo.</div>'}</div>`;
+    box.innerHTML=`<div class="actions" style="margin-bottom:12px"><button id="v480CopyAssessments" type="button">Copiar listado</button><button id="v480PdfAssessments" type="button">Exportar PDF</button></div><div class="libraryCards">${rows.map(r=>`<article class="libraryCard"><h3 style="margin:0 0 8px">${esc(r.a.full_name||'Sin nombre')}</h3>${v479OverallAssessmentHtml(r.marAtt,r.gymForUser,workouts,r.paceRows,titleMap,r.wkgDelta)}</article>`).join('')||'<div class="info">No hay remeros en este equipo.</div>'}</div>`;
     const copyBtn=document.getElementById('v480CopyAssessments');
     if(copyBtn)copyBtn.onclick=()=>{
-      const text=`Valoraciones · ${teamLabel(team)} · ${shortDateES(localISODate())}\n\n`+rows.map(r=>{
-        const gymT=v479GymTrendSummary(r.gymForUser,workouts),ergoT=v479ErgoTrendSummary(r.paceRows,titleMap),pct=r.marAtt.total?Math.round(100*r.marAtt.attended/r.marAtt.total):null;
-        return `${r.a.full_name||'Sin nombre'}\n- Mar: ${pct!=null?`${pct}% (${r.marAtt.attended}/${r.marAtt.total})`:'sin datos'}\n- GYM: sube ${gymT.up} / igual ${gymT.flat} / baja ${gymT.down} (${gymT.tracked} ejercicios con tendencia)\n- ERGO: mejora ${ergoT.up} / igual ${ergoT.flat} / empeora ${ergoT.down} (${ergoT.tracked} ejercicios con tendencia)${r.wkgDelta!=null?`\n- Test: ${r.wkgDelta>=0?'+':''}${r.wkgDelta.toFixed(2)} W/kg`:''}`;
-      }).join('\n\n');
+      const text=`Valoraciones · ${teamLabel(team)} · ${shortDateES(localISODate())}\n\n`+rows.map(r=>`${r.a.full_name||'Sin nombre'}\n${r.data.lines.map(l=>`- ${l}`).join('\n')}\n- Valoración: ${r.data.verdict}`).join('\n\n');
       copyInvite(copyBtn,text);
     };
+    const pdfBtn=document.getElementById('v480PdfAssessments');
+    if(pdfBtn)pdfBtn.onclick=()=>v480ExportAssessmentsPdf(rows.map(r=>({name:r.a.full_name||'Sin nombre',...r.data})),teamLabel(team));
+  }
+  // V481 · versión "bonita" (PDF con cabecera, tipografía y maquetación del club) del mismo listado de
+  // valoraciones, para compartir o imprimir -- misma plantilla de cabecera/pie que ya usan las demás
+  // exportaciones en PDF de la app (v449DrawComparePdfPage), pero con un cuerpo de texto que fluye y
+  // añade páginas según haga falta, porque aquí cada remera ocupa un bloque de varias líneas, no una
+  // fila de tabla de altura fija.
+  async function v480ExportAssessmentsPdf(rows,teamLabelText){
+    if(!rows.length)return alert('No hay remeros en este equipo todavía.');
+    const {jsPDF}=window.jspdf||{};
+    if(!jsPDF)return alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
+    const hex=h=>{const n=parseInt(h.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255]};
+    const t=v450SafePdfText,PW=595,PH=842,M=36;
+    const doc=new jsPDF({unit:'pt',format:'a4',compress:true});
+    let page=0;
+    const drawHeader=()=>{
+      doc.setFillColor(255,255,255);doc.rect(0,0,PW,PH,'F');
+      doc.setFillColor(...hex('#07162f'));doc.rect(0,0,PW,56,'F');
+      doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);
+      doc.text('Club de Remo Pedregalejo',M,24);
+      doc.setFont('helvetica','normal');doc.setFontSize(10);
+      doc.text(t(`Valoraciones del equipo · ${teamLabelText}`),M,39);
+      doc.setFontSize(8);
+      doc.text(t(v273FullDateES(localISODate())),M,50);
+    };
+    const drawFooter=()=>{doc.setTextColor(...hex('#94a3b8'));doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(t(`Generado el ${shortDateES(localISODate())} · Row Training · página ${page+1}`),M,PH-18)};
+    drawHeader();let y=82;
+    const ensureSpace=(needed)=>{if(y+needed>PH-40){drawFooter();doc.addPage('a4');page++;drawHeader();y=82}};
+    rows.forEach(r=>{
+      ensureSpace(24);
+      doc.setTextColor(...hex('#0b1b35'));doc.setFont('helvetica','bold');doc.setFontSize(12.5);
+      doc.text(t(r.name),M,y);y+=13;
+      doc.setDrawColor(...hex('#dbe3ec'));doc.line(M,y-8,PW-M,y-8);y+=4;
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...hex('#334155'));
+      r.lines.forEach(line=>{
+        const wrapped=doc.splitTextToSize(t(line),PW-2*M);
+        ensureSpace(wrapped.length*12+4);
+        wrapped.forEach(w=>{doc.text(w,M,y);y+=12});
+      });
+      y+=4;ensureSpace(14);
+      doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...hex('#07162f'));
+      doc.splitTextToSize(t('Valoración: '+r.verdict),PW-2*M).forEach(w=>{ensureSpace(12);doc.text(w,M,y);y+=12});
+      y+=16;
+    });
+    drawFooter();
+    doc.save(`valoraciones-${team}-${localISODate()}.pdf`);
   }
   function renderClient(){
     // Antes de reconstruir el HTML, recordamos si el remero tenía estos paneles abiertos, para no plegarlos al cambiar de semana/mes.
