@@ -2287,7 +2287,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="499";
+const APP_VERSION="500";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3141,6 +3141,16 @@ async function v310CrewPhysicalStats(userIds,teamCode){
 // V495 · wiring compartido de los botones RSVP y los acordeones de chat de evento: antes vivía inline
 // dentro de bindAthletePlannedActionsV113 (solo Semana del remero), ahora también lo usa la pestaña
 // Eventos (remero y entrenador) y el Registro MAR, así que se saca a funciones reutilizables.
+// V499fix · "permission denied for table session_rsvp" (distinto del error de ON CONFLICT) casi
+// siempre significa que el token de sesión del navegador ha caducado y la petición llegó como
+// usuario anónimo en vez de autenticado — no es un problema de la base de datos. Mensaje más claro
+// para que Nacho sepa qué hacer, en vez de un error críptico de Postgres.
+function v499FriendlyRsvpError(e,prefix){
+  const t=e?.message||String(e||'');
+  if(/relation .* does not exist|column .* does not exist/i.test(t))return 'Falta ejecutar 17_asistencia_mar_rsvp.sql, 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.';
+  if(/permission denied/i.test(t))return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar, y prueba otra vez.';
+  return prefix+(e?.message||e);
+}
 function v495WireRsvpButtons(root){
   root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
     if(!currentUser)return;
@@ -3154,7 +3164,7 @@ function v495WireRsvpButtons(root){
       row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
       const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=status==='in'?'Has confirmado que vas':'Has avisado de que no vas';
       row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status}}));
-    }catch(e){alert(/relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 17_asistencia_mar_rsvp.sql, 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.':'No se pudo guardar tu respuesta: '+(e.message||e))}
+    }catch(e){alert(v499FriendlyRsvpError(e,'No se pudo guardar tu respuesta: '))}
     finally{row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=false)}
   });
 }
@@ -3351,7 +3361,7 @@ function v499WireSubstituteBoxes(root,afterChange){
         const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
         if(q.error)throw q.error;
         if(afterChange)afterChange();
-      }catch(e){alert('No se pudo guardar: '+(e.message||e));btn.disabled=false}
+      }catch(e){alert(v499FriendlyRsvpError(e,'No se pudo guardar: '));btn.disabled=false}
     };
   });
 }
