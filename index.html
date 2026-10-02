@@ -530,6 +530,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v528DayHead{font-weight:700;font-size:1.05rem;margin:4px 0 10px;padding:8px 12px;border-radius:9px;background:var(--accent-tint);border-left:4px solid #2563eb}@keyframes v528Flash{0%{box-shadow:0 0 0 0 #2563eb88}100%{box-shadow:0 0 0 14px #2563eb00}}#planArea.v528Flash{animation:v528Flash 1s ease-out;border-radius:10px}
 .v527CancelBanner{background:#fee2e2;color:#991b1b;border-radius:8px;padding:8px 10px;font-weight:700;margin:8px 0}.v527Strike{text-decoration:line-through;opacity:.7}.v527RowCancelled{opacity:.6}.v527RowCancelled .v503Title{text-decoration:line-through}.v527CancelTxt{color:#dc2626!important;font-weight:600}
 .v522Loc a{color:#2563eb;text-decoration:underline;font-weight:500}
 .v519Btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin:4px 0 10px}
@@ -2377,7 +2378,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="527";
+const APP_VERSION="528";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8195,7 +8196,10 @@ async function coachPlanner(){
  async function drawCalendar(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
   if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'edit',[])}
-  planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));renderPlanDay()});
+  // V528 · "cuando pincho en una fecha del calendario debería hacer scroll hacia arriba para ver el
+  // entrenamiento, que se note que has pinchado un día": tras cargar el día, sube suavemente hasta
+  // él, con una cabecera con la fecha y un destello breve.
+  planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));await renderPlanDay();v528FocusPlanDay()});
   let draggedSessionId=null;
   planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
     item.addEventListener('click',e=>e.stopPropagation());
@@ -8227,6 +8231,17 @@ async function coachPlanner(){
    plannerTargetSessionId=null;
  }
  plannerJumpDate=null; plannerJumpTeam=null;
+}
+function v528FocusPlanDay(){
+  const area=document.getElementById('planArea');if(!area)return;
+  const ds=document.getElementById('planDate')?.value;
+  if(ds&&!area.querySelector('.v528DayHead')){
+    const label=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(ds+'T12:00:00'));
+    area.insertAdjacentHTML('afterbegin',`<div class="v528DayHead">📅 ${esc(label.charAt(0).toUpperCase()+label.slice(1))}</div>`);
+  }
+  const top=area.getBoundingClientRect().top+window.scrollY-80;
+  window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  area.classList.remove('v528Flash');void area.offsetWidth;area.classList.add('v528Flash');
 }
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
