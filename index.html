@@ -2361,7 +2361,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="508";
+const APP_VERSION="509";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3346,6 +3346,14 @@ function v495EventDateLabel(ds){
   if(!ds)return'';
   return new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(ds+'T12:00:00')).replace(/^./,c=>c.toUpperCase());
 }
+// V506 · "en vista general aparece la hora y el día (martes, jueves…), lo quiero lo más parecido
+// posible a Spond en todas las pantallas de eventos" — día de la semana completo en minúscula +
+// hora, p.ej. "domingo: 8:15" / "martes: 18:45", igual que en las capturas de Spond.
+function v506SpondDayTimeLabel(ds,time){
+  if(!ds)return'';
+  const weekday=new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(ds+'T12:00:00'));
+  return weekday+(time?`: ${time}`:'');
+}
 async function v495FetchEvents(team){
   const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
   const [ss,cc,ee]=await Promise.all([
@@ -3488,7 +3496,9 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   const extra=ev.kind==='club_event'?`${ev.location?`<p>📍 ${esc(ev.location)}</p>`:''}${ev.notes?`<p>${esc(ev.notes)}</p>`:''}`:'';
   const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button><button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</h3><p class="muted">${esc(v495EventDateLabel(ev.event_date))}</p>${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${subBox}${summary}${chat}${editBtns}</div>`;
+  // V506 · "lo quiero lo más parecido posible a Spond en todas las pantallas de eventos" — el día+hora
+  // pasa a formato Spond ("domingo: 8:15") en vez de la abreviatura de antes ("Dom, 4 oct").
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="muted">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</p>${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${subBox}${summary}${chat}${editBtns}</div>`;
 }
 // V499 · cablea el botón "Confirmar su asistencia" del cuadro de sustituto puntual (subBox de
 // arriba). El RLS de session_rsvp ya permite a cualquier coach/ayudante escribir una fila para OTRO
@@ -3564,7 +3574,10 @@ async function coachEventsView(){
     const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
     const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
     const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
-    return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
+    // V506 · "en vista general aparece la hora y el día (martes, jueves…), lo quiero lo más parecido
+    // posible a Spond" — se separa en dos líneas, como en la captura de Spond: título solo, luego
+    // "domingo: 8:15" en su propia línea, y el equipo+tipo debajo de esa.
+    return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
   }
   // V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
   // in-situ. Reutiliza exactamente la misma carga de datos que antes vivía en el handler de
