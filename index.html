@@ -1435,7 +1435,7 @@ function parseGymDbRow(x){
   const dose=(txt.match(/(?:^|\n)DOSIS\s*·\s*([^\n]+)/i)||[])[1]||(txt.match(/(\d+\s*[×x]\s*[^·\n]+)/i)||[])[1]||txt.split('\n')[0]||'';
   const rest=(txt.match(/(?:^|\n)DESCANSO\s*·\s*([^\n]+)/i)||[])[1]||(txt.match(/(?:rec|descanso)\s*([^·\n]+)/i)||[])[1]||'—';
   const how=(txt.match(/(?:^|\n)INDICACIONES\s*·\s*([^\n]+)/i)||[])[1]||txt;
-  return {dbId:x.id,source:'custom',created_by:x.created_by,created_by_name:x.created_by_name,is_system:x.is_system,is_active:x.is_active,archived_at:x.archived_at,archived_by:x.archived_by,_pref:x._pref||{},metadata:x.metadata||{},created_at:x.created_at,updated_at:x.updated_at,name,dose:dose.trim(),rest:rest.trim(),how:how.trim(),content:txt,image_url:x.image_url||null,how_url:x.how_url||null,video_url:x.video_url||null,tags:Array.isArray(x.metadata?.tags)?x.metadata.tags:[]};
+  return {id:`db-gym-${x.id}`,dbId:x.id,source:'custom',created_by:x.created_by,created_by_name:x.created_by_name,is_system:x.is_system,is_active:x.is_active,archived_at:x.archived_at,archived_by:x.archived_by,_pref:x._pref||{},metadata:x.metadata||{},created_at:x.created_at,updated_at:x.updated_at,name,dose:dose.trim(),rest:rest.trim(),how:how.trim(),content:txt,image_url:x.image_url||null,how_url:x.how_url||null,video_url:x.video_url||null,tags:Array.isArray(x.metadata?.tags)?x.metadata.tags:[]};
 }
 function parseGymSessionDbRow(x){return {id:`db-gym-session-${x.id}`,dbId:x.id,source:'custom',created_by:x.created_by,created_by_name:x.created_by_name,is_system:x.is_system,is_active:x.is_active,archived_at:x.archived_at,archived_by:x.archived_by,_pref:x._pref||{},metadata:x.metadata||{},created_at:x.created_at,updated_at:x.updated_at,name:stripLibraryPrefix(x.name),objective:x.metadata?.objective||'Personalizada',load:x.metadata?.load||'Personalizada',content:String(x.content||'')}}
 
@@ -2256,7 +2256,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="478";
+const APP_VERSION="479";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
