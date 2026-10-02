@@ -530,7 +530,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
-.v528DayHead{font-weight:700;font-size:1.05rem;margin:4px 0 10px;padding:8px 12px;border-radius:9px;background:var(--accent-tint);border-left:4px solid #2563eb}@keyframes v528Flash{0%{box-shadow:0 0 0 0 #2563eb88}100%{box-shadow:0 0 0 14px #2563eb00}}#planArea.v528Flash{animation:v528Flash 1s ease-out;border-radius:10px}
+.v528DayHead{font-weight:700;font-size:1.05rem;margin:4px 0 10px;padding:8px 12px;border-radius:9px;background:var(--accent-tint);border-left:4px solid #2563eb}@keyframes v528Flash{0%{box-shadow:0 0 0 0 #2563eb88}100%{box-shadow:0 0 0 14px #2563eb00}}#planArea.v528Flash{animation:v528Flash 1s ease-out;border-radius:10px}#planArea{scroll-margin-top:12px}
 .v527CancelBanner{background:#fee2e2;color:#991b1b;border-radius:8px;padding:8px 10px;font-weight:700;margin:8px 0}.v527Strike{text-decoration:line-through;opacity:.7}.v527RowCancelled{opacity:.6}.v527RowCancelled .v503Title{text-decoration:line-through}.v527CancelTxt{color:#dc2626!important;font-weight:600}
 .v522Loc a{color:#2563eb;text-decoration:underline;font-weight:500}
 .v519Btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin:4px 0 10px}
@@ -2378,7 +2378,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="528";
+const APP_VERSION="529";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8202,7 +8202,7 @@ async function coachPlanner(){
   planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));await renderPlanDay();v528FocusPlanDay()});
   let draggedSessionId=null;
   planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
-    item.addEventListener('click',e=>e.stopPropagation());
+    item.addEventListener('click',e=>{e.stopPropagation();item.closest('.coachDay')?.click()});
     item.addEventListener('dragstart',e=>{draggedSessionId=item.dataset.sessionId;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedSessionId);});
     item.addEventListener('dragend',()=>{item.classList.remove('dragging');planCalendar.querySelectorAll('.coachDay').forEach(d=>d.classList.remove('dragOver'));});
   });
@@ -8239,8 +8239,9 @@ function v528FocusPlanDay(){
     const label=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(ds+'T12:00:00'));
     area.insertAdjacentHTML('afterbegin',`<div class="v528DayHead">📅 ${esc(label.charAt(0).toUpperCase()+label.slice(1))}</div>`);
   }
-  const top=area.getBoundingClientRect().top+window.scrollY-80;
-  window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  // V528fix · el scroll de la app no es la ventana sino el contenedor #v347Scroll: scrollIntoView
+  // funciona con cualquiera de los dos (con margen para la cabecera, vía scroll-margin-top).
+  area.scrollIntoView({behavior:'smooth',block:'start'});
   area.classList.remove('v528Flash');void area.offsetWidth;area.classList.add('v528Flash');
 }
 async function renderPlanDay(){
