@@ -2376,7 +2376,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="522";
+const APP_VERSION="523";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3876,7 +3876,50 @@ function v503GroupedRowsHtml(evs){
 }
 // V514 · si el evento tiene destinatarios elegidos (invitee_ids), su listado es solo esa gente (más
 // quien lo creó); si no, todo el equipo como hasta ahora.
+// V523 · al añadir a alguien a un equipo, ofrecer invitarle (o no) a los eventos ya creados.
+async function v523AfterApproval(requestId,team){
+  try{const r=await sb.from('registration_requests').select('user_id,full_name').eq('id',requestId).maybeSingle();if(r.data?.user_id)setTimeout(()=>v523OfferInviteToEvents(r.data.user_id,team,r.data.full_name),600)}catch(e){}
+}
+async function v523OfferInviteToEvents(uid,team,name){
+  try{
+    if(!uid||!team||!v497AttendanceEnabledForTeam(team))return;
+    const today=localISODate();
+    const evs=(await v495FetchEvents(team)).filter(ev=>ev.event_date>=today&&!(ev.kind==='club_event'&&ev.team_code&&ev.team_code!==team&&!(ev.extra_team_codes||[]).includes(team)));
+    if(!evs.length)return;
+    const who=name||'esta persona';
+    const layer=document.createElement('div');layer.className='modalBack';
+    layer.innerHTML=`<div class="modalCard" style="max-width:520px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">¿Invitar a ${esc(who)} a los eventos ya creados?</h2></div><p class="muted">Se ha añadido a <b>${esc(teamLabel(team))}</b>. Marca a qué eventos próximos quieres invitarle; los que dejes sin marcar no los verá.</p><div class="v514PeopleHead"><span>${evs.length} eventos</span><button type="button" class="linkButton" id="v523All">Marcar / desmarcar todos</button></div><div class="v514PeopleList">${evs.map((ev,i)=>`<label class="v514Person"><span>${esc(ev.event_title)}<br><small class="muted">${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</small></span><input type="checkbox" data-i="${i}" checked></label>`).join('')}</div><label class="inlineCheck"><input type="checkbox" id="v523Notify" checked> <span>Avisarle de la invitación</span></label><div class="actions"><button type="button" class="primary" id="v523Go">Guardar</button><button type="button" id="v523None">No invitar a ninguno</button></div><div id="v523St" class="muted"></div></div>`;
+    document.body.appendChild(layer);
+    const cbs=[...layer.querySelectorAll('input[data-i]')];
+    layer.querySelector('#v523All').onclick=()=>{const on=!cbs.every(c=>c.checked);cbs.forEach(c=>c.checked=on)};
+    const apply=async picks=>{
+      const st=layer.querySelector('#v523St');st.textContent='Guardando…';
+      let invited=0,errs=0;
+      for(let i=0;i<evs.length;i++){
+        const ev=evs[i],yes=picks[i],table=V498_TABLE_BY_KIND[ev.kind];
+        const inv=Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?ev.invitee_ids.map(String):null;
+        const exc=(ev.excluded_ids||[]).map(String);
+        let patch=null;
+        if(inv){if(yes&&!inv.includes(String(uid)))patch={invitee_ids:[...inv,String(uid)]}}
+        else if(yes){if(exc.includes(String(uid)))patch={excluded_ids:exc.filter(x=>x!==String(uid))}}
+        else if(!exc.includes(String(uid)))patch={excluded_ids:[...exc,String(uid)]};
+        if(yes)invited++;
+        if(!patch)continue;
+        const q=await sb.from(table).update(patch).eq('id',ev.id);
+        if(q.error)errs++;
+      }
+      if(errs){st.textContent=`No se pudieron guardar ${errs} eventos (¿falta ejecutar 33_eventos_excluidos.sql?).`;return}
+      if(invited&&layer.querySelector('#v523Notify')?.checked){try{await sendNotificationV110({audience:{mode:'users',user_ids:[uid],team_codes:[team]},title:'📅 Te han invitado a eventos',body:`Tienes ${invited} evento${invited===1?'':'s'} de ${teamLabel(team)} pendientes de confirmar en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+      layer.remove();
+    };
+    layer.querySelector('#v523Go').onclick=()=>apply(cbs.map(c=>c.checked));
+    layer.querySelector('#v523None').onclick=()=>apply(cbs.map(()=>false));
+  }catch(e){console.warn('v523',e)}
+}
 function v514EventRoster(ev,roster){
+  // V523 · personas excluidas expresamente de un evento de equipo (p.ej. alguien que entró después
+  // en el equipo y no se le quiso invitar a los eventos ya creados).
+  if(Array.isArray(ev.excluded_ids)&&ev.excluded_ids.length){const ex=new Set(ev.excluded_ids.map(String));roster=roster.filter(p=>!ex.has(String(p.user_id)))}
   if(!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length)return roster;
   const ids=new Set(ev.invitee_ids.map(String));if(ev.created_by)ids.add(String(ev.created_by));
   return roster.filter(p=>ids.has(String(p.user_id)));
@@ -4088,7 +4131,7 @@ async function athleteEventsView(){
   // V514 · si el evento tiene destinatarios elegidos, la remera solo lo ve si está invitada; y si las
   // respuestas son "solo organizadores", no ve los contadores en la lista.
   const me=String(currentUser?.id||'');
-  const visible=events.filter(ev=>!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length||ev.invitee_ids.map(String).includes(me)||String(ev.created_by)===me);
+  const visible=events.filter(ev=>!(Array.isArray(ev.excluded_ids)&&ev.excluded_ids.map(String).includes(me))&&(!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length||ev.invitee_ids.map(String).includes(me)||String(ev.created_by)===me));
   const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,new Map())).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
   area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
   withCounts.forEach(v514TryReminder);
@@ -4827,7 +4870,7 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
       const q1=await sb.from('profiles').update(profilePayload).eq('user_id',uid);if(q1.error)throw q1.error;
       if(canManageTeams)for(const t of editableTeams){
         const wantR=modal.querySelector(`.v168Rower[data-team="${CSS.escape(t.code)}"]`)?.checked||false,hadR=members.some(m=>m.team_code===t.code&&m.is_rower!==false);
-        if(wantR&&!hadR){const q=await sb.from('rower_team_memberships').upsert({user_id:uid,team_code:t.code,is_rower:true,updated_at:new Date().toISOString()},{onConflict:'user_id,team_code'});if(q.error)throw q.error}
+        if(wantR&&!hadR){const q=await sb.from('rower_team_memberships').upsert({user_id:uid,team_code:t.code,is_rower:true,updated_at:new Date().toISOString()},{onConflict:'user_id,team_code'});if(q.error)throw q.error;(window.__v523Added=window.__v523Added||[]).push(t.code)}
         if(!wantR&&hadR){const q=await sb.from('rower_team_memberships').delete().eq('user_id',uid).eq('team_code',t.code);if(q.error)throw q.error}
         // V376 · si no hay <select> para este equipo (caso: no-admin viendo a alguien ya
         // entrenador) no se toca su rol técnico, para no desasignarlo sin querer.
@@ -4839,6 +4882,7 @@ async function openUnifiedPersonEditorV168(uid,opts={}){
       const metricFields=['v168Weight','v168Rest','v168Max',...['ut2','ut1','at','tr','an'].flatMap(z=>['v168_'+z+'_min','v168_'+z+'_max'])];const hasMetric=metricFields.some(id=>String(modal.querySelector('#'+id)?.value||'').trim())||String(modal.querySelector('#v168Notes').value||'').trim();let newMetric=null;
       if(hasMetric){const row={user_id:uid,weight_kg:modal.querySelector('#v168Weight').value?Number(modal.querySelector('#v168Weight').value):null,resting_hr:modal.querySelector('#v168Rest').value?Number(modal.querySelector('#v168Rest').value):null,max_hr:modal.querySelector('#v168Max').value?Number(modal.querySelector('#v168Max').value):null,notes:modal.querySelector('#v168Notes').value||null};['ut2','ut1','at','tr','an'].forEach(z=>{row[z+'_min']=modal.querySelector('#v168_'+z+'_min').value?Number(modal.querySelector('#v168_'+z+'_min').value):null;row[z+'_max']=modal.querySelector('#v168_'+z+'_max').value?Number(modal.querySelector('#v168_'+z+'_max').value):null});const q2=await sb.from('athlete_metrics').insert(row).select('*').single();if(q2.error)throw q2.error;newMetric=q2.data}
       st.textContent='Guardado ✓';await opts.onSaved?.({profile:{...prof,...profilePayload},metric:newMetric});modal.remove();
+      const added=window.__v523Added||[];window.__v523Added=[];for(const tc of added)await v523OfferInviteToEvents(uid,tc,profilePayload.full_name||prof?.full_name);
     }catch(e){st.textContent='Error: '+(e?.message||e);b.disabled=false}};
     const del=modal.querySelector('#v168Delete');if(del)del.onclick=async()=>{const ok=prompt(`ELIMINAR DE LA APP\n\nSe borrará la cuenta completa y dejará de aparecer como pendiente/sin equipo. No se puede deshacer.\n\nEscribe ELIMINAR para confirmar:`,'');if(String(ok||'').trim().toUpperCase()!=='ELIMINAR')return;del.disabled=true;del.textContent='Eliminando…';try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)throw new Error('Sesión de administrador no disponible');const r=await fetch('/api/user-delete',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({user_id:uid})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||j.detail||`Error ${r.status}`);modal.remove();await opts.onDeleted?.(uid)}catch(e){alert('No se pudo eliminar el usuario: '+(e?.message||e));del.disabled=false;del.textContent='Eliminar usuario de la app'}};
   }catch(e){modal.innerHTML=`<div class="modalCard"><div class="modalTitle"><h2>Editar persona</h2><button type="button" class="v168Close">Cerrar</button></div><div class="saveStatus err">${esc(e?.message||String(e))}</div></div>`;modal.querySelector('.v168Close').onclick=()=>modal.remove()}
@@ -4932,6 +4976,7 @@ async function teamStaffAdminView(){
     btn.disabled=true;btn.textContent='Aprobando…';
     const res=await sb.rpc('approve_registration',{p_request_id:id,p_team_code:team});
     if(res.error){alert(res.error.message);btn.disabled=false;btn.textContent='Aprobar';return}
+    v523AfterApproval(id,team);
     try{const {data:{session}}=await sb.auth.getSession();if(session){await fetch('/api/registration-welcome',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({request_id:id})})}}catch(e){}
     await loadPendingRegistrationCount();draw();await teamStaffAdminView();
   });
@@ -4948,6 +4993,7 @@ async function teamStaffAdminView(){
     b.disabled=true;b.textContent="Aprobando…";
     const res=await sb.rpc("approve_registration",{p_request_id:id,p_team_code:team});
     if(res.error){alert(res.error.message);b.disabled=false;b.textContent="Aprobar y asignar";return}
+    v523AfterApproval(id,team);
     let mailOk=false,mailMsg="";
     try{
       const {data:{session}}=await sb.auth.getSession();
