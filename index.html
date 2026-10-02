@@ -2053,7 +2053,31 @@ function v530Blocks(prefs,cat,rsvpStatus){
   if(cat==='rsvp'){const m=p.rsvp||'all';return m==='none'||(m==='out'&&rsvpStatus==='in')}
   return p[cat]===false;
 }
+async function v533GateNotLive(clean,category){
+  // Avisos de eventos (no las respuestas, que van a organizadores) a equipos aún no activados:
+  // solo llegan al equipo técnico, nunca a las remeras.
+  if(!category||!String(category).startsWith('event_'))return clean;
+  const a=clean.audience||{},teams=(a.team_codes||[]).filter(Boolean);
+  if(!teams.length)return clean;
+  const live=teams.filter(v533TeamLive);
+  if(live.length===teams.length)return clean;
+  if(a.mode==='teams'){if(live.length)return {...clean,audience:{...a,team_codes:live}};return null}
+  if(a.mode==='users'){
+    if(live.length)return clean;
+    try{
+      const [gc,ts]=await Promise.all([sb.from('user_roles').select('user_id').eq('role','coach'),sb.from('team_staff_roles').select('user_id').in('team_code',teams)]);
+      const staff=new Set([...(gc.data||[]),...(ts.data||[])].map(x=>String(x.user_id)));
+      const keep=(a.user_ids||[]).map(String).filter(id=>staff.has(id));
+      return keep.length?{...clean,audience:{...a,user_ids:keep}}:null;
+    }catch(e){return null}
+  }
+  return clean;
+}
 async function v530FilterAudience(payload){
+  const {category:cat0,rsvpStatus:rs0,...clean0}=payload||{};
+  const gated=await v533GateNotLive(clean0,cat0);
+  if(!gated)return null;
+  payload={...gated,category:cat0,rsvpStatus:rs0};
   const {category,rsvpStatus,...clean}=payload||{};
   if(!category)return clean;
   try{
@@ -2246,6 +2270,13 @@ let TEAM_OPTIONS=[["veteranas","Veteranas femenino"],["senior_m","Senior masculi
 let TEAM_GOALS_V281=new Map(); // team_code -> {target:number|null, notes:string|null}
 let TEAM_ATTENDANCE_V497=new Map(); // team_code -> boolean (módulo de convocatorias/asistencia activo), por defecto true si no hay dato
 function v497AttendanceEnabledForTeam(team){const v=TEAM_ATTENDANCE_V497.get(team);return v!==false}
+// V533 · los eventos NO se enseñan ni se avisan a las remeras hasta que se active por equipo
+// (rowing_teams.events_rowers_live). Si la columna aún no existe o no hay dato: apagado (seguro).
+// Tú (lista de pruebas) los ves siempre también en modo remero.
+let TEAM_ROWERS_LIVE_V533=new Map();
+function v533TeamLive(team){return TEAM_ROWERS_LIVE_V533.get(team)===true}
+function v533IsTester(){return (typeof V495_EVENT_CHAT_TEST_EMAILS!=='undefined'?V495_EVENT_CHAT_TEST_EMAILS:['sixpackcosta@gmail.com']).includes(String(currentUser?.email||'').toLowerCase())}
+function v533RowerSeesEvents(team){return v497AttendanceEnabledForTeam(team)&&(v533TeamLive(team)||v533IsTester())}
 let TEAM_DEFAULT_SUB_V499=new Map(); // team_code -> user_id del sustituto por defecto (si el entrenador no puede ir)
 const CURRENT_SEASON_LABEL_V283="26-27"; // v283: distintivo visual de temporada en la cabecera. Cambiar a mano cada temporada hasta que haya gestión de temporadas.
 const PHASE_OPTIONS=[["base","Base"],["development","Desarrollo"],["precomp","Precompetición / Específica"],["competition","Competición"],["recovery","Recuperación"]];
@@ -2432,7 +2463,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="531";
+const APP_VERSION="533";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2461,6 +2492,11 @@ async function loadTeamsV88(publicOnly=false){
       try{
         const att=await sb.from('rowing_teams').select('code,attendance_module_enabled');
         if(!att.error)(att.data||[]).forEach(x=>TEAM_ATTENDANCE_V497.set(x.code,x.attendance_module_enabled!==false));
+      }catch(e){}
+      try{
+        const lv=await sb.from('rowing_teams').select('code,events_rowers_live');
+        TEAM_ROWERS_LIVE_V533=new Map();
+        if(!lv.error)(lv.data||[]).forEach(x=>TEAM_ROWERS_LIVE_V533.set(x.code,x.events_rowers_live===true));
       }catch(e){}
       // V499 · sustituto por defecto por equipo, consulta aparte igual que la de arriba (columna
       // nueva: no debe romper la carga de equipos si aún no se ha ejecutado 23_eventos_v499.sql).
@@ -2964,7 +3000,7 @@ function v330RenderBottomNav(){
     items=[
       ['trabajo','trabajo',v311T('nav_trabajo'),'hoy'],
       ['actividad','actividad',v311T('nav_actividad'),'hist'],
-      ...(v497AttendanceEnabledForTeam(currentTeamCode)?[['eventos','eventos','Eventos','eventos']]:[]),
+      ...(v533RowerSeesEvents(currentTeamCode)?[['eventos','eventos','Eventos','eventos']]:[]),
       ['mensajes','mensajes',v311T('nav_mensajes'),'mensajes'],
       ['yo','perfil',v311T('nav_yo'),'perfil']
     ];
@@ -3064,7 +3100,7 @@ function render(){
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
     if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasAnyCoachTeam())return coachMessagesView();return staffTodayView();
   }
-  if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="eventos"){if(!v497AttendanceEnabledForTeam(currentTeamCode)){tab="hist";draw();return history()}athleteEventsView()}else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
+  if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="eventos"){if(!v533RowerSeesEvents(currentTeamCode)){tab="hist";draw();return history()}athleteEventsView()}else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
 }
 (function(){
   var v316OrigRender=render;
@@ -3484,7 +3520,7 @@ async function v516CountsForEvents(events,statusByEvent,viewTeam,cache){
 async function v495FetchEvents(team){
   const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
   const [ss,cc,ee]=await Promise.all([
-    sb.from('training_sessions').select('*').eq('team_code',team).eq('is_event',true).gte('session_date',start).lte('session_date',end).order('session_date'),
+    sb.from('training_sessions').select('*').eq('team_code',team).eq('is_event',true).is('target_user_ids',null).gte('session_date',start).lte('session_date',end).order('session_date'),
     sb.from('competitions').select('*').contains('team_codes',[team]).gte('competition_date',start).lte('competition_date',end).order('competition_date'),
     sb.from('club_events').select('*').or(`team_code.eq.${team},extra_team_codes.cs.{${team}}`).gte('event_date',start).lte('event_date',end).order('event_date')
   ]);
@@ -3539,6 +3575,7 @@ const V498_TABLE_BY_KIND={session:'training_sessions',competition:'competitions'
 async function v498TryClaimAndNotify(ev,teamCode){
   const opensAt=v498ComputeOpensAt(ev);
   if(!opensAt||opensAt>new Date()||ev.opens_notified_at||ev.cancelled_at)return;
+  if(!v533TeamLive(ev.kind==='club_event'?(ev.team_code||teamCode):teamCode))return; // V533 · aún no para remeras: no se "gasta" el aviso
   const table=V498_TABLE_BY_KIND[ev.kind];
   try{
     const upd=await sb.from(table).update({opens_notified_at:new Date().toISOString()}).eq('id',ev.id).is('opens_notified_at',null).select('id');
@@ -3702,10 +3739,18 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       let others=[];
       if(($('v514Scope')?.value||'one')==='following'){
         const wd=new Date(existing.event_date+'T12:00:00').getDay();
-        let rq=sb.from('training_sessions').select('id,session_date').eq('team_code',t0).eq('session_type',existing.session_type).gt('session_date',existing.event_date);
-        if(!converting)rq=rq.eq('is_event',true);
-        const r=await rq;
-        others=(r.data||[]).filter(o=>new Date(o.session_date+'T12:00:00').getDay()===wd);
+        // V532 · por DÍA, no por sesión: en cada fecha siguiente del mismo día de la semana se coge
+        // una sola sesión general (MAR > GYM > ERGO), nunca las individuales; al convertir se saltan
+        // los días que ya tienen evento, y al editar solo se tocan los que ya son evento.
+        const r=await sb.from('training_sessions').select('id,session_date,session_type,is_event,target_user_ids').eq('team_code',t0).gt('session_date',existing.event_date).is('target_user_ids',null);
+        const byDate=new Map();
+        (r.data||[]).filter(o=>new Date(o.session_date+'T12:00:00').getDay()===wd&&['MAR','GYM','ERG'].includes(String(o.session_type).toUpperCase())).forEach(o=>{if(!byDate.has(o.session_date))byDate.set(o.session_date,[]);byDate.get(o.session_date).push(o)});
+        const rank=t=>({MAR:1,GYM:2,ERG:3})[String(t).toUpperCase()]||9;
+        byDate.forEach(list=>{
+          const ev=list.find(o=>o.is_event);
+          if(converting){if(ev)return;const best=[...list].sort((a,b)=>rank(a.session_type)-rank(b.session_type))[0];if(best)others.push(best)}
+          else if(ev)others.push(ev);
+        });
         if(others.length){const q2=await sb.from('training_sessions').update(patch).in('id',others.map(o=>o.id));if(q2.error)return fail(q2.error.message)}
       }
       if(converting){
@@ -3822,7 +3867,7 @@ function v498RenderCompetitionForm(container,existing,afterSave){
   };
 }
 function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit=false,staffList=[],organizerIds=null){
-  const typeLabel=ev.kind==='competition'?'🏁 Competición':ev.kind==='club_event'?'📅 Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'🏋️ GYM · convocatoria':'🚣 MAR · convocatoria');
+  const typeLabel=ev.kind==='competition'?'🏁 Competición':ev.kind==='club_event'?'📅 Evento':(String(ev.session_type||'').toUpperCase()==='MAR'?'🚣 MAR · convocatoria':'🏋️ GIM+ERGO · convocatoria');
   const cardCls=ev.kind==='competition'?'raceCard':(String(ev.session_type||'').toUpperCase()==='MAR'?'mar':'');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
   // V512 · organizadores = quien lo creó (created_by) + los añadidos a mano (event_organizers).
@@ -3969,7 +4014,7 @@ function v503OverviewRowHtml(ev,clash){
   const tc=v502TeamColor(ev._viewTeam);
   const d=new Date(ev.event_date+'T12:00:00');
   const monthAbbr=new Intl.DateTimeFormat('es-ES',{month:'short',timeZone:'UTC'}).format(d).replace('.','').toUpperCase();
-  const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
+  const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='MAR'?'MAR':'GIM+ERGO');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
   // V516 · como en Spond: los que aún no se han enviado salen con su leyenda debajo ("La invitación se
   // enviará en 15 horas" en verde si falta menos de un día; si no, "…3 días antes").
@@ -4118,6 +4163,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
 // reminder_sent_at hace de cerrojo para que solo se mande una vez.
 async function v514TryReminder(ev){
   try{
+    if(!v533TeamLive(ev._viewTeam))return;
     if(ev.cancelled_at||!['club_event','session','competition'].includes(ev.kind)||!ev.reminder_hours_before||ev.reminder_sent_at||!ev._pendingIds?.length)return;
     const tm=/^\d{1,2}:\d{2}$/.test(ev.meet_time||ev.event_time||'')?(ev.meet_time||ev.event_time).padStart(5,'0'):'09:00';
     const start=new Date(`${ev.event_date}T${tm}:00`),remindAt=new Date(start.getTime()-ev.reminder_hours_before*3600000),now=new Date();
@@ -4301,7 +4347,7 @@ async function athleteEventsView(){
   const team=currentTeamCode;
   content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   const area=document.getElementById('eventsArea');
-  if(!v497AttendanceEnabledForTeam(team)){area.innerHTML='<div class="info">Tu entrenador ha desactivado este módulo por ahora.</div>';return}
+  if(!v533RowerSeesEvents(team)){area.innerHTML='<div class="info">Los eventos todavía no están disponibles.</div>';return}
   let events,invited;
   try{[events,invited]=await Promise.all([v495FetchEvents(team),v516FetchInvitedClubEvents()])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
@@ -5147,7 +5193,7 @@ async function teamStaffAdminView(){
   <details class="libraryAccordion"><summary><span>Gestión de equipos</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><div class="teamRosterToolbar"><div><h3 style="margin:0">Plantillas de los equipos</h3><p class="muted" style="margin:4px 0 0">Vista rápida para saber cuántos sois, quién está en cada equipo y detectar personas sin asignar.</p></div>${(()=>{const uniqueRowers=[...new Set(members.map(m=>String(m.user_id)))],on=pushState?.ok?uniqueRowers.filter(uid=>(pushState.users.get(uid)||0)>0).length:null;return pushState?.ok?`<div class="pushSummaryV248"><span>🔔</span><span><strong>${on}/${uniqueRowers.length}</strong> remeros con push activo</span></div>`:`<div class="pushSummaryV248"><span>🔔</span><span><strong>Estado push no disponible</strong><div class="pushStatusNoteV248">${esc(pushState?.reason||'No se pudo consultar')}</div></span></div>`})()}</div><div class="teamRosterGrid">${rosterCards}</div>${unassigned.length||pendingGeneric.length?`<div class="unassignedBox"><h3 style="margin-top:0">⚠️ Por revisar</h3>${unassigned.length?`<p><b>${unassigned.length} persona${unassigned.length===1?'':'s'} sin equipo ni rol</b></p><div class="rosterList">${unassigned.map(p=>`<div class="rosterPerson"><span><b>${esc(personLabel(p))}</b></span><span class="rosterRoles"><span class="tag">Sin equipo</span><button type="button" class="editPersonTeamsV167" data-user="${p.user_id}">Editar / eliminar</button></span></div>`).join('')}</div>`:''}${pendingGeneric.length?`<p style="margin-top:12px"><b>${pendingGeneric.length} alta${pendingGeneric.length===1?'':'s'} desde enlace general</b></p><div class="rosterList">${pendingGeneric.map(rg=>`<div class="rosterPerson"><span><b>${esc(rg.full_name||rg.email||'Sin nombre')}</b>${rg.email?`<small class="muted"> · ${esc(rg.email)}</small>`:''}</span><span class="tag">Sin equipo solicitado</span></div>`).join('')}</div>`:''}</div>`:''}</div></details>
   ${isGlobalCoach?`<details class="libraryAccordion"><summary><span>Crear / editar equipos</span>${countBadge(teams.length)}</summary><div class="accordionBody"><h3 style="margin-top:0">Crear equipo</h3><div class="plannerGrid"><label>Nombre<input id="newTeamName" placeholder="Ej. Juvenil masculino"></label><label>Código interno<input id="newTeamCode" placeholder="Se genera automáticamente"></label><label>Categoría<input id="newTeamCategory" placeholder="Ej. Juvenil"></label><label>Sexo / grupo<input id="newTeamGender" placeholder="Ej. Masculino"></label></div><button id="createTeam" class="primary">Crear equipo</button><h3>Equipos existentes</h3><div class="teamEditGrid">${teams.map((t,i)=>`<div class="staffPerson"><div class="plannerGrid"><label>Nombre<input class="teamNameEdit" data-i="${i}" value="${esc(t.name)}"></label><label>Categoría<input class="teamCategoryEdit" data-i="${i}" value="${esc(t.category||'')}"></label><label>Sexo / grupo<input class="teamGenderEdit" data-i="${i}" value="${esc(t.gender||'')}"></label><label>Estado<select class="teamActiveEdit" data-i="${i}"><option value="1" ${t.is_active?'selected':''}>Activo</option><option value="0" ${!t.is_active?'selected':''}>Inactivo</option></select></label></div><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamEdit" data-i="${i}">Guardar cambios</button></div></div>`).join('')}</div></div></details>`:''}
   <details class="libraryAccordion" id="v281GoalsSection"><summary><span>Objetivos de equipo</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Objetivo orientativo de W/kg y notas de temporada (tests, competiciones…) por equipo. Se puede ajustar cada temporada.</p><div class="teamEditGrid">${manageTeams.map((t,i)=>`<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><div class="plannerGrid"><label>Objetivo W/kg<input class="teamWkgTargetEdit" data-code="${esc(t.code)}" type="number" step="0.1" min="0" placeholder="ej. 3.5" value="${t.wkg_target!=null?t.wkg_target:''}"></label></div><label style="display:block;margin-top:8px">Objetivos de temporada<textarea class="teamSeasonGoalsEdit" data-code="${esc(t.code)}" rows="3" placeholder="Ej. Subir la media a 3.3 W/kg antes del test de enero; clasificar para el campeonato autonómico en mayo…">${esc(t.season_goals||'')}</textarea></label><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamGoalsV281" data-code="${esc(t.code)}">Guardar objetivos</button></div></div>`).join('')}</div></div></details>
-  ${isGlobalCoach?`<details class="libraryAccordion" id="v497AttendanceSection"><summary><span>Convocatorias y asistencia</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Activa o desactiva, equipo por equipo, el módulo de convocatorias (confirmación de asistencia + chat del evento, pestaña "Eventos"). Si lo desactivas para un equipo, sus remeras dejan de ver esa pestaña y las convocatorias existentes quedan en pausa hasta que lo reactives.</p><div class="teamEditGrid">${manageTeams.map(t=>{const staffOpts=roles.filter(r=>r.team_code===t.code).map(r=>{const p=profiles.find(pp=>pp.user_id===r.user_id);return p?{user_id:r.user_id,full_name:p.full_name,staff_role:r.staff_role}:null}).filter(Boolean);return `<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><label class="inlineCheck"><input type="checkbox" class="v497AttendanceToggle" data-code="${esc(t.code)}" ${t.attendance_module_enabled!==false?'checked':''}> <span>Convocatorias y asistencia activas para este equipo</span></label><label style="display:block;margin-top:10px"><small>Añadir automáticamente como co-organizador de toda convocatoria nueva a (le llegará un aviso para que confirme si va)</small><select class="v499DefaultSub" data-code="${esc(t.code)}"><option value="">— Nadie por defecto —</option>${staffOpts.map(s=>`<option value="${esc(s.user_id)}" ${t.default_staff_substitute_id===s.user_id?'selected':''}>${esc(s.full_name||'Sin nombre')} (${s.staff_role==='coach'?'entrenador':'ayudante'})</option>`).join('')}</select></label></div>`}).join('')}</div></div></details>`:''}
+  ${isGlobalCoach?`<details class="libraryAccordion" id="v497AttendanceSection"><summary><span>Convocatorias y asistencia</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Activa o desactiva, equipo por equipo, el módulo de convocatorias (confirmación de asistencia + chat del evento, pestaña "Eventos"). Si lo desactivas para un equipo, sus remeras dejan de ver esa pestaña y las convocatorias existentes quedan en pausa hasta que lo reactives.</p><div class="teamEditGrid">${manageTeams.map(t=>{const staffOpts=roles.filter(r=>r.team_code===t.code).map(r=>{const p=profiles.find(pp=>pp.user_id===r.user_id);return p?{user_id:r.user_id,full_name:p.full_name,staff_role:r.staff_role}:null}).filter(Boolean);return `<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><label class="inlineCheck"><input type="checkbox" class="v497AttendanceToggle" data-code="${esc(t.code)}" ${t.attendance_module_enabled!==false?'checked':''}> <span>Convocatorias y asistencia activas para este equipo</span></label><label class="inlineCheck"><input type="checkbox" class="v533LiveToggle" data-code="${esc(t.code)}" ${v533TeamLive(t.code)?'checked':''}> <span><b>Visible y con avisos para las remeras</b><br><small class="muted">Mientras esté desmarcado, solo el equipo técnico ve los eventos y recibe sus avisos.</small></span></label><label style="display:block;margin-top:10px"><small>Añadir automáticamente como co-organizador de toda convocatoria nueva a (le llegará un aviso para que confirme si va)</small><select class="v499DefaultSub" data-code="${esc(t.code)}"><option value="">— Nadie por defecto —</option>${staffOpts.map(s=>`<option value="${esc(s.user_id)}" ${t.default_staff_substitute_id===s.user_id?'selected':''}>${esc(s.full_name||'Sin nombre')} (${s.staff_role==='coach'?'entrenador':'ayudante'})</option>`).join('')}</select></label></div>`}).join('')}</div></div></details>`:''}
   <details class="libraryAccordion"><summary><span>Enlaces de inscripción</span></summary><div class="accordionBody"><div class="inviteLinks">${isGlobalCoach?`<div class="inviteLink"><b>Enlace general</b><p class="muted">Sin equipo preseleccionado. Las solicitudes generales las gestiona el entrenador administrador.</p><button class="copyInvite" data-url="${esc(genericInviteUrl)}">Copiar enlace</button></div>`:""}${allowedTeams.map(t=>{const u=invitationUrl(t[0]);return `<div class="inviteLink"><b>${esc(t[1])}</b><p class="muted">La solicitud queda vinculada a este equipo. Solo tienes que aprobarla; no hace falta volver a asignar el equipo.</p><button class="copyInvite" data-url="${esc(u)}">Copiar enlace</button></div>`}).join("")}</div></div></details>
   ${recentAltas.length?`<details class="libraryAccordion"><summary><span>Altas revisadas recientemente</span>${countBadge(recentAltas.length)}</summary><div class="accordionBody">${recentAltas.map(x=>`<div class="last"><b>${esc(x.full_name)}</b> · ${x.status==="approved"?"Aprobada":"Rechazada"}${x.assigned_team?` · ${esc(teamLabel(x.assigned_team))}`:""}${x.status==="approved"?` <button class="resendWelcome" data-id="${x.id}" style="margin-left:8px">Reenviar bienvenida</button>`:""}</div>`).join("")}</div></details>`:""}
   </div>`;
@@ -5213,6 +5259,15 @@ async function teamStaffAdminView(){
     const q=await sb.from('rowing_teams').update({wkg_target:wkg,season_goals:notes||null,updated_at:new Date().toISOString()}).eq('code',code);
     if(q.error){alert(q.error.message);b.disabled=false;b.textContent='Guardar objetivos';return}
     await loadTeamsV88(false);teamStaffAdminView();
+  });
+  document.querySelectorAll('.v533LiveToggle').forEach(cb=>cb.onchange=async()=>{
+    const code=cb.dataset.code,on=cb.checked;
+    if(on&&!confirm(`¿Activar los eventos para las remeras de ${teamLabel(code)}? A partir de ahora los verán y recibirán sus avisos.`)){cb.checked=false;return}
+    cb.disabled=true;
+    const q=await sb.from('rowing_teams').update({events_rowers_live:on,updated_at:new Date().toISOString()}).eq('code',code);
+    cb.disabled=false;
+    if(q.error){alert(/column .* does not exist/i.test(q.error.message||'')?'Falta ejecutar 40_eventos_remeras_pausa.sql en Supabase.':q.error.message);cb.checked=!on;return}
+    await loadTeamsV88(false);
   });
   document.querySelectorAll('.v497AttendanceToggle').forEach(cb=>cb.onchange=async()=>{
     const code=cb.dataset.code,enabled=cb.checked;
@@ -8345,12 +8400,17 @@ async function renderPlanDay(){
 // sesiones del día (MAR si la hay; si no GYM; si no ERGO), pero se gestiona como "el evento del día".
 function v531DayEventBar(sessions,team,date){
   const area=document.getElementById('planArea');if(!area)return;
-  const pick=['MAR','GYM','ERG'].map(t=>sessions.find(x=>String(x.session_type).toUpperCase()===t)).find(Boolean);
+  // V532 · las sesiones individuales (plan individual de una o varias remeras) no cuentan para el
+  // evento del día: antes se colaban y salían dos eventos el mismo día.
+  const general=sessions.filter(x=>!sessionTargetsV249(x).length);
+  const pick=['MAR','GYM','ERG'].map(t=>general.find(x=>String(x.session_type).toUpperCase()===t)).find(Boolean);
   if(!pick)return;
-  const evS=sessions.find(x=>x.is_event)||null;
+  const evAll=sessions.filter(x=>x.is_event);
+  const evS=evAll.find(x=>!sessionTargetsV249(x).length)||evAll[0]||null;
+  const extraEv=evAll.filter(x=>x!==evS);
   const types=[...new Set(sessions.map(x=>String(x.session_type).toUpperCase()).filter(t=>t!=='DESC'))].join(' + ');
   const html=evS
-    ?`<div class="v531Bar${evS.cancelled_at?' cancelled':''}"><div><b>📅 Evento del día:</b> ${esc(v524SessionEventName(evS))}${evS.event_time?` · ${esc(evS.event_time)}`:''}${evS.cancelled_at?' · <span class="v527CancelTxt">Cancelado</span>':''}<br><small class="muted">Las remeras confirman asistencia a este día (${esc(types)}).</small></div><div class="v531Btns"><button type="button" id="v531Edit">✏️ Editar evento</button><button type="button" id="v531Open">Ver en Eventos</button></div></div>`
+    ?`<div class="v531Bar${evS.cancelled_at?' cancelled':''}"><div><b>📅 Evento del día:</b> ${esc(v524SessionEventName(evS))}${evS.event_time?` · ${esc(evS.event_time)}`:''}${evS.cancelled_at?' · <span class="v527CancelTxt">Cancelado</span>':''}<br><small class="muted">Las remeras confirman asistencia a este día (${esc(types)}).</small>${extraEv.length?`<br><span class="v527CancelTxt">⚠️ Este día tiene ${extraEv.length+1} eventos (sobra${extraEv.length>1?'n':''} ${extraEv.length}).</span>`:''}</div><div class="v531Btns">${extraEv.length?`<button type="button" class="dangerBtn" id="v532Fix">Dejar solo uno</button>`:''}<button type="button" id="v531Edit">✏️ Editar evento</button><button type="button" id="v531Open">Ver en Eventos</button></div></div>`
     :`<div class="v531Bar"><div><b>Este día no es evento</b><br><small class="muted">${esc(types)} · conviértelo para que las remeras confirmen si vienen.</small></div><div class="v531Btns"><button type="button" class="primary" id="v531Convert">📅 Convertir día en evento</button></div></div>`;
   area.insertAdjacentHTML('afterbegin',html);
   const formFor=(sess,convert)=>{
@@ -8361,6 +8421,11 @@ function v531DayEventBar(sessions,team,date){
     v498RenderClubEventForm(box.querySelector('#v531FormHost'),team,ev,()=>{renderPlanDay()});
     box.scrollIntoView({behavior:'smooth',block:'start'});
   };
+  document.getElementById('v532Fix')?.addEventListener('click',async()=>{
+    if(!confirm(`Se quita la marca de evento a ${extraEv.length} sesión(es) de este día y se deja solo "${v524SessionEventName(evS)}". Los entrenamientos no se borran.`))return;
+    const q=await sb.from('training_sessions').update({is_event:false,updated_at:new Date().toISOString()}).in('id',extraEv.map(x=>x.id));
+    if(q.error)return alert(q.error.message);renderPlanDay();
+  });
   document.getElementById('v531Convert')?.addEventListener('click',()=>formFor(pick,true));
   document.getElementById('v531Edit')?.addEventListener('click',()=>formFor(evS,false));
   document.getElementById('v531Open')?.addEventListener('click',()=>v503OpenEventDetail(team,'session',evS.id,true,()=>renderPlanDay(),true));
@@ -8529,7 +8594,7 @@ function sessionEditor(x=null){
    if(sessType.value==='MAR'&&new Date(date+'T12:00:00').getDay()===2){
      contentValue=normalizeTuesdayMar60V198(contentValue);
    }
-   const isEventNow=['MAR','GYM'].includes(sessType.value)?!!document.getElementById('sessIsEvent')?.checked:false;
+   const isEventNow=['MAR','GYM'].includes(sessType.value)&&!audienceSelV249.size?!!document.getElementById('sessIsEvent')?.checked:false;
    const openDaysVal=document.getElementById('sessOpenDays')?.value,openTimeVal=document.getElementById('sessOpenTime')?.value;
    // V517 · opciones de evento de la sesión
    let eventFields={};
@@ -8559,7 +8624,7 @@ function sessionEditor(x=null){
    let v517SentBulk=false;
    if(isEventNow&&document.getElementById('seRepeat')?.value){
      const until=document.getElementById('seUntil')?.value||date;
-     const rr=await sb.from('training_sessions').select('id,session_date,is_event').eq('team_code',team).eq('session_type',sessType.value).gt('session_date',date).lte('session_date',until);
+     const rr=await sb.from('training_sessions').select('id,session_date,is_event').eq('team_code',team).eq('session_type',sessType.value).is('target_user_ids',null).gt('session_date',date).lte('session_date',until);
      const targets=(rr.data||[]).filter(r=>seDaySel.has(new Date(r.session_date+'T12:00:00').getDay()));
      if(targets.length){
        const upd=await sb.from('training_sessions').update({is_event:true,rsvp_open_days_before:payload.rsvp_open_days_before,rsvp_open_time:payload.rsvp_open_time,...eventFields,updated_at:new Date().toISOString()}).in('id',targets.map(t=>t.id));
@@ -11402,7 +11467,7 @@ async function todayView(){
   const [ss,cc,ee,pendingSessions,ww,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,date,date),
     sb.from('competitions').select('*').eq('competition_date',date).contains('team_codes',[currentTeamCode]),
-    v497AttendanceEnabledForTeam(currentTeamCode)?sb.from('club_events').select('*').eq('team_code',currentTeamCode).eq('event_date',date):Promise.resolve({data:[]}),
+    v533RowerSeesEvents(currentTeamCode)?sb.from('club_events').select('*').eq('team_code',currentTeamCode).eq('event_date',date):Promise.resolve({data:[]}),
     sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content,target_user_ids').eq('team_code',currentTeamCode).gte('session_date',seasonStart).lte('session_date',date).in('session_type',['GYM','ERG']).order('session_date'),
     sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,created_at,hidden').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(300),
     sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(300)
@@ -11436,7 +11501,7 @@ function athleteWeekSessionV123(s,rsvpStatus){
   const detail=isMar?`<div class="athleteWeekSeaV123">${v311T('sesion_mar')}</div>`:trainingContentHtml(s?.content||'');
   const prevRef=isErg?`<div id="ergoPrevRefV306_${s.id}" class="ergoPrevRefV306"></div>`:'';
   const actions=isMar?'':isGym?`<button class="athleteLogGymV113 primary" data-id="${s.id}">${v311T('registrar_gym')}</button>`:isErg?`<button class="athleteOpenErgoV113 primary" data-id="${s.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${s.id}">${v311T('registrar_manual')}</button>`:'';
-  const attOn=v497AttendanceEnabledForTeam(s.team_code||currentTeamCode);
+  const attOn=v533RowerSeesEvents(s.team_code||currentTeamCode);
   const rsvp=isMar&&attOn?v493RsvpWidgetHtml(s.id,s.team_code||currentTeamCode,rsvpStatus):'';
   const eventChat=isMar&&attOn&&v495ChatVisibleForRower()?`<details class="libraryAccordion v494EventChatAccordion" data-id="${s.id}" data-team="${esc(s.team_code||currentTeamCode||'')}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'';
   return `<details class="athleteWeekSessionV123" data-id="${s.id}" data-date="${esc(s.session_date||'')}" data-type="${esc(type)}"><summary><div class="athleteWeekSessionMainV123"><div class="athleteWeekSessionTopV123"><span class="athleteWeekTypeV123 ${isMar?'mar':''} ${isTest?'test':''}">${isTest?'TEST':esc(type||'SES')}</span><span class="athleteWeekSessionTitleV123">${esc(title)}</span></div><div class="athleteWeekSessionBottomV123"><span>${isMar?v311T('contenido_reservado'):v311T('toca_ver_detalle')}</span><span class="athleteWeekStatusV123">${v311T('pendiente_status')}</span></div></div><span class="athleteWeekChevronV123">⌄</span></summary><div class="athleteWeekDetailV123">${rsvp}${detail}${eventChat}${prevRef}${actions?`<div class="staffActions">${actions}</div>`:''}</div></details>`
