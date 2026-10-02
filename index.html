@@ -1739,7 +1739,10 @@ async function coachGymLibraryView(){
 
 // V491 · GYM_KNOWN_TAGS son las etiquetas/grupos musculares que ya usa el resto de la app (filtros,
 // generador de sesiones...); se muestran como chips para elegir en vez de tener que escribirlas a mano.
-const GYM_KNOWN_TAGS_V491=['piernas','posterior','tiron','espalda','empuje','core','agarre','potencia','general','unilateral','hombro','estabilidad'];
+// V492 · recortado a las 7 categorías reales que usa el resto de la app (misma lista que la leyenda de
+// arriba y que los grupos del listado); antes había 12, y 5 de ellas no existían en ningún otro sitio,
+// así que parecían etiquetas duplicadas o sueltas sin sentido.
+const GYM_KNOWN_TAGS_V491=['piernas','posterior','tiron','empuje','core','agarre','potencia'];
 function gymLibraryForm(item){
   const existingImg=gymImageUrlV88(item||{});
   const itemTags=(item?.tags&&item.tags.length?item.tags:item?.name?gymTagsForExercise(item):[]).map(t=>String(t).toLowerCase());
@@ -2278,7 +2281,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="491";
+const APP_VERSION="492";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
