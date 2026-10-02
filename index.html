@@ -513,6 +513,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .assignChoiceV151 details summary{font-size:.9rem}
   .assignCardV151 .staffActions{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 14px;z-index:5}
 }
+.v493RsvpRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.v493RsvpRow .v493RsvpBtn{padding:9px 13px}.v493RsvpStatus{flex-basis:100%}
+.v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}
 /* V490 · en móvil se acumulaba demasiado padding lateral anidado (main > .card > .coachAnalysisSectionBodyV123 >
    .libraryCard > .info), dejando el texto apelotonado en una columna estrecha con mucho hueco a los lados.
    Se recorta ese padding en cascada en pantallas pequeñas para recuperar ancho real de lectura. */
@@ -2144,6 +2146,7 @@ async function openNotificationsV104(){
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
    if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
+   if(u.includes('tab=eventos')&&v497AttendanceEnabledForTeam(currentMode==='staff'?coachSelectedTeam:currentTeamCode)){tab='eventos';draw();render();return}
  }));
 }
 
@@ -2157,6 +2160,8 @@ let coachLibrarySection="ERGO",gymEditorRows=[];
 let libraryViewMode="compact",libraryShowHidden=false,libraryFavoritesOnly=false,libraryArchiveMode="active";
 let TEAM_OPTIONS=[["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]];
 let TEAM_GOALS_V281=new Map(); // team_code -> {target:number|null, notes:string|null}
+let TEAM_ATTENDANCE_V497=new Map(); // team_code -> boolean (módulo de convocatorias/asistencia activo), por defecto true si no hay dato
+function v497AttendanceEnabledForTeam(team){const v=TEAM_ATTENDANCE_V497.get(team);return v!==false}
 const CURRENT_SEASON_LABEL_V283="26-27"; // v283: distintivo visual de temporada en la cabecera. Cambiar a mano cada temporada hasta que haya gestión de temporadas.
 const PHASE_OPTIONS=[["base","Base"],["development","Desarrollo"],["precomp","Precompetición / Específica"],["competition","Competición"],["recovery","Recuperación"]];
 
@@ -2281,7 +2286,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="492";
+const APP_VERSION="497";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2304,6 +2309,13 @@ async function loadTeamsV88(publicOnly=false){
       const rows=publicOnly?res.data:res.data.filter(x=>x.is_active!==false);
       if(rows.length)TEAM_OPTIONS=rows.map(x=>[x.code,x.name]);
       res.data.forEach(x=>TEAM_GOALS_V281.set(x.code,{target:x.wkg_target!=null?Number(x.wkg_target):null,notes:x.season_goals||null}));
+      // V497 · columna nueva (attendance_module_enabled) en consulta aparte y con su propio try/catch:
+      // si todavía no se ha ejecutado 20_eventos_v497.sql en Supabase, esto falla solo, sin romper la
+      // carga de equipos (que es crítica para toda la app).
+      try{
+        const att=await sb.from('rowing_teams').select('code,attendance_module_enabled');
+        if(!att.error)(att.data||[]).forEach(x=>TEAM_ATTENDANCE_V497.set(x.code,x.attendance_module_enabled!==false));
+      }catch(e){}
       try{if(typeof REG_TEAM_PARAM!=="undefined"&&REG_TEAM_PARAM)REG_TEAM_VALID=TEAM_OPTIONS.some(x=>x[0]===REG_TEAM_PARAM)?REG_TEAM_PARAM:null}catch(e){}
       return res.data||[];
     }
@@ -2735,7 +2747,7 @@ function draw(){
 }
 function v330GroupForTab(t){
   if(t==='hoy'||t==='semana'||t==='mes')return 'trabajo';
-  if(t==='hist'||t==='biblioteca')return 'actividad';
+  if(t==='hist'||t==='biblioteca'||t==='eventos')return 'actividad';
   if(t==='mensajes')return 'mensajes';
   if(t==='perfil')return 'yo';
   // V378 · agrupación equivalente para el modo entrenador (antes solo el remero tenía barra
@@ -2745,7 +2757,7 @@ function v330GroupForTab(t){
   // (junto con Perfil/Ajustes/Ayuda/Salir) para quedar en 4 botones.
   if(currentMode==='staff'){
     if(t==='registro')return 'trabajo';
-    if(t==='planificar'||t==='result')return 'actividad';
+    if(t==='planificar'||t==='result'||t==='eventos')return 'actividad';
     if(t==='equipo'||t==='sistema')return 'yo';
   }
   return null;
@@ -2851,9 +2863,9 @@ function v330InjectSubTabs(){
   if(!el||!el.firstElementChild||el.querySelector('.v330SubTabs'))return;
   let items;
   if(currentMode==='staff'){
-    items=group==='trabajo'?[['hoy','Hoy'],['semana','Semana'],['mes','Mes'],['registro','Registro MAR']]:[['planificar','Planificación'],['result','Análisis'],['biblioteca','Biblioteca']];
+    items=group==='trabajo'?[['hoy','Hoy'],['semana','Semana'],['mes','Mes'],['registro','Registro MAR']]:[['planificar','Planificación'],['result','Análisis'],['biblioteca','Biblioteca'],['eventos','Eventos']];
   }else{
-    items=group==='trabajo'?[['hoy',v311T('nav_hoy')],['semana',v311T('nav_semana')],['mes',v311T('nav_mes')]]:[['hist',v311T('nav_hist')],['biblioteca',v311T('nav_biblioteca')]];
+    items=group==='trabajo'?[['hoy',v311T('nav_hoy')],['semana',v311T('nav_semana')],['mes',v311T('nav_mes')]]:[['hist',v311T('nav_hist')],['biblioteca',v311T('nav_biblioteca')],...(v497AttendanceEnabledForTeam(currentTeamCode)?[['eventos','Eventos']]:[])];
   }
   const bar=document.createElement('div');
   bar.className='v330SubTabs';
@@ -2874,9 +2886,9 @@ function render(){
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
-    if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasAnyCoachTeam())return coachMessagesView();return staffTodayView();
+    if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasAnyCoachTeam())return coachMessagesView();return staffTodayView();
   }
-  if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
+  if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="eventos"){if(!v497AttendanceEnabledForTeam(currentTeamCode)){tab="hist";draw();return history()}athleteEventsView()}else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
 }
 (function(){
   var v316OrigRender=render;
@@ -2911,12 +2923,12 @@ async function staffTodayView(){
   const teams=staffViewTeamCodes(),date=localISODate();if(!teams.length){content.innerHTML='<div class="card"><h2>Sin equipo asignado</h2><p>Un administrador debe asignarte como entrenador o ayudante.</p></div>';return}
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
-  const [ss,cc]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team])]);
-  const sessions=ss.data||[],comps=cc.data||[];
+  const [ss,cc,ee]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team]),v497AttendanceEnabledForTeam(team)?sb.from('club_events').select('*').eq('team_code',team).eq('event_date',date):Promise.resolve({data:[]})]);
+  const sessions=ss.data||[],comps=cc.data||[],clubEvs=ee.error?[]:(ee.data||[]);
   // V403 · se quita el botón "Ver semana" (la barra Hoy/Semana/Mes/Registro MAR de arriba ya
   // permite ir a Semana, era redundante) y el selector de Equipo sube justo debajo del título,
   // en su propia fila compacta, en vez de compartir hueco con un botón.
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}${x.is_event?' · convocatoria':''}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
 }
 async function staffRegisterView(){
@@ -2934,10 +2946,14 @@ async function staffRegisterView(){
     const xs=q.data||[],today=localISODate(),nearAll=near.data||[],nearSorted=nearAll.slice().sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(today+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(today+'T12:00:00'))).slice(0,8).sort((a,b)=>a.session_date.localeCompare(b.session_date)),ids=nearSorted.map(x=>x.id);let doneIds=new Set();if(ids.length){const rr=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);doneIds=new Set((rr.data||[]).map(x=>String(x.training_session_id)))}
     const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
     dayBox?.querySelectorAll('.seaDayQuickV138').forEach(b=>b.onclick=()=>{staffRegDate.value=b.dataset.date;load()});
-    const crewMapV309=await v307FetchCrewMap(xs.map(x=>x.id));
+    const [crewMapV309,roster,rsvpRowsAll]=await Promise.all([v307FetchCrewMap(xs.map(x=>x.id)),staffAthletesForTeam(t),xs.length?sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',xs.map(x=>x.id)):Promise.resolve({data:[]})]);
     xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${v307CrewBoatHtml(x.crew,x.id,false,t)}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
+    const attOnReg=v497AttendanceEnabledForTeam(t);
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map()):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
+    v495WireEventChatAccordions(staffRegArea);
+    staffRegArea.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;b.disabled=true;b.textContent='Avisando…';try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[t]},title:'¿Vas al entreno de mar?',body:`Confirma tu asistencia a ${b.dataset.title||'la sesión de mar'} en Row Training.`,url:'/',type:'training'});b.textContent='Aviso enviado ✓'}catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}});
     xs.forEach(x=>{
       const boat=staffRegArea.querySelector(`.v307CrewBoat[data-session="${x.id}"]`);
       if(boat){const card=boat.closest('.card');v307BindCrewBoat(card,x,t,load);v307InjectCrewPhysicals(card,x.crew,x.id,t)}
@@ -3086,6 +3102,139 @@ async function v310CrewPhysicalStats(userIds,teamCode){
     });
   }catch(e){console.warn('No se pudieron cargar peso/W-kg de la tripulación',e)}
   return result;
+}
+// V495 · wiring compartido de los botones RSVP y los acordeones de chat de evento: antes vivía inline
+// dentro de bindAthletePlannedActionsV113 (solo Semana del remero), ahora también lo usa la pestaña
+// Eventos (remero y entrenador) y el Registro MAR, así que se saca a funciones reutilizables.
+function v495WireRsvpButtons(root){
+  root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
+    if(!currentUser)return;
+    const row=b.closest('.v493RsvpRow'),eventId=Number(row.dataset.id),kind=row.dataset.kind||'session',teamCode=row.dataset.team,status=b.dataset.status;
+    row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=true);
+    try{
+      const payload={user_id:currentUser.id,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
+      const onConflict=kind==='competition'?'competition_id,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+      const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
+      if(q.error)throw q.error;
+      row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
+      const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=status==='in'?'Has confirmado que vas':'Has avisado de que no vas';
+      row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status}}));
+    }catch(e){alert(/relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 17_asistencia_mar_rsvp.sql, 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.':'No se pudo guardar tu respuesta: '+(e.message||e))}
+    finally{row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=false)}
+  });
+}
+function v495WireEventChatAccordions(root){
+  root.querySelectorAll('.v494EventChatAccordion').forEach(det=>det.addEventListener('toggle',()=>{
+    if(!det.open||det.dataset.loaded)return;det.dataset.loaded='1';
+    v494RenderEventChatThread(det.querySelector('.v494EventChatBody'),Number(det.dataset.id),det.dataset.team,det.dataset.kind||'session');
+  }));
+}
+// V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
+// respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser){
+  const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in');
+  const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out');
+  const pendingList=roster.filter(p=>!statusByUser.has(String(p.user_id)));
+  return `<div class="v493RsvpSummary"><b>Confirmaciones:</b> ✅ ${inList.length} van · ❌ ${outList.length} no van · ⏳ ${pendingList.length} sin responder<details><summary>Ver quién</summary>${inList.length?`<p><b>Van:</b> ${inList.map(p=>esc(p.full_name||'Sin nombre')).join(', ')}</p>`:''}${outList.length?`<p><b>No van:</b> ${outList.map(p=>esc(p.full_name||'Sin nombre')).join(', ')}</p>`:''}${pendingList.length?`<p><b>Sin responder:</b> ${pendingList.map(p=>esc(p.full_name||'Sin nombre')).join(', ')}</p>`:''}</details>${pendingList.length?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:''}</div>`;
+}
+// V495 · pestaña "Eventos": generaliza RSVP+chat de evento más allá de MAR, a cualquier sesión de
+// MAR/GYM que el entrenador marque explícitamente como "convocatoria" (is_event=true) más todas las
+// competiciones. El listado de quién va/no va/falta por responder lo ve TODO el equipo (no solo el
+// entrenador), a diferencia de Registro MAR que es solo para el entrenador.
+function v495EventDateLabel(ds){
+  if(!ds)return'';
+  return new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(ds+'T12:00:00')).replace(/^./,c=>c.toUpperCase());
+}
+async function v495FetchEvents(team){
+  const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
+  const [ss,cc,ee]=await Promise.all([
+    sb.from('training_sessions').select('*').eq('team_code',team).eq('is_event',true).gte('session_date',start).lte('session_date',end).order('session_date'),
+    sb.from('competitions').select('*').contains('team_codes',[team]).gte('competition_date',start).lte('competition_date',end).order('competition_date'),
+    sb.from('club_events').select('*').eq('team_code',team).gte('event_date',start).lte('event_date',end).order('event_date')
+  ]);
+  if(ss.error&&/column .* does not exist/i.test(ss.error.message||''))throw new Error('Falta ejecutar 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.');
+  const sessions=(ss.error?[]:(ss.data||[])).map(x=>({...x,kind:'session',event_date:x.session_date,event_title:x.title||x.session_type||'Convocatoria'}));
+  const comps=(cc.error?[]:(cc.data||[])).map(x=>({...x,kind:'competition',event_date:x.competition_date,event_title:x.name||'Competición'}));
+  const customs=(ee.error?[]:(ee.data||[])).map(x=>({...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}));
+  return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
+}
+async function v495RsvpStatusMapsForEvents(events){
+  const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
+  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',sessionIds));
+  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status').in('competition_id',compIds));
+  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds));
+  const results=qs.length?await Promise.all(qs):[],byEvent=new Map();
+  results.forEach(r=>(r.data||[]).forEach(row=>{
+    const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
+    if(!byEvent.has(k))byEvent.set(k,new Map());
+    byEvent.get(k).set(String(row.user_id),row.status);
+  }));
+  return byEvent;
+}
+function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat){
+  const typeLabel=ev.kind==='competition'?'🏁 Competición':ev.kind==='club_event'?'📅 Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'🏋️ GYM · convocatoria':'🚣 MAR · convocatoria');
+  const cardCls=ev.kind==='competition'?'raceCard':(String(ev.session_type||'').toUpperCase()==='MAR'?'mar':'');
+  const rsvp=v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
+  const summary=v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser);
+  const chat=showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'';
+  const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
+  const extra=ev.kind==='club_event'?`${ev.location?`<p>📍 ${esc(ev.location)}</p>`:''}${ev.notes?`<p>${esc(ev.notes)}</p>`:''}`:'';
+  return `<div class="card staffDayCard ${cardCls}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</h3><p class="muted">${esc(v495EventDateLabel(ev.event_date))}</p>${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${rsvp}${summary}${chat}</div>`;
+}
+async function coachEventsView(){
+  const teams=staffViewTeamCodes();
+  if(!teams.length)return staffTodayView();
+  const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
+  coachSelectedTeam=team;
+  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias (sesiones de mar o gimnasio que marques como tal al crearlas/editarlas), competiciones y eventos propios. Todo el equipo ve aquí quién ha confirmado.</p><label>Equipo<select id="eventsTeamSel">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  v497NewClubEvent.onclick=()=>{
+    const f=document.getElementById('v497ClubEventForm');
+    f.classList.remove('hidden');
+    f.innerHTML=`<div class="plannerGrid"><label>Título<input id="v497CeTitle" placeholder="Ej. Reunión de equipo"></label><label>Fecha<input id="v497CeDate" type="date" value="${localISODate()}"></label><label>Hora (opcional)<input id="v497CeTime" placeholder="Ej. 19:00"></label><label>Lugar (opcional)<input id="v497CeLocation"></label></div><label>Notas (opcional)<textarea id="v497CeNotes" rows="2"></textarea></label><label>Responder antes del (opcional)<input id="v497CeDeadline" type="date"></label><div class="actions"><button type="button" id="v497CeSave" class="primary">Crear evento y avisar al equipo</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
+    v497CeCancel.onclick=()=>{f.classList.add('hidden');f.innerHTML=''};
+    v497CeSave.onclick=async()=>{
+      const title=v497CeTitle.value.trim(),date=v497CeDate.value;
+      if(!title||!date)return alert('Completa al menos el título y la fecha.');
+      v497CeSave.disabled=true;
+      const t=eventsTeamSel.value;
+      const q=await sb.from('club_events').insert({team_code:t,title,event_date:date,event_time:v497CeTime.value.trim()||null,location:v497CeLocation.value.trim()||null,notes:v497CeNotes.value.trim()||null,response_deadline:v497CeDeadline.value||null,created_by:currentUser.id}).select('id').single();
+      if(q.error){alert(/relation .* does not exist/i.test(q.error.message||'')?'Falta ejecutar 20_eventos_v497.sql en Supabase.':q.error.message);v497CeSave.disabled=false;return}
+      try{await sendNotificationV110({audience:{mode:'teams',team_codes:[t]},title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+      f.classList.add('hidden');f.innerHTML='';
+      load();
+    };
+  };
+  async function load(){
+    const t=eventsTeamSel.value;coachSelectedTeam=t;
+    const area=document.getElementById('eventsArea');
+    if(!v497AttendanceEnabledForTeam(t)){area.innerHTML='<div class="info">El módulo de convocatorias y asistencia está desactivado para este equipo.<br><span class="muted">Puedes reactivarlo en Equipo → "Convocatorias y asistencia".</span></div>';return}
+    area.innerHTML=v316Loading('Cargando eventos…');
+    let events,roster;
+    try{[events,roster]=await Promise.all([v495FetchEvents(t),staffAthletesForTeam(t)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+    if(tab!=='eventos'||currentMode!=='staff')return;
+    const statusByEvent=await v495RsvpStatusMapsForEvents(events);
+    area.innerHTML=events.length?events.map(ev=>v495EventCardHtml(ev,roster,statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),null,t,true)).join(''):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
+    v495WireEventChatAccordions(area);
+    area.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;b.disabled=true;b.textContent='Avisando…';try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[t]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/',type:'training'});b.textContent='Aviso enviado ✓'}catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}});
+  }
+  eventsTeamSel.onchange=load;
+  load();
+}
+async function athleteEventsView(){
+  const team=currentTeamCode;
+  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias de mar o gimnasio y competiciones. Confirma si vas; todo el equipo puede ver quién ha confirmado.</p><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  const area=document.getElementById('eventsArea');
+  if(!v497AttendanceEnabledForTeam(team)){area.innerHTML='<div class="info">Tu entrenador ha desactivado este módulo por ahora.</div>';return}
+  let events,roster;
+  try{[events,roster]=await Promise.all([v495FetchEvents(team),staffAthletesForTeam(team)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  if(tab!=='eventos'||currentMode!=='athlete')return;
+  const statusByEvent=await v495RsvpStatusMapsForEvents(events);
+  area.innerHTML=events.length?events.map(ev=>{
+    const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
+    return v495EventCardHtml(ev,roster,statusByUser,myStatus,team,v495ChatVisibleForRower());
+  }).join(''):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
+  v495WireRsvpButtons(area);
+  v495WireEventChatAccordions(area);
 }
 async function v307FetchCrewMap(sessionIds){
   const map=new Map();
@@ -3913,6 +4062,7 @@ async function teamStaffAdminView(){
   <details class="libraryAccordion"><summary><span>Gestión de equipos</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><div class="teamRosterToolbar"><div><h3 style="margin:0">Plantillas de los equipos</h3><p class="muted" style="margin:4px 0 0">Vista rápida para saber cuántos sois, quién está en cada equipo y detectar personas sin asignar.</p></div>${(()=>{const uniqueRowers=[...new Set(members.map(m=>String(m.user_id)))],on=pushState?.ok?uniqueRowers.filter(uid=>(pushState.users.get(uid)||0)>0).length:null;return pushState?.ok?`<div class="pushSummaryV248"><span>🔔</span><span><strong>${on}/${uniqueRowers.length}</strong> remeros con push activo</span></div>`:`<div class="pushSummaryV248"><span>🔔</span><span><strong>Estado push no disponible</strong><div class="pushStatusNoteV248">${esc(pushState?.reason||'No se pudo consultar')}</div></span></div>`})()}</div><div class="teamRosterGrid">${rosterCards}</div>${unassigned.length||pendingGeneric.length?`<div class="unassignedBox"><h3 style="margin-top:0">⚠️ Por revisar</h3>${unassigned.length?`<p><b>${unassigned.length} persona${unassigned.length===1?'':'s'} sin equipo ni rol</b></p><div class="rosterList">${unassigned.map(p=>`<div class="rosterPerson"><span><b>${esc(personLabel(p))}</b></span><span class="rosterRoles"><span class="tag">Sin equipo</span><button type="button" class="editPersonTeamsV167" data-user="${p.user_id}">Editar / eliminar</button></span></div>`).join('')}</div>`:''}${pendingGeneric.length?`<p style="margin-top:12px"><b>${pendingGeneric.length} alta${pendingGeneric.length===1?'':'s'} desde enlace general</b></p><div class="rosterList">${pendingGeneric.map(rg=>`<div class="rosterPerson"><span><b>${esc(rg.full_name||rg.email||'Sin nombre')}</b>${rg.email?`<small class="muted"> · ${esc(rg.email)}</small>`:''}</span><span class="tag">Sin equipo solicitado</span></div>`).join('')}</div>`:''}</div>`:''}</div></details>
   ${isGlobalCoach?`<details class="libraryAccordion"><summary><span>Crear / editar equipos</span>${countBadge(teams.length)}</summary><div class="accordionBody"><h3 style="margin-top:0">Crear equipo</h3><div class="plannerGrid"><label>Nombre<input id="newTeamName" placeholder="Ej. Juvenil masculino"></label><label>Código interno<input id="newTeamCode" placeholder="Se genera automáticamente"></label><label>Categoría<input id="newTeamCategory" placeholder="Ej. Juvenil"></label><label>Sexo / grupo<input id="newTeamGender" placeholder="Ej. Masculino"></label></div><button id="createTeam" class="primary">Crear equipo</button><h3>Equipos existentes</h3><div class="teamEditGrid">${teams.map((t,i)=>`<div class="staffPerson"><div class="plannerGrid"><label>Nombre<input class="teamNameEdit" data-i="${i}" value="${esc(t.name)}"></label><label>Categoría<input class="teamCategoryEdit" data-i="${i}" value="${esc(t.category||'')}"></label><label>Sexo / grupo<input class="teamGenderEdit" data-i="${i}" value="${esc(t.gender||'')}"></label><label>Estado<select class="teamActiveEdit" data-i="${i}"><option value="1" ${t.is_active?'selected':''}>Activo</option><option value="0" ${!t.is_active?'selected':''}>Inactivo</option></select></label></div><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamEdit" data-i="${i}">Guardar cambios</button></div></div>`).join('')}</div></div></details>`:''}
   <details class="libraryAccordion" id="v281GoalsSection"><summary><span>Objetivos de equipo</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Objetivo orientativo de W/kg y notas de temporada (tests, competiciones…) por equipo. Se puede ajustar cada temporada.</p><div class="teamEditGrid">${manageTeams.map((t,i)=>`<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><div class="plannerGrid"><label>Objetivo W/kg<input class="teamWkgTargetEdit" data-code="${esc(t.code)}" type="number" step="0.1" min="0" placeholder="ej. 3.5" value="${t.wkg_target!=null?t.wkg_target:''}"></label></div><label style="display:block;margin-top:8px">Objetivos de temporada<textarea class="teamSeasonGoalsEdit" data-code="${esc(t.code)}" rows="3" placeholder="Ej. Subir la media a 3.3 W/kg antes del test de enero; clasificar para el campeonato autonómico en mayo…">${esc(t.season_goals||'')}</textarea></label><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamGoalsV281" data-code="${esc(t.code)}">Guardar objetivos</button></div></div>`).join('')}</div></div></details>
+  ${isGlobalCoach?`<details class="libraryAccordion" id="v497AttendanceSection"><summary><span>Convocatorias y asistencia</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Activa o desactiva, equipo por equipo, el módulo de convocatorias (confirmación de asistencia + chat del evento, pestaña "Eventos"). Si lo desactivas para un equipo, sus remeras dejan de ver esa pestaña y las convocatorias existentes quedan en pausa hasta que lo reactives.</p><div class="teamEditGrid">${manageTeams.map(t=>`<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><label class="inlineCheck"><input type="checkbox" class="v497AttendanceToggle" data-code="${esc(t.code)}" ${t.attendance_module_enabled!==false?'checked':''}> <span>Convocatorias y asistencia activas para este equipo</span></label></div>`).join('')}</div></div></details>`:''}
   <details class="libraryAccordion"><summary><span>Enlaces de inscripción</span></summary><div class="accordionBody"><div class="inviteLinks">${isGlobalCoach?`<div class="inviteLink"><b>Enlace general</b><p class="muted">Sin equipo preseleccionado. Las solicitudes generales las gestiona el entrenador administrador.</p><button class="copyInvite" data-url="${esc(genericInviteUrl)}">Copiar enlace</button></div>`:""}${allowedTeams.map(t=>{const u=invitationUrl(t[0]);return `<div class="inviteLink"><b>${esc(t[1])}</b><p class="muted">La solicitud queda vinculada a este equipo. Solo tienes que aprobarla; no hace falta volver a asignar el equipo.</p><button class="copyInvite" data-url="${esc(u)}">Copiar enlace</button></div>`}).join("")}</div></div></details>
   ${recentAltas.length?`<details class="libraryAccordion"><summary><span>Altas revisadas recientemente</span>${countBadge(recentAltas.length)}</summary><div class="accordionBody">${recentAltas.map(x=>`<div class="last"><b>${esc(x.full_name)}</b> · ${x.status==="approved"?"Aprobada":"Rechazada"}${x.assigned_team?` · ${esc(teamLabel(x.assigned_team))}`:""}${x.status==="approved"?` <button class="resendWelcome" data-id="${x.id}" style="margin-left:8px">Reenviar bienvenida</button>`:""}</div>`).join("")}</div></details>`:""}
   </div>`;
@@ -3976,6 +4126,14 @@ async function teamStaffAdminView(){
     const q=await sb.from('rowing_teams').update({wkg_target:wkg,season_goals:notes||null,updated_at:new Date().toISOString()}).eq('code',code);
     if(q.error){alert(q.error.message);b.disabled=false;b.textContent='Guardar objetivos';return}
     await loadTeamsV88(false);teamStaffAdminView();
+  });
+  document.querySelectorAll('.v497AttendanceToggle').forEach(cb=>cb.onchange=async()=>{
+    const code=cb.dataset.code,enabled=cb.checked;
+    cb.disabled=true;
+    const q=await sb.from('rowing_teams').update({attendance_module_enabled:enabled,updated_at:new Date().toISOString()}).eq('code',code);
+    cb.disabled=false;
+    if(q.error){alert(/column .* does not exist/i.test(q.error.message||'')?'Falta ejecutar 20_eventos_v497.sql en Supabase.':q.error.message);cb.checked=!enabled;return}
+    await loadTeamsV88(false);
   });
 }
 function localISODate(){const x=new Date();return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`}
@@ -5565,6 +5723,63 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   sendBtn.onclick=send;
   input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
 }
+// V494 · Chat GRUPAL por evento (sesión de MAR): todo el equipo convocado ve los mismos mensajes,
+// a diferencia de v300* que es 1 a 1 (entrenador <-> una remera). De momento solo se muestra en el
+// panel de entrenador (Registro MAR); para remeras está apagado por este interruptor hasta que Nacho
+// lo dé por probado -- cuando quiera activarlo basta con poner esta constante a true.
+const V494_EVENT_CHAT_ENABLED_FOR_ROWERS=false;
+// V495 · mientras el interruptor general sigue en false, Nacho puede verlo él mismo en modo remero
+// (modo pruebas) añadiendo su email a esta lista, sin activarlo todavía para el resto de remeras.
+const V495_EVENT_CHAT_TEST_EMAILS=['sixpackcosta@gmail.com'];
+function v495ChatVisibleForRower(){return V494_EVENT_CHAT_ENABLED_FOR_ROWERS||V495_EVENT_CHAT_TEST_EMAILS.includes(String(currentUser?.email||'').toLowerCase())}
+async function v494FetchEventChat(eventId,kind='session'){
+  try{
+    let q=sb.from('event_chat_messages').select('id,sender_id,body,created_at');
+    q=kind==='competition'?q.eq('competition_id',eventId):kind==='club_event'?q.eq('club_event_id',eventId):q.eq('training_session_id',eventId);
+    const r=await q.order('created_at',{ascending:true}).limit(300);
+    return r.error?[]:(r.data||[]);
+  }catch(e){return[]}
+}
+async function v494SendEventChat(eventId,teamCode,text,kind='session'){
+  const res=await sb.from('event_chat_messages').insert({training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null,team_code:teamCode,sender_id:currentUser.id,body:text});
+  let pushResult=null,pushError=null;
+  if(!res.error){
+    try{
+      const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
+      pushResult=await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'event_chat_message'});
+    }catch(e){pushError=e?.message||String(e)}
+  }
+  return {error:res.error,pushResult,pushError};
+}
+function v494EventChatBubblesHtml(messages,meId,namesById){
+  if(!messages.length)return '<p class="muted" style="text-align:center;padding:20px 0">Aún no hay mensajes en este evento. Escribe el primero 👇</p>';
+  return messages.map(m=>{
+    const mine=m.sender_id===meId,name=namesById.get(String(m.sender_id))||'Alguien';
+    return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${!mine?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div></div>`;
+  }).join('');
+}
+async function v494RenderEventChatThread(container,sessionId,teamCode,kind='session'){
+  container.innerHTML=`<p class="muted">${v316Loading('Cargando chat del evento…')}</p>`;
+  const messages=await v494FetchEventChat(sessionId,kind);
+  const senderIds=[...new Set(messages.map(m=>String(m.sender_id)))];
+  const namesById=new Map();
+  if(senderIds.length){const nq=await sb.from('profiles').select('user_id,full_name').in('user_id',senderIds);(nq.data||[]).forEach(p=>namesById.set(String(p.user_id),p.full_name||'Sin nombre'))}
+  container.innerHTML=`<div id="v494ChatScroll_${sessionId}" style="max-height:50vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v494EventChatBubblesHtml(messages,currentUser.id,namesById)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v494ChatInput_${sessionId}" rows="1" placeholder="Escribe al equipo…" style="flex:1;resize:none"></textarea><button type="button" id="v494ChatSend_${sessionId}" class="primary">Enviar</button></div>`;
+  const scrollBox=container.querySelector(`#v494ChatScroll_${sessionId}`);scrollBox.scrollTop=scrollBox.scrollHeight;
+  const input=container.querySelector(`#v494ChatInput_${sessionId}`),sendBtn=container.querySelector(`#v494ChatSend_${sessionId}`);
+  const send=async()=>{
+    const text=input.value.trim();if(!text)return;
+    sendBtn.disabled=true;
+    const{error,pushError}=await v494SendEventChat(sessionId,teamCode,text,kind);
+    sendBtn.disabled=false;
+    if(error){alert(/relation .* does not exist|column .* does not exist/i.test(error.message||'')?'Falta ejecutar 18_chat_evento.sql y 19_eventos_generalizado.sql en Supabase antes de poder usar el chat del evento.':error.message);return}
+    input.value='';
+    await v494RenderEventChatThread(container,sessionId,teamCode,kind);
+    if(pushError)v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+pushError);
+  };
+  sendBtn.onclick=send;
+  input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+}
 async function v300RefreshUnreadMsgCount(){
   try{
     if(currentMode==='athlete'&&currentUser){
@@ -7059,6 +7274,8 @@ function sessionEditor(x=null){
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
  <div id="visualSessionEditorV213"></div>
  <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea><label id="gymCustomTextWrapV249" class="inlineCheck" style="margin-top:8px"><input id="gymCustomTextV249" type="checkbox"> <span><b>Solo GYM:</b> guardar este texto tal cual (ignora los ejercicios marcados de la biblioteca). Formato por línea: <i>Ejercicio · 4×12-10-10-8 · notas</i></span></label></details>
+ <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Es convocatoria</b><br>Aparece en la pestaña Eventos: las remeras confirman si van o no (visible para todo el equipo) y hay un chat propio de ese día. Al marcarla (o guardar un cambio con la casilla ya marcada) se avisa por push a todo el equipo.</span></label>
+ <label id="sessResponseDeadlineWrap" style="display:none">Responder antes del (opcional)<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <label class="notifyToggleV110"><input id="notifyRowerChangeV110" type="checkbox"><span><b>Enviar notificación a los remeros</b><br>Márcalo solo si quieres avisar de este alta o cambio. Los retoques internos pueden guardarse sin avisar.</span></label>
  <div id="typeAdvice"></div>
@@ -7117,7 +7334,7 @@ function sessionEditor(x=null){
   box.innerHTML=`<details ${audienceSelV249.size?'open':''}><summary><b>👤 Dirigida a:</b> <span id="audSummaryV249">${summary()}</span></summary><p class="muted" style="margin:8px 0">Por defecto la sesión es para todo el equipo. Marca a una o varias personas para que solo ellas la vean: ese día sustituirá, para ellas, a la sesión general del mismo tipo (GYM o ERGO). MAR y mensajes siguen siendo del equipo.</p><div style="display:grid;gap:4px">${list.map(p=>`<label class="inlineCheck"><input type="checkbox" class="audV249" value="${esc(p.user_id)}" ${audienceSelV249.has(p.user_id)?'checked':''}> ${esc(p.full_name||'Sin nombre')}</label>`).join('')||'<span class="muted">No hay remeros en este equipo.</span>'}</div></details>`;
   box.querySelectorAll('.audV249').forEach(cb=>cb.onchange=()=>{cb.checked?audienceSelV249.add(cb.value):audienceSelV249.delete(cb.value);document.getElementById('audSummaryV249').textContent=summary()});
  }
- const refresh=()=>{drawAudienceV249();renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ const refresh=()=>{drawAudienceV249();renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';sessIsEventWrap.style.display=['MAR','GYM'].includes(sessType.value)?'flex':'none';sessResponseDeadlineWrap.style.display=['MAR','GYM'].includes(sessType.value)?'block':'none';v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())setSessionContentV213(marDefaultSessionContent());else if(sessType.value!=='MAR'&&skeleton)setSessionContentV213('');refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    if(['ERG','MAR'].includes(sessType.value))syncVisualToTextV213();
@@ -7136,10 +7353,16 @@ function sessionEditor(x=null){
    if(sessType.value==='MAR'&&new Date(date+'T12:00:00').getDay()===2){
      contentValue=normalizeTuesdayMar60V198(contentValue);
    }
-   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,updated_at:new Date().toISOString()};
+   const isEventNow=['MAR','GYM'].includes(sessType.value)?!!document.getElementById('sessIsEvent')?.checked:false;
+   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,updated_at:new Date().toISOString()};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
    if(targetsV249.length||sessionTargetsV249(x).length)payload.target_user_ids=targetsV249.length?targetsV249:null;
    let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload); if(q.error){alert(q.error.message);return}
+   // V497 · la convocatoria "salta" (se avisa al equipo) justo en el momento en que el entrenador la
+   // marca como tal, no antes: si no estaba marcada y ahora sí, se manda ya el aviso push.
+   if(isEventNow&&!x?.is_event&&v497AttendanceEnabledForTeam(team)){
+     try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${sessTitle.value.trim()||sessType.value}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+   }
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
    if(document.getElementById('notifyRowerChangeV110')?.checked){const action=x?'Entrenamiento actualizado':'Nuevo entrenamiento';const bodyV249=`${shortDateES(date)} · ${sessTitle.value.trim()||sessType.value}`;if(targetsV249.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:targetsV249,team_codes:[team]},title:action,body:bodyV249,url:'/',type:'training'})}catch(e){alert('El cambio se ha guardado, pero no se pudo enviar la notificación.\n\nDetalle: '+(e?.message||e))}}else await notifyTeamChangeV110(team,action,bodyV249,'/');}
    renderPlanDay();
@@ -9672,7 +9895,7 @@ async function athleteGymFormV113(s,back){
   content.querySelectorAll('.athGymMainV116').forEach(btn=>btn.onclick=()=>{const i=Number(btn.dataset.main);delete selections[i];delete athleteGymSelectionsV117[athleteGymSelectionKeyV117(s.id,i)];const st=document.getElementById(`athGymVariantStatusV116_${i}`);if(st)st.innerHTML=`Se registrará: <b>${esc(planned[i].name)}</b>`;refreshLoadAdviceV215(i,planned[i].name);content.querySelectorAll(`.altChoose[data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'))});
   athGymSaveV113.onclick=async()=>{athGymSaveV113.disabled=true;const w=await sb.from('workout_logs').insert({user_id:currentUser.id,session_code:s.title||'GYM',session_type:'gym',session_date:s.session_date,training_session_id:s.id,status:'completed',notes:athGymNoteV113.value.trim()||null}).select('id').single();if(w.error){alert(w.error.message);athGymSaveV113.disabled=false;return}if(planned.length){const rows=planned.map((e,i)=>{const chosen=selections[i]||e.name,typedNote=document.getElementById(`athGymExerciseNoteV116_${i}`).value.trim(),note=(chosen!==e.name?`[[ASIGNADO:${e.name}]] `:'')+typedNote;return {workout_id:w.data.id,user_id:currentUser.id,exercise_name:chosen,weight_kg:document.getElementById(`athGymWeightV113_${i}`).value?Number(document.getElementById(`athGymWeightV113_${i}`).value):null,reps:null,perceived_difficulty:document.getElementById(`athGymFeelV113_${i}`).value,note:note||null}}),q=await sb.from('gym_exercise_results').insert(rows);if(q.error){alert(q.error.message);athGymSaveV113.disabled=false;return}}const workoutNotice=await notifyWorkoutCoachesV129('workout',w.data.id,currentTeamCode);alert('Entrenamiento GYM guardado'+workoutNoticeTextV130(workoutNotice));back()}
 }
-function bindAthletePlannedActionsV113(root,sessions,back){root.querySelectorAll('.athGymPreviewAltV117').forEach(btn=>btn.onclick=()=>{const sid=btn.dataset.session,i=Number(btn.dataset.ex),chosen=decodeURIComponent(btn.dataset.alt),s=sessions.find(x=>String(x.id)===sid),e=s?gymExercisesFromContent(s.content)[i]:null;if(!e)return;athleteGymSelectionsV117[athleteGymSelectionKeyV117(sid,i)]=chosen;const st=document.getElementById(`athGymPreviewStatusV117_${sid}_${i}`);if(st)st.innerHTML=`Se realizará: <b>${esc(chosen)}</b>`;root.querySelectorAll(`.athGymPreviewAltV117[data-session="${sid}"][data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'));btn.classList.add('selected')});root.querySelectorAll('.athGymPreviewMainV117').forEach(btn=>btn.onclick=()=>{const sid=btn.dataset.session,i=Number(btn.dataset.ex),s=sessions.find(x=>String(x.id)===sid),e=s?gymExercisesFromContent(s.content)[i]:null;if(!e)return;delete athleteGymSelectionsV117[athleteGymSelectionKeyV117(sid,i)];const st=document.getElementById(`athGymPreviewStatusV117_${sid}_${i}`);if(st)st.innerHTML=`Se realizará: <b>${esc(e.name)}</b>`;root.querySelectorAll(`.athGymPreviewAltV117[data-session="${sid}"][data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'))});root.querySelectorAll('.athleteLogGymV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(s)athleteGymFormV113(s,back)});root.querySelectorAll('.athleteOpenErgoV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(s)plannedErgoLinkV113(s)});root.querySelectorAll('.athleteManualErgoV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(!s)return;currentErgoPrescription={code:`PLAN-${s.id}`,name:s.title||'ERGO',scheduledDate:s.session_date,trainingSessionId:s.id};content.innerHTML=`<div class="card"><button id="athErgoBackV113">← Volver</button><h2>${esc(s.title||'ERGO')}</h2><div id="ergoFormWrap"></div></div>`;athErgoBackV113.onclick=back;showErgoForm()})}
+function bindAthletePlannedActionsV113(root,sessions,back){root.querySelectorAll('.athGymPreviewAltV117').forEach(btn=>btn.onclick=()=>{const sid=btn.dataset.session,i=Number(btn.dataset.ex),chosen=decodeURIComponent(btn.dataset.alt),s=sessions.find(x=>String(x.id)===sid),e=s?gymExercisesFromContent(s.content)[i]:null;if(!e)return;athleteGymSelectionsV117[athleteGymSelectionKeyV117(sid,i)]=chosen;const st=document.getElementById(`athGymPreviewStatusV117_${sid}_${i}`);if(st)st.innerHTML=`Se realizará: <b>${esc(chosen)}</b>`;root.querySelectorAll(`.athGymPreviewAltV117[data-session="${sid}"][data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'));btn.classList.add('selected')});root.querySelectorAll('.athGymPreviewMainV117').forEach(btn=>btn.onclick=()=>{const sid=btn.dataset.session,i=Number(btn.dataset.ex),s=sessions.find(x=>String(x.id)===sid),e=s?gymExercisesFromContent(s.content)[i]:null;if(!e)return;delete athleteGymSelectionsV117[athleteGymSelectionKeyV117(sid,i)];const st=document.getElementById(`athGymPreviewStatusV117_${sid}_${i}`);if(st)st.innerHTML=`Se realizará: <b>${esc(e.name)}</b>`;root.querySelectorAll(`.athGymPreviewAltV117[data-session="${sid}"][data-ex="${i}"]`).forEach(x=>x.classList.remove('selected'))});root.querySelectorAll('.athleteLogGymV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(s)athleteGymFormV113(s,back)});root.querySelectorAll('.athleteOpenErgoV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(s)plannedErgoLinkV113(s)});root.querySelectorAll('.athleteManualErgoV113').forEach(b=>b.onclick=()=>{const s=sessions.find(x=>String(x.id)===b.dataset.id);if(!s)return;currentErgoPrescription={code:`PLAN-${s.id}`,name:s.title||'ERGO',scheduledDate:s.session_date,trainingSessionId:s.id};content.innerHTML=`<div class="card"><button id="athErgoBackV113">← Volver</button><h2>${esc(s.title||'ERGO')}</h2><div id="ergoFormWrap"></div></div>`;athErgoBackV113.onclick=back;showErgoForm()});v495WireRsvpButtons(root);v495WireEventChatAccordions(root)}
 const V311_LANG_KEY='rowtraining_v311_lang';
 let currentLocale=localStorage.getItem(V311_LANG_KEY)||'es';
 const V311_DICT={
@@ -9950,19 +10173,20 @@ async function v311TranslatePending(items){
 async function todayView(){
   const date=localISODate(),seasonStart='2026-09-01';
   content.innerHTML=`<div class="card"><h2>${v311T('hoy_title')}</h2><p class="muted">${v316Loading(v311T('cargando_plan'))}</p></div>`;
-  const [ss,cc,pendingSessions,ww,c2]=await Promise.all([
+  const [ss,cc,ee,pendingSessions,ww,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,date,date),
     sb.from('competitions').select('*').eq('competition_date',date).contains('team_codes',[currentTeamCode]),
+    v497AttendanceEnabledForTeam(currentTeamCode)?sb.from('club_events').select('*').eq('team_code',currentTeamCode).eq('event_date',date):Promise.resolve({data:[]}),
     sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content,target_user_ids').eq('team_code',currentTeamCode).gte('session_date',seasonStart).lte('session_date',date).in('session_type',['GYM','ERG']).order('session_date'),
     sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,created_at,hidden').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(300),
     sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(300)
   ]);
   if(tab!=='hoy'||currentMode!=='athlete')return;
-  const sessions=ss.data||[],comps=cc.error?[]:(cc.data||[]),pendErr=pendingSessions.error||ww.error||c2.error;
+  const sessions=ss.data||[],comps=cc.error?[]:(cc.data||[]),clubEvs=ee.error?[]:(ee.data||[]),pendErr=pendingSessions.error||ww.error||c2.error;
   const pending=pendErr?null:v225PendingPlansForAthlete(currentUser.id,currentTeamCode,pendingSessions.data||[],ww.data||[],c2.data||[],date);
   const [displaySessions,displayPending,teamLabelDisplay]=await Promise.all([v311TranslateSessions(sessions),v311TranslatePending(pending),v311TranslateContent(teamLabel(currentTeamCode))]);
   if(tab!=='hoy'||currentMode!=='athlete')return;
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">${v311T('hoy_tag')} · ${shortDateES(date)}</span><h2>${esc(teamLabelDisplay)}</h2></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
+  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">${v311T('hoy_tag')} · ${shortDateES(date)}</span><h2>${esc(teamLabelDisplay)}</h2></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
   const pendingAsSessionsV308=(displayPending||[]).map(x=>({id:x.id,title:x.title,content:x.content,session_date:x.date,session_type:x.type==='ERGO'?'ERG':'GYM'}));
   bindAthletePlannedActionsV113(content,[...sessions,...pendingAsSessionsV308],todayView);
   sessions.filter(s=>s.session_type==='ERG').forEach(s=>v306InjectErgoHelpers(s));
@@ -9972,14 +10196,24 @@ async function todayView(){
 
 /* V226 · restaura helpers de Semana del remero y evita carga infinita */
 function athleteWeekRangeV123(start,end){return `${shortDateES(start)} – ${shortDateES(end)}`}
-function athleteWeekSessionV123(s){
+// V493 · RSVP de asistencia: por ahora solo en MAR (es donde de verdad hace falta saber quién va,
+// para montar tripulaciones), con dos botones simples que guardan en session_rsvp.
+// V495 · generalizado para que valga tanto para una sesión (MAR/GYM marcada "convocatoria") como para
+// una competición: kind='session'|'competition'.
+function v493RsvpWidgetHtml(eventId,teamCode,status,kind='session'){
+  return `<div class="v493RsvpRow" data-id="${eventId}" data-kind="${kind}" data-team="${esc(teamCode||'')}"><button type="button" class="v493RsvpBtn btn ${status==='in'?'active':''}" data-status="in">✅ Voy</button><button type="button" class="v493RsvpBtn btn ${status==='out'?'active':''}" data-status="out">❌ No voy</button><small class="muted v493RsvpStatus">${status==='in'?'Has confirmado que vas':status==='out'?'Has avisado de que no vas':'Sin confirmar todavía'}</small></div>`;
+}
+function athleteWeekSessionV123(s,rsvpStatus){
   const type=String(s?.session_type||'').toUpperCase();
   const isMar=type==='MAR',isGym=type==='GYM',isErg=type==='ERG',isTest=/test/i.test(String(s?.title||''));
   const title=isMar?v311T('sesion_mar'):(s?.title||type||'Entrenamiento');
   const detail=isMar?`<div class="athleteWeekSeaV123">${v311T('sesion_mar')}</div>`:trainingContentHtml(s?.content||'');
   const prevRef=isErg?`<div id="ergoPrevRefV306_${s.id}" class="ergoPrevRefV306"></div>`:'';
   const actions=isMar?'':isGym?`<button class="athleteLogGymV113 primary" data-id="${s.id}">${v311T('registrar_gym')}</button>`:isErg?`<button class="athleteOpenErgoV113 primary" data-id="${s.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${s.id}">${v311T('registrar_manual')}</button>`:'';
-  return `<details class="athleteWeekSessionV123" data-id="${s.id}" data-date="${esc(s.session_date||'')}" data-type="${esc(type)}"><summary><div class="athleteWeekSessionMainV123"><div class="athleteWeekSessionTopV123"><span class="athleteWeekTypeV123 ${isMar?'mar':''} ${isTest?'test':''}">${isTest?'TEST':esc(type||'SES')}</span><span class="athleteWeekSessionTitleV123">${esc(title)}</span></div><div class="athleteWeekSessionBottomV123"><span>${isMar?v311T('contenido_reservado'):v311T('toca_ver_detalle')}</span><span class="athleteWeekStatusV123">${v311T('pendiente_status')}</span></div></div><span class="athleteWeekChevronV123">⌄</span></summary><div class="athleteWeekDetailV123">${detail}${prevRef}${actions?`<div class="staffActions">${actions}</div>`:''}</div></details>`
+  const attOn=v497AttendanceEnabledForTeam(s.team_code||currentTeamCode);
+  const rsvp=isMar&&attOn?v493RsvpWidgetHtml(s.id,s.team_code||currentTeamCode,rsvpStatus):'';
+  const eventChat=isMar&&attOn&&v495ChatVisibleForRower()?`<details class="libraryAccordion v494EventChatAccordion" data-id="${s.id}" data-team="${esc(s.team_code||currentTeamCode||'')}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'';
+  return `<details class="athleteWeekSessionV123" data-id="${s.id}" data-date="${esc(s.session_date||'')}" data-type="${esc(type)}"><summary><div class="athleteWeekSessionMainV123"><div class="athleteWeekSessionTopV123"><span class="athleteWeekTypeV123 ${isMar?'mar':''} ${isTest?'test':''}">${isTest?'TEST':esc(type||'SES')}</span><span class="athleteWeekSessionTitleV123">${esc(title)}</span></div><div class="athleteWeekSessionBottomV123"><span>${isMar?v311T('contenido_reservado'):v311T('toca_ver_detalle')}</span><span class="athleteWeekStatusV123">${v311T('pendiente_status')}</span></div></div><span class="athleteWeekChevronV123">⌄</span></summary><div class="athleteWeekDetailV123">${rsvp}${detail}${eventChat}${prevRef}${actions?`<div class="staffActions">${actions}</div>`:''}</div></details>`
 }
 async function loadRowerWeekComplianceV123(start,end,sessions){const box=document.getElementById('rowerWeekComplianceV123');if(!box||!currentUser)return;try{const [ww,gg,cc]=await Promise.all([sb.from('workout_logs').select('id,user_id,session_code,session_type,session_date,training_session_id,status,created_at,hidden').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(100),sb.from('gym_exercise_results').select('id,workout_id,user_id,exercise_name,note,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(500),sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(100)]),err=ww.error||gg.error||cc.error;if(err)throw err;const c=v79ComplianceForAthlete(currentUser.id,sessions,ww.data||[],gg.data||[],cc.data||[],start,end),pct=Math.max(0,Math.min(100,c.percent||0));if(!document.getElementById('rowerWeekComplianceV123'))return;box.innerHTML=c.expected?`<div class="athleteWeekProgressTopV123"><b>${c.completed}/${c.expected} ${v311T('sesiones_completadas')}</b><span>${pct}%</span></div><div class="athleteWeekProgressBarV123" aria-label="Progreso semanal ${pct}%"><span style="width:${pct}%"></span></div>`:`<div class="athleteWeekProgressTopV123"><b>${v311T('sin_sesiones_gym_ergo')}</b><span>—</span></div>`;const queues={};c.details.forEach(x=>{const key=`${x.date}|${x.type==='ERGO'?'ERG':'GYM'}`;(queues[key]||(queues[key]=[])).push(x)});content.querySelectorAll('.athleteWeekSessionV123[data-type="GYM"],.athleteWeekSessionV123[data-type="ERG"]').forEach(row=>{const x=(queues[`${row.dataset.date}|${row.dataset.type}`]||[]).shift(),status=row.querySelector('.athleteWeekStatusV123');row.classList.remove('is-done','is-overdue');if(x?.done){row.classList.add('is-done');if(status)status.textContent=v311T('completada_status')}else if(x?.due){row.classList.add('is-overdue');if(status)status.textContent=v311T('sin_completar_status')}else if(status)status.textContent=v311T('pendiente_status')})}catch(e){box.innerHTML=`<span class="muted">${v311T('no_se_pudo_calcular_cumplimiento')}</span>`}}
 async function weekly(){
@@ -9993,9 +10227,12 @@ async function weekly(){
     if(tab!=='semana'||currentMode!=='athlete')return;
     if(ss?.error)console.warn('Semana remero: sesiones MAR/planificación',ss.error);
     const sessions=ss?.data||[],comps=cc?.error?[]:(cc?.data||[]),days=Array.from({length:7},(_,i)=>addDaysISO(start,i)),names=v311T('dias_semana'),today=localISODate();
+    const marIds=sessions.filter(x=>String(x.session_type||'').toUpperCase()==='MAR').map(x=>x.id);
+    const rsvpRows=marIds.length&&currentUser?(await sb.from('session_rsvp').select('training_session_id,status').eq('user_id',currentUser.id).in('training_session_id',marIds)).data||[]:[];
+    const rsvpMapV493=new Map(rsvpRows.map(r=>[String(r.training_session_id),r.status]));
     const teamLabelDisplay=await v311TranslateContent(teamLabel(currentTeamCode));
     if(tab!=='semana'||currentMode!=='athlete')return;
-    content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekNavV123"><button id="rowerPrevWeek" type="button" aria-label="${v311T('semana_anterior')}">‹</button><div class="athleteWeekTitleV123"><h2>${athleteWeekRangeV123(start,end)}</h2><small>${esc(teamLabelDisplay)}</small></div><button id="rowerNextWeek" type="button" aria-label="${v311T('semana_siguiente')}">›</button></div><div id="rowerWeekComplianceV123" class="athleteWeekProgressV123"><span class="muted">${v311T('calculando_cumplimiento')}</span></div><div class="athleteWeekDaysV123">${(await Promise.all(days.map(async(d,i)=>{const xs=sessions.filter(x=>x.session_date===d),cs=comps.filter(x=>x.competition_date===d),displayXs=await Promise.all(xs.map(async x=>({...x,title:await v311TranslateContent(x.title||''),content:await v311TranslateContent(x.content||'')})));const items=`${cs.map(c=>`<div class="athleteWeekRaceV123">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${displayXs.map(athleteWeekSessionV123).join('')}`;return `<section class="athleteWeekDayV123 ${d===today?'is-today':''}"><div class="athleteWeekDateV123"><b>${names[i]}</b><strong>${Number(d.slice(-2))}</strong>${d===today?`<em>${v311T('hoy_tag')}</em>`:''}</div><div class="athleteWeekItemsV123">${items||`<div class="athleteWeekRestV123">${v311T('descanso_sin_sesion')}</div>`}</div></section>`}))).join('')}</div></div>`;
+    content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekNavV123"><button id="rowerPrevWeek" type="button" aria-label="${v311T('semana_anterior')}">‹</button><div class="athleteWeekTitleV123"><h2>${athleteWeekRangeV123(start,end)}</h2><small>${esc(teamLabelDisplay)}</small></div><button id="rowerNextWeek" type="button" aria-label="${v311T('semana_siguiente')}">›</button></div><div id="rowerWeekComplianceV123" class="athleteWeekProgressV123"><span class="muted">${v311T('calculando_cumplimiento')}</span></div><div class="athleteWeekDaysV123">${(await Promise.all(days.map(async(d,i)=>{const xs=sessions.filter(x=>x.session_date===d),cs=comps.filter(x=>x.competition_date===d),displayXs=await Promise.all(xs.map(async x=>({...x,title:await v311TranslateContent(x.title||''),content:await v311TranslateContent(x.content||'')})));const items=`${cs.map(c=>`<div class="athleteWeekRaceV123">🏁 ${esc(c.name||'Competición')}</div>`).join('')}${displayXs.map(x=>athleteWeekSessionV123(x,rsvpMapV493.get(String(x.id)))).join('')}`;return `<section class="athleteWeekDayV123 ${d===today?'is-today':''}"><div class="athleteWeekDateV123"><b>${names[i]}</b><strong>${Number(d.slice(-2))}</strong>${d===today?`<em>${v311T('hoy_tag')}</em>`:''}</div><div class="athleteWeekItemsV123">${items||`<div class="athleteWeekRestV123">${v311T('descanso_sin_sesion')}</div>`}</div></section>`}))).join('')}</div></div>`;
     rowerPrevWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,-7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};
     rowerNextWeek.onclick=()=>{athleteWeekStartV113=addDaysISO(start,7);athleteSelectedDateV113=athleteWeekStartV113;weekly()};
     content.querySelectorAll('.athleteWeekSessionV123').forEach(row=>row.addEventListener('toggle',()=>{if(!row.open)return;athleteSelectedDateV113=row.dataset.date;content.querySelectorAll('.athleteWeekSessionV123[open]').forEach(other=>{if(other!==row)other.open=false});if(row.dataset.type==='ERG'&&!row.dataset.prevLoadedV306){row.dataset.prevLoadedV306='1';const s=sessions.find(x=>String(x.id)===row.dataset.id);if(s)v306InjectErgoHelpers(s)}}));
