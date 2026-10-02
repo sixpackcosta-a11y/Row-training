@@ -2376,7 +2376,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="525";
+const APP_VERSION="526";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3505,6 +3505,9 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   // V518 · el mismo formulario sirve también para editar competiciones (antes tenían uno mínimo sin
   // invitados ni organizadores). En una competición los "grupos" son sus team_codes.
   const isComp=srcEv?.kind==='competition';
+  // V526 · también para editar EL EVENTO de un entrenamiento convertido (no el entrenamiento en sí):
+  // nombre del evento, horas, lugar, invitación, destinatarios, organizadores y ajustes.
+  const isSess=srcEv?.kind==='session';
   const lockTeam=existing?(isComp?team:existing.team_code):null;
   let teamsSel=new Set(isComp?(Array.isArray(srcEv.team_codes)&&srcEv.team_codes.length?srcEv.team_codes:[team]):[srcEv?srcEv.team_code:team,...(srcEv&&Array.isArray(srcEv.extra_team_codes)?srcEv.extra_team_codes:[])].filter(Boolean));
   // V518 · organizadores también desde el formulario (crear y editar).
@@ -3517,15 +3520,15 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   const sec=(title,body)=>`<div class="v514Sec">${title?`<div class="v514SecTitle">${esc(title)}</div>`:''}${body}</div>`;
   const remOpts=[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']];
   container.innerHTML=
-    sec('',`<label>Título del evento<input id="v497CeTitle" value="${esc(x.title||x.name||'')}" placeholder="Ej. Reunión de equipo"></label><label>Descripción (opcional)<textarea id="v497CeNotes" rows="2">${esc(x.notes||'')}</textarea></label>`)+
+    sec('',isSess?`<label>Nombre del evento<input id="v497CeTitle" value="${esc(x.event_name||'')}" placeholder="${esc(v524DefaultEventName(x.session_type))}"></label><p class="muted"><small>Editas el evento, no el entrenamiento (${esc(x.title||'')}). Para cambiar el contenido del entrenamiento, usa "Editar entrenamiento".</small></p><textarea id="v497CeNotes" class="hidden"></textarea>`:`<label>Título del evento<input id="v497CeTitle" value="${esc(x.title||x.name||'')}" placeholder="Ej. Reunión de equipo"></label><label>Descripción (opcional)<textarea id="v497CeNotes" rows="2">${esc(x.notes||'')}</textarea></label>`)+
     sec('Imagen de portada',`<div class="v514CoverBox"><div id="v514CoverPrev">${coverUrl?`<img src="${esc(coverUrl)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="v514CoverInput">${coverUrl?'Cambiar':'Añadir'}</label><input type="file" id="v514CoverInput" accept="image/*" class="hidden"><button type="button" id="v514CoverRemove" class="${coverUrl?'':'hidden'}">Quitar</button></div>`)+
-    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}" placeholder="Dirección o enlace de Google Maps"></label>`)+
-    sec('Para quién',`${allTeams.length>1?`<div class="v514Label">Grupos <small class="muted">(un solo evento para todos los que marques)</small></div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(lockTeam||team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
+    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}" ${isSess?'disabled title="La fecha es la del entrenamiento: cámbiala desde Planificación"':''}></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}" placeholder="Dirección o enlace de Google Maps"></label>`)+
+    sec('Para quién',`${allTeams.length>1&&!isSess?`<div class="v514Label">Grupos <small class="muted">(un solo evento para todos los que marques)</small></div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(lockTeam||team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
     sec('Organizadores',`<div id="v518Orgs" class="v518Orgs"></div><div class="v518OrgAdd"><select id="v518OrgSel"><option value="">— Añadir organizador —</option></select><button type="button" id="v518OrgAddBtn">Añadir</button></div><p class="muted"><small>${existing?'':'Tú ya eres organizador. '}A quien añadas le llegará un aviso para que confirme si va.</small></p>`)+
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
     sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
-    (existing?sec('Al guardar',`${existing.recurrence_group?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">Solo este evento</option><option value="following">Este y los siguientes de la serie</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>Avisar a los invitados del cambio</span></label>`):'')+
+    (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">Solo este evento</option><option value="following">${isSess?`Este y los siguientes (${esc(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00')))}s de ${esc(String(x.session_type||'').toUpperCase())} que sean evento)`:'Este y los siguientes de la serie'}</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>Avisar a los invitados del cambio</span></label>`):'')+
     `<div class="actions"><button type="button" id="v497CeSave" class="primary">${existing?'Guardar cambios':'Crear evento'}</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
   const $=id=>document.getElementById(id);
   // equipos (solo al crear)
@@ -3583,7 +3586,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   $('v497CeSave').onclick=async()=>{
     const saveBtn=$('v497CeSave');
     const title=$('v497CeTitle').value.trim(),date=$('v497CeDate').value;
-    if(!title||!date)return alert('Completa al menos el título y la fecha.');
+    if((!title&&!isSess)||!date)return alert('Completa al menos el título y la fecha.');
     const maxP=$('v514Max').value?Number($('v514Max').value):null,defStatus=$('v514Default').value||null;
     if(maxP&&defStatus==='in')return alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');
     if(Number($('v514MeetBefore').value)&&!$('v497CeTime').value)return alert('Para poner hora de encuentro, indica primero la hora de comienzo.');
@@ -3612,6 +3615,31 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     const allTeamsSel=[t0,...extras];
     const opensLater=base.rsvp_open_days_before!=null||!!base.rsvp_open_time;
     const colErr=e=>isComp&&missingCols(e)?'Falta ejecutar 32_competiciones_opciones.sql en Supabase.':/extra_team_codes/.test(e?.message||'')?'Falta ejecutar 30_eventos_varios_grupos.sql en Supabase.':missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql y 30_eventos_varios_grupos.sql en Supabase.':e.message;
+    if(existing&&isSess){
+      const now=new Date().toISOString();
+      const patch={event_name:title||null,event_time:base.event_time,meet_time:base.meet_time,end_time:base.end_time,location:base.location,cover_url:base.cover_url,rsvp_open_days_before:base.rsvp_open_days_before,rsvp_open_time:base.rsvp_open_time,max_participants:base.max_participants,reminder_hours_before:base.reminder_hours_before,default_status:base.default_status,chat_enabled:base.chat_enabled,responses_visibility:base.responses_visibility,invitee_ids:inv&&inv.length?inv:null,updated_at:now};
+      const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
+      if(q.error)return fail(/invitee_ids/.test(q.error.message||'')?'Falta ejecutar 35_convocatorias_destinatarios.sql en Supabase.':/event_name/.test(q.error.message||'')?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':missingCols(q.error)?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);
+      let others=[];
+      if(($('v514Scope')?.value||'one')==='following'){
+        const wd=new Date(existing.event_date+'T12:00:00').getDay();
+        const r=await sb.from('training_sessions').select('id,session_date').eq('team_code',t0).eq('session_type',existing.session_type).eq('is_event',true).gt('session_date',existing.event_date);
+        others=(r.data||[]).filter(o=>new Date(o.session_date+'T12:00:00').getDay()===wd);
+        if(others.length){const q2=await sb.from('training_sessions').update(patch).in('id',others.map(o=>o.id));if(q2.error)return fail(q2.error.message)}
+      }
+      if($('v514Notify')?.checked){
+        const changes=[],nm=title||v524DefaultEventName(existing.session_type);
+        if((base.event_time||'')!==(existing.event_time||''))changes.push(base.event_time?`empieza a las ${base.event_time}`:'sin hora de inicio');
+        if((base.meet_time||'')!==(existing.meet_time||''))changes.push(base.meet_time?`encuentro a las ${base.meet_time}`:'sin hora de encuentro');
+        if((base.end_time||'')!==(existing.end_time||''))changes.push(base.end_time?`termina a las ${base.end_time}`:'sin hora de fin');
+        if((base.location||'')!==(existing.location||''))changes.push(base.location?`lugar: ${base.location}`:'sin lugar');
+        const aud=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
+        try{await sendNotificationV110({audience:aud,title:'✏️ Cambios en '+nm,body:`${shortDateES(existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.',url:'/?tab=eventos',type:'training'})}catch(e){}
+      }
+      await syncOrgs({kind:'session',id:existing.id},true);
+      container.classList.add('hidden');container.innerHTML='';
+      afterSave();return;
+    }
     if(existing){
       // V514 · "me debe dejar editar un evento creado, cambiar hora o lo que sea, añadir gente de otros
       // grupos, y que me dé la opción de avisar del cambio a los invitados o no".
@@ -3746,7 +3774,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V525 · las convocatorias de entrenamiento también tienen "Editar" (abre esa sesión en
   // Planificación, donde están sus opciones de evento) y "Quitar de eventos" (no borra el
   // entrenamiento, solo deja de ser evento).
-  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="actions"><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">Editar</button><button type="button" class="v525UnEvent dangerBtn" data-id="${ev.id}">Quitar de eventos</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
+  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entrenamiento</button><button type="button" class="v525UnEvent dangerBtn" data-id="${ev.id}">Quitar de eventos</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
   return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<p class="muted"><small>Sesión planificada: ${esc(ev.title||'')}</small></p>`+trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
