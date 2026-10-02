@@ -2376,7 +2376,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="523";
+const APP_VERSION="524";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3370,6 +3370,10 @@ function v506SpondDayTimeLabel(ds,time){
   const weekday=new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(ds+'T12:00:00'));
   return weekday+(time?`: ${time}`:'');
 }
+// V524 · nombre del evento de un entrenamiento convertido: el que se ponga a mano (event_name) o,
+// por defecto, "Entrenamiento MAR" / "Entrenamiento GIM+ERGO" — no el título del entrenamiento.
+function v524DefaultEventName(type){return String(type||'').toUpperCase()==='MAR'?'Entrenamiento MAR':'Entrenamiento GIM+ERGO'}
+function v524SessionEventName(x){return (x.event_name&&String(x.event_name).trim())||v524DefaultEventName(x.session_type)}
 function v516MapClubEvent(x){return {...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}}
 // V516 · eventos propios en los que estoy invitada personalmente aunque sean de otro grupo.
 async function v516FetchInvitedClubEvents(){
@@ -3412,7 +3416,7 @@ async function v495FetchEvents(team){
   let ee2=ee;
   if(ee.error)ee2=await sb.from('club_events').select('*').eq('team_code',team).gte('event_date',start).lte('event_date',end).order('event_date');
   if(ss.error&&/column .* does not exist/i.test(ss.error.message||''))throw new Error('Falta ejecutar 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.');
-  const sessions=(ss.error?[]:(ss.data||[])).map(x=>({...x,kind:'session',event_date:x.session_date,event_title:x.title||x.session_type||'Convocatoria'}));
+  const sessions=(ss.error?[]:(ss.data||[])).map(x=>({...x,kind:'session',event_date:x.session_date,event_title:v524SessionEventName(x)}));
   const comps=(cc.error?[]:(cc.data||[])).map(x=>({...x,kind:'competition',event_date:x.competition_date,event_title:x.name||'Competición'}));
   const customs=(ee2.error?[]:(ee2.data||[])).map(v516MapClubEvent);
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
@@ -3741,7 +3745,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const extra=`${locLine}${ev.kind!=='session'&&ev.notes?`<p>${esc(ev.notes)}</p>`:''}`;
   const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<p class="muted"><small>Sesión planificada: ${esc(ev.title||'')}</small></p>`+trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
 function v522MapsUrl(loc){
   const t=String(loc||'').trim();
@@ -8192,6 +8196,7 @@ function sessionEditor(x=null){
  <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea><label id="gymCustomTextWrapV249" class="inlineCheck" style="margin-top:8px"><input id="gymCustomTextV249" type="checkbox"> <span><b>Solo GYM:</b> guardar este texto tal cual (ignora los ejercicios marcados de la biblioteca). Formato por línea: <i>Ejercicio · 4×12-10-10-8 · notas</i></span></label></details>
  <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Convertir en evento</b><br>Aparece en Eventos: las remeras confirman si van o no y hay un chat propio de ese día.</span></label>
  <div id="sessEventOpts" class="v517EventOpts" style="display:none">
+  <div class="v514Sec"><label>Nombre del evento<input id="seName" value="${esc(x?.event_name||'')}" placeholder="${esc(v524DefaultEventName(x?.session_type||'MAR'))}"></label><p class="muted"><small>Es lo que ven las remeras en Eventos. En blanco = "${esc(v524DefaultEventName(x?.session_type||'MAR'))}". El título del entrenamiento no se muestra.</small></p></div>
   <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid"><label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}" placeholder="Dirección o enlace de Google Maps"></label></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
@@ -8312,7 +8317,7 @@ function sessionEditor(x=null){
      if(maxP&&defS==='in'){alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');return}
      if(Number(g('seMeet'))&&!g('seTime')){alert('Para poner hora de encuentro, indica primero la hora de comienzo.');return}
      if(seCoverFile){try{seCoverUrl=await v514UploadEventCover(seCoverFile)}catch(e){alert('No se pudo subir la imagen (¿falta ejecutar 29_eventos_opciones.sql?): '+(e.message||e));return}}
-     eventFields={event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
+     eventFields={event_name:g('seName').trim()||null,event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,...eventFields,updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
@@ -8325,7 +8330,7 @@ function sessionEditor(x=null){
      const {created_by,...payloadNoCreator}=payload;
      q=await sb.from('training_sessions').insert(payloadNoCreator).select('id').single();
    }
-   if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);return}
+   if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?(/event_name/.test(q.error.message)?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.'):q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
    // V517 · periódico: aplicar las mismas opciones de evento a las sesiones del mismo tipo ya
    // planificadas en los días de la semana elegidos, hasta la fecha indicada.
@@ -8340,7 +8345,7 @@ function sessionEditor(x=null){
        else{
          targets.filter(t=>!t.is_event).forEach(t=>v499ApplyDefaultSubstitute(team,'session',t.id));
          const later=payload.rsvp_open_days_before!=null||payload.rsvp_open_time;
-         if(!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${sessTitle.value.trim()||sessType.value}" · ${targets.length+1} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+         if(!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${eventFields.event_name||v524DefaultEventName(sessType.value)}" · ${targets.length+1} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
          alert(`Convertidas en evento ${targets.length} sesiones más de ${sessType.value} (además de esta).`);
        }
      }else alert('No hay más sesiones de este tipo planificadas en esos días hasta esa fecha: solo se ha convertido este día.');
@@ -8352,7 +8357,7 @@ function sessionEditor(x=null){
    const opensLater=v498ComputeOpensAt({event_date:date,rsvp_open_days_before:payload.rsvp_open_days_before,rsvp_open_time:payload.rsvp_open_time});
    if(isNewEventNow)v499ApplyDefaultSubstitute(team,'session',savedSessionId);
    if(isEventNow&&!x?.is_event&&!v517SentBulk&&v497AttendanceEnabledForTeam(team)&&!(opensLater&&opensLater>new Date())){
-     try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${sessTitle.value.trim()||sessType.value}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+     try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${eventFields.event_name||v524DefaultEventName(sessType.value)}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
    }
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
    if(document.getElementById('notifyRowerChangeV110')?.checked){const action=x?'Entrenamiento actualizado':'Nuevo entrenamiento';const bodyV249=`${shortDateES(date)} · ${sessTitle.value.trim()||sessType.value}`;if(targetsV249.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:targetsV249,team_codes:[team]},title:action,body:bodyV249,url:'/',type:'training'})}catch(e){alert('El cambio se ha guardado, pero no se pudo enviar la notificación.\n\nDetalle: '+(e?.message||e))}}else await notifyTeamChangeV110(team,action,bodyV249,'/');}
