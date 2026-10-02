@@ -530,6 +530,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v517OpenSession{margin:8px 0;width:100%}.v517EventOpts{margin:8px 0}
+.v516Opens{white-space:normal}.v516Opens.soon{color:#16a34a;font-weight:600}
 .v514Sec{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v514SecTitle{font-weight:700;font-size:.9rem;margin-bottom:6px}.v514Label{font-size:.85rem;font-weight:600;margin:6px 0 4px}.v514CoverBox{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.v514CoverBox img{width:96px;height:60px;object-fit:cover;border-radius:7px}.v514CoverBox label.btn{padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-weight:600;font-size:.85rem;cursor:pointer}.v514Seg{display:flex;gap:6px;margin-bottom:6px}.v514SegBtn{flex:1;padding:7px 10px;font-size:.85rem}.v514SegBtn.on{background:#07162f;color:#fff;border-color:#07162f}.v514PeopleHead{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;color:var(--text-muted)}.v514PeopleList{max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:4px}.v514Person{display:flex;align-items:center;gap:10px;padding:6px 8px;background:var(--surface);border-radius:7px;margin:0}.v514Person span{flex:1}.v514Person input{width:auto;margin:0}.v514Person.hidden{display:none}.v514Cover{width:100%;max-height:200px;object-fit:cover;border-radius:9px;margin-bottom:10px}.v503DateBlock.v514Covered{background-size:cover;background-position:center;border-radius:8px;padding:4px 2px;color:#fff}.v503DateBlock.v514Covered .v503Month{color:#fff}
 .v513Chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.v513Chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);border-radius:999px;padding:6px 12px;font-size:.85rem}.v513Chip.on{background:var(--chip-bg-on,var(--accent-tint));color:var(--chip-text-on,var(--text));border-color:var(--chip-dot,#07162f);font-weight:600}.v513ChipDot{width:8px;height:8px;border-radius:50%;background:var(--chip-dot,#94a3b8)}
 .v512DateLine{margin:4px 0;font-weight:500}.v512TeamLine{display:flex;align-items:center;gap:7px;margin:4px 0;color:var(--text-muted);font-size:.92rem}.v512OrgLine{margin:6px 0 10px;font-size:.92rem;display:flex;flex-wrap:wrap;align-items:center;gap:6px}.v512OrgName{font-weight:600}.v512RemoveOrg{border:none;background:transparent;padding:0 4px;color:var(--text-muted);font-size:.85rem}.v512AddOrgToggle{padding:5px 10px;font-size:.85rem}.v512AddOrgBox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;margin-top:4px}.v512AddOrgBox.hidden{display:none}.v512AddOrgBox select{flex:1 1 180px;margin:0}.v512OrgRow{cursor:default}
@@ -2367,7 +2369,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="515";
+const APP_VERSION="517";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3361,17 +3363,51 @@ function v506SpondDayTimeLabel(ds,time){
   const weekday=new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(ds+'T12:00:00'));
   return weekday+(time?`: ${time}`:'');
 }
+function v516MapClubEvent(x){return {...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}}
+// V516 · eventos propios en los que estoy invitada personalmente aunque sean de otro grupo.
+async function v516FetchInvitedClubEvents(){
+  if(!currentUser)return [];
+  try{
+    const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
+    const r=await sb.from('club_events').select('*').contains('invitee_ids',[currentUser.id]).gte('event_date',start).lte('event_date',end);
+    return r.error?[]:(r.data||[]).map(v516MapClubEvent);
+  }catch(e){return []}
+}
+// V516 · roster completo de un evento: su equipo + los grupos añadidos (extra_team_codes). Caché por
+// pantalla para no repetir consultas.
+function v516RosterOf(team,cache){
+  if(!cache.has(team))cache.set(team,(async()=>{const [r,st]=await Promise.all([staffAthletesForTeam(team),v499StaffForTeam(team)]);return v499MergeRoster(r,st)})());
+  return cache.get(team);
+}
+async function v516FullRoster(ev,viewTeam,cache){
+  const main=ev.kind==='club_event'?(ev.team_code||viewTeam):viewTeam;
+  const teams=[...new Set([main,...(ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes:[])].filter(Boolean))];
+  const lists=await Promise.all(teams.map(t=>v516RosterOf(t,cache)));
+  return v499MergeRoster(lists.flat(),[]);
+}
+async function v516CountsForEvents(events,statusByEvent,viewTeam,cache){
+  const out=[];
+  for(const ev of events){
+    const r=await v516FullRoster(ev,viewTeam,cache);
+    out.push(v503CountsForEvents([ev],r,statusByEvent,ev.kind==='club_event'?(ev.team_code||viewTeam):viewTeam)[0]);
+  }
+  return out;
+}
 async function v495FetchEvents(team){
   const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
   const [ss,cc,ee]=await Promise.all([
     sb.from('training_sessions').select('*').eq('team_code',team).eq('is_event',true).gte('session_date',start).lte('session_date',end).order('session_date'),
     sb.from('competitions').select('*').contains('team_codes',[team]).gte('competition_date',start).lte('competition_date',end).order('competition_date'),
-    sb.from('club_events').select('*').eq('team_code',team).gte('event_date',start).lte('event_date',end).order('event_date')
+    sb.from('club_events').select('*').or(`team_code.eq.${team},extra_team_codes.cs.{${team}}`).gte('event_date',start).lte('event_date',end).order('event_date')
   ]);
+  // V516 · si aún no se ha ejecutado 30_eventos_varios_grupos.sql (no existe extra_team_codes), se
+  // vuelve a la consulta de antes para no perder los eventos propios.
+  let ee2=ee;
+  if(ee.error)ee2=await sb.from('club_events').select('*').eq('team_code',team).gte('event_date',start).lte('event_date',end).order('event_date');
   if(ss.error&&/column .* does not exist/i.test(ss.error.message||''))throw new Error('Falta ejecutar 19_eventos_generalizado.sql y 20_eventos_v497.sql en Supabase.');
   const sessions=(ss.error?[]:(ss.data||[])).map(x=>({...x,kind:'session',event_date:x.session_date,event_title:x.title||x.session_type||'Convocatoria'}));
   const comps=(cc.error?[]:(cc.data||[])).map(x=>({...x,kind:'competition',event_date:x.competition_date,event_title:x.name||'Competición'}));
-  const customs=(ee.error?[]:(ee.data||[])).map(x=>({...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}));
+  const customs=(ee2.error?[]:(ee2.data||[])).map(v516MapClubEvent);
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
 }
 async function v495RsvpStatusMapsForEvents(events,team){
@@ -3384,7 +3420,8 @@ async function v495RsvpStatusMapsForEvents(events,team){
   const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
   if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',sessionIds).eq('team_code',team));
   if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status').in('competition_id',compIds).eq('team_code',team));
-  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds).eq('team_code',team));
+  // V516 · un evento propio puede incluir varios grupos: sus respuestas no se filtran por equipo.
+  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds));
   const results=qs.length?await Promise.all(qs):[],byEvent=new Map();
   results.forEach(r=>(r.data||[]).forEach(row=>{
     const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
@@ -3418,7 +3455,8 @@ async function v498TryClaimAndNotify(ev,teamCode){
   try{
     const upd=await sb.from(table).update({opens_notified_at:new Date().toISOString()}).eq('id',ev.id).is('opens_notified_at',null).select('id');
     if(upd.error||!upd.data?.length)return;
-    await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:'📅 Ya puedes confirmar asistencia',body:`Confirma tu asistencia a "${ev.event_title}" (${shortDateES(ev.event_date)}) en Row Training.`,url:'/?tab=eventos',type:'training'});
+    const aud=ev.kind==='club_event'&&Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?{mode:'users',user_ids:ev.invitee_ids,team_codes:[teamCode]}:{mode:'teams',team_codes:ev.kind==='club_event'?[ev.team_code||teamCode,...(ev.extra_team_codes||[])]:[teamCode]};
+    await sendNotificationV110({audience:aud,title:'📅 Ya puedes confirmar asistencia',body:`Confirma tu asistencia a "${ev.event_title}" (${shortDateES(ev.event_date)}) en Row Training.`,url:'/?tab=eventos',type:'training'});
   }catch(e){}
 }
 // V514 · formulario de evento propio con las opciones de Spond que pidió Nacho ("todas"): hora de
@@ -3449,10 +3487,11 @@ function v514MeetOptionsHtml(sel){
   for(let m=5;m<=180;m+=5){const hh=Math.floor(m/60),mm=m%60;const l=(hh?`${hh} h `:'')+(mm?`${mm} min`:'');h+=`<option value="${m}" ${m===sel?'selected':''}>${l.trim()} antes del inicio</option>`}
   return h;
 }
-function v498RenderClubEventForm(container,team,existing,afterSave){
-  const x=existing||{};
+function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null){
+  const x=existing||prefill||{};
   const allTeams=staffViewTeamCodes().filter(v497AttendanceEnabledForTeam);
-  let teamsSel=new Set([existing?existing.team_code:team].filter(Boolean));
+  const srcEv=existing||prefill;
+  let teamsSel=new Set([srcEv?srcEv.team_code:team,...(srcEv&&Array.isArray(srcEv.extra_team_codes)?srcEv.extra_team_codes:[])].filter(Boolean));
   let inviteMode=Array.isArray(x.invitee_ids)&&x.invitee_ids.length?'some':'all';
   let invitees=new Set((x.invitee_ids||[]).map(String));
   let coverUrl=x.cover_url||null,coverFile=null;
@@ -3464,7 +3503,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
     sec('',`<label>Título del evento<input id="v497CeTitle" value="${esc(x.title||'')}" placeholder="Ej. Reunión de equipo"></label><label>Descripción (opcional)<textarea id="v497CeNotes" rows="2">${esc(x.notes||'')}</textarea></label>`)+
     sec('Imagen de portada',`<div class="v514CoverBox"><div id="v514CoverPrev">${coverUrl?`<img src="${esc(coverUrl)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="v514CoverInput">${coverUrl?'Cambiar':'Añadir'}</label><input type="file" id="v514CoverInput" accept="image/*" class="hidden"><button type="button" id="v514CoverRemove" class="${coverUrl?'':'hidden'}">Quitar</button></div>`)+
     sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}"></label>`)+
-    sec('Para quién',`${allTeams.length>1?`<div class="v514Label">Equipos${existing?' <small class="muted">(puedes añadir otros grupos)</small>':''}</div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(existing?existing.team_code:team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
+    sec('Para quién',`${allTeams.length>1?`<div class="v514Label">Grupos <small class="muted">(un solo evento para todos los que marques)</small></div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(existing?existing.team_code:team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
     sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
@@ -3525,12 +3564,19 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
       if(coverFile)coverUrl=await v514UploadEventCover(coverFile);
     }catch(e){return fail(missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql en Supabase (crea el espacio para las imágenes).':'No se pudo subir la imagen: '+(e.message||e))}
     const base={title,event_time:$('v497CeTime').value||null,meet_time:(Number($('v514MeetBefore').value)&&$('v497CeTime').value)?v514ShiftTime($('v497CeTime').value,-Number($('v514MeetBefore').value)):null,end_time:$('v514End').value||null,location:$('v497CeLocation').value.trim()||null,notes:$('v497CeNotes').value.trim()||null,response_deadline:$('v497CeDeadline').value||null,rsvp_open_days_before:$('v497CeOpenDays').value?Number($('v497CeOpenDays').value):null,rsvp_open_time:$('v497CeOpenTime').value||null,max_participants:maxP,cover_url:coverUrl,reminder_hours_before:$('v514Reminder').value?Number($('v514Reminder').value):null,default_status:defStatus,chat_enabled:$('v514Chat').value!=='0',responses_visibility:$('v514Vis').value};
-    const inviteesFor=async t=>{if(inviteMode!=='some')return null;const ids=new Set((await rosterFor(t)).map(p=>String(p.user_id)));return [...invitees].filter(id=>ids.has(id))};
+    // V516 · un solo evento para todos los grupos marcados (como en Spond con varios subgrupos):
+    // equipo principal + extra_team_codes, y si se eligen personas, invitee_ids (de cualquier grupo).
+    const t0=existing?existing.team_code:(teamsSel.has(team)?team:[...teamsSel][0]);
+    const extras=[...teamsSel].filter(t=>t!==t0);
+    const inv=inviteMode==='some'?[...invitees]:null;
+    const groupFields={extra_team_codes:extras.length?extras:null,invitee_ids:inv&&inv.length?inv:null};
+    const audienceFor=(ids,teams)=>ids&&ids.length?{mode:'users',user_ids:ids,team_codes:teams}:{mode:'teams',team_codes:teams};
+    const allTeamsSel=[t0,...extras];
+    const opensLater=base.rsvp_open_days_before!=null||!!base.rsvp_open_time;
+    const colErr=e=>/extra_team_codes/.test(e?.message||'')?'Falta ejecutar 30_eventos_varios_grupos.sql en Supabase.':missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql y 30_eventos_varios_grupos.sql en Supabase.':e.message;
     if(existing){
       // V514 · "me debe dejar editar un evento creado, cambiar hora o lo que sea, añadir gente de otros
       // grupos, y que me dé la opción de avisar del cambio a los invitados o no".
-      const t0=existing.team_code;
-      const inv=await inviteesFor(t0);
       const scope=$('v514Scope')?.value||'one';
       let others=[];
       if(scope==='following'&&existing.recurrence_group){
@@ -3538,53 +3584,50 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
         others=r.error?[]:(r.data||[]);
       }
       const now=new Date().toISOString();
-      const q=await sb.from('club_events').update({...base,invitee_ids:inv&&inv.length?inv:null,event_date:date,updated_at:now}).eq('id',existing.id);
-      if(q.error)return fail(missingCols(q.error)?'Falta ejecutar 29_eventos_opciones.sql en Supabase.':q.error.message);
+      const q=await sb.from('club_events').update({...base,...groupFields,event_date:date,updated_at:now}).eq('id',existing.id);
+      if(q.error)return fail(colErr(q.error));
       if(others.length){
-        const q2=await sb.from('club_events').update({...base,invitee_ids:inv&&inv.length?inv:null,updated_at:now}).in('id',others.map(o=>o.id));
-        if(q2.error)return fail(q2.error.message);
-      }
-      // grupos añadidos: se crea una copia del evento para cada uno (mismas fechas que se editan)
-      const allDates=[date,...others.map(o=>o.event_date)];
-      for(const t of teamsSel){
-        if(t===t0)continue;
-        const invT=await inviteesFor(t);
-        if(invT&&!invT.length)continue;
-        const rows=allDates.map(d=>({...base,team_code:t,invitee_ids:invT,event_date:d,created_by:currentUser.id,recurrence_group:null}));
-        const qi=await sb.from('club_events').insert(rows).select('id');
-        if(qi.error)return fail(qi.error.message);
-        if($('v514Notify')?.checked&&!(base.rsvp_open_days_before!=null||base.rsvp_open_time)){
-          const audience=invT?{mode:'users',user_ids:invT,team_codes:[t]}:{mode:'teams',team_codes:[t]};
-          try{await sendNotificationV110({audience,title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
-        }
+        const q2=await sb.from('club_events').update({...base,...groupFields,updated_at:now}).in('id',others.map(o=>o.id));
+        if(q2.error)return fail(colErr(q2.error));
       }
       if($('v514Notify')?.checked){
+        // quién ya estaba invitado antes y quién es nuevo
+        const oldTeams=[existing.team_code,...(existing.extra_team_codes||[])];
+        const oldInv=Array.isArray(existing.invitee_ids)&&existing.invitee_ids.length?existing.invitee_ids.map(String):null;
         const changes=[];
         if(date!==existing.event_date||(base.event_time||'')!==(existing.event_time||''))changes.push(`ahora es el ${v512DetailDateLabel(date,base.event_time)}`);
         if((base.meet_time||'')!==(existing.meet_time||''))changes.push(base.meet_time?`encuentro a las ${base.meet_time}`:'sin hora de encuentro');
+        if((base.end_time||'')!==(existing.end_time||''))changes.push(base.end_time?`termina a las ${base.end_time}`:'sin hora de fin');
         if((base.location||'')!==(existing.location||''))changes.push(base.location?`lugar: ${base.location}`:'sin lugar');
         if(title!==(existing.title||''))changes.push(`nuevo nombre: "${title}"`);
-        const audience=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
-        try{await sendNotificationV110({audience,title:'✏️ Cambios en '+title,body:(changes.length?changes.join(' · '):'Se han actualizado los detalles del evento')+(others.length?` (y en las ${others.length} fechas siguientes)`:'')+'. Revísalo en Eventos.',url:'/?tab=eventos',type:'training'})}catch(e){}
+        const body=(changes.length?changes.join(' · '):'Se han actualizado los detalles del evento')+(others.length?` (y en las ${others.length} fechas siguientes)`:'')+'. Revísalo en Eventos.';
+        // a los de antes (que siguen invitados): aviso de cambios
+        const keepInv=oldInv?(inv?oldInv.filter(id=>inv.includes(id)):oldInv):null;
+        const keepTeams=oldTeams.filter(t=>allTeamsSel.includes(t));
+        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:'✏️ Cambios en '+title,body,url:'/?tab=eventos',type:'training'})}catch(e){}
+        // a los nuevos: invitación
+        if(!opensLater){
+          let newAud=null;
+          const newTeams=allTeamsSel.filter(t=>!oldTeams.includes(t));
+          if(inv){
+            let newIds;
+            if(oldInv)newIds=inv.filter(id=>!oldInv.includes(id));
+            else{const oldIds=new Set((await Promise.all(oldTeams.map(rosterFor))).flat().map(p=>String(p.user_id)));newIds=inv.filter(id=>!oldIds.has(id))}
+            if(newIds.length)newAud=audienceFor(newIds,allTeamsSel);
+          }else if(newTeams.length)newAud=audienceFor(null,newTeams);
+          if(newAud){try{await sendNotificationV110({audience:newAud,title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+        }
       }
     }else{
       const dates=v498RecurrenceDates(date,$('v497CeRepeat').value,$('v497CeRepeatUntil').value);
       const group=dates.length>1?(crypto.randomUUID?crypto.randomUUID():String(Date.now())):null;
-      let created=0;
-      for(const t of teamsSel){
-        const inv=await inviteesFor(t);
-        if(inv&&!inv.length)continue; // en este equipo no se ha elegido a nadie
-        const rows=dates.map(d=>({...base,team_code:t,invitee_ids:inv,event_date:d,created_by:currentUser.id,recurrence_group:group}));
-        const q=await sb.from('club_events').insert(rows).select('id');
-        if(q.error)return fail(missingCols(q.error)?'Falta ejecutar 29_eventos_opciones.sql en Supabase.':q.error.message);
-        created++;
-        (q.data||[]).forEach(r=>v499ApplyDefaultSubstitute(t,'club_event',r.id));
-        if(!(base.rsvp_open_days_before!=null||base.rsvp_open_time)){
-          const audience=inv?{mode:'users',user_ids:inv,team_codes:[t]}:{mode:'teams',team_codes:[t]};
-          try{await sendNotificationV110({audience,title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}${dates.length>1?` · ${dates.length} fechas`:''}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
-        }
+      const rows=dates.map(d=>({...base,...groupFields,team_code:t0,event_date:d,created_by:currentUser.id,recurrence_group:group}));
+      const q=await sb.from('club_events').insert(rows).select('id');
+      if(q.error)return fail(colErr(q.error));
+      (q.data||[]).forEach(r=>v499ApplyDefaultSubstitute(t0,'club_event',r.id));
+      if(!opensLater){
+        try{await sendNotificationV110({audience:audienceFor(inv,allTeamsSel),title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}${dates.length>1?` · ${dates.length} fechas`:''}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
       }
-      if(!created)return fail('No se ha creado nada: ninguna de las personas elegidas pertenece a los equipos marcados.');
     }
     container.classList.add('hidden');container.innerHTML='';
     afterSave();
@@ -3642,7 +3685,8 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V512 · "cuando abro un evento no aparece de qué equipo es" — línea de equipo con su color, como
   // "CDR Pedregalejo · VET F - Llaut" en la ficha de Spond.
   const tcol=v502TeamColor(team);
-  const teamLine=team?`<p class="v512TeamLine"><span class="v503Dot" style="background:${tcol.stripe}"></span>${esc(teamLabel(team))}</p>`:'';
+  const extraT=ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes:[];
+  const teamLine=team?`<p class="v512TeamLine">${[team,...extraT.filter(t=>t!==team)].map(t=>`<span class="v503Dot" style="background:${v502TeamColor(t).stripe}"></span>${esc(teamLabel(t))}`).join(' &nbsp;')}${Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?` · <span class="muted">${ev.invitee_ids.length} invitados</span>`:''}</p>`:'';
   // V512 · "Añadir organizador" como en Spond (sustituye al cuadro de "marcar la asistencia de otra
   // persona"): la persona añadida recibe un aviso y es ella quien acepta.
   const orgNames=orgIds.map(uid=>{const n=nameOf(uid);if(!n)return '';const removable=canEdit&&organizerIds&&organizerIds.includes(uid)&&String(uid)!==String(ev.created_by);return `<span class="v512OrgName">${esc(n)}${removable?` <button type="button" class="v512RemoveOrg" data-uid="${esc(uid)}" title="Quitar organizador">✕</button>`:''}</span>`}).filter(Boolean);
@@ -3653,9 +3697,9 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const opensNote=opensFuture?`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`:'';
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   const extra=ev.kind==='club_event'?`${ev.location?`<p>📍 ${esc(ev.location)}</p>`:''}${ev.notes?`<p>${esc(ev.notes)}</p>`:''}`:'';
-  const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button><button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
+  const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
 function v512DetailDateLabel(ds,time){
   if(!ds)return'';
@@ -3738,6 +3782,13 @@ function v503RelativeOpensLabel(opensAt){
   if(hours<48)return `La invitación se enviará en ${hours} hora${hours===1?'':'s'}`;
   return `La invitación se enviará en ${Math.round(hours/24)} días`;
 }
+function v516OpensLegend(ev,opensAt){
+  const hours=Math.round((opensAt-new Date())/3600000);
+  if(hours<24)return {txt:`La invitación se enviará en ${Math.max(hours,1)} hora${hours===1?'':'s'}`,soon:true};
+  const d=ev.rsvp_open_days_before;
+  if(d!=null&&d!=='')return {txt:`La invitación se enviará ${d} día${Number(d)===1?'':'s'} antes`,soon:false};
+  return {txt:`La invitación se enviará el ${v498OpensAtLabel(opensAt)}`,soon:false};
+}
 function v503WeekLabel(d,todayMon){
   const mon=mondayOfISO(d),diffWeeks=Math.round((new Date(mon+'T12:00:00')-new Date(todayMon+'T12:00:00'))/(7*86400000));
   if(diffWeeks===0)return 'Esta semana';
@@ -3751,9 +3802,14 @@ function v503OverviewRowHtml(ev,clash){
   const monthAbbr=new Intl.DateTimeFormat('es-ES',{month:'short',timeZone:'UTC'}).format(d).replace('.','').toUpperCase();
   const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
-  const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}${ev.max_participants?`/${ev.max_participants}`:''}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
+  // V516 · como en Spond: los que aún no se han enviado salen con su leyenda debajo ("La invitación se
+  // enviará en 15 horas" en verde si falta menos de un día; si no, "…3 días antes").
+  const ol=opensFuture?v516OpensLegend(ev,opensAt):null;
+  const opensLine=ol?`<div class="v503Sub v516Opens${ol.soon?' soon':''}">${esc(ol.txt)}</div>`:'';
+  const extraTeams=ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes.filter(t=>t!==ev._viewTeam):[];
+  const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}${ev.max_participants?`/${ev.max_participants}`:''}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
   const coverStyle=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
-  return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
+  return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
 }
 // V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
 // y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
@@ -3797,12 +3853,12 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
 // reminder_sent_at hace de cerrojo para que solo se mande una vez.
 async function v514TryReminder(ev){
   try{
-    if(ev.kind!=='club_event'||!ev.reminder_hours_before||ev.reminder_sent_at||!ev._pendingIds?.length)return;
+    if(!['club_event','session'].includes(ev.kind)||!ev.reminder_hours_before||ev.reminder_sent_at||!ev._pendingIds?.length)return;
     const tm=/^\d{1,2}:\d{2}$/.test(ev.meet_time||ev.event_time||'')?(ev.meet_time||ev.event_time).padStart(5,'0'):'09:00';
     const start=new Date(`${ev.event_date}T${tm}:00`),remindAt=new Date(start.getTime()-ev.reminder_hours_before*3600000),now=new Date();
     if(now<remindAt||now>start)return;
     const opensAt=v498ComputeOpensAt(ev);if(opensAt&&opensAt>now)return;
-    const upd=await sb.from('club_events').update({reminder_sent_at:now.toISOString()}).eq('id',ev.id).is('reminder_sent_at',null).select('id');
+    const upd=await sb.from(V498_TABLE_BY_KIND[ev.kind]).update({reminder_sent_at:now.toISOString()}).eq('id',ev.id).is('reminder_sent_at',null).select('id');
     if(upd.error||!upd.data?.length)return;
     await sendNotificationV110({audience:{mode:'users',user_ids:ev._pendingIds,team_codes:[ev._viewTeam]},title:'🔔 ¿Vas a '+ev.event_title+'?',body:`Aún no has respondido a "${ev.event_title}" (${v506SpondDayTimeLabel(ev.event_date,ev.event_time)}). Confirma en Row Training.`,url:'/?tab=eventos',type:'training'});
   }catch(e){}
@@ -3839,7 +3895,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true)
     const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
     const ev2=events2.find(e=>e.kind===kind&&e.id===id);
     if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
-    const roster2=v514EventRoster(ev2,v499MergeRoster(rowersOnly2,staffList2));
+    const roster2=v514EventRoster(ev2,await v516FullRoster(ev2,tc,new Map([[tc,Promise.resolve(v499MergeRoster(rowersOnly2,staffList2))]])));
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
     const statusByUser=v514EffectiveStatus(ev2,roster2,statusByEvent2.get(`${ev2.kind}_${ev2.id}`)),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     const orgIds2=await v512FetchOrganizerIds(ev2,tc);
@@ -3848,7 +3904,12 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true)
     v495WireEventChatAccordions(body);
     v493WireRsvpSummaryTabs(body,reopen);
     v499WireRemindButton(body,tc);
+    // V517 · GYM/ERGO: "Abrir entrenamiento" lleva a la remera al día de esa sesión en su Semana.
+    body.querySelectorAll('.v517OpenSession').forEach(b=>b.onclick=()=>{const d=b.dataset.date;close();athleteWeekStartV113=mondayOfISO(d);athleteSelectedDateV113=d;tab='semana';draw();render()});
     if(canEdit){
+      // V517 · duplicar un evento: abre el formulario de crear con todo copiado (cambias fecha, etc.)
+      const dup=body.querySelector('.v517DupEvent');
+      if(dup)dup.onclick=()=>{const formBox=document.getElementById('v497ClubEventForm');if(!formBox)return;close();v498RenderClubEventForm(formBox,ev2.team_code||tc,null,afterChange,ev2);formBox.scrollIntoView({behavior:'smooth',block:'start'})};
       // V512 · "+ Añadir organizador" (como en Spond) en vez del cuadro de sustituto puntual.
       const tog=body.querySelector('.v512AddOrgToggle'),box=body.querySelector('.v512AddOrgBox');
       if(tog&&box)tog.onclick=()=>box.classList.toggle('hidden');
@@ -3935,15 +3996,21 @@ async function coachEventsView(){
     const act=activeTeams();
     if(act.length===1)coachSelectedTeam=act[0];
     area.innerHTML=v316Loading('Cargando eventos…');
-    let perTeam;
+    let perTeam;const cache=new Map(),seenClub=new Set();
     try{
       perTeam=await Promise.all(act.map(async tc=>{
-        const [events,rowersOnly,staffList]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
-        const roster=v499MergeRoster(rowersOnly,staffList);
+        const events=await v495FetchEvents(tc);
         const statusByEvent=await v495RsvpStatusMapsForEvents(events,tc);
-        events.forEach(ev=>v498TryClaimAndNotify(ev,tc));
-        return v503CountsForEvents(events,roster,statusByEvent,tc);
+        return {tc,events,statusByEvent};
       }));
+      // V516 · un evento propio con varios grupos sale una sola vez (no una por grupo).
+      const lists=[];
+      for(const {tc,events,statusByEvent} of perTeam){
+        const evs=events.filter(ev=>{if(ev.kind!=='club_event')return true;const k=String(ev.id);if(seenClub.has(k))return false;seenClub.add(k);return true});
+        evs.forEach(ev=>v498TryClaimAndNotify(ev,ev.kind==='club_event'?ev.team_code:tc));
+        lists.push(await v516CountsForEvents(evs,statusByEvent,tc,cache));
+      }
+      perTeam=lists;
     }catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
     if(tab!=='eventos'||currentMode!=='staff')return;
     const all=perTeam.flat();
@@ -3963,20 +4030,23 @@ async function athleteEventsView(){
   content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   const area=document.getElementById('eventsArea');
   if(!v497AttendanceEnabledForTeam(team)){area.innerHTML='<div class="info">Tu entrenador ha desactivado este módulo por ahora.</div>';return}
-  let events,rowersOnly,staffList,roster;
-  try{[events,rowersOnly,staffList]=await Promise.all([v495FetchEvents(team),staffAthletesForTeam(team),v499StaffForTeam(team)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
-  roster=v499MergeRoster(rowersOnly,staffList);
+  let events,invited;
+  try{[events,invited]=await Promise.all([v495FetchEvents(team),v516FetchInvitedClubEvents()])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
+  const ids=new Set(events.filter(e=>e.kind==='club_event').map(e=>String(e.id)));
+  invited.forEach(ev=>{if(!ids.has(String(ev.id)))events.push(ev)});
+  events.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
   if(tab!=='eventos'||currentMode!=='athlete')return;
   const statusByEvent=await v495RsvpStatusMapsForEvents(events,team);
   // V514 · si el evento tiene destinatarios elegidos, la remera solo lo ve si está invitada; y si las
   // respuestas son "solo organizadores", no ve los contadores en la lista.
   const me=String(currentUser?.id||'');
   const visible=events.filter(ev=>!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length||ev.invitee_ids.map(String).includes(me)||String(ev.created_by)===me);
-  const withCounts=v503CountsForEvents(visible,roster,statusByEvent,team).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
+  const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,new Map())).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
   area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
   withCounts.forEach(v514TryReminder);
   area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
-  events.forEach(ev=>v498TryClaimAndNotify(ev,team));
+  events.forEach(ev=>v498TryClaimAndNotify(ev,ev.kind==='club_event'?ev.team_code:team));
 }
 async function v307FetchCrewMap(sessionIds){
   const map=new Map();
@@ -8027,9 +8097,14 @@ function sessionEditor(x=null){
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
  <div id="visualSessionEditorV213"></div>
  <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea><label id="gymCustomTextWrapV249" class="inlineCheck" style="margin-top:8px"><input id="gymCustomTextV249" type="checkbox"> <span><b>Solo GYM:</b> guardar este texto tal cual (ignora los ejercicios marcados de la biblioteca). Formato por línea: <i>Ejercicio · 4×12-10-10-8 · notas</i></span></label></details>
- <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Es convocatoria</b><br>Aparece en la pestaña Eventos: las remeras confirman si van o no (visible para todo el equipo) y hay un chat propio de ese día. Al marcarla (o guardar un cambio con la casilla ya marcada) se avisa por push a todo el equipo.</span></label>
- <label id="sessResponseDeadlineWrap" style="display:none">Responder antes del (opcional)<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label>
- <div id="sessOpensWrap" class="plannerGrid" style="display:none"><label>Abrir para confirmar · días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>Hora de apertura (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div>
+ <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Convertir en evento</b><br>Aparece en Eventos: las remeras confirman si van o no y hay un chat propio de ese día.</span></label>
+ <div id="sessEventOpts" class="v517EventOpts" style="display:none">
+  <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid"><label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}"></label></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
+  <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No, solo este día</option><option value="yes">Sí, aplicar también a otros días ya planificados</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted"><small>Se convierten en evento, con estas mismas opciones, las sesiones del mismo tipo que ya estén planificadas en esos días hasta esa fecha.</small></p></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Más ajustes</div><div class="plannerGrid"><label>Límite de participantes<input id="seMax" type="number" min="1" placeholder="Ninguno" value="${x?.max_participants??''}"></label><label id="sessResponseDeadlineWrap">Plazo límite de respuesta<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label><label>Recordatorio automático<select id="seRem">${[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']].map(([v,l])=>`<option value="${v}" ${String(x?.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="seDef"><option value="">Sin respuesta</option><option value="in" ${x?.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat)<select id="seChat"><option value="1" ${x?.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x?.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="seVis"><option value="all" ${x?.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x?.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div></div>
+ </div>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <label class="notifyToggleV110"><input id="notifyRowerChangeV110" type="checkbox"><span><b>Enviar notificación a los remeros</b><br>Márcalo solo si quieres avisar de este alta o cambio. Los retoques internos pueden guardarse sin avisar.</span></label>
  <div id="typeAdvice"></div>
@@ -8088,7 +8163,21 @@ function sessionEditor(x=null){
   box.innerHTML=`<details ${audienceSelV249.size?'open':''}><summary><b>👤 Dirigida a:</b> <span id="audSummaryV249">${summary()}</span></summary><p class="muted" style="margin:8px 0">Por defecto la sesión es para todo el equipo. Marca a una o varias personas para que solo ellas la vean: ese día sustituirá, para ellas, a la sesión general del mismo tipo (GYM o ERGO). MAR y mensajes siguen siendo del equipo.</p><div style="display:grid;gap:4px">${list.map(p=>`<label class="inlineCheck"><input type="checkbox" class="audV249" value="${esc(p.user_id)}" ${audienceSelV249.has(p.user_id)?'checked':''}> ${esc(p.full_name||'Sin nombre')}</label>`).join('')||'<span class="muted">No hay remeros en este equipo.</span>'}</div></details>`;
   box.querySelectorAll('.audV249').forEach(cb=>cb.onchange=()=>{cb.checked?audienceSelV249.add(cb.value):audienceSelV249.delete(cb.value);document.getElementById('audSummaryV249').textContent=summary()});
  }
- const refresh=()=>{drawAudienceV249();renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';sessIsEventWrap.style.display=['MAR','GYM'].includes(sessType.value)?'flex':'none';sessResponseDeadlineWrap.style.display=['MAR','GYM'].includes(sessType.value)?'block':'none';sessOpensWrap.style.display=['MAR','GYM'].includes(sessType.value)?'grid':'none';v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
+ // V517 · "convertir en evento" desde la planificación, con todas las opciones de un evento.
+ function v517SyncEventOpts(){const box=document.getElementById('sessEventOpts');if(box)box.style.display=(['MAR','GYM'].includes(sessType.value)&&document.getElementById('sessIsEvent')?.checked)?'block':'none'}
+ let seCoverUrl=x?.cover_url||null,seCoverFile=null,seEndTouched=!!x?.end_time;
+ const seDaySel=new Set([new Date(date+'T12:00:00').getDay()]);
+ function v517PaintDays(){const box=document.getElementById('seDays');if(!box)return;const names=[[1,'L'],[2,'M'],[3,'X'],[4,'J'],[5,'V'],[6,'S'],[0,'D']];box.innerHTML=names.map(([d,l])=>`<button type="button" class="v513Chip${seDaySel.has(d)?' on':''}" data-d="${d}">${l}</button>`).join('');box.querySelectorAll('.v513Chip').forEach(b=>b.onclick=()=>{const d=Number(b.dataset.d);if(seDaySel.has(d)){if(seDaySel.size>1)seDaySel.delete(d)}else seDaySel.add(d);v517PaintDays()})}
+ setTimeout(()=>{
+   document.getElementById('sessIsEvent')?.addEventListener('change',v517SyncEventOpts);
+   const st=document.getElementById('seTime'),en=document.getElementById('seEnd');
+   if(st&&en){en.oninput=()=>{seEndTouched=true};st.onchange=()=>{if(st.value&&(!seEndTouched||!en.value)){en.value=v514ShiftTime(st.value,60);seEndTouched=false}}}
+   const rp=document.getElementById('seRepeat');if(rp)rp.onchange=()=>{document.getElementById('seRepeatBox').style.display=rp.value?'block':'none';v517PaintDays()};
+   const ci=document.getElementById('seCoverInput');if(ci)ci.onchange=()=>{const f=ci.files?.[0];if(!f)return;seCoverFile=f;document.getElementById('seCoverPrev').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="">`;document.getElementById('seCoverRemove').classList.remove('hidden')};
+   const cr=document.getElementById('seCoverRemove');if(cr)cr.onclick=()=>{seCoverFile=null;seCoverUrl=null;ci.value='';document.getElementById('seCoverPrev').innerHTML='<span class="muted">Sin imagen</span>';cr.classList.add('hidden')};
+   v517SyncEventOpts();
+ },0);
+ const refresh=()=>{drawAudienceV249();renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';sessIsEventWrap.style.display=['MAR','GYM'].includes(sessType.value)?'flex':'none';v517SyncEventOpts();v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())setSessionContentV213(marDefaultSessionContent());else if(sessType.value!=='MAR'&&skeleton)setSessionContentV213('');refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
    if(['ERG','MAR'].includes(sessType.value))syncVisualToTextV213();
@@ -8109,7 +8198,17 @@ function sessionEditor(x=null){
    }
    const isEventNow=['MAR','GYM'].includes(sessType.value)?!!document.getElementById('sessIsEvent')?.checked:false;
    const openDaysVal=document.getElementById('sessOpenDays')?.value,openTimeVal=document.getElementById('sessOpenTime')?.value;
-   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
+   // V517 · opciones de evento de la sesión
+   let eventFields={};
+   if(isEventNow){
+     const g=id=>document.getElementById(id)?.value||'';
+     const maxP=g('seMax')?Number(g('seMax')):null,defS=g('seDef')||null;
+     if(maxP&&defS==='in'){alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');return}
+     if(Number(g('seMeet'))&&!g('seTime')){alert('Para poner hora de encuentro, indica primero la hora de comienzo.');return}
+     if(seCoverFile){try{seCoverUrl=await v514UploadEventCover(seCoverFile)}catch(e){alert('No se pudo subir la imagen (¿falta ejecutar 29_eventos_opciones.sql?): '+(e.message||e));return}}
+     eventFields={event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
+   }
+   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,...eventFields,updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
    if(targetsV249.length||sessionTargetsV249(x).length)payload.target_user_ids=targetsV249.length?targetsV249:null;
    const isNewEventNow=isEventNow&&!x?.is_event;
@@ -8120,15 +8219,33 @@ function sessionEditor(x=null){
      const {created_by,...payloadNoCreator}=payload;
      q=await sb.from('training_sessions').insert(payloadNoCreator).select('id').single();
    }
-   if(q.error){alert(q.error.message);return}
+   if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
+   // V517 · periódico: aplicar las mismas opciones de evento a las sesiones del mismo tipo ya
+   // planificadas en los días de la semana elegidos, hasta la fecha indicada.
+   let v517SentBulk=false;
+   if(isEventNow&&document.getElementById('seRepeat')?.value){
+     const until=document.getElementById('seUntil')?.value||date;
+     const rr=await sb.from('training_sessions').select('id,session_date,is_event').eq('team_code',team).eq('session_type',sessType.value).gt('session_date',date).lte('session_date',until);
+     const targets=(rr.data||[]).filter(r=>seDaySel.has(new Date(r.session_date+'T12:00:00').getDay()));
+     if(targets.length){
+       const upd=await sb.from('training_sessions').update({is_event:true,rsvp_open_days_before:payload.rsvp_open_days_before,rsvp_open_time:payload.rsvp_open_time,...eventFields,updated_at:new Date().toISOString()}).in('id',targets.map(t=>t.id));
+       if(upd.error)alert('Este día se guardó, pero no se pudo aplicar a los demás: '+upd.error.message);
+       else{
+         targets.filter(t=>!t.is_event).forEach(t=>v499ApplyDefaultSubstitute(team,'session',t.id));
+         const later=payload.rsvp_open_days_before!=null||payload.rsvp_open_time;
+         if(!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${sessTitle.value.trim()||sessType.value}" · ${targets.length+1} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+         alert(`Convertidas en evento ${targets.length} sesiones más de ${sessType.value} (además de esta).`);
+       }
+     }else alert('No hay más sesiones de este tipo planificadas en esos días hasta esa fecha: solo se ha convertido este día.');
+   }
    // V497/V498 · la convocatoria "salta" (se avisa al equipo) en el momento en que el entrenador la
    // marca como tal, salvo que haya fijado una regla de apertura (días/hora) en el futuro -- en ese
    // caso el aviso se dispara más tarde, automáticamente, la primera vez que alguien abra Eventos
    // después de esa hora (v498TryClaimAndNotify).
    const opensLater=v498ComputeOpensAt({event_date:date,rsvp_open_days_before:payload.rsvp_open_days_before,rsvp_open_time:payload.rsvp_open_time});
    if(isNewEventNow)v499ApplyDefaultSubstitute(team,'session',savedSessionId);
-   if(isEventNow&&!x?.is_event&&v497AttendanceEnabledForTeam(team)&&!(opensLater&&opensLater>new Date())){
+   if(isEventNow&&!x?.is_event&&!v517SentBulk&&v497AttendanceEnabledForTeam(team)&&!(opensLater&&opensLater>new Date())){
      try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${sessTitle.value.trim()||sessType.value}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
    }
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
