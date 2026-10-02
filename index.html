@@ -530,6 +530,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v531Bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-tint);border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:0 0 10px}.v531Bar.cancelled{background:#fee2e2;border-color:#fecaca}.v531Btns{display:flex;gap:8px;flex-wrap:wrap}.v531FormCard{margin:0 0 12px}
+.v530Row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);margin:0}.v530Row input[type=checkbox]{width:auto;margin:0;transform:scale(1.25)}.v530Row select{width:auto;margin:0}
 .v528DayHead{font-weight:700;font-size:1.05rem;margin:4px 0 10px;padding:8px 12px;border-radius:9px;background:var(--accent-tint);border-left:4px solid #2563eb}@keyframes v528Flash{0%{box-shadow:0 0 0 0 #2563eb88}100%{box-shadow:0 0 0 14px #2563eb00}}#planArea.v528Flash{animation:v528Flash 1s ease-out;border-radius:10px}#planArea{scroll-margin-top:12px}
 .v527CancelBanner{background:#fee2e2;color:#991b1b;border-radius:8px;padding:8px 10px;font-weight:700;margin:8px 0}.v527Strike{text-decoration:line-through;opacity:.7}.v527RowCancelled{opacity:.6}.v527RowCancelled .v503Title{text-decoration:line-through}.v527CancelTxt{color:#dc2626!important;font-weight:600}
 .v522Loc a{color:#2563eb;text-decoration:underline;font-weight:500}
@@ -2042,7 +2044,59 @@ async function testPushV104(){
     const d=j.errors?.[0];return alert('El dispositivo está registrado, pero el envío push fue rechazado.\n\nDetalle: '+(d?.statusCode?d.statusCode+' · ':'')+(d?.message||'sin detalle'));
   }catch(e){alert('No se pudo hacer la prueba.\n\nDetalle: '+(e?.message||e));}
 }
+// V530 · preferencias de notificaciones (Ajustes → Notificaciones). Cada aviso de eventos lleva una
+// categoría; antes de enviarlo se quita a quien la tenga desactivada. Sin preferencias guardadas o si
+// la tabla aún no existe, se envía igual que antes.
+const V530_CATEGORIES=[['event_new','Nuevos eventos e invitaciones','Cuando se publica un evento, te invitan o ya se puede confirmar.'],['event_change','Cambios y cancelaciones','Cambio de hora o lugar, cancelado, reactivado o eliminado.'],['event_reminder','Recordatorios','Avisos de que aún no has respondido.'],['event_message','Mensajes a los invitados','Mensajes que el organizador envía a todos.']];
+function v530Blocks(prefs,cat,rsvpStatus){
+  const p=prefs||{};
+  if(cat==='rsvp'){const m=p.rsvp||'all';return m==='none'||(m==='out'&&rsvpStatus==='in')}
+  return p[cat]===false;
+}
+async function v530FilterAudience(payload){
+  const {category,rsvpStatus,...clean}=payload||{};
+  if(!category)return clean;
+  try{
+    const r=await sb.from('notification_prefs').select('user_id,prefs');
+    if(r.error)return clean;
+    const blocked=new Set((r.data||[]).filter(x=>v530Blocks(x.prefs,category,rsvpStatus)).map(x=>String(x.user_id)));
+    if(!blocked.size)return clean;
+    const a=clean.audience||{};let ids;
+    if(a.mode==='users')ids=(a.user_ids||[]).map(String);
+    else if(a.mode==='teams'){const m=await sb.from('rower_team_memberships').select('user_id').in('team_code',a.team_codes||[]).eq('is_rower',true);if(m.error)return clean;ids=[...new Set((m.data||[]).map(x=>String(x.user_id)))]}
+    else return clean;
+    const keep=ids.filter(id=>!blocked.has(id));
+    if(!keep.length)return null;
+    return {...clean,audience:{mode:'users',user_ids:keep,team_codes:a.team_codes||[]}};
+  }catch(e){return clean}
+}
+// V530 · "¿me llega notificación cuando alguien acepta o rechaza?" — ahora sí: a quien organiza el
+// evento (quien lo creó + organizadores añadidos), salvo que lo haya desactivado en Ajustes.
+var v530PendingEvent=null;
+// V530 · "al pinchar en la notificación que me lleve al evento en sí".
+function v530OpenPendingEvent(){
+  const p=v530PendingEvent;v530PendingEvent=null;if(!p||!p.id)return;
+  const team=p.team||(currentMode==='staff'?coachSelectedTeam:currentTeamCode);
+  const staff=currentMode==='staff';
+  v503OpenEventDetail(team,p.kind,p.id,staff,()=>{if(tab==='eventos')render()},staff?true:v495ChatVisibleForRower());
+}
+async function v530NotifyOrganizersRsvp(kind,eventId,team,status){
+  try{
+    const r=await sb.from(V498_TABLE_BY_KIND[kind]).select('*').eq('id',eventId).maybeSingle();
+    const ev=r.data;if(!ev)return;
+    const orgs=new Set([ev.created_by?String(ev.created_by):null,...(await v512FetchOrganizerIds({kind,id:eventId},team))].filter(Boolean));
+    orgs.delete(String(currentUser?.id));
+    if(!orgs.size)return;
+    const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
+    const date=kind==='session'?ev.session_date:kind==='competition'?ev.competition_date:ev.event_date;
+    const who=currentUserProfile?.full_name||'Alguien';
+    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
+  }catch(e){}
+}
+function v530EventUrl(kind,id,team){return `/?tab=eventos&ek=${encodeURIComponent(kind||'')}&eid=${encodeURIComponent(id||'')}&et=${encodeURIComponent(team||'')}`}
 async function sendNotificationV110(payload){
+  payload=await v530FilterAudience(payload);
+  if(!payload)return {ok:true,skipped:true};
   const {data:{session}}=await sb.auth.getSession();
   if(!session?.access_token)throw new Error('Sesión no disponible');
   const r=await fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify(payload)});
@@ -2176,7 +2230,7 @@ async function openNotificationsV104(){
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
    if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
-   if(u.includes('tab=eventos')&&v497AttendanceEnabledForTeam(currentMode==='staff'?coachSelectedTeam:currentTeamCode)){tab='eventos';draw();render();return}
+   if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||''};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
  }));
 }
 
@@ -2378,7 +2432,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="529";
+const APP_VERSION="531";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2540,6 +2594,7 @@ async function startApp(){
       if(launchParams.get("rower"))v300PendingMessageRower=launchParams.get("rower");
     }
   }
+  if(launchParams.get("tab")==="eventos"){tab="eventos";if(launchParams.get("eid"))v530PendingEvent={kind:launchParams.get("ek")||'club_event',id:Number(launchParams.get("eid")),team:launchParams.get("et")||''}}
   if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
   await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
@@ -2547,6 +2602,7 @@ async function startApp(){
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(v300ResumeScrollY!=null)setTimeout(()=>v347ScrollTo(v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
+  if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),800);
   setTimeout(()=>showPushOnboardingV106(),700);
   if(currentMode==="athlete"&&currentTeamCode)setTimeout(()=>autoSyncConcept2(),500);
   if(currentMode==="athlete"&&currentUser)setTimeout(()=>{v300CheckNewComments();v300CheckNewChatMessages()},900);
@@ -2813,7 +2869,7 @@ function v300OpenSettingsMenu(){
   const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
   const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
   const layer=document.createElement('div');layer.className='modalBack v300SettingsMenuBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button><button type="button" class="v300NavItem" data-a="__notifs__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">🔔</span><span>Notificaciones</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
@@ -2821,7 +2877,25 @@ function v300OpenSettingsMenu(){
     const v=btn.dataset.a;layer.remove();
     if(v==="__theme__"){applyThemeV299(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');return}
     if(v==="__language__"){v311OpenLanguagePicker();return}
+    if(v==="__notifs__"){v530OpenNotifPrefs();return}
   });
+}
+async function v530OpenNotifPrefs(){
+  const layer=document.createElement('div');layer.className='modalBack';
+  layer.innerHTML=`<div class="modalCard" style="max-width:440px"><div class="modalTitle"><h2 style="margin:0">Notificaciones</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div id="v530Body">${v316Loading('Cargando…')}</div></div>`;
+  document.body.appendChild(layer);
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};layer.querySelector('.v300CloseDetail').onclick=()=>layer.remove();
+  let prefs={};
+  try{const r=await sb.from('notification_prefs').select('prefs').eq('user_id',currentUser.id).maybeSingle();if(r.error)throw r.error;prefs=r.data?.prefs||{}}
+  catch(e){layer.querySelector('#v530Body').innerHTML=`<div class="info">Falta ejecutar 37_preferencias_notificaciones.sql en Supabase.</div>`;return}
+  const body=layer.querySelector('#v530Body');
+  body.innerHTML=`<p class="muted"><small>Avisos de Eventos. Los mensajes del chat y los de entrenamientos siguen como hasta ahora.</small></p>${V530_CATEGORIES.map(([k,l,d])=>`<label class="v530Row"><span><b>${esc(l)}</b><br><small class="muted">${esc(d)}</small></span><input type="checkbox" data-k="${k}" ${prefs[k]!==false?'checked':''}></label>`).join('')}<label class="v530Row"><span><b>Respuestas a mis eventos</b><br><small class="muted">Cuando alguien dice que va o que no va a un evento que organizas.</small></span><select id="v530Rsvp"><option value="all" ${(prefs.rsvp||'all')==='all'?'selected':''}>Todas</option><option value="out" ${prefs.rsvp==='out'?'selected':''}>Solo quien no va</option><option value="none" ${prefs.rsvp==='none'?'selected':''}>Ninguna</option></select></label><div class="actions"><button type="button" class="primary" id="v530Save">Guardar</button></div><div id="v530St" class="muted"></div>`;
+  body.querySelector('#v530Save').onclick=async()=>{
+    const np={};body.querySelectorAll('input[data-k]').forEach(c=>np[c.dataset.k]=c.checked);np.rsvp=body.querySelector('#v530Rsvp').value;
+    const q=await sb.from('notification_prefs').upsert({user_id:currentUser.id,prefs:np,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    body.querySelector('#v530St').textContent=q.error?'No se pudo guardar: '+q.error.message:'Guardado ✓';
+    if(!q.error)setTimeout(()=>layer.remove(),700);
+  };
 }
 function v311OpenLanguagePicker(){
   document.querySelectorAll('.v311LangPickerBack').forEach(x=>x.remove());
@@ -3261,6 +3335,7 @@ function v495WireRsvpButtons(root,afterChange){
       row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
       const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=status==='in'?'Has confirmado que vas':'Has avisado de que no vas';
       row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status}}));
+      v530NotifyOrganizersRsvp(kind,eventId,teamCode,status);
       // V500 · el botón se actualiza al instante (líneas de arriba), pero el panel de
       // "Confirmaciones" (quién va/no va/falta) de la misma tarjeta se había quedado con los datos
       // de cuando se cargó la vista — había que recargar la vista para verse reflejado ahí.
@@ -3351,7 +3426,7 @@ function v493WireRsvpSummaryTabs(root,afterChange){
     if(!text||!text.trim())return;
     b.disabled=true;const original=b.textContent;b.textContent='Enviando…';
     try{
-      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[b.dataset.team]},title:b.dataset.title,body:text.trim(),url:'/?tab=eventos',type:'training'});
+      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[b.dataset.team]},title:b.dataset.title,body:text.trim(),url:'/?tab=eventos',category:'event_message',type:'training'});
       b.textContent='Mensaje enviado ✓';
     }catch(e){alert('No se pudo enviar: '+(e.message||e));b.disabled=false;b.textContent=original}
   });
@@ -3469,7 +3544,7 @@ async function v498TryClaimAndNotify(ev,teamCode){
     const upd=await sb.from(table).update({opens_notified_at:new Date().toISOString()}).eq('id',ev.id).is('opens_notified_at',null).select('id');
     if(upd.error||!upd.data?.length)return;
     const aud=ev.kind==='club_event'&&Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?{mode:'users',user_ids:ev.invitee_ids,team_codes:[teamCode]}:{mode:'teams',team_codes:ev.kind==='club_event'?[ev.team_code||teamCode,...(ev.extra_team_codes||[])]:[teamCode]};
-    await sendNotificationV110({audience:aud,title:'📅 Ya puedes confirmar asistencia',body:`Confirma tu asistencia a "${ev.event_title}" (${shortDateES(ev.event_date)}) en Row Training.`,url:'/?tab=eventos',type:'training'});
+    await sendNotificationV110({audience:aud,title:'📅 Ya puedes confirmar asistencia',body:`Confirma tu asistencia a "${ev.event_title}" (${shortDateES(ev.event_date)}) en Row Training.`,url:v530EventUrl(ev.kind,ev.id,teamCode),category:'event_new',type:'training'});
   }catch(e){}
 }
 // V514 · formulario de evento propio con las opciones de Spond que pidió Nacho ("todas"): hora de
@@ -3530,8 +3605,8 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
     sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
-    (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">Solo este evento</option><option value="following">${isSess?`Este y los siguientes (${esc(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00')))}s de ${esc(String(x.session_type||'').toUpperCase())} que sean evento)`:'Este y los siguientes de la serie'}</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>Avisar a los invitados del cambio</span></label>`):'')+
-    `<div class="actions"><button type="button" id="v497CeSave" class="primary">${existing?'Guardar cambios':'Crear evento'}</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
+    (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">${x.__convert?'Solo este día':'Solo este evento'}</option><option value="following">${isSess?`${x.__convert?'Periódico: este y todos los siguientes':'Este y los siguientes'} (${esc((w=>w.endsWith('s')?w:w+'s')(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00'))))} de ${esc(String(x.session_type||'').toUpperCase())}${x.__convert?' ya planificados':' que sean evento'})`:'Este y los siguientes de la serie'}</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>${x.__convert?'Avisar a las remeras (si la invitación no está programada para más tarde)':'Avisar a los invitados del cambio'}</span></label>`):'')+
+    `<div class="actions"><button type="button" id="v497CeSave" class="primary">${existing?.__convert?'Convertir en evento':existing?'Guardar cambios':'Crear evento'}</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
   const $=id=>document.getElementById(id);
   // equipos (solo al crear)
   function paintTeams(){
@@ -3620,23 +3695,31 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     if(existing&&isSess){
       const now=new Date().toISOString();
       const patch={event_name:title||null,event_time:base.event_time,meet_time:base.meet_time,end_time:base.end_time,location:base.location,cover_url:base.cover_url,rsvp_open_days_before:base.rsvp_open_days_before,rsvp_open_time:base.rsvp_open_time,max_participants:base.max_participants,reminder_hours_before:base.reminder_hours_before,default_status:base.default_status,chat_enabled:base.chat_enabled,responses_visibility:base.responses_visibility,invitee_ids:inv&&inv.length?inv:null,updated_at:now};
+      const converting=!!existing.__convert;
+      if(converting)patch.is_event=true;
       const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
       if(q.error)return fail(/invitee_ids/.test(q.error.message||'')?'Falta ejecutar 35_convocatorias_destinatarios.sql en Supabase.':/event_name/.test(q.error.message||'')?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':missingCols(q.error)?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);
       let others=[];
       if(($('v514Scope')?.value||'one')==='following'){
         const wd=new Date(existing.event_date+'T12:00:00').getDay();
-        const r=await sb.from('training_sessions').select('id,session_date').eq('team_code',t0).eq('session_type',existing.session_type).eq('is_event',true).gt('session_date',existing.event_date);
+        let rq=sb.from('training_sessions').select('id,session_date').eq('team_code',t0).eq('session_type',existing.session_type).gt('session_date',existing.event_date);
+        if(!converting)rq=rq.eq('is_event',true);
+        const r=await rq;
         others=(r.data||[]).filter(o=>new Date(o.session_date+'T12:00:00').getDay()===wd);
         if(others.length){const q2=await sb.from('training_sessions').update(patch).in('id',others.map(o=>o.id));if(q2.error)return fail(q2.error.message)}
       }
-      if($('v514Notify')?.checked){
+      if(converting){
+        others.forEach(o=>v499ApplyDefaultSubstitute(t0,'session',o.id));v499ApplyDefaultSubstitute(t0,'session',existing.id);
+        const later=base.rsvp_open_days_before!=null||!!base.rsvp_open_time;
+        if(!later&&$('v514Notify')?.checked){const nm=title||v524DefaultEventName(existing.session_type);try{await sendNotificationV110({audience:inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]},title:others.length?'📅 Nuevas convocatorias':'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${nm}" (${shortDateES(existing.event_date)}${others.length?` y ${others.length} fecha${others.length===1?'':'s'} más`:''}) en Row Training.`,url:v530EventUrl('session',existing.id,t0),category:'event_new',type:'training'})}catch(e){}}
+      }else if($('v514Notify')?.checked){
         const changes=[],nm=title||v524DefaultEventName(existing.session_type);
         if((base.event_time||'')!==(existing.event_time||''))changes.push(base.event_time?`empieza a las ${base.event_time}`:'sin hora de inicio');
         if((base.meet_time||'')!==(existing.meet_time||''))changes.push(base.meet_time?`encuentro a las ${base.meet_time}`:'sin hora de encuentro');
         if((base.end_time||'')!==(existing.end_time||''))changes.push(base.end_time?`termina a las ${base.end_time}`:'sin hora de fin');
         if((base.location||'')!==(existing.location||''))changes.push(base.location?`lugar: ${base.location}`:'sin lugar');
         const aud=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
-        try{await sendNotificationV110({audience:aud,title:'✏️ Cambios en '+nm,body:`${shortDateES(existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.',url:'/?tab=eventos',type:'training'})}catch(e){}
+        try{await sendNotificationV110({audience:aud,title:'✏️ Cambios en '+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.',category:'event_change',type:'training'})}catch(e){}
       }
       await syncOrgs({kind:'session',id:existing.id},true);
       container.classList.add('hidden');container.innerHTML='';
@@ -3672,7 +3755,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         // a los de antes (que siguen invitados): aviso de cambios
         const keepInv=oldInv?(inv?oldInv.filter(id=>inv.includes(id)):oldInv):null;
         const keepTeams=oldTeams.filter(t=>allTeamsSel.includes(t));
-        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:'✏️ Cambios en '+title,body,url:'/?tab=eventos',type:'training'})}catch(e){}
+        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:'✏️ Cambios en '+title,body,url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_change',type:'training'})}catch(e){}
         // a los nuevos: invitación
         if(!opensLater){
           let newAud=null;
@@ -3683,7 +3766,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
             else{const oldIds=new Set((await Promise.all(oldTeams.map(rosterFor))).flat().map(p=>String(p.user_id)));newIds=inv.filter(id=>!oldIds.has(id))}
             if(newIds.length)newAud=audienceFor(newIds,allTeamsSel);
           }else if(newTeams.length)newAud=audienceFor(null,newTeams);
-          if(newAud){try{await sendNotificationV110({audience:newAud,title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+          if(newAud){try{await sendNotificationV110({audience:newAud,title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}) en Row Training.`,url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_new',type:'training'})}catch(e){}}
         }
       }
       await syncOrgs({kind:isComp?'competition':'club_event',id:existing.id},true);
@@ -3698,7 +3781,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const ids=(q.data||[]).map(r=>r.id);
       for(let i=0;i<ids.length;i++)await syncOrgs({kind:'club_event',id:ids[i]},i===0);
       if(!opensLater){
-        try{await sendNotificationV110({audience:audienceFor(inv,allTeamsSel),title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}${dates.length>1?` · ${dates.length} fechas`:''}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+        try{await sendNotificationV110({audience:audienceFor(inv,allTeamsSel),...(q.data?.[0]?.id?{url:v530EventUrl('club_event',q.data[0].id,t0)}:{url:'/?tab=eventos'}),title:'📅 Nuevo evento: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}${dates.length>1?` · ${dates.length} fechas`:''}) en Row Training.`,category:'event_new',type:'training'})}catch(e){}
       }
     }
     container.classList.add('hidden');container.innerHTML='';
@@ -3844,7 +3927,7 @@ async function v512AddOrganizer(ev,team,userId){
   if(q.error&&!/duplicate key/i.test(q.error.message||''))throw q.error;
   const who=currentUserProfile?.full_name||'Tu entrenador';
   const when=ev.event_date?` (${v506SpondDayTimeLabel(ev.event_date,ev.event_time)})`:'';
-  try{await sendNotificationV110({audience:{mode:'users',user_ids:[userId],team_codes:[team]},title:'Te han añadido como organizador',body:`${who} te ha añadido como organizador de ${ev.event_title?`"${ev.event_title}"`:'un evento'}${when}. Entra en Eventos y confirma si vas.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+  try{await sendNotificationV110({audience:{mode:'users',user_ids:[userId],team_codes:[team]},title:'Te han añadido como organizador',body:`${who} te ha añadido como organizador de ${ev.event_title?`"${ev.event_title}"`:'un evento'}${when}. Entra en Eventos y confirma si vas.`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_new',type:'training'})}catch(e){}
 }
 async function v512RemoveOrganizer(ev,team,userId){
   let q=sb.from('event_organizers').delete().eq(v512EventCol(ev.kind),ev.id).eq('user_id',userId);
@@ -3948,7 +4031,7 @@ async function v527Cancel(ev,team,reactivate=false){
     if(!d)return false;
     const q=await sb.from(table).update({cancelled_at:null,cancel_reason:null}).eq('id',ev.id);
     if(q.error){alert(q.error.message);return false}
-    if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'✅ Se mantiene: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} · vuelve a estar en pie. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+    if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'✅ Se mantiene: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} · vuelve a estar en pie. Confirma tu asistencia en Row Training.`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_change',type:'training'})}catch(e){}}
     return true;
   }
   const sibs=ev.kind==='session'?await v527SiblingSessions(ev):[];
@@ -3957,7 +4040,7 @@ async function v527Cancel(ev,team,reactivate=false){
   const ids=[ev.id,...(d.scope==='following'?sibs.map(x=>x.id):[])];
   const q=await sb.from(table).update({cancelled_at:new Date().toISOString(),cancel_reason:(d.reason||'').trim()||null}).in('id',ids);
   if(q.error){alert(/cancelled_at|cancel_reason/.test(q.error.message||'')?'Falta ejecutar 36_cancelar_eventos.sql en Supabase.':q.error.message);return false}
-  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🚫 Cancelado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)}${ids.length>1?` (y los ${ids.length-1} siguientes)`:''}${d.reason?` · ${d.reason.trim()}`:''}`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🚫 Cancelado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)}${ids.length>1?` (y los ${ids.length-1} siguientes)`:''}${d.reason?` · ${d.reason.trim()}`:''}`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_change',type:'training'})}catch(e){}}
   return true;
 }
 async function v527Delete(ev,team){
@@ -3966,7 +4049,7 @@ async function v527Delete(ev,team){
   if(!d)return false;
   const q=await sb.from(V498_TABLE_BY_KIND[ev.kind]).delete().eq('id',ev.id);
   if(q.error){alert(q.error.message);return false}
-  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🗑️ Eliminado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} ya no está en el calendario.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🗑️ Eliminado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} ya no está en el calendario.`,url:'/?tab=eventos',category:'event_change',type:'training'})}catch(e){}}
   return true;
 }
 async function v523AfterApproval(requestId,team){
@@ -4001,7 +4084,7 @@ async function v523OfferInviteToEvents(uid,team,name){
         if(q.error)errs++;
       }
       if(errs){st.textContent=`No se pudieron guardar ${errs} eventos (¿falta ejecutar 33_eventos_excluidos.sql?).`;return}
-      if(invited&&layer.querySelector('#v523Notify')?.checked){try{await sendNotificationV110({audience:{mode:'users',user_ids:[uid],team_codes:[team]},title:'📅 Te han invitado a eventos',body:`Tienes ${invited} evento${invited===1?'':'s'} de ${teamLabel(team)} pendientes de confirmar en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+      if(invited&&layer.querySelector('#v523Notify')?.checked){try{await sendNotificationV110({audience:{mode:'users',user_ids:[uid],team_codes:[team]},title:'📅 Te han invitado a eventos',body:`Tienes ${invited} evento${invited===1?'':'s'} de ${teamLabel(team)} pendientes de confirmar en Row Training.`,url:'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}}
       layer.remove();
     };
     layer.querySelector('#v523Go').onclick=()=>apply(cbs.map(c=>c.checked));
@@ -4042,7 +4125,7 @@ async function v514TryReminder(ev){
     const opensAt=v498ComputeOpensAt(ev);if(opensAt&&opensAt>now)return;
     const upd=await sb.from(V498_TABLE_BY_KIND[ev.kind]).update({reminder_sent_at:now.toISOString()}).eq('id',ev.id).is('reminder_sent_at',null).select('id');
     if(upd.error||!upd.data?.length)return;
-    await sendNotificationV110({audience:{mode:'users',user_ids:ev._pendingIds,team_codes:[ev._viewTeam]},title:'🔔 ¿Vas a '+ev.event_title+'?',body:`Aún no has respondido a "${ev.event_title}" (${v506SpondDayTimeLabel(ev.event_date,ev.event_time)}). Confirma en Row Training.`,url:'/?tab=eventos',type:'training'});
+    await sendNotificationV110({audience:{mode:'users',user_ids:ev._pendingIds,team_codes:[ev._viewTeam]},title:'🔔 ¿Vas a '+ev.event_title+'?',body:`Aún no has respondido a "${ev.event_title}" (${v506SpondDayTimeLabel(ev.event_date,ev.event_time)}). Confirma en Row Training.`,url:v530EventUrl(ev.kind,ev.id,ev._viewTeam),category:'event_reminder',type:'training'});
   }catch(e){}
 }
 // V499 · "Avisar a los que faltan por confirmar" — antes solo vivía cableado dentro de la lista plana
@@ -4052,7 +4135,7 @@ function v499WireRemindButton(root,team){
     const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;
     b.disabled=true;b.textContent='Avisando…';
     try{
-      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/',type:'training'});
+      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
       b.textContent='Aviso enviado ✓';
     }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}
   });
@@ -8255,6 +8338,32 @@ async function renderPlanDay(){
  document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{const sx=data.sessions.find(x=>String(x.id)===b.dataset.id);if(confirm('¿Eliminar esta sesión futura?')){const q=await sb.from('training_sessions').delete().eq('id',b.dataset.id);if(q.error)return alert(q.error.message);if(sx&&confirm('Sesión eliminada. ¿Quieres avisar a los remeros?'))await notifyTeamChangeV110(team,'Entrenamiento cancelado',`${shortDateES(date)} · ${sx.title||sx.session_type}`,'/');renderPlanDay()}});
  document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
+ v531DayEventBar(data.sessions||[],team,date);
+}
+// V531 · "¿cómo convierto en evento un día de GIM+ERGO? me debería dejar editar el día en sí": barra
+// arriba del día con el evento de ESE DÍA (no de cada sesión). El evento se guarda en una de las
+// sesiones del día (MAR si la hay; si no GYM; si no ERGO), pero se gestiona como "el evento del día".
+function v531DayEventBar(sessions,team,date){
+  const area=document.getElementById('planArea');if(!area)return;
+  const pick=['MAR','GYM','ERG'].map(t=>sessions.find(x=>String(x.session_type).toUpperCase()===t)).find(Boolean);
+  if(!pick)return;
+  const evS=sessions.find(x=>x.is_event)||null;
+  const types=[...new Set(sessions.map(x=>String(x.session_type).toUpperCase()).filter(t=>t!=='DESC'))].join(' + ');
+  const html=evS
+    ?`<div class="v531Bar${evS.cancelled_at?' cancelled':''}"><div><b>📅 Evento del día:</b> ${esc(v524SessionEventName(evS))}${evS.event_time?` · ${esc(evS.event_time)}`:''}${evS.cancelled_at?' · <span class="v527CancelTxt">Cancelado</span>':''}<br><small class="muted">Las remeras confirman asistencia a este día (${esc(types)}).</small></div><div class="v531Btns"><button type="button" id="v531Edit">✏️ Editar evento</button><button type="button" id="v531Open">Ver en Eventos</button></div></div>`
+    :`<div class="v531Bar"><div><b>Este día no es evento</b><br><small class="muted">${esc(types)} · conviértelo para que las remeras confirmen si vienen.</small></div><div class="v531Btns"><button type="button" class="primary" id="v531Convert">📅 Convertir día en evento</button></div></div>`;
+  area.insertAdjacentHTML('afterbegin',html);
+  const formFor=(sess,convert)=>{
+    const ev={...sess,kind:'session',event_date:sess.session_date,event_title:v524SessionEventName(sess),__convert:convert};
+    if(convert&&!sess.event_name)ev.event_name=String(sess.session_type).toUpperCase()==='MAR'?'':'';
+    const box=document.createElement('div');box.className='card v531FormCard';box.innerHTML=`<h3 style="margin-top:0">${convert?'Convertir día en evento':'Editar evento del día'}</h3><div id="v531FormHost"></div>`;
+    area.querySelector('.v531Bar')?.after(box);
+    v498RenderClubEventForm(box.querySelector('#v531FormHost'),team,ev,()=>{renderPlanDay()});
+    box.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  document.getElementById('v531Convert')?.addEventListener('click',()=>formFor(pick,true));
+  document.getElementById('v531Edit')?.addEventListener('click',()=>formFor(evS,false));
+  document.getElementById('v531Open')?.addEventListener('click',()=>v503OpenEventDetail(team,'session',evS.id,true,()=>renderPlanDay(),true));
 }
 const PLAN_B_LIBRARY=[
  {code:"PB-BASE-2X10",name:"Base · GYM + ERGO 2×10'",desc:"Sustitución suave para un día de mar. Mantiene fuerza general y UT2 sin disparar la fatiga.",gymTitle:"GYM · Fuerza global corta",gymContent:"DURACIÓN OBJETIVO · 35–40 min\nCALENTAMIENTO · 8 min\nPrensa de piernas · 3×10 · rec 2 min\nRemo sentado en polea · 3×10 · rec 75 s\nHip thrust · 3×10 · rec 90 s\nPallof press · 2×10/lado · rec 45 s\nVUELTA A LA CALMA · 5 min\nCarga: RIR 2–3; técnica limpia y sin llegar al fallo.",ergoTitle:"ERGO · UT2 · 2×10' @20 · rec 3'",ergoContent:"4 min calentamiento\n2×10 min @20 ppm · UT2\nRecuperación 3 min suave\n5 min vuelta a la calma"},
@@ -8459,9 +8568,9 @@ function sessionEditor(x=null){
          targets.filter(t=>!t.is_event).forEach(t=>v499ApplyDefaultSubstitute(team,'session',t.id));
          const later=payload.rsvp_open_days_before!=null||payload.rsvp_open_time;
          const newOnes=targets.filter(t=>!t.is_event);
-         if(newOnes.length&&!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${eventFields.event_name||v524DefaultEventName(sessType.value)}" · ${newOnes.length+(x?.is_event?0:1)} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+         if(newOnes.length&&!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${eventFields.event_name||v524DefaultEventName(sessType.value)}" · ${newOnes.length+(x?.is_event?0:1)} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}}
          // si ya eran eventos y se marcó "Enviar notificación", un solo aviso de cambios para todos
-         if(x?.is_event&&document.getElementById('notifyRowerChangeV110')?.checked){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'✏️ Cambios en '+(eventFields.event_name||v524DefaultEventName(sessType.value)),body:`Desde el ${shortDateES(date)} y en los ${targets.length} siguientes: ${eventFields.event_time?`empieza a las ${eventFields.event_time}`:''}${eventFields.location?` · ${eventFields.location}`:''}. Revísalo en Eventos.`,url:'/?tab=eventos',type:'training'})}catch(e){}document.getElementById('notifyRowerChangeV110').checked=false}
+         if(x?.is_event&&document.getElementById('notifyRowerChangeV110')?.checked){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'✏️ Cambios en '+(eventFields.event_name||v524DefaultEventName(sessType.value)),body:`Desde el ${shortDateES(date)} y en los ${targets.length} siguientes: ${eventFields.event_time?`empieza a las ${eventFields.event_time}`:''}${eventFields.location?` · ${eventFields.location}`:''}. Revísalo en Eventos.`,url:'/?tab=eventos',category:'event_change',type:'training'})}catch(e){}document.getElementById('notifyRowerChangeV110').checked=false}
          alert(x?.is_event?`Cambios guardados en este día y en ${targets.length} más.`:`Convertidas en evento ${targets.length} sesiones más de ${sessType.value} (además de esta).`);
        }
      }else alert('No hay más sesiones de este tipo planificadas en esos días hasta esa fecha: solo se ha convertido este día.');
@@ -8473,7 +8582,7 @@ function sessionEditor(x=null){
    const opensLater=v498ComputeOpensAt({event_date:date,rsvp_open_days_before:payload.rsvp_open_days_before,rsvp_open_time:payload.rsvp_open_time});
    if(isNewEventNow)v499ApplyDefaultSubstitute(team,'session',savedSessionId);
    if(isEventNow&&!x?.is_event&&!v517SentBulk&&v497AttendanceEnabledForTeam(team)&&!(opensLater&&opensLater>new Date())){
-     try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${eventFields.event_name||v524DefaultEventName(sessType.value)}" (${shortDateES(date)}) en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+     try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${eventFields.event_name||v524DefaultEventName(sessType.value)}" (${shortDateES(date)}) en Row Training.`,url:savedSessionId?v530EventUrl('session',savedSessionId,team):'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}
    }
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
    if(document.getElementById('notifyRowerChangeV110')?.checked){const action=x?'Entrenamiento actualizado':'Nuevo entrenamiento';const bodyV249=`${shortDateES(date)} · ${sessTitle.value.trim()||sessType.value}`;if(targetsV249.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:targetsV249,team_codes:[team]},title:action,body:bodyV249,url:'/',type:'training'})}catch(e){alert('El cambio se ha guardado, pero no se pudo enviar la notificación.\n\nDetalle: '+(e?.message||e))}}else await notifyTeamChangeV110(team,action,bodyV249,'/');}
