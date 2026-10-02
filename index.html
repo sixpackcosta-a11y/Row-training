@@ -530,6 +530,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v527CancelBanner{background:#fee2e2;color:#991b1b;border-radius:8px;padding:8px 10px;font-weight:700;margin:8px 0}.v527Strike{text-decoration:line-through;opacity:.7}.v527RowCancelled{opacity:.6}.v527RowCancelled .v503Title{text-decoration:line-through}.v527CancelTxt{color:#dc2626!important;font-weight:600}
 .v522Loc a{color:#2563eb;text-decoration:underline;font-weight:500}
 .v519Btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin:4px 0 10px}
 .v518Orgs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.v518Orgs .v518OrgDel{border:none;background:transparent;padding:0 2px;font-size:.8rem;color:inherit}.v518OrgAdd{display:flex;gap:8px;flex-wrap:wrap}.v518OrgAdd select{flex:1 1 200px;margin:0}
@@ -2376,7 +2377,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="526";
+const APP_VERSION="527";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3461,7 +3462,7 @@ const V498_TABLE_BY_KIND={session:'training_sessions',competition:'competitions'
 // aunque varias personas abran la pestaña casi a la vez.
 async function v498TryClaimAndNotify(ev,teamCode){
   const opensAt=v498ComputeOpensAt(ev);
-  if(!opensAt||opensAt>new Date()||ev.opens_notified_at)return;
+  if(!opensAt||opensAt>new Date()||ev.opens_notified_at||ev.cancelled_at)return;
   const table=V498_TABLE_BY_KIND[ev.kind];
   try{
     const upd=await sb.from(table).update({opens_notified_at:new Date().toISOString()}).eq('id',ev.id).is('opens_notified_at',null).select('id');
@@ -3743,7 +3744,8 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V512 · organizadores = quien lo creó (created_by) + los añadidos a mano (event_organizers).
   const orgIds=[...new Set([ev.created_by?String(ev.created_by):null,...(organizerIds||[])].filter(Boolean))];
   const nameOf=uid=>String(uid)===String(currentUser?.id)?'Tú':(roster.find(p=>String(p.user_id)===String(uid))?.full_name||null);
-  const rsvp=opensFuture?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
+  const cancelled=!!ev.cancelled_at;
+  const rsvp=opensFuture||cancelled?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
   // V514 · "Quién ve las respuestas: solo organizadores" — el resto solo ve su propia respuesta.
   const amOrganizer=canEdit||orgIds.includes(String(currentUser?.id));
   const hideResponses=ev.responses_visibility==='organizers'&&!amOrganizer;
@@ -3774,9 +3776,10 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V525 · las convocatorias de entrenamiento también tienen "Editar" (abre esa sesión en
   // Planificación, donde están sus opciones de evento) y "Quitar de eventos" (no borra el
   // entrenamiento, solo deja de ser evento).
-  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entrenamiento</button><button type="button" class="v525UnEvent dangerBtn" data-id="${ev.id}">Quitar de eventos</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
+  const cancelBtn=`<button type="button" class="v527CancelBtn${cancelled?'':' dangerBtn'}">${cancelled?'↩️ Reactivar':'🚫 Cancelar'}</button>`;
+  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entrenamiento</button>${cancelBtn}<button type="button" class="v525UnEvent" data-id="${ev.id}">Quitar de eventos</button><button type="button" class="v498DeleteEvent dangerBtn" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}${cancelBtn}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<p class="muted"><small>Sesión planificada: ${esc(ev.title||'')}</small></p>`+trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span>${cancelled?`<div class="v527CancelBanner">🚫 Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div>`:''}<h3${cancelled?' class="v527Strike"':''}>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<p class="muted"><small>Sesión planificada: ${esc(ev.title||'')}</small></p>`+trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
 function v522MapsUrl(loc){
   const t=String(loc||'').trim();
@@ -3889,6 +3892,10 @@ function v503OverviewRowHtml(ev,clash){
   const ol=opensFuture?v516OpensLegend(ev,opensAt):null;
   const opensLine=ol?`<div class="v503Sub v516Opens${ol.soon?' soon':''}">${esc(ol.txt)}</div>`:'';
   const extraTeams=ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes.filter(t=>t!==ev._viewTeam):[];
+  if(ev.cancelled_at){
+    const coverStyleC=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
+    return `<button type="button" class="v503EventRow v527RowCancelled" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyleC}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub v527CancelTxt">Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}</div></div></button>`;
+  }
   const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}${ev.max_participants?`/${ev.max_participants}`:''}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
   const coverStyle=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
   return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
@@ -3912,6 +3919,55 @@ function v503GroupedRowsHtml(evs){
 // V514 · si el evento tiene destinatarios elegidos (invitee_ids), su listado es solo esa gente (más
 // quien lo creó); si no, todo el equipo como hasta ahora.
 // V523 · al añadir a alguien a un equipo, ofrecer invitarle (o no) a los eventos ya creados.
+// V527 · cancelar / eliminar con aviso opcional a los invitados.
+function v527Audience(ev,team){
+  const inv=Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?ev.invitee_ids:null;
+  const teams=ev.kind==='club_event'?[ev.team_code||team,...(ev.extra_team_codes||[])]:ev.kind==='competition'?(ev.team_codes&&ev.team_codes.length?ev.team_codes:[team]):[ev.team_code||team];
+  return inv?{mode:'users',user_ids:inv,team_codes:teams}:{mode:'teams',team_codes:teams.filter(Boolean)};
+}
+function v527Dialog({title,html,okText,danger}){
+  return new Promise(resolve=>{
+    const layer=document.createElement('div');layer.className='modalBack';
+    layer.innerHTML=`<div class="modalCard" style="max-width:460px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">${esc(title)}</h2></div>${html}<div class="actions"><button type="button" class="${danger?'dangerBtn':'primary'}" id="v527Ok">${esc(okText)}</button><button type="button" id="v527No">Volver</button></div></div>`;
+    document.body.appendChild(layer);
+    layer.querySelector('#v527No').onclick=()=>{layer.remove();resolve(null)};
+    layer.querySelector('#v527Ok').onclick=()=>{const data={};layer.querySelectorAll('[data-f]').forEach(el=>data[el.dataset.f]=el.type==='checkbox'?el.checked:el.value);layer.remove();resolve(data)};
+  });
+}
+async function v527SiblingSessions(ev){
+  if(ev.kind!=='session')return [];
+  const wd=new Date(ev.event_date+'T12:00:00').getDay();
+  const r=await sb.from('training_sessions').select('id,session_date').eq('team_code',ev.team_code).eq('session_type',ev.session_type).eq('is_event',true).gt('session_date',ev.event_date);
+  return (r.data||[]).filter(o=>new Date(o.session_date+'T12:00:00').getDay()===wd);
+}
+async function v527Cancel(ev,team,reactivate=false){
+  const name=ev.event_title||'el evento',table=V498_TABLE_BY_KIND[ev.kind];
+  if(reactivate){
+    const d=await v527Dialog({title:'Reactivar '+name,html:`<label class="inlineCheck"><input type="checkbox" data-f="notify" checked> <span>Avisar a los invitados de que vuelve a haber ${esc(name)}</span></label>`,okText:'Reactivar'});
+    if(!d)return false;
+    const q=await sb.from(table).update({cancelled_at:null,cancel_reason:null}).eq('id',ev.id);
+    if(q.error){alert(q.error.message);return false}
+    if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'✅ Se mantiene: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} · vuelve a estar en pie. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+    return true;
+  }
+  const sibs=ev.kind==='session'?await v527SiblingSessions(ev):[];
+  const d=await v527Dialog({title:'Cancelar '+name,danger:true,okText:'Cancelar evento',html:`<p class="muted">Seguirá apareciendo como <b>Cancelado</b> y nadie podrá confirmar asistencia. ${ev.kind==='session'?'El entrenamiento no se borra de la planificación.':''}</p><label>Motivo (opcional)<input data-f="reason" placeholder="Ej. mal tiempo, viento de levante…"></label>${sibs.length?`<label>Cancelar<select data-f="scope"><option value="one">Solo este día</option><option value="following">Este y los ${sibs.length} siguientes</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" data-f="notify" checked> <span>Avisar a los invitados</span></label>`});
+  if(!d)return false;
+  const ids=[ev.id,...(d.scope==='following'?sibs.map(x=>x.id):[])];
+  const q=await sb.from(table).update({cancelled_at:new Date().toISOString(),cancel_reason:(d.reason||'').trim()||null}).in('id',ids);
+  if(q.error){alert(/cancelled_at|cancel_reason/.test(q.error.message||'')?'Falta ejecutar 36_cancelar_eventos.sql en Supabase.':q.error.message);return false}
+  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🚫 Cancelado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)}${ids.length>1?` (y los ${ids.length-1} siguientes)`:''}${d.reason?` · ${d.reason.trim()}`:''}`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+  return true;
+}
+async function v527Delete(ev,team){
+  const name=ev.event_title||'el evento',isSess=ev.kind==='session';
+  const d=await v527Dialog({title:(isSess?'Eliminar entrenamiento: ':'Eliminar ')+name,danger:true,okText:'Eliminar',html:`<p class="muted">${isSess?'Se borra el entrenamiento de la planificación (contenido incluido), con sus confirmaciones y su chat. No se puede deshacer. Si solo no se va a hacer, mejor <b>Cancelar</b>.':'Se borra el evento con sus confirmaciones y su chat. No se puede deshacer.'}</p><label class="inlineCheck"><input type="checkbox" data-f="notify"> <span>Avisar a los invitados de que se ha eliminado</span></label>`});
+  if(!d)return false;
+  const q=await sb.from(V498_TABLE_BY_KIND[ev.kind]).delete().eq('id',ev.id);
+  if(q.error){alert(q.error.message);return false}
+  if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🗑️ Eliminado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} ya no está en el calendario.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+  return true;
+}
 async function v523AfterApproval(requestId,team){
   try{const r=await sb.from('registration_requests').select('user_id,full_name').eq('id',requestId).maybeSingle();if(r.data?.user_id)setTimeout(()=>v523OfferInviteToEvents(r.data.user_id,team,r.data.full_name),600)}catch(e){}
 }
@@ -3978,7 +4034,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
 // reminder_sent_at hace de cerrojo para que solo se mande una vez.
 async function v514TryReminder(ev){
   try{
-    if(!['club_event','session','competition'].includes(ev.kind)||!ev.reminder_hours_before||ev.reminder_sent_at||!ev._pendingIds?.length)return;
+    if(ev.cancelled_at||!['club_event','session','competition'].includes(ev.kind)||!ev.reminder_hours_before||ev.reminder_sent_at||!ev._pendingIds?.length)return;
     const tm=/^\d{1,2}:\d{2}$/.test(ev.meet_time||ev.event_time||'')?(ev.meet_time||ev.event_time).padStart(5,'0'):'09:00';
     const start=new Date(`${ev.event_date}T${tm}:00`),remindAt=new Date(start.getTime()-ev.reminder_hours_before*3600000),now=new Date();
     if(now<remindAt||now>start)return;
@@ -4067,12 +4123,12 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true)
         formBox.scrollIntoView({behavior:'smooth',block:'start'});
       }});
       body.querySelectorAll('.v498DeleteEvent').forEach(b=>{b.onclick=async()=>{
-        if(!confirm('¿Eliminar? Se perderán también las confirmaciones y el chat asociados.'))return;
         b.disabled=true;
-        const q=await sb.from(V498_TABLE_BY_KIND[b.dataset.kind]).delete().eq('id',Number(b.dataset.id));
-        if(q.error){alert(q.error.message);b.disabled=false;return}
-        close();
-        if(afterChange)afterChange();
+        if(await v527Delete(ev2,tc)){close();if(afterChange)afterChange()}else b.disabled=false;
+      }});
+      body.querySelectorAll('.v527CancelBtn').forEach(b=>{b.onclick=async()=>{
+        b.disabled=true;
+        if(await v527Cancel(ev2,tc,!!ev2.cancelled_at))reopen();else b.disabled=false;
       }});
     }
   }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
@@ -8305,11 +8361,14 @@ function sessionEditor(x=null){
  const seDaySel=new Set([new Date(date+'T12:00:00').getDay()]);
  // V521 · texto que explica en claro qué va a pasar ("todos los domingos de MAR ya planificados…").
  function v521RepeatSummary(){
+   const wasEvent=!!x?.is_event;
    const names={1:'lunes',2:'martes',3:'miércoles',4:'jueves',5:'viernes',6:'sábados',0:'domingos'};
    const order=[1,2,3,4,5,6,0].filter(d=>seDaySel.has(d)).map(d=>names[d]);
    const days=order.length>1?order.slice(0,-1).join(', ')+' y '+order[order.length-1]:order[0]||'';
    const tipo=sessType.value==='MAR'?'MAR':'GYM';
-   const opt=document.getElementById('seRepeatYesOpt');if(opt)opt.textContent=`Periódico (todos los ${days} de ${tipo})`;
+   const opt=document.getElementById('seRepeatYesOpt');if(opt)opt.textContent=wasEvent?`Este y los siguientes ${days} de ${tipo}`:`Periódico (todos los ${days} de ${tipo})`;
+   const noOpt=document.querySelector('#seRepeat option[value=""]');if(noOpt)noOpt.textContent=wasEvent?'Solo este día':'No periódico (solo este día)';
+   const ttl=document.getElementById('seRepeat')?.closest('.v514Sec')?.querySelector('.v514SecTitle');if(ttl)ttl.textContent=wasEvent?'Guardar los cambios del evento en':'Periódico';
    const until=document.getElementById('seUntil')?.value;
    const box=document.getElementById('seRepeatSummary');
    if(box)box.innerHTML=`<small>Al guardar, también se convierten en evento —con estas mismas opciones— todas las sesiones de <b>${tipo}</b> de este equipo que ya estén planificadas los <b>${days}</b> hasta el <b>${until?shortDateES(until):'—'}</b>. Cada una mantiene su título y contenido. Las que se planifiquen más adelante habrá que convertirlas aparte.</small>`;
@@ -8383,8 +8442,11 @@ function sessionEditor(x=null){
        else{
          targets.filter(t=>!t.is_event).forEach(t=>v499ApplyDefaultSubstitute(team,'session',t.id));
          const later=payload.rsvp_open_days_before!=null||payload.rsvp_open_time;
-         if(!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${eventFields.event_name||v524DefaultEventName(sessType.value)}" · ${targets.length+1} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
-         alert(`Convertidas en evento ${targets.length} sesiones más de ${sessType.value} (además de esta).`);
+         const newOnes=targets.filter(t=>!t.is_event);
+         if(newOnes.length&&!later&&v497AttendanceEnabledForTeam(team)){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nuevas convocatorias',body:`"${eventFields.event_name||v524DefaultEventName(sessType.value)}" · ${newOnes.length+(x?.is_event?0:1)} fechas. Confirma tu asistencia en Row Training.`,url:'/?tab=eventos',type:'training'})}catch(e){}}
+         // si ya eran eventos y se marcó "Enviar notificación", un solo aviso de cambios para todos
+         if(x?.is_event&&document.getElementById('notifyRowerChangeV110')?.checked){v517SentBulk=true;try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'✏️ Cambios en '+(eventFields.event_name||v524DefaultEventName(sessType.value)),body:`Desde el ${shortDateES(date)} y en los ${targets.length} siguientes: ${eventFields.event_time?`empieza a las ${eventFields.event_time}`:''}${eventFields.location?` · ${eventFields.location}`:''}. Revísalo en Eventos.`,url:'/?tab=eventos',type:'training'})}catch(e){}document.getElementById('notifyRowerChangeV110').checked=false}
+         alert(x?.is_event?`Cambios guardados en este día y en ${targets.length} más.`:`Convertidas en evento ${targets.length} sesiones más de ${sessType.value} (además de esta).`);
        }
      }else alert('No hay más sesiones de este tipo planificadas en esos días hasta esa fecha: solo se ha convertido este día.');
    }
@@ -10885,7 +10947,9 @@ async function loadAthleteSessionsV139(team,start,end){
     sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),
     sb.rpc('athlete_mar_sessions_v139',{p_team:team,p_start:start,p_end:end})
   ]);
-  const rows=[...(regular.data||[]),...(sea.data||[])],unique=new Map();rows.forEach(x=>unique.set(String(x.id),x));
+  const rows=[...(regular.data||[]),...(sea.data||[])],unique=new Map();rows.forEach(x=>{const prev=unique.get(String(x.id));unique.set(String(x.id),prev?{...x,cancelled_at:prev.cancelled_at??x.cancelled_at,cancel_reason:prev.cancel_reason??x.cancel_reason}:x)});
+  // V527 · entrenamiento cancelado: se sigue viendo ese día, pero marcado como cancelado y sin contenido.
+  unique.forEach((x,k)=>{if(x.cancelled_at)unique.set(k,{...x,title:`🚫 CANCELADO · ${x.title||x.session_type||''}`,content:`CANCELADO · ${x.cancel_reason||'Este entrenamiento se ha cancelado.'}`})});
   return {data:filterSessionsForUserV249([...unique.values()],currentUser?.id).sort((a,b)=>String(a.session_date).localeCompare(String(b.session_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))),error:regular.error||sea.error};
 }
 async function plannedErgoLinkV113(s){const rows=await loadErgoLibrary(),hay=v79Norm(`${s.title||''} ${s.content||''}`),direct=String(s.content||'').match(/https:\/\/workout\.ergdata\.com\/shared\/[a-z0-9]+/i)?.[0],signature=v=>String(v||'').match(/(\d+)\s*[×x]\s*(\d+)\s*(?:min|')/i)?.slice(1,3).join('x'),sig=signature(hay);let hit=direct?{url:direct}:rows.find(x=>x.url&&sig&&signature(v79Norm(x.name))===sig);if(!hit)hit=rows.find(x=>x.url&&hay.includes(v79Norm(x.name).replace(/opcional senior/g,'').trim()));const code=`PLAN-${s.id}`;await sb.from('ergo_intents').upsert({user_id:currentUser.id,scheduled_date:s.session_date,session_code:code,session_name:s.title||'ERGO',content:s.content||null,training_session_id:s.id,ergdata_url:hit?.url||null},{onConflict:'user_id,scheduled_date,session_code'});if(hit?.url)location.href=hit.url;else{tab='biblioteca';draw();await ergoLibrary();alert('No hay un enlace exacto asociado a esta sesión. Se abre la biblioteca ERGO para elegirlo.')}}
