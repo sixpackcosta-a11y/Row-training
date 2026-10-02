@@ -2364,7 +2364,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="510";
+const APP_VERSION="511";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3601,7 +3601,7 @@ function v499WireRemindButton(root,team){
 // in-situ. La usan la Vista general (canEdit=false, siempre de solo lectura) y ahora también la vista
 // normal de un equipo (canEdit=true: desde aquí sí se puede editar/eliminar y usar el sustituto
 // puntual, cosas que en la Vista general se siguen dejando solo para "la vista normal de ESE equipo").
-async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange){
+async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true){
   document.querySelectorAll('.v503DetailBack').forEach(x=>x.remove());
   const layer=document.createElement('div');layer.className='modalBack v503DetailBack';
   layer.innerHTML=`<div class="modalCard v503DetailCard"><div class="modalTitle"><button type="button" class="v503DetailBackBtn">← Volver</button></div><div class="v503DetailBody">${v316Loading('Cargando…')}</div></div>`;
@@ -3612,7 +3612,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange){
   const body=layer.querySelector('.v503DetailBody');
   // V506 · tras confirmar/cambiar algo dentro del detalle, se refresca tanto el propio detalle como
   // la lista de fondo (para que sus contadores ✅/❓/❌ no se queden desactualizados detrás).
-  const reopen=()=>{if(afterChange)afterChange();v503OpenEventDetail(tc,kind,id,canEdit,afterChange)};
+  const reopen=()=>{if(afterChange)afterChange();v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat)};
   try{
     const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
     const ev2=events2.find(e=>e.kind===kind&&e.id===id);
@@ -3620,7 +3620,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange){
     const roster2=v499MergeRoster(rowersOnly2,staffList2);
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
     const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
-    body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,canEdit,staffList2);
+    body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2);
     v495WireRsvpButtons(body,reopen);
     v495WireEventChatAccordions(body);
     v493WireRsvpSummaryTabs(body,reopen);
@@ -3704,9 +3704,13 @@ async function coachEventsView(){
   eventsTeamSel.onchange=load;
   load();
 }
+// V506 · "para los remeros lo quiero igual" — mismo cambio que la vista del entrenador: filas
+// resumen (fecha, título, día/hora, contadores) en vez de las tarjetas completas de antes, y tocar
+// una abre la pantalla de detalle aparte (de solo lectura para confirmar asistencia — editar/eliminar
+// siguen siendo solo del entrenador).
 async function athleteEventsView(){
   const team=currentTeamCode;
-  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias de mar o gimnasio y competiciones. Confirma si vas; todo el equipo puede ver quién ha confirmado.</p><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   const area=document.getElementById('eventsArea');
   if(!v497AttendanceEnabledForTeam(team)){area.innerHTML='<div class="info">Tu entrenador ha desactivado este módulo por ahora.</div>';return}
   let events,rowersOnly,staffList,roster;
@@ -3714,13 +3718,9 @@ async function athleteEventsView(){
   roster=v499MergeRoster(rowersOnly,staffList);
   if(tab!=='eventos'||currentMode!=='athlete')return;
   const statusByEvent=await v495RsvpStatusMapsForEvents(events,team);
-  area.innerHTML=events.length?events.map(ev=>{
-    const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
-    return v495EventCardHtml(ev,roster,statusByUser,myStatus,team,v495ChatVisibleForRower());
-  }).join(''):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
-  v495WireRsvpButtons(area,athleteEventsView);
-  v495WireEventChatAccordions(area);
-  v493WireRsvpSummaryTabs(area);
+  const withCounts=v503CountsForEvents(events,roster,statusByEvent,team);
+  area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
+  area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
   events.forEach(ev=>v498TryClaimAndNotify(ev,team));
 }
 async function v307FetchCrewMap(sessionIds){
