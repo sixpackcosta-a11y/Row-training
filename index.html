@@ -530,6 +530,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v512DateLine{margin:4px 0;font-weight:500}.v512TeamLine{display:flex;align-items:center;gap:7px;margin:4px 0;color:var(--text-muted);font-size:.92rem}.v512OrgLine{margin:6px 0 10px;font-size:.92rem;display:flex;flex-wrap:wrap;align-items:center;gap:6px}.v512OrgName{font-weight:600}.v512RemoveOrg{border:none;background:transparent;padding:0 4px;color:var(--text-muted);font-size:.85rem}.v512AddOrgToggle{padding:5px 10px;font-size:.85rem}.v512AddOrgBox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;margin-top:4px}.v512AddOrgBox.hidden{display:none}.v512AddOrgBox select{flex:1 1 180px;margin:0}.v512OrgRow{cursor:default}
 .v493SumPanel .rosterPerson{gap:10px}.v505PersonStatus{margin:0;padding:5px 7px;font-size:.78rem;max-width:132px}
 /* V490 · en móvil se acumulaba demasiado padding lateral anidado (main > .card > .coachAnalysisSectionBodyV123 >
    .libraryCard > .info), dejando el texto apelotonado en una columna estrecha con mucho hueco a los lados.
@@ -2364,7 +2365,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="511";
+const APP_VERSION="512";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3262,7 +3263,7 @@ function v495WireEventChatAccordions(root){
 }
 // V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
 // respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
-function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false){
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[]){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
@@ -3287,7 +3288,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   // roster largos, así que se omite si hay 6 personas o menos.
   const searchBox=roster.length>6?`<input type="search" class="v505RosterSearch" placeholder="Buscar por nombre…">`:'';
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
-    <div class="v493SumRows">${row('in','asistirán','✅',inList,true)}${row('pending','sin contestar','❓',pendingList,false)}${row('out','rechazados','❌',outList,false)}${row('all','todos','👥',allList,false)}</div>
+    <div class="v493SumRows">${row('in','asistirán','✅',inList,true)}${row('pending','sin contestar','❓',pendingList,false)}${row('out','rechazados','❌',outList,false)}${row('all','todos','👥',allList,false)}${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v493SumRow v512OrgRow"><span class="v493SumIcon">⭐</span><span><b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</span></div>`})():''}</div>
     ${searchBox}
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${panel('out',outList,false)}${panel('all',allList,false)}
     <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
@@ -3296,8 +3297,8 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
 // v493RsvpSummaryHtml (Eventos y Registro MAR).
 function v493WireRsvpSummaryTabs(root,afterChange){
   root.querySelectorAll('.v493RsvpSummary').forEach(box=>{
-    box.querySelectorAll('.v493SumRow').forEach(btn=>btn.onclick=()=>{
-      box.querySelectorAll('.v493SumRow').forEach(b=>b.classList.toggle('active',b===btn));
+    box.querySelectorAll('.v493SumRow[data-key]').forEach(btn=>btn.onclick=()=>{
+      box.querySelectorAll('.v493SumRow[data-key]').forEach(b=>b.classList.toggle('active',b===btn));
       box.querySelectorAll('.v493SumPanel').forEach(p=>p.classList.toggle('hidden',p.dataset.key!==btn.dataset.key));
     });
   });
@@ -3480,28 +3481,37 @@ function v498RenderCompetitionForm(container,existing,afterSave){
     afterSave();
   };
 }
-function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit=false,staffList=[]){
+function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit=false,staffList=[],organizerIds=null){
   const typeLabel=ev.kind==='competition'?'🏁 Competición':ev.kind==='club_event'?'📅 Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'🏋️ GYM · convocatoria':'🚣 MAR · convocatoria');
   const cardCls=ev.kind==='competition'?'raceCard':(String(ev.session_type||'').toUpperCase()==='MAR'?'mar':'');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
+  // V512 · organizadores = quien lo creó (created_by) + los añadidos a mano (event_organizers).
+  const orgIds=[...new Set([ev.created_by?String(ev.created_by):null,...(organizerIds||[])].filter(Boolean))];
+  const nameOf=uid=>String(uid)===String(currentUser?.id)?'Tú':(roster.find(p=>String(p.user_id)===String(uid))?.full_name||null);
   const rsvp=opensFuture?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
-  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit);
-  // V504 · "Organizador: Tú" como en Spond — solo se muestra cuando se conoce quién lo creó
-  // (created_by); las filas creadas antes de 26_organizador_eventos.sql no lo tienen guardado.
-  const organizerName=ev.created_by?(roster.find(p=>String(p.user_id)===String(ev.created_by))?.full_name||null):null;
-  const organizerLine=organizerName?`<p class="muted"><small>Organizador: ${ev.created_by===currentUser?.id?'Tú':esc(organizerName)}</small></p>`:'';
+  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds);
+  // V512 · "cuando abro un evento no aparece de qué equipo es" — línea de equipo con su color, como
+  // "CDR Pedregalejo · VET F - Llaut" en la ficha de Spond.
+  const tcol=v502TeamColor(team);
+  const teamLine=team?`<p class="v512TeamLine"><span class="v503Dot" style="background:${tcol.stripe}"></span>${esc(teamLabel(team))}</p>`:'';
+  // V512 · "Añadir organizador" como en Spond (sustituye al cuadro de "marcar la asistencia de otra
+  // persona"): la persona añadida recibe un aviso y es ella quien acepta.
+  const orgNames=orgIds.map(uid=>{const n=nameOf(uid);if(!n)return '';const removable=canEdit&&organizerIds&&organizerIds.includes(uid)&&String(uid)!==String(ev.created_by);return `<span class="v512OrgName">${esc(n)}${removable?` <button type="button" class="v512RemoveOrg" data-uid="${esc(uid)}" title="Quitar organizador">✕</button>`:''}</span>`}).filter(Boolean);
+  const candidates=canEdit?roster.filter(p=>!orgIds.includes(String(p.user_id))):[];
+  const addOrg=canEdit&&organizerIds!==null?`<button type="button" class="v512AddOrgToggle">+ Añadir organizador</button><div class="v512AddOrgBox hidden"><select class="v512AddOrgSelect"><option value="">— Elegir persona —</option>${candidates.map(p=>`<option value="${esc(p.user_id)}">${esc(p.full_name||'Sin nombre')}</option>`).join('')}</select><button type="button" class="v512AddOrgConfirm primary">Añadir y avisar</button></div>`:'';
+  const organizerLine=(orgNames.length||addOrg)?`<div class="v512OrgLine">${orgNames.length?`<span class="muted">Organizador${orgNames.length>1?'es':''}:</span> ${orgNames.join(', ')}`:''}${addOrg}</div>`:'';
   const chat=opensFuture?'':(showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'');
   const opensNote=opensFuture?`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`:'';
-  // V499 · "poder añadir de forma puntual... a otro entrenador o ayudante si yo no puedo ir": si hay
-  // más de un miembro del equipo técnico, el entrenador puede marcar la asistencia de OTRA persona
-  // para este evento concreto (puntual), sin tocar su propia respuesta.
-  const subBox=(canEdit&&!opensFuture&&staffList&&staffList.length>1)?`<div class="v499SubBox" data-id="${ev.id}" data-kind="${ev.kind}" data-team="${esc(team||'')}"><label><small>¿No vas tú a este evento? Marca la asistencia de otra persona del equipo técnico</small><select class="v499SubSelect"><option value="">— Elegir —</option>${staffList.filter(s=>String(s.user_id)!==String(currentUser?.id)).map(s=>`<option value="${esc(s.user_id)}">${esc(s.full_name||'Sin nombre')}</option>`).join('')}</select></label> <button type="button" class="v499SubConfirm">Confirmar su asistencia</button></div>`:'';
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   const extra=ev.kind==='club_event'?`${ev.location?`<p>📍 ${esc(ev.location)}</p>`:''}${ev.notes?`<p>${esc(ev.notes)}</p>`:''}`:'';
   const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button><button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
-  // V506 · "lo quiero lo más parecido posible a Spond en todas las pantallas de eventos" — el día+hora
-  // pasa a formato Spond ("domingo: 8:15") en vez de la abreviatura de antes ("Dom, 4 oct").
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="muted">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</p>${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${subBox}${summary}${chat}${editBtns}</div>`;
+  // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${teamLine}${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
+}
+function v512DetailDateLabel(ds,time){
+  if(!ds)return'';
+  const s=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(ds+'T12:00:00')).replace('.','');
+  return s+(time?` · ${time}`:'');
 }
 // V499 · cablea el botón "Confirmar su asistencia" del cuadro de sustituto puntual (subBox de
 // arriba). El RLS de session_rsvp ya permite a cualquier coach/ayudante escribir una fila para OTRO
@@ -3527,14 +3537,47 @@ function v499WireSubstituteBoxes(root,afterChange){
 // V499 · "o para todos" — si el equipo tiene un sustituto por defecto configurado (Equipo → Roles →
 // "Convocatorias y asistencia"), se le marca "Asistiré" automáticamente en CADA convocatoria nueva
 // de ese equipo, sin que el entrenador tenga que hacer nada evento por evento.
+// V512 · "la opción en Spond es añadir organizador, y a esa persona le llega el aviso de aceptar":
+// el "sustituto por defecto" ya no se marca como "Asistiré" sin preguntarle — ahora se le añade como
+// co-organizador de cada convocatoria nueva y se le avisa para que sea ella quien confirme.
 async function v499ApplyDefaultSubstitute(team,kind,eventId){
   try{
     const sub=TEAM_DEFAULT_SUB_V499.get(team);
-    if(!sub||!eventId)return;
-    const payload={user_id:sub,team_code:team,status:'in',responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
-    const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
-    await sb.from('session_rsvp').upsert(payload,{onConflict});
+    if(!sub||!eventId||sub===currentUser?.id)return;
+    await v512AddOrganizer({kind,id:eventId,event_title:'una nueva convocatoria'},team,sub);
   }catch(e){}
+}
+// V512 · organizadores de evento (tabla event_organizers, 28_organizadores_evento.sql). Quien creó el
+// evento (created_by) cuenta siempre como organizador; aquí se guardan los añadidos a mano.
+function v512EventCol(kind){return kind==='competition'?'competition_id':kind==='club_event'?'club_event_id':'training_session_id'}
+async function v512FetchOrganizerIds(ev,team){
+  try{
+    let q=sb.from('event_organizers').select('user_id').eq(v512EventCol(ev.kind),ev.id);
+    if(ev.kind==='competition')q=q.eq('team_code',team);
+    const r=await q;
+    return r.error?[]:(r.data||[]).map(x=>String(x.user_id));
+  }catch(e){return []}
+}
+async function v512AddOrganizer(ev,team,userId){
+  const row={team_code:team,user_id:userId,added_by:currentUser?.id||null,training_session_id:null,competition_id:null,club_event_id:null};
+  row[v512EventCol(ev.kind)]=ev.id;
+  const q=await sb.from('event_organizers').insert(row);
+  if(q.error&&!/duplicate key/i.test(q.error.message||''))throw q.error;
+  const who=currentUserProfile?.full_name||'Tu entrenador';
+  const when=ev.event_date?` (${v506SpondDayTimeLabel(ev.event_date,ev.event_time)})`:'';
+  try{await sendNotificationV110({audience:{mode:'users',user_ids:[userId],team_codes:[team]},title:'Te han añadido como organizador',body:`${who} te ha añadido como organizador de ${ev.event_title?`"${ev.event_title}"`:'un evento'}${when}. Entra en Eventos y confirma si vas.`,url:'/?tab=eventos',type:'training'})}catch(e){}
+}
+async function v512RemoveOrganizer(ev,team,userId){
+  let q=sb.from('event_organizers').delete().eq(v512EventCol(ev.kind),ev.id).eq('user_id',userId);
+  if(ev.kind==='competition')q=q.eq('team_code',team);
+  const r=await q;
+  if(r.error)throw r.error;
+}
+function v512FriendlyOrgError(e){
+  const t=e?.message||String(e||'');
+  if(/relation .* does not exist|event_organizers/i.test(t)&&/does not exist|schema cache/i.test(t))return 'Falta ejecutar 28_organizadores_evento.sql en Supabase.';
+  if(/permission denied/i.test(t))return 'Sin permiso sobre event_organizers: vuelve a ejecutar 28_organizadores_evento.sql (incluye los GRANT).';
+  return 'No se pudo guardar: '+t;
 }
 // V502/V503/V506 · helpers compartidos por la Vista general y la vista normal de un equipo. Desde
 // v506 las dos usan el mismo estilo de fila resumen + pantalla de detalle aparte ("en la visión de
@@ -3620,13 +3663,30 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true)
     const roster2=v499MergeRoster(rowersOnly2,staffList2);
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
     const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
-    body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2);
+    const orgIds2=await v512FetchOrganizerIds(ev2,tc);
+    body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2,orgIds2);
     v495WireRsvpButtons(body,reopen);
     v495WireEventChatAccordions(body);
     v493WireRsvpSummaryTabs(body,reopen);
     v499WireRemindButton(body,tc);
     if(canEdit){
-      v499WireSubstituteBoxes(body,reopen);
+      // V512 · "+ Añadir organizador" (como en Spond) en vez del cuadro de sustituto puntual.
+      const tog=body.querySelector('.v512AddOrgToggle'),box=body.querySelector('.v512AddOrgBox');
+      if(tog&&box)tog.onclick=()=>box.classList.toggle('hidden');
+      const conf=body.querySelector('.v512AddOrgConfirm');
+      if(conf)conf.onclick=async()=>{
+        const uid=body.querySelector('.v512AddOrgSelect')?.value;
+        if(!uid)return alert('Elige primero a quién añadir como organizador.');
+        conf.disabled=true;conf.textContent='Añadiendo…';
+        try{await v512AddOrganizer(ev2,tc,uid);reopen()}
+        catch(e){alert(v512FriendlyOrgError(e));conf.disabled=false;conf.textContent='Añadir y avisar'}
+      };
+      body.querySelectorAll('.v512RemoveOrg').forEach(b=>b.onclick=async()=>{
+        if(!confirm('¿Quitar a esta persona como organizadora del evento?'))return;
+        b.disabled=true;
+        try{await v512RemoveOrganizer(ev2,tc,b.dataset.uid);reopen()}
+        catch(e){alert(v512FriendlyOrgError(e));b.disabled=false}
+      });
       body.querySelectorAll('.v498EditEvent').forEach(b=>{b.onclick=()=>{
         const formBox=document.getElementById('v497ClubEventForm');
         if(!formBox)return;
@@ -4549,7 +4609,7 @@ async function teamStaffAdminView(){
   <details class="libraryAccordion"><summary><span>Gestión de equipos</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><div class="teamRosterToolbar"><div><h3 style="margin:0">Plantillas de los equipos</h3><p class="muted" style="margin:4px 0 0">Vista rápida para saber cuántos sois, quién está en cada equipo y detectar personas sin asignar.</p></div>${(()=>{const uniqueRowers=[...new Set(members.map(m=>String(m.user_id)))],on=pushState?.ok?uniqueRowers.filter(uid=>(pushState.users.get(uid)||0)>0).length:null;return pushState?.ok?`<div class="pushSummaryV248"><span>🔔</span><span><strong>${on}/${uniqueRowers.length}</strong> remeros con push activo</span></div>`:`<div class="pushSummaryV248"><span>🔔</span><span><strong>Estado push no disponible</strong><div class="pushStatusNoteV248">${esc(pushState?.reason||'No se pudo consultar')}</div></span></div>`})()}</div><div class="teamRosterGrid">${rosterCards}</div>${unassigned.length||pendingGeneric.length?`<div class="unassignedBox"><h3 style="margin-top:0">⚠️ Por revisar</h3>${unassigned.length?`<p><b>${unassigned.length} persona${unassigned.length===1?'':'s'} sin equipo ni rol</b></p><div class="rosterList">${unassigned.map(p=>`<div class="rosterPerson"><span><b>${esc(personLabel(p))}</b></span><span class="rosterRoles"><span class="tag">Sin equipo</span><button type="button" class="editPersonTeamsV167" data-user="${p.user_id}">Editar / eliminar</button></span></div>`).join('')}</div>`:''}${pendingGeneric.length?`<p style="margin-top:12px"><b>${pendingGeneric.length} alta${pendingGeneric.length===1?'':'s'} desde enlace general</b></p><div class="rosterList">${pendingGeneric.map(rg=>`<div class="rosterPerson"><span><b>${esc(rg.full_name||rg.email||'Sin nombre')}</b>${rg.email?`<small class="muted"> · ${esc(rg.email)}</small>`:''}</span><span class="tag">Sin equipo solicitado</span></div>`).join('')}</div>`:''}</div>`:''}</div></details>
   ${isGlobalCoach?`<details class="libraryAccordion"><summary><span>Crear / editar equipos</span>${countBadge(teams.length)}</summary><div class="accordionBody"><h3 style="margin-top:0">Crear equipo</h3><div class="plannerGrid"><label>Nombre<input id="newTeamName" placeholder="Ej. Juvenil masculino"></label><label>Código interno<input id="newTeamCode" placeholder="Se genera automáticamente"></label><label>Categoría<input id="newTeamCategory" placeholder="Ej. Juvenil"></label><label>Sexo / grupo<input id="newTeamGender" placeholder="Ej. Masculino"></label></div><button id="createTeam" class="primary">Crear equipo</button><h3>Equipos existentes</h3><div class="teamEditGrid">${teams.map((t,i)=>`<div class="staffPerson"><div class="plannerGrid"><label>Nombre<input class="teamNameEdit" data-i="${i}" value="${esc(t.name)}"></label><label>Categoría<input class="teamCategoryEdit" data-i="${i}" value="${esc(t.category||'')}"></label><label>Sexo / grupo<input class="teamGenderEdit" data-i="${i}" value="${esc(t.gender||'')}"></label><label>Estado<select class="teamActiveEdit" data-i="${i}"><option value="1" ${t.is_active?'selected':''}>Activo</option><option value="0" ${!t.is_active?'selected':''}>Inactivo</option></select></label></div><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamEdit" data-i="${i}">Guardar cambios</button></div></div>`).join('')}</div></div></details>`:''}
   <details class="libraryAccordion" id="v281GoalsSection"><summary><span>Objetivos de equipo</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Objetivo orientativo de W/kg y notas de temporada (tests, competiciones…) por equipo. Se puede ajustar cada temporada.</p><div class="teamEditGrid">${manageTeams.map((t,i)=>`<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><div class="plannerGrid"><label>Objetivo W/kg<input class="teamWkgTargetEdit" data-code="${esc(t.code)}" type="number" step="0.1" min="0" placeholder="ej. 3.5" value="${t.wkg_target!=null?t.wkg_target:''}"></label></div><label style="display:block;margin-top:8px">Objetivos de temporada<textarea class="teamSeasonGoalsEdit" data-code="${esc(t.code)}" rows="3" placeholder="Ej. Subir la media a 3.3 W/kg antes del test de enero; clasificar para el campeonato autonómico en mayo…">${esc(t.season_goals||'')}</textarea></label><div class="teamCardFooter"><small class="muted">Código interno: ${esc(t.code)}</small><button class="saveTeamGoalsV281" data-code="${esc(t.code)}">Guardar objetivos</button></div></div>`).join('')}</div></div></details>
-  ${isGlobalCoach?`<details class="libraryAccordion" id="v497AttendanceSection"><summary><span>Convocatorias y asistencia</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Activa o desactiva, equipo por equipo, el módulo de convocatorias (confirmación de asistencia + chat del evento, pestaña "Eventos"). Si lo desactivas para un equipo, sus remeras dejan de ver esa pestaña y las convocatorias existentes quedan en pausa hasta que lo reactives.</p><div class="teamEditGrid">${manageTeams.map(t=>{const staffOpts=roles.filter(r=>r.team_code===t.code).map(r=>{const p=profiles.find(pp=>pp.user_id===r.user_id);return p?{user_id:r.user_id,full_name:p.full_name,staff_role:r.staff_role}:null}).filter(Boolean);return `<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><label class="inlineCheck"><input type="checkbox" class="v497AttendanceToggle" data-code="${esc(t.code)}" ${t.attendance_module_enabled!==false?'checked':''}> <span>Convocatorias y asistencia activas para este equipo</span></label><label style="display:block;margin-top:10px"><small>Si tú no puedes ir, marcar por defecto "Asistiré" en toda convocatoria nueva a</small><select class="v499DefaultSub" data-code="${esc(t.code)}"><option value="">— Nadie por defecto —</option>${staffOpts.map(s=>`<option value="${esc(s.user_id)}" ${t.default_staff_substitute_id===s.user_id?'selected':''}>${esc(s.full_name||'Sin nombre')} (${s.staff_role==='coach'?'entrenador':'ayudante'})</option>`).join('')}</select></label></div>`}).join('')}</div></div></details>`:''}
+  ${isGlobalCoach?`<details class="libraryAccordion" id="v497AttendanceSection"><summary><span>Convocatorias y asistencia</span>${countBadge(manageTeams.length)}</summary><div class="accordionBody"><p class="muted">Activa o desactiva, equipo por equipo, el módulo de convocatorias (confirmación de asistencia + chat del evento, pestaña "Eventos"). Si lo desactivas para un equipo, sus remeras dejan de ver esa pestaña y las convocatorias existentes quedan en pausa hasta que lo reactives.</p><div class="teamEditGrid">${manageTeams.map(t=>{const staffOpts=roles.filter(r=>r.team_code===t.code).map(r=>{const p=profiles.find(pp=>pp.user_id===r.user_id);return p?{user_id:r.user_id,full_name:p.full_name,staff_role:r.staff_role}:null}).filter(Boolean);return `<div class="staffPerson"><h3 style="margin:0 0 8px">${esc(t.name)}</h3><label class="inlineCheck"><input type="checkbox" class="v497AttendanceToggle" data-code="${esc(t.code)}" ${t.attendance_module_enabled!==false?'checked':''}> <span>Convocatorias y asistencia activas para este equipo</span></label><label style="display:block;margin-top:10px"><small>Añadir automáticamente como co-organizador de toda convocatoria nueva a (le llegará un aviso para que confirme si va)</small><select class="v499DefaultSub" data-code="${esc(t.code)}"><option value="">— Nadie por defecto —</option>${staffOpts.map(s=>`<option value="${esc(s.user_id)}" ${t.default_staff_substitute_id===s.user_id?'selected':''}>${esc(s.full_name||'Sin nombre')} (${s.staff_role==='coach'?'entrenador':'ayudante'})</option>`).join('')}</select></label></div>`}).join('')}</div></div></details>`:''}
   <details class="libraryAccordion"><summary><span>Enlaces de inscripción</span></summary><div class="accordionBody"><div class="inviteLinks">${isGlobalCoach?`<div class="inviteLink"><b>Enlace general</b><p class="muted">Sin equipo preseleccionado. Las solicitudes generales las gestiona el entrenador administrador.</p><button class="copyInvite" data-url="${esc(genericInviteUrl)}">Copiar enlace</button></div>`:""}${allowedTeams.map(t=>{const u=invitationUrl(t[0]);return `<div class="inviteLink"><b>${esc(t[1])}</b><p class="muted">La solicitud queda vinculada a este equipo. Solo tienes que aprobarla; no hace falta volver a asignar el equipo.</p><button class="copyInvite" data-url="${esc(u)}">Copiar enlace</button></div>`}).join("")}</div></div></details>
   ${recentAltas.length?`<details class="libraryAccordion"><summary><span>Altas revisadas recientemente</span>${countBadge(recentAltas.length)}</summary><div class="accordionBody">${recentAltas.map(x=>`<div class="last"><b>${esc(x.full_name)}</b> · ${x.status==="approved"?"Aprobada":"Rechazada"}${x.assigned_team?` · ${esc(teamLabel(x.assigned_team))}`:""}${x.status==="approved"?` <button class="resendWelcome" data-id="${x.id}" style="margin-left:8px">Reenviar bienvenida</button>`:""}</div>`).join("")}</div></details>`:""}
   </div>`;
