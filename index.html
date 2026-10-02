@@ -2376,7 +2376,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="524";
+const APP_VERSION="525";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3743,7 +3743,10 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // convocatorias de entrenamiento y competiciones, no solo en eventos propios.
   const locLine=ev.location?`<p class="v522Loc">📍 <a href="${esc(v522MapsUrl(ev.location))}" target="_blank" rel="noopener">${esc(/^https?:\/\//i.test(ev.location)?'Ver ubicación en el mapa':ev.location)}</a></p>`:'';
   const extra=`${locLine}${ev.kind!=='session'&&ev.notes?`<p>${esc(ev.notes)}</p>`:''}`;
-  const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
+  // V525 · las convocatorias de entrenamiento también tienen "Editar" (abre esa sesión en
+  // Planificación, donde están sus opciones de evento) y "Quitar de eventos" (no borra el
+  // entrenamiento, solo deja de ser evento).
+  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="actions"><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">Editar</button><button type="button" class="v525UnEvent dangerBtn" data-id="${ev.id}">Quitar de eventos</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">Duplicar</button>`:''}<button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
   return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<p class="muted"><small>Sesión planificada: ${esc(ev.title||'')}</small></p>`+trainingContentHtml(ev.content):(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
@@ -4002,6 +4005,13 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true)
     body.querySelectorAll('.v517OpenSession').forEach(b=>b.onclick=()=>{const d=b.dataset.date;close();athleteWeekStartV113=mondayOfISO(d);athleteSelectedDateV113=d;tab='semana';draw();render()});
     if(canEdit){
       // V517 · duplicar un evento: abre el formulario de crear con todo copiado (cambias fecha, etc.)
+      body.querySelectorAll('.v525EditSession').forEach(b=>b.onclick=()=>{close();openCoachPlanner(b.dataset.team,b.dataset.date,Number(b.dataset.id))});
+      body.querySelectorAll('.v525UnEvent').forEach(b=>b.onclick=async()=>{
+        if(!confirm('¿Quitar este entrenamiento de Eventos? El entrenamiento sigue en la planificación; solo deja de pedir confirmación de asistencia.'))return;
+        b.disabled=true;const q=await sb.from('training_sessions').update({is_event:false,updated_at:new Date().toISOString()}).eq('id',Number(b.dataset.id));
+        if(q.error){alert(q.error.message);b.disabled=false;return}
+        close();if(afterChange)afterChange();
+      });
       const dup=body.querySelector('.v517DupEvent');
       if(dup)dup.onclick=()=>{const formBox=document.getElementById('v497ClubEventForm');if(!formBox)return;close();v498RenderClubEventForm(formBox,ev2.team_code||tc,null,afterChange,ev2);formBox.scrollIntoView({behavior:'smooth',block:'start'})};
       // V512 · "+ Añadir organizador" (como en Spond) en vez del cuadro de sustituto puntual.
