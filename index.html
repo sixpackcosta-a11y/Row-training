@@ -2367,7 +2367,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="514";
+const APP_VERSION="515";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3433,6 +3433,22 @@ async function v514UploadEventCover(file){
   if(up.error)throw up.error;
   return sb.storage.from('event-covers').getPublicUrl(path).data.publicUrl;
 }
+// V515 · "el encuentro de antes pónmelo de 5 en 5 minutos" — como en Spond: "X min antes del inicio"
+// en vez de una hora suelta. Se sigue guardando como hora (meet_time) calculada a partir del inicio.
+function v514MinutesBetween(early,late){
+  const m=t=>/^\d{1,2}:\d{2}$/.test(t||'')?Number(t.split(':')[0])*60+Number(t.split(':')[1]):null;
+  const a=m(early),b=m(late);return a!=null&&b!=null&&b>a?b-a:0;
+}
+function v514ShiftTime(t,mins){
+  if(!/^\d{1,2}:\d{2}$/.test(t||''))return null;
+  let v=(Number(t.split(':')[0])*60+Number(t.split(':')[1])+mins)%1440;if(v<0)v+=1440;
+  return `${String(Math.floor(v/60)).padStart(2,'0')}:${String(v%60).padStart(2,'0')}`;
+}
+function v514MeetOptionsHtml(sel){
+  let h='<option value="0">Ninguno</option>';
+  for(let m=5;m<=180;m+=5){const hh=Math.floor(m/60),mm=m%60;const l=(hh?`${hh} h `:'')+(mm?`${mm} min`:'');h+=`<option value="${m}" ${m===sel?'selected':''}>${l.trim()} antes del inicio</option>`}
+  return h;
+}
 function v498RenderClubEventForm(container,team,existing,afterSave){
   const x=existing||{};
   const allTeams=staffViewTeamCodes().filter(v497AttendanceEnabledForTeam);
@@ -3447,7 +3463,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
   container.innerHTML=
     sec('',`<label>Título del evento<input id="v497CeTitle" value="${esc(x.title||'')}" placeholder="Ej. Reunión de equipo"></label><label>Descripción (opcional)<textarea id="v497CeNotes" rows="2">${esc(x.notes||'')}</textarea></label>`)+
     sec('Imagen de portada',`<div class="v514CoverBox"><div id="v514CoverPrev">${coverUrl?`<img src="${esc(coverUrl)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="v514CoverInput">${coverUrl?'Cambiar':'Añadir'}</label><input type="file" id="v514CoverInput" accept="image/*" class="hidden"><button type="button" id="v514CoverRemove" class="${coverUrl?'':'hidden'}">Quitar</button></div>`)+
-    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro (opcional)<input id="v514Meet" type="time" value="${esc(x.meet_time||'')}"></label><label>Termina (opcional)<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}"></label>`)+
+    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}"></label>`)+
     sec('Para quién',`${allTeams.length>1?`<div class="v514Label">Equipos${existing?' <small class="muted">(puedes añadir otros grupos)</small>':''}</div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(existing?existing.team_code:team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
@@ -3487,6 +3503,11 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
   // portada
   $('v514CoverInput').onchange=()=>{const f=$('v514CoverInput').files?.[0];if(!f)return;coverFile=f;$('v514CoverPrev').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="">`;$('v514CoverRemove').classList.remove('hidden')};
   $('v514CoverRemove').onclick=()=>{coverFile=null;coverUrl=null;$('v514CoverInput').value='';$('v514CoverPrev').innerHTML='<span class="muted">Sin imagen</span>';$('v514CoverRemove').classList.add('hidden')};
+  // V515 · "la hora de terminación 1 hora por defecto, editable": al poner/cambiar el inicio, el fin
+  // se pone 1 h después, salvo que ya lo hayas tocado a mano.
+  let endTouched=!!x.end_time;
+  $('v514End').oninput=()=>{endTouched=true};
+  $('v497CeTime').onchange=()=>{const st=$('v497CeTime').value;if(st&&(!endTouched||!$('v514End').value)){$('v514End').value=v514ShiftTime(st,60);endTouched=false}};
   if(!existing)$('v497CeRepeat').onchange=()=>{$('v497CeRepeatUntilWrap').style.display=$('v497CeRepeat').value?'block':'none'};
   $('v497CeCancel').onclick=()=>{container.classList.add('hidden');container.innerHTML=''};
   const missingCols=e=>/column .* does not exist|schema cache|relation .* does not exist|bucket .* not found/i.test(e?.message||'');
@@ -3496,13 +3517,14 @@ function v498RenderClubEventForm(container,team,existing,afterSave){
     if(!title||!date)return alert('Completa al menos el título y la fecha.');
     const maxP=$('v514Max').value?Number($('v514Max').value):null,defStatus=$('v514Default').value||null;
     if(maxP&&defStatus==='in')return alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');
+    if(Number($('v514MeetBefore').value)&&!$('v497CeTime').value)return alert('Para poner hora de encuentro, indica primero la hora de comienzo.');
     if(inviteMode==='some'&&!invitees.size)return alert('Has elegido "Elegir personas" pero no has marcado a nadie.');
     saveBtn.disabled=true;saveBtn.textContent='Guardando…';
     const fail=msg=>{alert(msg);saveBtn.disabled=false;saveBtn.textContent=existing?'Guardar cambios':'Crear evento'};
     try{
       if(coverFile)coverUrl=await v514UploadEventCover(coverFile);
     }catch(e){return fail(missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql en Supabase (crea el espacio para las imágenes).':'No se pudo subir la imagen: '+(e.message||e))}
-    const base={title,event_time:$('v497CeTime').value||null,meet_time:$('v514Meet').value||null,end_time:$('v514End').value||null,location:$('v497CeLocation').value.trim()||null,notes:$('v497CeNotes').value.trim()||null,response_deadline:$('v497CeDeadline').value||null,rsvp_open_days_before:$('v497CeOpenDays').value?Number($('v497CeOpenDays').value):null,rsvp_open_time:$('v497CeOpenTime').value||null,max_participants:maxP,cover_url:coverUrl,reminder_hours_before:$('v514Reminder').value?Number($('v514Reminder').value):null,default_status:defStatus,chat_enabled:$('v514Chat').value!=='0',responses_visibility:$('v514Vis').value};
+    const base={title,event_time:$('v497CeTime').value||null,meet_time:(Number($('v514MeetBefore').value)&&$('v497CeTime').value)?v514ShiftTime($('v497CeTime').value,-Number($('v514MeetBefore').value)):null,end_time:$('v514End').value||null,location:$('v497CeLocation').value.trim()||null,notes:$('v497CeNotes').value.trim()||null,response_deadline:$('v497CeDeadline').value||null,rsvp_open_days_before:$('v497CeOpenDays').value?Number($('v497CeOpenDays').value):null,rsvp_open_time:$('v497CeOpenTime').value||null,max_participants:maxP,cover_url:coverUrl,reminder_hours_before:$('v514Reminder').value?Number($('v514Reminder').value):null,default_status:defStatus,chat_enabled:$('v514Chat').value!=='0',responses_visibility:$('v514Vis').value};
     const inviteesFor=async t=>{if(inviteMode!=='some')return null;const ids=new Set((await rosterFor(t)).map(p=>String(p.user_id)));return [...invitees].filter(id=>ids.has(id))};
     if(existing){
       // V514 · "me debe dejar editar un evento creado, cambiar hora o lo que sea, añadir gente de otros
