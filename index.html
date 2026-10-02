@@ -514,7 +514,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .assignCardV151 .staffActions{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 14px;z-index:5}
 }
 .v493RsvpRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.v493RsvpRow .v493RsvpBtn{padding:9px 13px}.v493RsvpStatus{flex-basis:100%}
-.v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}.v493SumTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v493SumTabs button{padding:6px 10px;font-size:13px}.v493SumPanel .rosterList{margin:4px 0}.v499SubBox{background:var(--surface-2);border-radius:7px;padding:10px 12px;margin:10px 0}.v499SubBox label{display:block;font-weight:700}.v499SubBox select{margin:4px 0 8px}
+.v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}.v493SumTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v493SumTabs button{padding:6px 10px;font-size:13px}.v493SumPanel .rosterList{margin:4px 0}.v499SubBox{background:var(--surface-2);border-radius:7px;padding:10px 12px;margin:10px 0}.v499SubBox label{display:block;font-weight:700}.v499SubBox select{margin:4px 0 8px}.v502Legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.v503WeekHead{margin:16px 0 6px;font-size:.95rem;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}.v503WeekHead:first-child{margin-top:0}.v503EventRow{background:var(--surface);border-radius:9px;margin:7px 0;overflow:hidden}.v503EventRow summary{display:flex;align-items:center;gap:12px;padding:11px 13px;cursor:pointer;list-style:none}.v503EventRow summary::-webkit-details-marker{display:none}.v503DateBlock{text-align:center;min-width:42px;flex:0 0 auto}.v503Month{display:block;font-size:10.5px;letter-spacing:.5px;color:var(--text-muted);font-weight:700}.v503Day{display:block;font-size:22px;font-weight:800;line-height:1.1}.v503Info{flex:1;min-width:0}.v503Title{font-weight:700}.v503Sub{font-size:.84rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:2px}.v503Dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}.v503Counts{display:flex;gap:7px;font-size:.84rem;white-space:nowrap;flex:0 0 auto}.v503OpensNote{font-size:.78rem;color:var(--text-muted);white-space:normal;max-width:130px;text-align:right;flex:0 0 auto}.v503EventRow .accordionBody{padding:0 13px 13px}.v503EventRow .accordionBody .card{box-shadow:none}.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}.v493SumRow.active{background:var(--surface-2);border-radius:7px}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 /* V490 · en móvil se acumulaba demasiado padding lateral anidado (main > .card > .coachAnalysisSectionBodyV123 >
    .libraryCard > .info), dejando el texto apelotonado en una columna estrecha con mucho hueco a los lados.
    Se recorta ese padding en cascada en pantallas pequeñas para recuperar ancho real de lectura. */
@@ -2182,6 +2182,15 @@ function teamKey(){
 function teamLabel(code){
  const x=TEAM_OPTIONS.find(t=>t[0]===code); return x?x[1]:(code||"Sin equipo asignado");
 }
+// V502 · "aplicar un color para cada equipo como en Spond puede estar bien para una visión clara de
+// eventos" — un color estable por equipo (mismo equipo = mismo color siempre, sin tener que
+// configurarlo a mano), calculado a partir del código del equipo. Se usa en la Vista general de
+// Eventos para distinguir equipos de un vistazo.
+function v502TeamColor(code){
+  let h=0;for(const ch of String(code||''))h=(h*31+ch.charCodeAt(0))>>>0;
+  const hue=h%360;
+  return {bg:`hsl(${hue} 70% 92%)`,text:`hsl(${hue} 65% 28%)`,stripe:`hsl(${hue} 65% 52%)`};
+}
 let schedule=schedules[teamKey()];
 function refreshTeamSchedule(){schedule=schedules[teamKey()];}
 function readableLabel(line){
@@ -2287,7 +2296,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="501";
+const APP_VERSION="504";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2961,7 +2970,7 @@ async function staffRegisterView(){
     xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
     const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
     const attOnReg=v497AttendanceEnabledForTeam(t);
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map()):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session'):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     v495WireEventChatAccordions(staffRegArea);
     v493WireRsvpSummaryTabs(staffRegArea);
@@ -3158,7 +3167,7 @@ function v495WireRsvpButtons(root,afterChange){
     row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=true);
     try{
       const payload={user_id:currentUser.id,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
-      const onConflict=kind==='competition'?'competition_id,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+      const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
       const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
       if(q.error)throw q.error;
       row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
@@ -3180,30 +3189,46 @@ function v495WireEventChatAccordions(root){
 }
 // V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
 // respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
-function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser){
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
   const pendingList=roster.filter(p=>!statusByUser.has(String(p.user_id))).sort(sortName);
   const allList=[...roster].sort(sortName);
   const uid='v493sum'+Math.random().toString(36).slice(2,9);
-  // V499 · listado ordenado y en pestañas, al estilo del modal "Destinatarios" de Spond.
-  const tabBtn=(key,label,icon,list,active)=>`<button type="button" class="v493SumTab${active?' primary':''}" data-key="${key}">${icon} ${esc(label)} (${list.length})</button>`;
+  // V504 · "Respuestas" en filas con texto, al estilo de la ficha de evento de Spond, en vez de la
+  // línea compacta de antes — cada fila sigue siendo la pestaña que filtra el listado de abajo.
+  const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v493SumIcon">${icon}</span><b>${list.length}</b> <span>${esc(label)}</span></button>`;
   const personRow=p=>`<div class="rosterPerson"><span>${esc(p.full_name||'Sin nombre')}</span></div>`;
   const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${list.length?`<div class="rosterList">${list.map(personRow).join('')}</div>`:'<p class="muted">Nadie en esta categoría.</p>'}</div>`;
-  return `<div class="v493RsvpSummary" id="${uid}"><b>Confirmaciones:</b> ✅ ${inList.length} van · ❌ ${outList.length} no van · ⏳ ${pendingList.length} sin responder
-    <div class="v493SumTabs">${tabBtn('in','Asistiré','✅',inList,true)}${tabBtn('pending','Sin contestar','⏳',pendingList,false)}${tabBtn('out','Rechazado','❌',outList,false)}${tabBtn('all','Todos','👥',allList,false)}</div>
+  const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
+  const remindBtn=pendingList.length?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
+  return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
+    <div class="v493SumRows">${row('in','asistirán','✅',inList,true)}${row('pending','sin contestar','❓',pendingList,false)}${row('out','rechazados','❌',outList,false)}${row('all','todos','👥',allList,false)}</div>
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${panel('out',outList,false)}${panel('all',allList,false)}
-    ${pendingList.length?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:''}</div>`;
+    <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
 // v493RsvpSummaryHtml (Eventos y Registro MAR).
 function v493WireRsvpSummaryTabs(root){
   root.querySelectorAll('.v493RsvpSummary').forEach(box=>{
-    box.querySelectorAll('.v493SumTab').forEach(btn=>btn.onclick=()=>{
-      box.querySelectorAll('.v493SumTab').forEach(b=>b.classList.toggle('primary',b===btn));
+    box.querySelectorAll('.v493SumRow').forEach(btn=>btn.onclick=()=>{
+      box.querySelectorAll('.v493SumRow').forEach(b=>b.classList.toggle('active',b===btn));
       box.querySelectorAll('.v493SumPanel').forEach(p=>p.classList.toggle('hidden',p.dataset.key!==btn.dataset.key));
     });
+  });
+  // V504 · "Enviar mensaje a los invitados" (como en Spond) — a diferencia de "Avisar a los que
+  // faltan", este manda a TODO el roster, hayan respondido o no.
+  root.querySelectorAll('.v493RsvpMsgAll').forEach(b=>b.onclick=async()=>{
+    const ids=(b.dataset.all||'').split(',').filter(Boolean);
+    if(!ids.length)return;
+    const text=prompt(`Mensaje para todos los invitados a "${b.dataset.title}":`);
+    if(!text||!text.trim())return;
+    b.disabled=true;const original=b.textContent;b.textContent='Enviando…';
+    try{
+      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[b.dataset.team]},title:b.dataset.title,body:text.trim(),url:'/?tab=eventos',type:'training'});
+      b.textContent='Mensaje enviado ✓';
+    }catch(e){alert('No se pudo enviar: '+(e.message||e));b.disabled=false;b.textContent=original}
   });
 }
 // V495 · pestaña "Eventos": generaliza RSVP+chat de evento más allá de MAR, a cualquier sesión de
@@ -3227,11 +3252,17 @@ async function v495FetchEvents(team){
   const customs=(ee.error?[]:(ee.data||[])).map(x=>({...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}));
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
 }
-async function v495RsvpStatusMapsForEvents(events){
+async function v495RsvpStatusMapsForEvents(events,team){
+  // V502fix · "si acepto en el evento de veteranos me aparece también aceptado en el de veteranas":
+  // una misma competición puede estar asignada a varios equipos a la vez (team_codes es un array:
+  // una regata externa a la que van dos categorías del club). Antes esta consulta no filtraba por
+  // team_code, así que confirmar en un equipo "contaminaba" el mismo competition_id visto desde el
+  // otro equipo. Ahora se filtra siempre por el equipo que se está viendo, para que cada equipo
+  // lleve su propia confirmación aunque compartan la misma competición.
   const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
-  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',sessionIds));
-  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status').in('competition_id',compIds));
-  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds));
+  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',sessionIds).eq('team_code',team));
+  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status').in('competition_id',compIds).eq('team_code',team));
+  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds).eq('team_code',team));
   const results=qs.length?await Promise.all(qs):[],byEvent=new Map();
   results.forEach(r=>(r.data||[]).forEach(row=>{
     const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
@@ -3336,7 +3367,11 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const cardCls=ev.kind==='competition'?'raceCard':(String(ev.session_type||'').toUpperCase()==='MAR'?'mar':'');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
   const rsvp=opensFuture?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
-  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser);
+  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind);
+  // V504 · "Organizador: Tú" como en Spond — solo se muestra cuando se conoce quién lo creó
+  // (created_by); las filas creadas antes de 26_organizador_eventos.sql no lo tienen guardado.
+  const organizerName=ev.created_by?(roster.find(p=>String(p.user_id)===String(ev.created_by))?.full_name||null):null;
+  const organizerLine=organizerName?`<p class="muted"><small>Organizador: ${ev.created_by===currentUser?.id?'Tú':esc(organizerName)}</small></p>`:'';
   const chat=opensFuture?'':(showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'');
   const opensNote=opensFuture?`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`:'';
   // V499 · "poder añadir de forma puntual... a otro entrenador o ayudante si yo no puedo ir": si hay
@@ -3346,7 +3381,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   const extra=ev.kind==='club_event'?`${ev.location?`<p>📍 ${esc(ev.location)}</p>`:''}${ev.notes?`<p>${esc(ev.notes)}</p>`:''}`:'';
   const editBtns=canEdit&&(ev.kind==='competition'||ev.kind==='club_event')?`<div class="actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">Editar</button><button type="button" class="v498DeleteEvent dangerBtn" data-kind="${ev.kind}" data-id="${ev.id}">Eliminar</button></div>`:'';
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</h3><p class="muted">${esc(v495EventDateLabel(ev.event_date))}</p>${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${subBox}${summary}${chat}${editBtns}</div>`;
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}"><span class="tag">${esc(typeLabel)}</span><h3>${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</h3><p class="muted">${esc(v495EventDateLabel(ev.event_date))}</p>${organizerLine}${extra}${ev.kind==='session'?trainingContentHtml(ev.content):''}${deadline}${opensNote}${rsvp}${subBox}${summary}${chat}${editBtns}</div>`;
 }
 // V499 · cablea el botón "Confirmar su asistencia" del cuadro de sustituto puntual (subBox de
 // arriba). El RLS de session_rsvp ya permite a cualquier coach/ayudante escribir una fila para OTRO
@@ -3361,7 +3396,7 @@ function v499WireSubstituteBoxes(root,afterChange){
       btn.disabled=true;
       try{
         const payload={user_id:uid,team_code:team,status:'in',responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
-        const onConflict=kind==='competition'?'competition_id,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+        const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
         const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
         if(q.error)throw q.error;
         if(afterChange)afterChange();
@@ -3377,7 +3412,7 @@ async function v499ApplyDefaultSubstitute(team,kind,eventId){
     const sub=TEAM_DEFAULT_SUB_V499.get(team);
     if(!sub||!eventId)return;
     const payload={user_id:sub,team_code:team,status:'in',responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
-    const onConflict=kind==='competition'?'competition_id,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+    const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
     await sb.from('session_rsvp').upsert(payload,{onConflict});
   }catch(e){}
 }
@@ -3386,8 +3421,100 @@ async function coachEventsView(){
   if(!teams.length)return staffTodayView();
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];
   coachSelectedTeam=team;
-  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias (sesiones de mar o gimnasio que marques como tal al crearlas/editarlas), competiciones y eventos propios. Todo el equipo ve aquí quién ha confirmado.</p><label>Equipo<select id="eventsTeamSel">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label><button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  content.innerHTML=`<div class="card"><h2>Eventos</h2><p class="muted">Convocatorias (sesiones de mar o gimnasio que marques como tal al crearlas/editarlas), competiciones y eventos propios. Todo el equipo ve aquí quién ha confirmado.</p><label id="eventsTeamSelWrap">Equipo<select id="eventsTeamSel">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${teams.length>1?`<label class="inlineCheck"><input type="checkbox" id="v502OverviewToggle"> <span>🗓️ Vista general — todos tus equipos a la vez, para ver si se pisan en horarios</span></label>`:''}<button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   v497NewClubEvent.onclick=()=>v498RenderClubEventForm(document.getElementById('v497ClubEventForm'),eventsTeamSel.value,null,load);
+  // V502 · "los entrenadores deberían poder ver todos los eventos de los otros equipos también,
+  // para saber si se pisan en horarios. Pero en visión general deberían estar plegados los eventos"
+  // — vista de solo lectura con TODOS los equipos a la vez, cada evento plegado por defecto (se
+  // despliega para ver/gestionar el detalle completo de ese equipo).
+  // V503 · "algo así" (con captura de la pantalla de inicio de Spond como referencia): agrupado por
+  // semana ("Esta semana"/"La próxima semana"/...), bloque de fecha grande, punto de color del
+  // equipo, y contador ✅/❓/❌ visible sin desplegar — o, si aún no se puede confirmar, cuándo se
+  // enviará la invitación. Se despliega para ver/confirmar el detalle completo.
+  function v503RelativeOpensLabel(opensAt){
+    const hours=Math.round((opensAt-new Date())/3600000);
+    if(hours<=0)return 'Se abre en breve';
+    if(hours<48)return `La invitación se enviará en ${hours} hora${hours===1?'':'s'}`;
+    return `La invitación se enviará en ${Math.round(hours/24)} días`;
+  }
+  function v503WeekLabel(d,todayMon){
+    const mon=mondayOfISO(d),diffWeeks=Math.round((new Date(mon+'T12:00:00')-new Date(todayMon+'T12:00:00'))/(7*86400000));
+    if(diffWeeks===0)return 'Esta semana';
+    if(diffWeeks===1)return 'La próxima semana';
+    if(diffWeeks<0)return 'Semana pasada';
+    return `Semana del ${v495EventDateLabel(mon).replace(/^\S+\s*/,'')}`;
+  }
+  function v503OverviewRowHtml(ev,clash){
+    const tc=v502TeamColor(ev._viewTeam);
+    const d=new Date(ev.event_date+'T12:00:00');
+    const monthAbbr=new Intl.DateTimeFormat('es-ES',{month:'short',timeZone:'UTC'}).format(d).replace('.','').toUpperCase();
+    const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
+    const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
+    const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
+    return `<details class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><summary><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</summary><div class="accordionBody"></div></details>`;
+  }
+  async function loadOverview(){
+    const area=document.getElementById('eventsArea');
+    document.getElementById('v497ClubEventForm').classList.add('hidden');
+    area.innerHTML=v316Loading('Cargando eventos de todos los equipos…');
+    const visibleTeams=teams.filter(v497AttendanceEnabledForTeam);
+    if(!visibleTeams.length){area.innerHTML='<div class="info">El módulo de convocatorias y asistencia está desactivado en todos tus equipos.</div>';return}
+    let perTeam;
+    try{
+      perTeam=await Promise.all(visibleTeams.map(async tc=>{
+        const events=await v495FetchEvents(tc);
+        const [rowersOnly,staffList]=await Promise.all([staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
+        const roster=v499MergeRoster(rowersOnly,staffList);
+        const statusByEvent=await v495RsvpStatusMapsForEvents(events,tc);
+        return {tc,events,roster,statusByEvent};
+      }));
+    }catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+    if(tab!=='eventos'||currentMode!=='staff')return;
+    const all=[];
+    perTeam.forEach(({tc,events,roster,statusByEvent})=>events.forEach(ev=>{
+      const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),counts={in:0,out:0,pending:0};
+      roster.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else counts.pending++});
+      all.push({...ev,_viewTeam:tc,_counts:counts});
+    }));
+    if(!all.length){area.innerHTML='<div class="info">No hay convocatorias ni competiciones próximas en ninguno de tus equipos.</div>';return}
+    all.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))||String(a.event_time||'').localeCompare(String(b.event_time||'')));
+    const dateTeams=new Map();
+    all.forEach(ev=>{if(!dateTeams.has(ev.event_date))dateTeams.set(ev.event_date,new Set());dateTeams.get(ev.event_date).add(ev._viewTeam)});
+    const legend=`<div class="v502Legend">${visibleTeams.map(tc=>{const c=v502TeamColor(tc);return `<span class="tag" style="background:${c.bg};color:${c.text}">${esc(teamLabel(tc))}</span>`}).join('')}</div>`;
+    const todayMon=mondayOfISO(localISODate());
+    let lastWeek=null,rows='';
+    all.forEach(ev=>{
+      const wl=v503WeekLabel(ev.event_date,todayMon);
+      if(wl!==lastWeek){rows+=`<h3 class="v503WeekHead">${esc(wl)}</h3>`;lastWeek=wl}
+      rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1);
+    });
+    area.innerHTML=legend+rows;
+    area.querySelectorAll('.v503EventRow').forEach(det=>det.addEventListener('toggle',async()=>{
+      if(!det.open||det.dataset.loaded)return;det.dataset.loaded='1';
+      const body=det.querySelector('.accordionBody'),tc=det.dataset.team,kind=det.dataset.kind,id=Number(det.dataset.id);
+      body.innerHTML=v316Loading('Cargando…');
+      try{
+        const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
+        const ev2=events2.find(e=>e.kind===kind&&e.id===id);
+        if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
+        const roster2=v499MergeRoster(rowersOnly2,staffList2);
+        const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
+        const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
+        // V502 · solo lectura + confirmar asistencia desde aquí (RSVP/chat); editar/eliminar y el
+        // sustituto puntual se hacen desde la vista normal de ESE equipo, para no complicar esta
+        // vista pensada solo para detectar solapes de horario de un vistazo.
+        body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,false);
+        v495WireRsvpButtons(body,()=>{det.dataset.loaded='';det.open=false;det.open=true});
+        v495WireEventChatAccordions(body);
+        v493WireRsvpSummaryTabs(body);
+      }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
+    }));
+  }
+  document.getElementById('v502OverviewToggle')?.addEventListener('change',function(){
+    document.getElementById('eventsTeamSelWrap').classList.toggle('hidden',this.checked);
+    v497NewClubEvent.classList.toggle('hidden',this.checked);
+    if(this.checked)loadOverview();else load();
+  });
   async function load(){
     const t=eventsTeamSel.value;coachSelectedTeam=t;
     const area=document.getElementById('eventsArea');
@@ -3398,7 +3525,7 @@ async function coachEventsView(){
     try{[events,rowersOnly,staffList]=await Promise.all([v495FetchEvents(t),staffAthletesForTeam(t),v499StaffForTeam(t)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
     roster=v499MergeRoster(rowersOnly,staffList);
     if(tab!=='eventos'||currentMode!=='staff')return;
-    const statusByEvent=await v495RsvpStatusMapsForEvents(events);
+    const statusByEvent=await v495RsvpStatusMapsForEvents(events,t);
     area.innerHTML=events.length?events.map(ev=>v495EventCardHtml(ev,roster,statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),currentUser?(statusByEvent.get(`${ev.kind}_${ev.id}`)?.get(String(currentUser.id))||null):null,t,true,true,staffList)).join(''):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
     v495WireRsvpButtons(area,load);
     v495WireEventChatAccordions(area);
@@ -3433,7 +3560,7 @@ async function athleteEventsView(){
   try{[events,rowersOnly,staffList]=await Promise.all([v495FetchEvents(team),staffAthletesForTeam(team),v499StaffForTeam(team)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   roster=v499MergeRoster(rowersOnly,staffList);
   if(tab!=='eventos'||currentMode!=='athlete')return;
-  const statusByEvent=await v495RsvpStatusMapsForEvents(events);
+  const statusByEvent=await v495RsvpStatusMapsForEvents(events,team);
   area.innerHTML=events.length?events.map(ev=>{
     const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     return v495EventCardHtml(ev,roster,statusByUser,myStatus,team,v495ChatVisibleForRower());
@@ -7571,11 +7698,18 @@ function sessionEditor(x=null){
    }
    const isEventNow=['MAR','GYM'].includes(sessType.value)?!!document.getElementById('sessIsEvent')?.checked:false;
    const openDaysVal=document.getElementById('sessOpenDays')?.value,openTimeVal=document.getElementById('sessOpenTime')?.value;
-   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,updated_at:new Date().toISOString()};
+   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
    if(targetsV249.length||sessionTargetsV249(x).length)payload.target_user_ids=targetsV249.length?targetsV249:null;
    const isNewEventNow=isEventNow&&!x?.is_event;
-   let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload).select('id').single(); if(q.error){alert(q.error.message);return}
+   let q=x?await sb.from('training_sessions').update(payload).eq('id',x.id):await sb.from('training_sessions').insert(payload).select('id').single();
+   // V504 · si todavía no se ha ejecutado 26_organizador_eventos.sql, no se bloquea el guardado de
+   // la sesión por la columna created_by que falta -- se reintenta sin ella.
+   if(q.error&&payload.created_by&&/column .* does not exist/i.test(q.error.message||'')){
+     const {created_by,...payloadNoCreator}=payload;
+     q=await sb.from('training_sessions').insert(payloadNoCreator).select('id').single();
+   }
+   if(q.error){alert(q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
    // V497/V498 · la convocatoria "salta" (se avisa al equipo) en el momento en que el entrenador la
    // marca como tal, salvo que haya fijado una regla de apertura (días/hora) en el futuro -- en ese
@@ -7794,7 +7928,7 @@ function raceEditor(){
    document.querySelectorAll('.raceHandicapRower').forEach(el=>el.onchange=updateHandicapPreview);
  });
  saveRace.onclick=async()=>{
-   const base={name:raceName.value.trim()||'Competición',competition_date:date,team_codes:[team],priority:racePriority.value,notes:raceNotes.value.trim()};
+   const base={name:raceName.value.trim()||'Competición',competition_date:date,team_codes:[team],priority:racePriority.value,notes:raceNotes.value.trim(),created_by:currentUser.id};
    const type=raceHandicapType.value;
    const avgAge=type==='far'?currentAvgAge():null;
    const dist=Number(raceHandicapDistance?.value)||700;
@@ -7802,9 +7936,12 @@ function raceEditor(){
    let q=await sb.from('competitions').insert({...base,...extra});
    // V464 · si todavía no se han creado las columnas de hándicap en Supabase, no se bloquea la
    // creación de la competición -- se reintenta sin esas columnas y se avisa para añadirlas.
-   if(q.error&&Object.keys(extra).length&&/column .* does not exist/i.test(q.error.message||'')){
-     q=await sb.from('competitions').insert(base);
-     if(!q.error)alert('Se ha guardado la competición, pero falta preparar la base de datos para guardar el hándicap (columnas handicap_type, handicap_own_age, handicap_distance_m, handicap_seconds en la tabla competitions). Avisa para dejarlo listo.');
+   // V504 · lo mismo con created_by (columna de "Organizador"), por si tampoco está creada aún.
+   if(q.error&&/column .* does not exist/i.test(q.error.message||'')){
+     const {created_by,...baseNoCreator}=base;
+     q=await sb.from('competitions').insert(Object.keys(extra).length?{...baseNoCreator,...extra}:baseNoCreator);
+     if(q.error&&Object.keys(extra).length&&/column .* does not exist/i.test(q.error.message||''))q=await sb.from('competitions').insert(baseNoCreator);
+     if(!q.error)alert('Se ha guardado la competición, pero falta ejecutar 26_organizador_eventos.sql (y quizá el SQL del hándicap) en Supabase.');
    }
    if(q.error)alert(q.error.message);else renderPlanDay();
  };
