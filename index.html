@@ -515,6 +515,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 }
 .v493RsvpRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.v493RsvpRow .v493RsvpBtn{padding:9px 13px}.v493RsvpStatus{flex-basis:100%}
 .v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}.v493SumTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v493SumTabs button{padding:6px 10px;font-size:13px}.v493SumPanel .rosterList{margin:4px 0}.v499SubBox{background:var(--surface-2);border-radius:7px;padding:10px 12px;margin:10px 0}.v499SubBox label{display:block;font-weight:700}.v499SubBox select{margin:4px 0 8px}.v502Legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.v503WeekHead{margin:16px 0 6px;font-size:.95rem;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}.v503WeekHead:first-child{margin-top:0}.v503EventRow{background:var(--surface);border-radius:9px;margin:7px 0;overflow:hidden}.v503EventRow summary{display:flex;align-items:center;gap:12px;padding:11px 13px;cursor:pointer;list-style:none}.v503EventRow summary::-webkit-details-marker{display:none}.v503DateBlock{text-align:center;min-width:42px;flex:0 0 auto}.v503Month{display:block;font-size:10.5px;letter-spacing:.5px;color:var(--text-muted);font-weight:700}.v503Day{display:block;font-size:22px;font-weight:800;line-height:1.1}.v503Info{flex:1;min-width:0}.v503Title{font-weight:700}.v503Sub{font-size:.84rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:2px}.v503Dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}.v503Counts{display:flex;gap:7px;font-size:.84rem;white-space:nowrap;flex:0 0 auto}.v503OpensNote{font-size:.78rem;color:var(--text-muted);white-space:normal;max-width:130px;text-align:right;flex:0 0 auto}.v503EventRow .accordionBody{padding:0 13px 13px}.v503EventRow .accordionBody .card{box-shadow:none}.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}.v493SumRow.active{background:var(--surface-2);border-radius:7px}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
+.v505RosterSearch{width:100%;margin:6px 0}
+.v493SumPanel .rosterPerson{gap:10px}.v505PersonStatus{margin:0;padding:5px 7px;font-size:.78rem;max-width:132px}
 /* V490 · en móvil se acumulaba demasiado padding lateral anidado (main > .card > .coachAnalysisSectionBodyV123 >
    .libraryCard > .info), dejando el texto apelotonado en una columna estrecha con mucho hueco a los lados.
    Se recorta ese padding en cascada en pantallas pequeñas para recuperar ancho real de lectura. */
@@ -2191,6 +2194,58 @@ function v502TeamColor(code){
   const hue=h%360;
   return {bg:`hsl(${hue} 70% 92%)`,text:`hsl(${hue} 65% 28%)`,stripe:`hsl(${hue} 65% 52%)`};
 }
+// V505 · fotos de perfil ("avatares"), inspirado en el listado de "Destinatarios" de Spond. Quien
+// no haya subido foto sale con un círculo de color (estable por persona) con sus iniciales, igual
+// que hace Spond con "NV"/"NA" cuando no hay foto.
+function v505Initials(name){
+  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length)return '?';
+  return (parts[0][0]+(parts[1]?.[0]||'')).toUpperCase();
+}
+function v505AvatarCircleHtml(p,size){
+  size=size||32;
+  const color=v502TeamColor(String(p.user_id||p.full_name||''));
+  if(p.avatar_url)return `<img class="v505Avatar" src="${esc(p.avatar_url)}" alt="" style="width:${size}px;height:${size}px">`;
+  return `<span class="v505Avatar v505AvatarInitials" style="width:${size}px;height:${size}px;background:${color.stripe};font-size:${Math.round(size*0.38)}px">${esc(v505Initials(p.full_name))}</span>`;
+}
+// V505 · sube/reemplaza la foto de UNA persona (ella misma, o un entrenador/ayudante editándola) al
+// bucket 'avatars' (RLS: cada cual solo puede escribir en su propia carpeta — <user_id>/..., salvo
+// el equipo técnico, que puede escribir en cualquiera). Devuelve la URL pública (con parámetro de
+// caché roto para que se vea el cambio al momento) o lanza si falla.
+async function v505UploadAvatar(targetUserId,file){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${targetUserId}/avatar.${ext}`;
+  const up=await sb.storage.from('avatars').upload(path,file,{upsert:true,cacheControl:'3600'});
+  if(up.error)throw up.error;
+  const {data}=sb.storage.from('avatars').getPublicUrl(path);
+  const url=data.publicUrl+'?v='+Date.now();
+  const q=await sb.from('profiles').update({avatar_url:url,updated_at:new Date().toISOString()}).eq('user_id',targetUserId);
+  if(q.error)throw q.error;
+  return url;
+}
+// V505 · cablea un bloque "<img/iniciales> + input file" ya insertado en el DOM (ver
+// v505AvatarUploadBoxHtml). onDone(url) se llama al terminar con éxito.
+function v505AvatarUploadBoxHtml(p,inputId,previewId){
+  return `<div class="v505AvatarBox"><div id="${previewId}">${v505AvatarCircleHtml(p,64)}</div><label class="btn" for="${inputId}">Cambiar foto</label><input type="file" id="${inputId}" accept="image/*" class="hidden"><span class="muted v505AvatarStatus"></span></div>`;
+}
+function v505WireAvatarUpload(container,targetUserId,inputId,previewId,onDone){
+  const input=container.querySelector('#'+inputId);
+  if(!input)return;
+  input.onchange=async()=>{
+    const file=input.files?.[0];if(!file)return;
+    const status=container.querySelector('.v505AvatarStatus');
+    if(status)status.textContent='Subiendo…';
+    try{
+      const url=await v505UploadAvatar(targetUserId,file);
+      const preview=document.getElementById(previewId);
+      if(preview)preview.innerHTML=`<img class="v505Avatar" src="${esc(url)}" alt="" style="width:64px;height:64px">`;
+      if(status)status.textContent='Foto actualizada ✓';
+      if(onDone)onDone(url);
+    }catch(e){
+      if(status)status.textContent=/bucket .* not found|relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 27_avatares.sql en Supabase.':'No se pudo subir: '+(e.message||e);
+    }
+  };
+}
 let schedule=schedules[teamKey()];
 function refreshTeamSchedule(){schedule=schedules[teamKey()];}
 function readableLabel(line){
@@ -2296,7 +2351,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="504";
+const APP_VERSION="506";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2731,7 +2786,7 @@ function v300OpenSettingsMenu(){
   const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
   const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
   const layer=document.createElement('div');layer.className='modalBack v300SettingsMenuBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button></div></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
@@ -2970,10 +3025,10 @@ async function staffRegisterView(){
     xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
     const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
     const attOnReg=v497AttendanceEnabledForTeam(t);
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session'):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     v495WireEventChatAccordions(staffRegArea);
-    v493WireRsvpSummaryTabs(staffRegArea);
+    v493WireRsvpSummaryTabs(staffRegArea,load);
     staffRegArea.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;b.disabled=true;b.textContent='Avisando…';try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[t]},title:'¿Vas al entreno de mar?',body:`Confirma tu asistencia a ${b.dataset.title||'la sesión de mar'} en Row Training.`,url:'/',type:'training'});b.textContent='Aviso enviado ✓'}catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}});
     xs.forEach(x=>{
       const boat=staffRegArea.querySelector(`.v307CrewBoat[data-session="${x.id}"]`);
@@ -3189,7 +3244,7 @@ function v495WireEventChatAccordions(root){
 }
 // V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
 // respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
-function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind){
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
@@ -3199,23 +3254,60 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   // V504 · "Respuestas" en filas con texto, al estilo de la ficha de evento de Spond, en vez de la
   // línea compacta de antes — cada fila sigue siendo la pestaña que filtra el listado de abajo.
   const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v493SumIcon">${icon}</span><b>${list.length}</b> <span>${esc(label)}</span></button>`;
-  const personRow=p=>`<div class="rosterPerson"><span>${esc(p.full_name||'Sin nombre')}</span></div>`;
+  // V505 · inspirado en "Destinatarios" de Spond: foto/iniciales de cada persona, y si quien mira es
+  // entrenador/ayudante (canEdit), un selector para cambiarle la asistencia directamente a cualquiera
+  // sin pasar por el cuadro de "sustituto puntual" (que es solo para el propio equipo técnico).
+  const personRow=p=>{
+    const st=statusByUser.get(String(p.user_id))||'pending';
+    const menu=canEdit?`<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option></select>`:'';
+    return `<div class="rosterPerson" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,28)}<span>${esc(p.full_name||'Sin nombre')}</span>${menu}</div>`;
+  };
   const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${list.length?`<div class="rosterList">${list.map(personRow).join('')}</div>`:'<p class="muted">Nadie en esta categoría.</p>'}</div>`;
   const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
   const remindBtn=pendingList.length?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
+  // V505 · caja de búsqueda por nombre, como en "Destinatarios" de Spond — solo tiene sentido con
+  // roster largos, así que se omite si hay 6 personas o menos.
+  const searchBox=roster.length>6?`<input type="search" class="v505RosterSearch" placeholder="Buscar por nombre…">`:'';
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
     <div class="v493SumRows">${row('in','asistirán','✅',inList,true)}${row('pending','sin contestar','❓',pendingList,false)}${row('out','rechazados','❌',outList,false)}${row('all','todos','👥',allList,false)}</div>
+    ${searchBox}
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${panel('out',outList,false)}${panel('all',allList,false)}
     <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
 // v493RsvpSummaryHtml (Eventos y Registro MAR).
-function v493WireRsvpSummaryTabs(root){
+function v493WireRsvpSummaryTabs(root,afterChange){
   root.querySelectorAll('.v493RsvpSummary').forEach(box=>{
     box.querySelectorAll('.v493SumRow').forEach(btn=>btn.onclick=()=>{
       box.querySelectorAll('.v493SumRow').forEach(b=>b.classList.toggle('active',b===btn));
       box.querySelectorAll('.v493SumPanel').forEach(p=>p.classList.toggle('hidden',p.dataset.key!==btn.dataset.key));
     });
+  });
+  // V505 · caja de búsqueda por nombre dentro del resumen de Respuestas.
+  root.querySelectorAll('.v505RosterSearch').forEach(inp=>inp.oninput=()=>{
+    const box=inp.closest('.v493RsvpSummary'),q=inp.value.trim().toLowerCase();
+    box.querySelectorAll('.rosterPerson').forEach(row=>row.classList.toggle('hidden',!!q&&!(row.dataset.name||'').includes(q)));
+  });
+  // V505 · menú "..." de Spond simplificado a un selector directo: el entrenador/ayudante cambia la
+  // asistencia de cualquier persona del roster sin que ella tenga que confirmarlo. "Sin decidir"
+  // borra la fila (session_rsvp solo admite 'in'/'out', no un tercer estado guardado).
+  root.querySelectorAll('.v505PersonStatus').forEach(sel=>sel.onchange=async()=>{
+    if(!currentUser)return;
+    const uidP=sel.dataset.uid,eventId=Number(sel.dataset.event),kind=sel.dataset.kind||'session',teamCode=sel.dataset.team,status=sel.value;
+    sel.disabled=true;
+    const col=kind==='competition'?'competition_id':kind==='club_event'?'club_event_id':'training_session_id';
+    try{
+      if(status==='pending'){
+        const q=await sb.from('session_rsvp').delete().eq('user_id',uidP).eq('team_code',teamCode).eq(col,eventId);
+        if(q.error)throw q.error;
+      }else{
+        const payload={user_id:uidP,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
+        const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+        const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
+        if(q.error)throw q.error;
+      }
+      if(afterChange)afterChange();
+    }catch(e){alert(v499FriendlyRsvpError(e,'No se pudo guardar: '));sel.disabled=false}
   });
   // V504 · "Enviar mensaje a los invitados" (como en Spond) — a diferencia de "Avisar a los que
   // faltan", este manda a TODO el roster, hayan respondido o no.
@@ -3367,7 +3459,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const cardCls=ev.kind==='competition'?'raceCard':(String(ev.session_type||'').toUpperCase()==='MAR'?'mar':'');
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
   const rsvp=opensFuture?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
-  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind);
+  const summary=opensFuture?'':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit);
   // V504 · "Organizador: Tú" como en Spond — solo se muestra cuando se conoce quién lo creó
   // (created_by); las filas creadas antes de 26_organizador_eventos.sql no lo tienen guardado.
   const organizerName=ev.created_by?(roster.find(p=>String(p.user_id)===String(ev.created_by))?.full_name||null):null;
@@ -3529,7 +3621,7 @@ async function coachEventsView(){
     area.innerHTML=events.length?events.map(ev=>v495EventCardHtml(ev,roster,statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),currentUser?(statusByEvent.get(`${ev.kind}_${ev.id}`)?.get(String(currentUser.id))||null):null,t,true,true,staffList)).join(''):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
     v495WireRsvpButtons(area,load);
     v495WireEventChatAccordions(area);
-    v493WireRsvpSummaryTabs(area);
+    v493WireRsvpSummaryTabs(area,load);
     v499WireSubstituteBoxes(area,load);
     events.forEach(ev=>v498TryClaimAndNotify(ev,t));
     area.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;b.disabled=true;b.textContent='Avisando…';try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[t]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/',type:'training'});b.textContent='Aviso enviado ✓'}catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}});
@@ -6876,8 +6968,9 @@ async function staffProfileViewV167(){
   const isRower=!!(rm||[]).length;
   // V391 · la fila de accesos rápidos ahora es una barra compartida (v390MasBarHtml/v390BindMasBar)
   // que se inyecta igual en Perfil, Equipo y Sistema, con el botón activo marcado según la pantalla.
-  content.innerHTML=`${v390MasBarHtml('perfil')}<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p><label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
+  content.innerHTML=`${v390MasBarHtml('perfil')}<div class="card"><h2>Mi perfil</h2><p class="muted">Estos datos identifican tu cuenta como entrenador/ayudante. El correo de acceso no se cambia desde aquí.</p>${v505AvatarUploadBoxHtml(pdata||{},'v167AvatarInput','v167AvatarPreview')}<label>Nombre<input id="v167StaffName" value="${esc(pdata?.full_name||'')}"></label><label>Correo<input value="${esc(currentUser?.email||'')}" disabled></label><label>Me identifico como <span class="muted">(para que los avisos digan "tu entrenador" o "tu entrenadora")</span><select id="v167StaffGender"><option value="" ${!pdata?.gender?'selected':''}>Prefiero no decirlo</option><option value="m" ${pdata?.gender==='m'?'selected':''}>Entrenador</option><option value="f" ${pdata?.gender==='f'?'selected':''}>Entrenadora</option></select></label><label>Altura (cm) <span class="muted">(opcional)</span><input id="v167StaffHeight" type="number" step=".1" value="${pdata?.height_cm??''}"></label><label>Fecha de nacimiento <span class="muted">(opcional)</span><input id="v167StaffBirth" type="date" value="${pdata?.birth_date??''}"></label><div id="v167StaffProfileStatus" class="saveStatus hidden"></div><div class="actions"><button id="v167SaveStaffProfile" class="primary">Guardar perfil</button>${isRower?'<button id="v167FullRowerProfile" type="button">Editar datos deportivos en modo remero</button>':''}</div></div>`;
   v390BindMasBar(content);
+  v505WireAvatarUpload(content,currentUser.id,'v167AvatarInput','v167AvatarPreview');
   v167SaveStaffProfile.onclick=async()=>{
     const b=v167SaveStaffProfile,st=v167StaffProfileStatus;b.disabled=true;b.textContent='Guardando…';
     const q=await sb.from('profiles').update({full_name:v167StaffName.value.trim(),gender:v167StaffGender.value||null,height_cm:v167StaffHeight.value?Number(v167StaffHeight.value):null,birth_date:v167StaffBirth.value||null,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
@@ -6921,6 +7014,7 @@ async function profileView(){
 
   content.innerHTML=`<div class="card v330ProfileQuickActions"><button type="button" id="v330OpenSettings">${v332Icon('ajustes')}${v311T('nav_ajustes')}</button><button type="button" id="v330OpenHelp">${v332Icon('ayuda')}${v311T('nav_ayuda')}</button>${hasStaffMode()?`<button type="button" id="v330SwitchMode">${v332Icon('compass')}Cambiar a modo entrenador</button>`:''}<button type="button" id="v330LogOut">${v332Icon('salir')}${v311T('nav_salir')}</button></div><div class="card"><h2>${v311T('perfil_titulo')}</h2>
   <label>${v311T('idioma')}<select id="pf_locale"><option value="es" ${currentLocale==='es'?'selected':''}>Español</option><option value="en" ${currentLocale==='en'?'selected':''}>English</option><option value="nl" ${currentLocale==='nl'?'selected':''}>Nederlands</option></select></label>
+  ${v505AvatarUploadBoxHtml(pdata||{},'pfAvatarInput','pfAvatarPreview')}
   <label>${v311T('nombre_label')}<input id="pf_name" value="${pdata?.full_name||""}"></label>
   <label>${v311T('identifico_como')}<select id="pf_gender"><option value="" ${!pdata?.gender?'selected':''}>${v311T('prefiero_no_decir')}</option><option value="m" ${pdata?.gender==='m'?'selected':''}>${v311T('hombre')}</option><option value="f" ${pdata?.gender==='f'?'selected':''}>${v311T('mujer')}</option></select></label>
   <label>${v311T('altura_cm')}<input id="pf_height" type="number" step=".1" value="${pdata?.height_cm??""}"></label>
@@ -7024,6 +7118,7 @@ async function profileView(){
     if(pf_rest.value) fillZones();
   }
 
+  v505WireAvatarUpload(content,currentUser.id,'pfAvatarInput','pfAvatarPreview');
   document.getElementById('pf_locale').onchange=e=>v311SetLocale(e.target.value);
   // V463 · el sexo elegido aquí para calcular la FC máxima es el mismo dato real que "Me identifico
   // como" -- si ese campo del perfil todavía está en blanco, se rellena solo al elegir aquí, para no
