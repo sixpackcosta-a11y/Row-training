@@ -2287,7 +2287,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="500";
+const APP_VERSION="501";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3151,7 +3151,7 @@ function v499FriendlyRsvpError(e,prefix){
   if(/permission denied/i.test(t))return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar, y prueba otra vez.';
   return prefix+(e?.message||e);
 }
-function v495WireRsvpButtons(root){
+function v495WireRsvpButtons(root,afterChange){
   root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
     if(!currentUser)return;
     const row=b.closest('.v493RsvpRow'),eventId=Number(row.dataset.id),kind=row.dataset.kind||'session',teamCode=row.dataset.team,status=b.dataset.status;
@@ -3164,6 +3164,10 @@ function v495WireRsvpButtons(root){
       row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
       const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=status==='in'?'Has confirmado que vas':'Has avisado de que no vas';
       row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status}}));
+      // V500 · el botón se actualiza al instante (líneas de arriba), pero el panel de
+      // "Confirmaciones" (quién va/no va/falta) de la misma tarjeta se había quedado con los datos
+      // de cuando se cargó la vista — había que recargar la vista para verse reflejado ahí.
+      if(afterChange)afterChange();
     }catch(e){alert(v499FriendlyRsvpError(e,'No se pudo guardar tu respuesta: '))}
     finally{row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=false)}
   });
@@ -3396,7 +3400,7 @@ async function coachEventsView(){
     if(tab!=='eventos'||currentMode!=='staff')return;
     const statusByEvent=await v495RsvpStatusMapsForEvents(events);
     area.innerHTML=events.length?events.map(ev=>v495EventCardHtml(ev,roster,statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),currentUser?(statusByEvent.get(`${ev.kind}_${ev.id}`)?.get(String(currentUser.id))||null):null,t,true,true,staffList)).join(''):'<div class="info">No hay convocatorias ni competiciones próximas para este equipo.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
-    v495WireRsvpButtons(area);
+    v495WireRsvpButtons(area,load);
     v495WireEventChatAccordions(area);
     v493WireRsvpSummaryTabs(area);
     v499WireSubstituteBoxes(area,load);
@@ -3434,7 +3438,7 @@ async function athleteEventsView(){
     const statusByUser=statusByEvent.get(`${ev.kind}_${ev.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     return v495EventCardHtml(ev,roster,statusByUser,myStatus,team,v495ChatVisibleForRower());
   }).join(''):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
-  v495WireRsvpButtons(area);
+  v495WireRsvpButtons(area,athleteEventsView);
   v495WireEventChatAccordions(area);
   v493WireRsvpSummaryTabs(area);
   events.forEach(ev=>v498TryClaimAndNotify(ev,team));
