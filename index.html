@@ -514,17 +514,17 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .assignCardV151 .staffActions{position:sticky;bottom:-14px;background:var(--surface);padding:10px 0 14px;z-index:5}
 }
 .v493RsvpRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.v493RsvpRow .v493RsvpBtn{padding:9px 13px}.v493RsvpStatus{flex-basis:100%}
-.v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}.v493SumTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v493SumTabs button{padding:6px 10px;font-size:13px}.v493SumPanel .rosterList{margin:4px 0}.v499SubBox{background:var(--surface-2);border-radius:7px;padding:10px 12px;margin:10px 0}.v499SubBox label{display:block;font-weight:700}.v499SubBox select{margin:4px 0 8px}.v502Legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.v503WeekHead{margin:16px 0 6px;font-size:.95rem;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}.v503WeekHead:first-child{margin-top:0}.v503EventRow{background:var(--surface);border-radius:9px;margin:7px 0;overflow:hidden}.v503EventRow summary{display:flex;align-items:center;gap:12px;padding:11px 13px;cursor:pointer;list-style:none}.v503EventRow summary::-webkit-details-marker{display:none}.v503DateBlock{text-align:center;min-width:34px;flex:0 0 auto}.v503Month{display:block;font-size:9.5px;letter-spacing:.5px;color:var(--text-muted);font-weight:700}.v503Day{display:block;font-size:18px;font-weight:800;line-height:1.1}.v503Info{flex:1;min-width:0}
-/* V505fix · "los textos ocupan mucho alto": el título largo de una competición llegaba a ocupar 5
-   líneas en móvil, empujando la fila entera. Se recorta a 2 líneas con elipsis (el título completo
-   se sigue viendo al desplegar la fila) y se reduce algo el tamaño de letra general de la fila. */
-.v503Title{font-weight:700;font-size:.88rem;line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.v503Sub{font-size:.76rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:2px}.v503Dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}.v503Counts{display:flex;gap:6px;font-size:.78rem;white-space:nowrap;flex:0 0 auto}.v503OpensNote{font-size:.72rem;color:var(--text-muted);white-space:normal;max-width:110px;text-align:right;flex:0 0 auto}.v503EventRow summary{padding:9px 11px}
-/* V505fix · "al desplegar hay espacio de más por los laterales": la tarjeta interior (.card, 15px de
-   padding propio) se sumaba al padding lateral de .accordionBody (13px), desplazando el contenido
-   desplegado ~28px desde el borde en vez de los ~11px del resumen plegado. Se quita el padding
-   lateral de .accordionBody y se deja que sea solo la tarjeta interior quien lo ponga, para que
-   quede alineado con el texto de la fila plegada. */
-.v503EventRow .accordionBody{padding:0 0 10px}.v503EventRow .accordionBody .card{box-shadow:none;margin:6px 0 0}.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}.v493SumRow.active{background:var(--surface-2);border-radius:7px}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.v493RsvpSummary{background:var(--accent-tint);border-radius:7px;padding:11px 13px;margin:10px 0}.v493RsvpSummary summary{cursor:pointer;font-weight:700;margin-top:4px}.v493RsvpSummary p{margin:6px 0}.v493SumTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v493SumTabs button{padding:6px 10px;font-size:13px}.v493SumPanel .rosterList{margin:4px 0}.v499SubBox{background:var(--surface-2);border-radius:7px;padding:10px 12px;margin:10px 0}.v499SubBox label{display:block;font-weight:700}.v499SubBox select{margin:4px 0 8px}.v502Legend{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.v503WeekHead{margin:16px 0 6px;font-size:.95rem;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}.v503WeekHead:first-child{margin-top:0}/* V506 · fila de ancho completo como en la Vista general real de Spond — ya no es un <details> que
+   se despliega in-situ, es un botón que abre la pantalla de detalle (v503OpenEventDetail). */
+.v503EventRow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:none;border-radius:9px;margin:7px 0;padding:11px 13px;font:inherit;color:inherit;cursor:pointer}.v503DateBlock{text-align:center;min-width:34px;flex:0 0 auto}.v503Month{display:block;font-size:9.5px;letter-spacing:.5px;color:var(--text-muted);font-weight:700}.v503Day{display:block;font-size:18px;font-weight:800;line-height:1.1}.v503Info{flex:1;min-width:0}
+/* V506 · "los textos se cortan en la vista sin desplegar, no puede ser como en Spond": en vez del
+   recorte a 2 líneas de antes, ahora el título es UNA sola línea con "…" si no cabe (igual que la
+   fila real de Spond) — el título completo se ve en la pantalla de detalle al tocar la fila. */
+.v503Title{font-weight:700;font-size:.88rem;line-height:1.28;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v503Sub{font-size:.76rem;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v503Dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}.v503Counts{display:flex;gap:6px;font-size:.78rem;white-space:nowrap;flex:0 0 auto}.v503OpensNote{font-size:.72rem;color:var(--text-muted);white-space:normal;max-width:110px;text-align:right;flex:0 0 auto}
+/* V506 · pantalla de detalle de un evento de la Vista general, superpuesta a pantalla completa (como
+   al tocar un evento en Spond) en vez de desplegarse in-situ. */
+.v503DetailBack{padding:0;align-items:stretch}.v503DetailCard{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;padding:14px}.v503DetailBackBtn{border:none;background:transparent;font-weight:700;font-size:15px;padding:6px 0;color:var(--text)}
+.v493SumRows{display:flex;flex-direction:column;margin:6px 0}.v493SumRow{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 4px;border:none;border-top:1px solid var(--border);background:transparent;border-radius:0;font-size:14.5px}.v493SumRows .v493SumRow:first-child{border-top:none}.v493SumRow.active{background:var(--surface-2);border-radius:7px}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
 .v493SumPanel .rosterPerson{gap:10px}.v505PersonStatus{margin:0;padding:5px 7px;font-size:.78rem;max-width:132px}
@@ -2361,7 +2361,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="507";
+const APP_VERSION="508";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3551,6 +3551,12 @@ async function coachEventsView(){
     if(diffWeeks<0)return 'Semana pasada';
     return `Semana del ${v495EventDateLabel(mon).replace(/^\S+\s*/,'')}`;
   }
+  // V506 · "no puedes simular el mismo estilo, ocupando todo el ancho y no desplegando sino pasando
+  // a otra pantalla" (captura de la Vista general real de Spond, donde cada fila es de ancho
+  // completo, el título nunca se corta/salta de línea, y tocarla abre una pantalla aparte en vez de
+  // desplegarse in-situ). Se cambia de <details> a un botón que abre v503OpenEventDetail (pantalla
+  // completa superpuesta, con botón "Volver"), y el título pasa a una sola línea con "…" en vez de
+  // envolver a varias.
   function v503OverviewRowHtml(ev,clash){
     const tc=v502TeamColor(ev._viewTeam);
     const d=new Date(ev.event_date+'T12:00:00');
@@ -3558,7 +3564,35 @@ async function coachEventsView(){
     const typeLabel=ev.kind==='competition'?'Competición':ev.kind==='club_event'?'Evento':(String(ev.session_type||'').toUpperCase()==='GYM'?'GYM':'MAR');
     const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
     const rightHtml=opensFuture?`<div class="v503OpensNote">${esc(v503RelativeOpensLabel(opensAt))}</div>`:`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
-    return `<details class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><summary><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</summary><div class="accordionBody"></div></details>`;
+    return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock"><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}${ev.event_time?` · ${esc(ev.event_time)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}${clash?' ⚠️':''}</div></div>${rightHtml}</button>`;
+  }
+  // V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
+  // in-situ. Reutiliza exactamente la misma carga de datos que antes vivía en el handler de
+  // "toggle" del <details>.
+  async function v503OpenEventDetail(tc,kind,id){
+    document.querySelectorAll('.v503DetailBack').forEach(x=>x.remove());
+    const layer=document.createElement('div');layer.className='modalBack v503DetailBack';
+    layer.innerHTML=`<div class="modalCard v503DetailCard"><div class="modalTitle"><button type="button" class="v503DetailBackBtn">← Volver</button></div><div class="v503DetailBody">${v316Loading('Cargando…')}</div></div>`;
+    document.body.appendChild(layer);
+    const close=()=>layer.remove();
+    layer.querySelector('.v503DetailBackBtn').onclick=close;
+    layer.onclick=e=>{if(e.target===layer)close()};
+    const body=layer.querySelector('.v503DetailBody');
+    try{
+      const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
+      const ev2=events2.find(e=>e.kind===kind&&e.id===id);
+      if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
+      const roster2=v499MergeRoster(rowersOnly2,staffList2);
+      const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
+      const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
+      // V502 · solo lectura + confirmar asistencia desde aquí (RSVP/chat); editar/eliminar y el
+      // sustituto puntual se hacen desde la vista normal de ESE equipo, para no complicar esta
+      // vista pensada solo para detectar solapes de horario de un vistazo.
+      body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,false);
+      v495WireRsvpButtons(body,()=>v503OpenEventDetail(tc,kind,id));
+      v495WireEventChatAccordions(body);
+      v493WireRsvpSummaryTabs(body);
+    }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
   }
   async function loadOverview(){
     const area=document.getElementById('eventsArea');
@@ -3596,26 +3630,7 @@ async function coachEventsView(){
       rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1);
     });
     area.innerHTML=legend+rows;
-    area.querySelectorAll('.v503EventRow').forEach(det=>det.addEventListener('toggle',async()=>{
-      if(!det.open||det.dataset.loaded)return;det.dataset.loaded='1';
-      const body=det.querySelector('.accordionBody'),tc=det.dataset.team,kind=det.dataset.kind,id=Number(det.dataset.id);
-      body.innerHTML=v316Loading('Cargando…');
-      try{
-        const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
-        const ev2=events2.find(e=>e.kind===kind&&e.id===id);
-        if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
-        const roster2=v499MergeRoster(rowersOnly2,staffList2);
-        const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
-        const statusByUser=statusByEvent2.get(`${ev2.kind}_${ev2.id}`)||new Map(),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
-        // V502 · solo lectura + confirmar asistencia desde aquí (RSVP/chat); editar/eliminar y el
-        // sustituto puntual se hacen desde la vista normal de ESE equipo, para no complicar esta
-        // vista pensada solo para detectar solapes de horario de un vistazo.
-        body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,true,false);
-        v495WireRsvpButtons(body,()=>{det.dataset.loaded='';det.open=false;det.open=true});
-        v495WireEventChatAccordions(body);
-        v493WireRsvpSummaryTabs(body);
-      }catch(e){body.innerHTML=`<div class="info">${esc(e.message||'No se pudo cargar.')}</div>`}
-    }));
+    area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id)));
   }
   document.getElementById('v502OverviewToggle')?.addEventListener('change',function(){
     document.getElementById('eventsTeamSelWrap').classList.toggle('hidden',this.checked);
