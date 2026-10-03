@@ -530,7 +530,6 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
-#app{position:relative}.v539Snap{position:absolute;left:0;right:0;min-height:100vh;background:var(--bg);z-index:5;opacity:1;transition:opacity .18s ease;overflow:hidden}.v539Snap *{animation:none!important}
 .v536Box{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v536Head{font-weight:700;margin-bottom:6px}.v536Item{margin:6px 0}.v536ItemHead{display:flex;justify-content:space-between;align-items:center;gap:8px}.v536Unlink{padding:4px 9px;font-size:.8rem}.v536Opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.v536AssignBox{margin-top:6px}.v536EditorLink{display:block;margin:10px 0}
 .v531Bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-tint);border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:0 0 10px}.v531Bar.cancelled{background:#fee2e2;border-color:#fecaca}.v531Btns{display:flex;gap:8px;flex-wrap:wrap}.v531FormCard{margin:0 0 12px}
 .v530Row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);margin:0}.v530Row input[type=checkbox]{width:auto;margin:0;transform:scale(1.25)}.v530Row select{width:auto;margin:0}
@@ -580,6 +579,8 @@ button.coachDay{width:100%;font:inherit;color:inherit}
    carga se alarga, además aparece el icono grande centrado. */
 #content{transition:opacity .5s ease}
 #content.v363Dim{opacity:.4;transition:opacity .12s ease}
+#content.v541In{animation:v541Fade .26s ease-out both}@keyframes v541Fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){#content.v541In{animation:none}}
 #app{position:relative}
 .v366Overlay{position:fixed;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:55;opacity:0;transition:opacity .25s ease}
 .v366Overlay.show{opacity:1}
@@ -752,20 +753,19 @@ function applyThemeV299(mode){
   // Garantizamos un mínimo de tiempo atenuado (aunque el contenido ya esté listo) para que el
   // recorrido completo (1 → .4 → 1) siempre se vea entero, sea cual sea la velocidad de carga.
   var v363MinDim=140;
+  // V541 · Mismo fundido en TODAS las pantallas: cuando la pantalla nueva está lista aparece con
+  // un fundido de entrada corto (0 → 1). Si los datos tardan, la anterior se atenúa mientras tanto
+  // (solo pasados 150 ms, para que lo rápido no parpadee) y si tarda mucho sale el icono 🚣.
   window.v360FinishLoad=function(){
-    clearTimeout(el._v363SafetyTimer);
-    var finish=function(){
-      el.classList.remove('v363Dim');
-      if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
-      if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
-    };
-    var elapsed=el._v363DimAt?(Date.now()-el._v363DimAt):v363MinDim;
-    clearTimeout(el._v363HoldTimer);
-    if(el.classList.contains('v363Dim')&&elapsed<v363MinDim){
-      el._v363HoldTimer=setTimeout(finish,v363MinDim-elapsed);
-    }else{
-      finish();
+    clearTimeout(el._v363SafetyTimer);clearTimeout(el._v540DimTimer);clearTimeout(el._v363HoldTimer);
+    if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
+    var pending=el._v541Pending;el._v541Pending=false;
+    el.classList.remove('v363Dim');
+    if(pending){
+      el.classList.remove('v541In');void el.offsetWidth;el.classList.add('v541In');
+      clearTimeout(el._v541T);el._v541T=setTimeout(function(){el.classList.remove('v541In')},320);
     }
+    if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
   };
   var raf=null;
   var mo=new MutationObserver(function(){
@@ -2479,7 +2479,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="539";
+const APP_VERSION="541";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2493,6 +2493,97 @@ const AUTO_C2_SYNC_MIN_MS=120000; // evita llamadas repetidas al volver varias v
 let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+// V540 · Velocidad general. Cada pestaña pide sus datos a Supabase cada vez que se abre, aunque
+// sean los mismos de hace unos segundos. Ahora las LECTURAS idénticas se guardan un rato en memoria
+// y al volver a una pestaña los datos salen al instante. Cualquier cambio que hagas tú (guardar,
+// borrar, responder, enviar…) vacía esa memoria entera, así que nunca ves algo tuyo desactualizado.
+// Chat y notificaciones no se guardan nunca (siempre frescos). ↻ y "tirar hacia abajo" también la vacían.
+(function(){
+  try{
+    var SLOW=new Set(['profiles','rowing_teams','user_roles','team_staff_roles','rower_team_memberships','training_library','ergo_library','notification_prefs','training_library_user_prefs','athlete_season_notes']);
+    var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests']);
+    var WRITE={insert:1,update:1,upsert:1,'delete':1},recipesStarted=false;
+    var cache=new Map();
+    window.v540ClearCache=function(){cache.clear()};
+    // V541 · "que cargue bien desde el inicio": la app recuerda (en este móvil) qué lecturas hace
+    // cada usuario al moverse por las pestañas. Al arrancar, y después de cada cambio que hagas, las
+    // repite en segundo plano, así que cuando abres cualquier pestaña sus datos ya están listos.
+    var RKEY='rowtraining_warm_v541_',recipes=null,recipesUser=null,saveT=null,warmT=null,warming=false;
+    function uid(){try{return (typeof currentUser!=='undefined'&&currentUser&&currentUser.id)||''}catch(e){return ''}}
+    function loadRecipes(){var u=uid();if(!u)return null;if(recipesUser!==u){recipesUser=u;try{recipes=JSON.parse(localStorage.getItem(RKEY+u)||'{}')||{}}catch(e){recipes={}}}return recipes}
+    function remember(key,table,rec){
+      var r=loadRecipes();if(!r||warming)return;
+      var x=r[key]||(r[key]={t:table,r:rec,n:0});x.n++;x.l=Date.now();
+      clearTimeout(saveT);saveT=setTimeout(function(){
+        try{var cut=Date.now()-5*864e5,keys=Object.keys(r).filter(function(k){return r[k].l>=cut}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,150),o={};keys.forEach(function(k){o[k]=r[k]});recipes=o;localStorage.setItem(RKEY+recipesUser,JSON.stringify(o))}catch(e){}
+      },1500);
+    }
+    window.v541Warm=function(delay){
+      clearTimeout(warmT);warmT=setTimeout(async function(){
+        var r=loadRecipes();if(!r||warming)return;
+        var cut=Date.now()-5*864e5;
+        var list=Object.keys(r).filter(function(k){return r[k].l>=cut&&!cache.has(k)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,90);
+        warming=true;
+        try{
+          var i=0;
+          async function worker(){
+            while(i<list.length){
+              var x=r[list[i++]];
+              try{var q=sb.from(x.t);for(var j=0;j<x.r.length;j++)q=q[x.r[j][0]].apply(q,x.r[j][1]);await q}catch(e){}
+            }
+          }
+          await Promise.all([worker(),worker(),worker(),worker()]);
+        }finally{warming=false}
+      },delay==null?400:delay);
+    };
+    var hiddenAt=0;
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
+      if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800)}
+    });
+    function clone(r){try{return typeof structuredClone==='function'?structuredClone(r):JSON.parse(JSON.stringify(r))}catch(e){return r}}
+    function wrap(target,table,rec){
+      return new Proxy(target,{get:function(t,prop){
+        var v=t[prop];
+        if(prop==='then'){
+          return function(res,rej){
+            var isWrite=rec.some(function(c){return WRITE[c[0]]});
+            if(isWrite||NEVER.has(table)){
+              if(isWrite)cache.clear();
+              var pw=v.call(t,function(x){return x});
+              if(isWrite)pw=pw.then(function(x){cache.clear();window.v541Warm(2500);return x});
+              return pw.then(res,rej);
+            }
+            var key;try{key=table+'|'+JSON.stringify(rec)}catch(e){return v.call(t,res,rej)}
+            remember(key,table,rec);
+            if(!recipesStarted&&uid()){recipesStarted=true;window.v541Warm(300)}
+            var ttl=SLOW.has(table)?600000:120000,now=Date.now(),hit=cache.get(key);
+            if(!hit||now-hit.t>ttl){
+              var pr=v.call(t,function(x){return x});
+              hit={t:now,p:pr};cache.set(key,hit);
+              pr.then(function(x){if(!x||x.error){if(cache.get(key)===hit)cache.delete(key)}},function(){if(cache.get(key)===hit)cache.delete(key)});
+            }
+            return hit.p.then(function(x){return clone(x)}).then(res,rej);
+          };
+        }
+        if(typeof v==='function'){
+          return function(){
+            var args=Array.prototype.slice.call(arguments);
+            var r=v.apply(t,args);
+            if(r&&typeof r==='object'&&typeof r.then==='function')return wrap(r,table,rec.concat([[String(prop),args]]));
+            return r;
+          };
+        }
+        return v;
+      }});
+    }
+    var origFrom=sb.from.bind(sb);
+    sb.from=function(table){return wrap(origFrom(table),String(table),[])};
+    var origRpc=sb.rpc.bind(sb);
+    sb.rpc=function(){cache.clear();window.v541Warm(2500);return origRpc.apply(null,arguments)};
+    var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(u!==lastAuth){lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
+  }catch(e){console.warn('v540 cache off',e)}
+})();
 async function loadTeamsV88(publicOnly=false){
   try{
     let q=sb.from("rowing_teams").select("code,name,category,gender,is_active,sort_order,wkg_target,season_goals").order("sort_order").order("name");
@@ -2764,6 +2855,7 @@ function v347ScrollTo(y){const el=document.getElementById('v347Scroll');if(el)el
 
 // V159 · actualización manual y gesto de arrastrar hacia abajo.
 async function refreshAppV159(){
+  if(typeof v540ClearCache==='function')v540ClearCache();
   const btn=document.getElementById('refreshAppV159');if(btn){btn.disabled=true;btn.classList.add('is-refreshing')}
   try{
     try{
@@ -3158,65 +3250,24 @@ function render(){
 (function(){
   var v316OrigRender=render;
   var v316ReduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // V539 · "quiero que arranquen todas como arranca la de Eventos: muy suave". Cada pestaña guarda
-  // una "foto" de cómo se vio la última vez; al volver a ella se enseña esa foto al instante (sin
-  // atenuado ni icono de carga) mientras la pantalla real se monta por debajo con datos frescos, y en
-  // cuanto está lista se cambia una por otra con un fundido corto. La primera vez que se abre una
-  // pestaña en la sesión se sigue viendo la carga normal.
-  var V539_SNAP=new Map(),v539LastKey=null;
-  function v539Key(){return [typeof currentMode!=='undefined'?currentMode:'',typeof tab!=='undefined'?tab:'',(typeof coachSelectedTeam!=='undefined'&&coachSelectedTeam)||(typeof currentTeamCode!=='undefined'&&currentTeamCode)||''].join('|')}
-  function v539Strip(html){return html.replace(/\s(id|for|name)="[^"]*"/g,'').replace(/\sautofocus/g,'')}
-  window.v539ForgetSnapshots=function(){V539_SNAP.clear()};
-  function v539RemoveSnap(fade){
-    var sn=document.getElementById('v539Snap');if(!sn)return;
-    if(sn._obs)sn._obs.disconnect();clearTimeout(sn._t1);clearTimeout(sn._t2);clearInterval(sn._iv);
-    if(!fade){sn.remove();return}
-    sn.style.opacity='0';setTimeout(function(){sn.remove()},180);
-  }
-  function v539ShowSnap(el,html){
-    v539RemoveSnap(false);
-    var sn=document.createElement('div');sn.id='v539Snap';sn.className='v539Snap';sn.setAttribute('aria-hidden','true');
-    sn.innerHTML=html;
-    sn.style.top=el.offsetTop+'px';
-    el.parentNode.insertBefore(sn,el);
-    var snapH=0;try{snapH=sn.scrollHeight}catch(e){}
-    var start=Date.now(),lastMut=Date.now();
-    var obs=new MutationObserver(function(){lastMut=Date.now()});
-    obs.observe(el,{childList:true,subtree:true,characterData:true});sn._obs=obs;
-    sn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation()},true);
-    sn._iv=setInterval(function(){
-      var now=Date.now(),quiet=now-lastMut,loading=!!el.querySelector('.v316LoadingWrap'),tall=el.scrollHeight>=snapH*0.6;
-      if((quiet>=300&&!loading&&tall)||quiet>=900||now-start>=3000)v539RemoveSnap(true);
-    },80);
-  }
   render=function(){
     var el=document.getElementById("content"),overlay=document.getElementById("v366LoadOverlay");
-    try{
-      // guardar la foto de lo que se está viendo ahora antes de cambiar de pantalla
-      if(el&&v539LastKey&&el.firstElementChild&&!el.querySelector('.v316LoadingWrap')&&!document.getElementById('v539Snap'))V539_SNAP.set(v539LastKey,v539Strip(el.innerHTML));
-      var key=v539Key();v539LastKey=key;
-      var snap=V539_SNAP.get(key);
-      if(snap&&el&&!v316ReduceMotion){
-        el.classList.remove("v363Dim");
-        if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove("show")}
-        v539ShowSnap(el,snap);
-        v316OrigRender();
-        return;
-      }
-      v539RemoveSnap(false);
-    }catch(e){}
     // V366 · #content baja un poco de opacidad (transición CSS continua, ver arriba) mientras
     // se piden los datos de la vista nueva. Si tarda más de lo normal, aparece el icono grande
     // superpuesto (único aviso de carga); si es rápido, ni siquiera llega a mostrarse. Todo
     // sube/desaparece solo en cuanto el contenido definitivo está listo (ver el observer de
     // más arriba). Nada de animación por keyframes: solo transiciones, para que nunca haya
     // un salto ni un parpadeo a transparente.
+    if(!v316ReduceMotion&&el)el._v541Pending=true;
     if(!v316ReduceMotion&&el&&el.firstElementChild){
-      el.classList.add("v363Dim");
-      el._v363DimAt=Date.now();
+      // V540 · si la pantalla nueva está lista enseguida (casi siempre, con la memoria de datos),
+      // no se atenúa nada: cambio directo, sin parpadeo. Solo si tarda se atenúa / sale el icono.
+      clearTimeout(el._v540DimTimer);
+      el._v540DimTimer=setTimeout(function(){el.classList.add("v363Dim");el._v363DimAt=Date.now()},150);
+      el._v363DimAt=0;
       if(overlay){
         clearTimeout(overlay._v366Timer);
-        overlay._v366Timer=setTimeout(function(){overlay.classList.add("show")},220);
+        overlay._v366Timer=setTimeout(function(){overlay.classList.add("show")},700);
       }
       // Red de seguridad: si la vista actual deja el contenido final en un div interno (en vez
       // de en #content directamente) el observer nunca ve esa mutación final y el atenuado/icono
