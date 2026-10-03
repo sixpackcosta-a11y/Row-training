@@ -2478,7 +2478,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="537";
+const APP_VERSION="538";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3551,6 +3551,39 @@ async function v516FetchInvitedClubEvents(){
 }
 // V516 · roster completo de un evento: su equipo + los grupos añadidos (extra_team_codes). Caché por
 // pantalla para no repetir consultas.
+// V538 · "al pulsar Eventos tarda 4 o 5 segundos": las plantillas de cada equipo se pedían una a una
+// (4-5 consultas por equipo, en serie). Ahora se piden todas a la vez en 3 consultas para todos los
+// equipos y se guardan 5 minutos, y la lista se pinta al instante con lo último que se vio mientras
+// se actualiza por detrás.
+const V538_RC=new Map();let V538_RC_TS=0;
+function v538Cache(){if(Date.now()-V538_RC_TS>300000){V538_RC.clear();V538_RC_TS=Date.now()}return V538_RC}
+async function v538PrefetchRosters(teams,cache){
+  const need=[...new Set(teams.filter(Boolean))].filter(t=>!cache.has(t));
+  if(!need.length)return;
+  const p=(async()=>{
+    const [m,gc,ts]=await Promise.all([
+      sb.from('rower_team_memberships').select('user_id,team_code').in('team_code',need).eq('is_rower',true),
+      sb.from('user_roles').select('user_id').eq('role','coach'),
+      sb.from('team_staff_roles').select('user_id,team_code').in('team_code',need)
+    ]);
+    const mem=m.error?[]:(m.data||[]),coaches=gc.error?[]:(gc.data||[]),staff=ts.error?[]:(ts.data||[]);
+    const ids=[...new Set([...mem,...coaches,...staff].map(x=>x.user_id))];
+    let pr=ids.length?await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',ids):{data:[]};
+    if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',ids);
+    const prof=new Map((pr.data||[]).map(x=>[String(x.user_id),x]));
+    const out=new Map();
+    for(const t of need){
+      let rowers=mem.filter(x=>x.team_code===t).map(x=>prof.get(String(x.user_id))).filter(Boolean);
+      if(!rowers.length)rowers=await staffAthletesForTeam(t); // equipos antiguos sin filas de membresía
+      const st=[...coaches,...staff.filter(x=>x.team_code===t)].map(x=>prof.get(String(x.user_id))).filter(Boolean);
+      out.set(t,v499MergeRoster(rowers,st));
+    }
+    return out;
+  })();
+  need.forEach(t=>cache.set(t,p.then(o=>o.get(t)||[]).catch(()=>[])));
+  await p.catch(()=>{});
+}
+const V538_SNAP=new Map();
 function v516RosterOf(team,cache){
   if(!cache.has(team))cache.set(team,(async()=>{const [r,st]=await Promise.all([staffAthletesForTeam(team),v499StaffForTeam(team)]);return v499MergeRoster(r,st)})());
   return cache.get(team);
@@ -4280,10 +4313,11 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
   // la lista de fondo (para que sus contadores ✅/❓/❌ no se queden desactualizados detrás).
   const reopen=()=>{if(afterChange)afterChange();v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat,true)};
   try{
-    const [events2,rowersOnly2,staffList2]=await Promise.all([v495FetchEvents(tc),staffAthletesForTeam(tc),v499StaffForTeam(tc)]);
+    const cacheD=v538Cache();const staffList2=[];
+    const [events2]=await Promise.all([v495FetchEvents(tc),v538PrefetchRosters([tc],cacheD)]);
     const ev2=events2.find(e=>e.kind===kind&&e.id===id);
     if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
-    const roster2=v514EventRoster(ev2,await v516FullRoster(ev2,tc,new Map([[tc,Promise.resolve(v499MergeRoster(rowersOnly2,staffList2))]])));
+    const roster2=v514EventRoster(ev2,await v516FullRoster(ev2,tc,cacheD));
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
     const statusByUser=v514EffectiveStatus(ev2,roster2,statusByEvent2.get(`${ev2.kind}_${ev2.id}`)),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     const orgIds2=await v512FetchOrganizerIds(ev2,tc);
@@ -4414,14 +4448,22 @@ async function coachEventsView(){
     if(!enabledTeams.length){area.innerHTML='<div class="info">El módulo de convocatorias y asistencia está desactivado en todos tus equipos.<br><span class="muted">Puedes reactivarlo en Equipo → "Convocatorias y asistencia".</span></div>';return}
     const act=activeTeams();
     if(act.length===1)coachSelectedTeam=act[0];
-    if(!area.querySelector('.v503EventRow'))area.innerHTML=v316Loading('Cargando eventos…'); // V535 · refresco silencioso
-    let perTeam;const cache=new Map(),seenClub=new Set();
+    const snapKey='staff:'+act.join(',');
+    const wireRows=()=>area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load));
+    if(!area.querySelector('.v503EventRow')){
+      if(V538_SNAP.has(snapKey)){area.innerHTML=V538_SNAP.get(snapKey);wireRows()}
+      else area.innerHTML=v316Loading('Cargando eventos…'); // V535 · refresco silencioso
+    }
+    let perTeam;const cache=v538Cache(),seenClub=new Set();
     try{
+      const rosterP=v538PrefetchRosters(act,cache);
       perTeam=await Promise.all(act.map(async tc=>{
         const events=await v495FetchEvents(tc);
         const statusByEvent=await v495RsvpStatusMapsForEvents(events,tc);
         return {tc,events,statusByEvent};
       }));
+      await rosterP;
+      await v538PrefetchRosters(perTeam.flatMap(x=>x.events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[])),cache);
       // V516 · un evento propio con varios grupos sale una sola vez (no una por grupo).
       const lists=[];
       for(const {tc,events,statusByEvent} of perTeam){
@@ -4434,7 +4476,8 @@ async function coachEventsView(){
     if(tab!=='eventos'||currentMode!=='staff')return;
     const all=perTeam.flat();
     area.innerHTML=all.length?v503GroupedRowsHtml(all):'<div class="info">No hay convocatorias ni competiciones próximas.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
-    area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load));
+    if(all.length)V538_SNAP.set(snapKey,area.innerHTML);
+    wireRows();
     all.forEach(v514TryReminder);
   }
   paintChips();
@@ -4446,11 +4489,16 @@ async function coachEventsView(){
 // siguen siendo solo del entrenador).
 async function athleteEventsView(){
   const team=currentTeamCode;
-  if(!document.getElementById('eventsArea')?.querySelector('.v503EventRow'))content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  const snapKey='athlete:'+team;
+  const wireRowsA=()=>document.getElementById('eventsArea')?.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
+  if(!document.getElementById('eventsArea')?.querySelector('.v503EventRow')){
+    content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${V538_SNAP.get(snapKey)||v316Loading('Cargando eventos…')}</div></div>`;
+    if(V538_SNAP.has(snapKey))wireRowsA();
+  }
   const area=document.getElementById('eventsArea');
   if(!v533RowerSeesEvents(team)){area.innerHTML='<div class="info">Los eventos todavía no están disponibles.</div>';return}
-  let events,invited;
-  try{[events,invited]=await Promise.all([v495FetchEvents(team),v516FetchInvitedClubEvents()])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  let events,invited;const cacheA=v538Cache();
+  try{[events,invited]=await Promise.all([v495FetchEvents(team),v516FetchInvitedClubEvents(),v538PrefetchRosters([team],cacheA)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
   const ids=new Set(events.filter(e=>e.kind==='club_event').map(e=>String(e.id)));
   invited.forEach(ev=>{if(!ids.has(String(ev.id)))events.push(ev)});
@@ -4461,10 +4509,12 @@ async function athleteEventsView(){
   // respuestas son "solo organizadores", no ve los contadores en la lista.
   const me=String(currentUser?.id||'');
   const visible=events.filter(ev=>!(Array.isArray(ev.excluded_ids)&&ev.excluded_ids.map(String).includes(me))&&(!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length||ev.invitee_ids.map(String).includes(me)||String(ev.created_by)===me));
-  const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,new Map())).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
+  await v538PrefetchRosters(visible.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
+  const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,cacheA)).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
   area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
+  if(withCounts.length)V538_SNAP.set(snapKey,area.innerHTML);
   withCounts.forEach(v514TryReminder);
-  area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
+  wireRowsA();
   events.forEach(ev=>v498TryClaimAndNotify(ev,ev.kind==='club_event'?ev.team_code:team));
 }
 async function v307FetchCrewMap(sessionIds){
