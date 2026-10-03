@@ -530,6 +530,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v536Box{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v536Head{font-weight:700;margin-bottom:6px}.v536Item{margin:6px 0}.v536ItemHead{display:flex;justify-content:space-between;align-items:center;gap:8px}.v536Unlink{padding:4px 9px;font-size:.8rem}.v536Opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.v536AssignBox{margin-top:6px}.v536EditorLink{display:block;margin:10px 0}
 .v531Bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-tint);border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:0 0 10px}.v531Bar.cancelled{background:#fee2e2;border-color:#fecaca}.v531Btns{display:flex;gap:8px;flex-wrap:wrap}.v531FormCard{margin:0 0 12px}
 .v530Row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);margin:0}.v530Row input[type=checkbox]{width:auto;margin:0;transform:scale(1.25)}.v530Row select{width:auto;margin:0}
 .v528DayHead{font-weight:700;font-size:1.05rem;margin:4px 0 10px;padding:8px 12px;border-radius:9px;background:var(--accent-tint);border-left:4px solid #2563eb}@keyframes v528Flash{0%{box-shadow:0 0 0 0 #2563eb88}100%{box-shadow:0 0 0 14px #2563eb00}}#planArea.v528Flash{animation:v528Flash 1s ease-out;border-radius:10px}#planArea{scroll-margin-top:12px}
@@ -2477,7 +2478,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="535";
+const APP_VERSION="536";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3915,7 +3916,9 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // mapas). Si se pegó directamente un enlace de mapas, se usa tal cual. Ahora también en
   // convocatorias de entrenamiento y competiciones, no solo en eventos propios.
   const locLine=ev.location?`<p class="v522Loc">📍 <a href="${esc(v522MapsUrl(ev.location))}" target="_blank" rel="noopener">${esc(/^https?:\/\//i.test(ev.location)?'Ver ubicación en el mapa':ev.location)}</a></p>`:'';
-  const extra=`${locLine}${ev.kind!=='session'&&ev.notes?`<p>${esc(ev.notes)}</p>`:''}`;
+  const linkedS=ev.kind!=='session'?(ev._linkedSessions||[]):[];
+  const linkedHtml=ev.kind==='session'?'':(linkedS.length||canEdit)?`<div class="v536Box"><div class="v536Head">🏋️ Entrenamiento</div>${linkedS.map(s=>{const tl=V536_TYPE_LABEL[String(s.session_type).toUpperCase()]||s.session_type;return canEdit?`<div class="v536Item"><div class="v536ItemHead"><b>${esc(tl)} · ${esc(s.title||'')}</b><button type="button" class="v536Unlink" data-sid="${s.id}">Quitar</button></div>${trainingContentHtml(s.content)}</div>`:(String(s.session_type).toUpperCase()==='MAR'?`<p class="v536Item">${esc(tl)} · entrenamiento de mar</p>`:`<button type="button" class="v517OpenSession primary" data-date="${esc(s.session_date)}">${esc(tl)} · Abrir entrenamiento</button>`)}).join('')||'<p class="muted"><small>Sin entrenamiento asignado.</small></p>'}${canEdit?`<div class="actions"><button type="button" class="v536Assign">+ Asignar entrenamiento</button></div><div class="v536AssignBox hidden"></div>`:''}</div>`:'';
+  const extra=`${locLine}${ev.kind!=='session'&&ev.notes?`<p>${esc(ev.notes)}</p>`:''}${linkedHtml}`;
   // V525 · las convocatorias de entrenamiento también tienen "Editar" (abre esa sesión en
   // Planificación, donde están sus opciones de evento) y "Quitar de eventos" (no borra el
   // entrenamiento, solo deja de ser evento).
@@ -4205,6 +4208,20 @@ function v499WireRemindButton(root,team){
 // in-situ. La usan la Vista general (canEdit=false, siempre de solo lectura) y ahora también la vista
 // normal de un equipo (canEdit=true: desde aquí sí se puede editar/eliminar y usar el sustituto
 // puntual, cosas que en la Vista general se siguen dejando solo para "la vista normal de ESE equipo").
+// V536 · "¿cómo asigno un entrenamiento a un evento? Creo un evento y más tarde quiero asignarle un
+// entrenamiento de mar, gim o ergo": los eventos propios y las competiciones guardan session_ids.
+let v536PendingLink=null,plannerAutoNewV536=false;
+async function v536SetLink(kind,eventId,sessionId,add){
+  const table=V498_TABLE_BY_KIND[kind];
+  const r=await sb.from(table).select('session_ids').eq('id',eventId).maybeSingle();
+  if(r.error)throw r.error;
+  const cur=(r.data?.session_ids||[]).map(Number);
+  const next=add?[...new Set([...cur,Number(sessionId)])]:cur.filter(x=>x!==Number(sessionId));
+  const q=await sb.from(table).update({session_ids:next.length?next:null}).eq('id',eventId);
+  if(q.error)throw q.error;
+}
+function v536LinkError(e){return /session_ids/.test(e?.message||'')?'Falta ejecutar 41_entrenamiento_en_evento.sql en Supabase.':(e?.message||String(e))}
+const V536_TYPE_LABEL={MAR:'🚣 MAR',GYM:'🏋️ GYM',ERG:'🚣‍♀️ ERGO',DESC:'Descanso'};
 async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,reuse=false){
   // V535 · "al aceptar o rechazar se actualice solo, pero sin el pantallazo blanco": al refrescar
   // tras un cambio se reutiliza la misma pantalla (sin quitarla ni poner "Cargando…"), se cambia el
@@ -4233,6 +4250,10 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
     const statusByUser=v514EffectiveStatus(ev2,roster2,statusByEvent2.get(`${ev2.kind}_${ev2.id}`)),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     const orgIds2=await v512FetchOrganizerIds(ev2,tc);
+    if(ev2.kind!=='session'&&Array.isArray(ev2.session_ids)&&ev2.session_ids.length){
+      const ls=await sb.from('training_sessions').select('*').in('id',ev2.session_ids);
+      ev2._linkedSessions=(ls.data||[]).sort((a,b)=>String(a.session_type).localeCompare(String(b.session_type)));
+    }else ev2._linkedSessions=[];
     const activeTab=reuse?body.querySelector('.v493SumRow.active')?.dataset.key:null;
     body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2,orgIds2);
     if(reuse){cardEl.scrollTop=keepScroll;if(activeTab)setTimeout(()=>body.querySelector(`.v493SumRow[data-key="${activeTab}"]`)?.click(),0);if(openChats){const d=body.querySelector('.v494EventChatAccordion');if(d)d.open=true}}
@@ -4241,6 +4262,24 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     v493WireRsvpSummaryTabs(body,reopen);
     v499WireRemindButton(body,tc);
     // V517 · GYM/ERGO: "Abrir entrenamiento" lleva a la remera al día de esa sesión en su Semana.
+    if(canEdit){
+      body.querySelectorAll('.v536Unlink').forEach(b=>b.onclick=async()=>{
+        if(!confirm('¿Quitar este entrenamiento del evento? El entrenamiento sigue en la planificación.'))return;
+        b.disabled=true;try{await v536SetLink(ev2.kind,ev2.id,b.dataset.sid,false);reopen()}catch(e){alert(v536LinkError(e));b.disabled=false}
+      });
+      const asg=body.querySelector('.v536Assign'),abox=body.querySelector('.v536AssignBox');
+      if(asg&&abox)asg.onclick=async()=>{
+        abox.classList.toggle('hidden');if(abox.classList.contains('hidden'))return;
+        abox.innerHTML=v316Loading('Buscando entrenamientos de ese día…');
+        const teamsEv=ev2.kind==='competition'?(ev2.team_codes&&ev2.team_codes.length?ev2.team_codes:[tc]):[ev2.team_code||tc,...(ev2.extra_team_codes||[])];
+        const r=await sb.from('training_sessions').select('id,team_code,session_type,title,session_date,target_user_ids').in('team_code',teamsEv).eq('session_date',ev2.event_date).order('session_type');
+        const linkedIds=new Set((ev2.session_ids||[]).map(Number));
+        const opts=(r.data||[]).filter(x=>!linkedIds.has(Number(x.id))&&!sessionTargetsV249(x).length&&String(x.session_type).toUpperCase()!=='DESC');
+        abox.innerHTML=`<p class="muted"><small>Entrenamientos ya planificados el ${esc(v512DetailDateLabel(ev2.event_date))}:</small></p>${opts.length?opts.map(x=>`<div class="v536Opt"><span>${esc(V536_TYPE_LABEL[String(x.session_type).toUpperCase()]||x.session_type)} · ${esc(x.title||'')}${teamsEv.length>1?` <small class="muted">(${esc(teamLabel(x.team_code))})</small>`:''}</span><button type="button" class="primary v536Pick" data-sid="${x.id}">Asignar</button></div>`).join(''):'<p class="muted">No hay entrenamientos planificados ese día.</p>'}<div class="actions"><button type="button" class="v536New">+ Crear un entrenamiento nuevo para ese día</button></div>`;
+        abox.querySelectorAll('.v536Pick').forEach(p=>p.onclick=async()=>{p.disabled=true;try{await v536SetLink(ev2.kind,ev2.id,p.dataset.sid,true);reopen()}catch(e){alert(v536LinkError(e));p.disabled=false}});
+        abox.querySelector('.v536New').onclick=()=>{v536PendingLink={kind:ev2.kind,id:ev2.id,title:ev2.event_title};plannerAutoNewV536=true;close();openCoachPlanner(ev2.kind==='competition'?tc:(ev2.team_code||tc),ev2.event_date)};
+      };
+    }
     body.querySelectorAll('.v517OpenSession').forEach(b=>b.onclick=()=>{const d=b.dataset.date;close();athleteWeekStartV113=mondayOfISO(d);athleteSelectedDateV113=d;tab='semana';draw();render()});
     if(canEdit){
       // V517 · duplicar un evento: abre el formulario de crear con todo copiado (cambias fecha, etc.)
@@ -8382,6 +8421,7 @@ async function coachPlanner(){
  if(exportExcelBtn)exportExcelBtn.onclick=()=>exportSeasonExcelV170();if(exportPdfBtn)exportPdfBtn.onclick=()=>exportSeasonPdfV170();if(importExcelInput)importExcelInput.onchange=e=>{const f=e.target.files?.[0];if(f)importSeasonExcelV170(f);e.target.value=''};
  seasonTeam.innerHTML=[...planTeam.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('');seasonTeam.value=planTeam.value;
  planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;seasonTeam.value=planTeam.value;drawCalendar();renderPlanDay();renderCoachSeason()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();await renderCoachSeason();
+ if(plannerAutoNewV536){plannerAutoNewV536=false;plannerAutoEdit=false;plannerTargetSessionId=null;sessionEditor()}
  if(plannerTargetSessionId!=null || plannerAutoEdit){
    const data=await loadCoachCalendar(planTeam.value,planDate.value);
    if(plannerTargetSessionId!=null){
@@ -8503,6 +8543,7 @@ function sessionEditor(x=null){
  <div id="editorLibrary" class="info" style="margin:12px 0"></div>
  <div id="visualSessionEditorV213"></div>
  <details id="advancedSessionTextV213" style="margin:12px 0"><summary><b>Edición avanzada · ver texto</b></summary><label style="margin-top:10px">Contenido / bloques</label><textarea id="sessContent" rows="10" placeholder="Selecciona una plantilla de la biblioteca o escribe el entrenamiento">${esc(initial)}</textarea><label id="gymCustomTextWrapV249" class="inlineCheck" style="margin-top:8px"><input id="gymCustomTextV249" type="checkbox"> <span><b>Solo GYM:</b> guardar este texto tal cual (ignora los ejercicios marcados de la biblioteca). Formato por línea: <i>Ejercicio · 4×12-10-10-8 · notas</i></span></label></details>
+ <div id="v536LinkBox"></div>
  <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Convertir en evento</b><br>Aparece en Eventos: las remeras confirman si van o no y hay un chat propio de ese día.</span></label>
  <div id="sessEventOpts" class="v517EventOpts" style="display:none">
   <div class="v514Sec"><label>Nombre del evento<input id="seName" value="${esc(x?.event_name||'')}" placeholder="${esc(v524DefaultEventName(x?.session_type||'MAR'))}"></label><p class="muted"><small>Es lo que ven las remeras en Eventos. En blanco = "${esc(v524DefaultEventName(x?.session_type||'MAR'))}". El título del entrenamiento no se muestra.</small></p></div>
@@ -8600,6 +8641,24 @@ function sessionEditor(x=null){
    const cr=document.getElementById('seCoverRemove');if(cr)cr.onclick=()=>{seCoverFile=null;seCoverUrl=null;ci.value='';document.getElementById('seCoverPrev').innerHTML='<span class="muted">Sin imagen</span>';cr.classList.add('hidden')};
    v517SyncEventOpts();
  },0);
+ // V536 · asignar este entrenamiento a un evento propio / competición de ese día.
+ let v536Evs=[];
+ (async()=>{
+   if(!v534EventsUI())return;
+   const box=document.getElementById('v536LinkBox');if(!box)return;
+   try{
+     const [ce,cc]=await Promise.all([
+       sb.from('club_events').select('id,title,team_code,extra_team_codes,session_ids').eq('event_date',date).or(`team_code.eq.${team},extra_team_codes.cs.{${team}}`),
+       sb.from('competitions').select('id,name,team_codes,session_ids').eq('competition_date',date).contains('team_codes',[team])
+     ]);
+     v536Evs=[...(ce.data||[]).map(e=>({kind:'club_event',id:e.id,name:e.title,ids:e.session_ids||[]})),...(cc.data||[]).map(e=>({kind:'competition',id:e.id,name:e.name,ids:e.session_ids||[]}))];
+     if(!v536Evs.length)return;
+     const cur=x?.id?v536Evs.find(e=>e.ids.map(Number).includes(Number(x.id))):null;
+     const pre=cur||(v536PendingLink?v536Evs.find(e=>e.kind===v536PendingLink.kind&&Number(e.id)===Number(v536PendingLink.id)):null);
+     box.innerHTML=`<label class="v536EditorLink">📅 Asignar a un evento de ese día<select id="v536LinkSel"><option value="">— Ninguno —</option>${v536Evs.map(e=>`<option value="${e.kind}:${e.id}" ${pre&&pre.kind===e.kind&&pre.id===e.id?'selected':''}>${e.kind==='competition'?'🏁 ':'📅 '}${esc(e.name||'Evento')}</option>`).join('')}</select></label>`;
+     box.dataset.orig=cur?`${cur.kind}:${cur.id}`:'';
+   }catch(e){}
+ })();
  const refresh=()=>{drawAudienceV249();renderEditorLibrary(sessType.value,x);drawVisualEditorV213(true);saveMarLibraryWrap.style.display=sessType.value==='MAR'?'flex':'none';sessIsEventWrap.style.display=['MAR','GYM'].includes(sessType.value)&&v534EventsUI()?'flex':'none';v517SyncEventOpts();v300ErgoTitleBuilder.style.display=sessType.value==='ERG'?'':'none'; typeAdvice.innerHTML=sessType.value==='GYM'?`<div class="info">${gymAdviceForDate(date)}<br><b>Editor:</b> los ejercicios marcados arriba sustituyen el contenido GYM al guardar.</div>`:sessType.value==='MAR'?`<div class="info"><b>MAR:</b> planifica la sesión completa, incluido calentamiento, recuperaciones y vuelta a la calma. En Registro MAR solo aparecerán los bloques de trabajo.${new Date(date+'T12:00:00').getDay()===2?'<br><b>Martes: duración objetivo 60 min.</b>':''}</div>`:sessType.value==='DESC'?'<div class="info"><b>DESCANSO:</b> recuperación. No se muestran indicaciones de carga.</div>':'';};
  sessType.onchange=()=>{const skeleton=sessContent.value.trim()===marDefaultSessionContent().trim();x=null;if(sessType.value==='MAR'&&!sessContent.value.trim())setSessionContentV213(marDefaultSessionContent());else if(sessType.value!=='MAR'&&skeleton)setSessionContentV213('');refresh()}; refresh(); cancelSess.onclick=renderPlanDay;
  saveSess.onclick=async()=>{
@@ -8644,6 +8703,18 @@ function sessionEditor(x=null){
    }
    if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?(/event_name/.test(q.error.message)?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.'):q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
+   // V536 · vínculo con evento
+   try{
+     const sel=document.getElementById('v536LinkSel');
+     if(sel&&savedSessionId){
+       const orig=document.getElementById('v536LinkBox')?.dataset.orig||'',now=sel.value;
+       if(orig!==now){
+         if(orig){const [k,i]=orig.split(':');await v536SetLink(k,Number(i),savedSessionId,false)}
+         if(now){const [k,i]=now.split(':');await v536SetLink(k,Number(i),savedSessionId,true)}
+       }
+     }
+   }catch(e){alert('El entrenamiento se guardó, pero no se pudo asignar al evento: '+v536LinkError(e))}
+   v536PendingLink=null;
    // V517 · periódico: aplicar las mismas opciones de evento a las sesiones del mismo tipo ya
    // planificadas en los días de la semana elegidos, hasta la fecha indicada.
    let v517SentBulk=false;
