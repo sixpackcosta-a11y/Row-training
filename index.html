@@ -2479,7 +2479,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="542";
+const APP_VERSION="543";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2772,6 +2772,7 @@ async function startApp(){
   loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
   if(typeof v541Warm==='function')v541Warm(1500);
+  setTimeout(()=>{if(tab!=='eventos')v543PrefetchEvents()},900);
   if(v300ResumeScrollY!=null)setTimeout(()=>v347ScrollTo(v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
   if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),800);
@@ -3704,7 +3705,40 @@ async function v538PrefetchRosters(teams,cache){
   need.forEach(t=>cache.set(t,p.then(o=>o.get(t)||[]).catch(()=>[])));
   await p.catch(()=>{});
 }
-const V538_SNAP=new Map();
+// V543 · la "foto" de la lista de Eventos se guarda también en el móvil (por usuario), así que la
+// primera vez que se abre Eventos tras arrancar la app ya sale al instante y se actualiza por detrás.
+const V538_SNAP=(function(){
+  const mem=new Map();let loadedFor=null;
+  const key=()=>'rowtraining_evsnap_v543_'+(currentUser?.id||'');
+  const load=()=>{const k=key();if(loadedFor===k)return;loadedFor=k;mem.clear();try{const o=JSON.parse(localStorage.getItem(k)||'{}')||{};Object.keys(o).forEach(x=>{if(o[x]&&Date.now()-o[x].t<3*864e5)mem.set(x,o[x].h)})}catch(e){}};
+  const save=()=>{try{const o={};mem.forEach((h,x)=>{o[x]={t:Date.now(),h}});localStorage.setItem(key(),JSON.stringify(o))}catch(e){}};
+  return {has:k=>{load();return mem.has(k)},get:k=>{load();return mem.get(k)},set:(k,h)=>{load();if(mem.get(k)===h)return;mem.set(k,h);save()}};
+})();
+// V543 · datos de Eventos precargados al arrancar (si los eventos están visibles para este usuario),
+// para que al pulsar la pestaña todo salga ya de memoria.
+async function v543PrefetchEvents(){
+  try{
+    if(!currentUser||!v534EventsUI())return;
+    let teams=[];
+    if(currentMode==='staff'){
+      if(!hasAnyCoachTeam())return;
+      const en=staffViewTeamCodes().filter(v497AttendanceEnabledForTeam);
+      let sel=[];try{sel=JSON.parse(localStorage.getItem(V513_TEAMS_KEY)||'[]')||[]}catch(e){}
+      teams=sel.filter(t=>en.includes(t));if(!teams.length)teams=en;
+    }else{
+      if(!currentTeamCode||!v533RowerSeesEvents(currentTeamCode))return;
+      teams=[currentTeamCode];
+    }
+    if(!teams.length)return;
+    const cache=v538Cache(),rp=v538PrefetchRosters(teams,cache);
+    await Promise.all(teams.map(async tc=>{
+      const evs=await v495FetchEvents(tc);
+      await Promise.all([v495RsvpStatusMapsForEvents(evs,tc),v538PrefetchRosters(evs.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cache)]);
+    }));
+    if(currentMode!=='staff')await v516FetchInvitedClubEvents().catch(()=>{});
+    await rp;
+  }catch(e){}
+}
 function v516RosterOf(team,cache){
   if(!cache.has(team))cache.set(team,(async()=>{const [r,st]=await Promise.all([staffAthletesForTeam(team),v499StaffForTeam(team)]);return v499MergeRoster(r,st)})());
   return cache.get(team);
@@ -4580,7 +4614,7 @@ async function coachEventsView(){
       const rosterP=v538PrefetchRosters(act,cache);
       perTeam=await Promise.all(act.map(async tc=>{
         const events=await v495FetchEvents(tc);
-        const statusByEvent=await v495RsvpStatusMapsForEvents(events,tc);
+        const [statusByEvent]=await Promise.all([v495RsvpStatusMapsForEvents(events,tc),v538PrefetchRosters(events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cache)]);
         return {tc,events,statusByEvent};
       }));
       await rosterP;
@@ -4625,7 +4659,9 @@ async function athleteEventsView(){
   invited.forEach(ev=>{if(!ids.has(String(ev.id)))events.push(ev)});
   events.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
   if(tab!=='eventos'||currentMode!=='athlete')return;
+  const v543ExtraP=v538PrefetchRosters(events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
   const statusByEvent=await v495RsvpStatusMapsForEvents(events,team);
+  await v543ExtraP;
   // V514 · si el evento tiene destinatarios elegidos, la remera solo lo ve si está invitada; y si las
   // respuestas son "solo organizadores", no ve los contadores en la lista.
   const me=String(currentUser?.id||'');
