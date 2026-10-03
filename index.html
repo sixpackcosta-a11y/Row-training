@@ -434,7 +434,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
   .complianceSubBodyV176{padding:10px 8px!important}
 }
 .v240ReviewBanner{background:#fff8e8;border:1px solid #edc36b;border-radius:7px;padding:10px 12px;margin:8px 0 12px;color:#0b1830}.v240ReviewBanner .staffActions{margin-top:8px}.v240ReviewBanner button{font-size:.82rem;padding:8px 10px}
-</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script async src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script><script async src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>.mixGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}@media(max-width:720px){.mixGrid{grid-template-columns:1fr}}
 /* V90 */
 .rowerTeamSwitch{margin-top:6px;max-width:250px;background:var(--surface);color:var(--text);border-radius:9px;padding:6px 8px}.libraryCard{transition:.15s ease}.libraryAccordion[open]>.libraryCards{padding:12px}.gymLegendV90{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.zoneLegendItem{display:flex!important;align-items:center;gap:8px!important;padding:7px 9px!important}.zoneLegendItem svg{width:30px;height:42px;flex:0 0 auto}.zoneBase{fill:#e9eef5;stroke:#8aa0b8;stroke-width:1.5}.zoneHi{fill:#ffb24a;opacity:.9}.libraryCard.detailCard{padding:18px}.libraryAccordion[open] summary{background:var(--surface-2)}.rowerMemberships{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.membershipTag{display:inline-flex;align-items:center;gap:7px;background:#edf4fb;border:1px solid #d6e2ee;border-radius:6px;padding:7px 9px;color:#0b1830}.raceSim{border-left:5px solid #f59e0b;background:#fff8ea;color:#0b1830}.seasonNotice{background:#fff8e7;border:1px solid #f3d28f;border-radius:7px;padding:10px 12px;margin:10px 0;color:#0b1830}
@@ -2479,7 +2479,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="541";
+const APP_VERSION="542";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2503,6 +2503,12 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var SLOW=new Set(['profiles','rowing_teams','user_roles','team_staff_roles','rower_team_memberships','training_library','ergo_library','notification_prefs','training_library_user_prefs','athlete_season_notes']);
     var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests']);
     var WRITE={insert:1,update:1,upsert:1,'delete':1},recipesStarted=false;
+    var PERSIST=new Set(['rowing_teams','user_roles','team_staff_roles','rower_team_memberships','profiles']),PKEY='rowtraining_pc_v542',pstore=null,psaveT=null;
+    function pload(){if(!pstore){try{pstore=JSON.parse(localStorage.getItem(PKEY)||'{}')||{}}catch(e){pstore={}}}return pstore}
+    function pget(k){var e=pload()[k];return e&&Date.now()-e.t<7*864e5?{data:e.d,error:null,count:e.c==null?null:e.c,status:200}:null}
+    function pset(k,x){var st=pload();st[k]={t:Date.now(),d:x.data,c:x.count==null?null:x.count};clearTimeout(psaveT);psaveT=setTimeout(function(){try{localStorage.setItem(PKEY,JSON.stringify(st))}catch(e){try{localStorage.removeItem(PKEY)}catch(_){}}},800)}
+    function pdrop(tb){var st=pload();Object.keys(st).forEach(function(k){if(k.indexOf(tb+'|')===0)delete st[k]});try{localStorage.setItem(PKEY,JSON.stringify(st))}catch(e){}}
+    function pwipe(){pstore={};try{localStorage.removeItem(PKEY)}catch(e){}}
     var cache=new Map();
     window.v540ClearCache=function(){cache.clear()};
     // V541 · "que cargue bien desde el inicio": la app recuerda (en este móvil) qué lecturas hace
@@ -2549,19 +2555,29 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
           return function(res,rej){
             var isWrite=rec.some(function(c){return WRITE[c[0]]});
             if(isWrite||NEVER.has(table)){
-              if(isWrite)cache.clear();
+              if(isWrite){cache.clear();if(PERSIST.has(table))pdrop(table)}
               var pw=v.call(t,function(x){return x});
-              if(isWrite)pw=pw.then(function(x){cache.clear();window.v541Warm(2500);return x});
+              if(isWrite)pw=pw.then(function(x){cache.clear();if(PERSIST.has(table))pdrop(table);window.v541Warm(2500);return x});
               return pw.then(res,rej);
             }
             var key;try{key=table+'|'+JSON.stringify(rec)}catch(e){return v.call(t,res,rej)}
             remember(key,table,rec);
-            if(!recipesStarted&&uid()){recipesStarted=true;window.v541Warm(300)}
+            // V542 · tablas que casi no cambian (equipos, roles, perfiles, grupos): al arrancar se usa
+            // lo guardado en el móvil al instante y se actualiza por detrás para la próxima vez.
+            if(PERSIST.has(table)&&!cache.has(key)){
+              var pv=pget(key);
+              if(pv){
+                var bg=v.call(t,function(x){return x});
+                var hp={t:Date.now(),p:Promise.resolve(pv)};cache.set(key,hp);
+                bg.then(function(x){if(x&&!x.error){pset(key,x);if(cache.get(key)===hp)cache.set(key,{t:Date.now(),p:Promise.resolve(x)})}},function(){});
+                return hp.p.then(function(x){return clone(x)}).then(res,rej);
+              }
+            }
             var ttl=SLOW.has(table)?600000:120000,now=Date.now(),hit=cache.get(key);
             if(!hit||now-hit.t>ttl){
               var pr=v.call(t,function(x){return x});
               hit={t:now,p:pr};cache.set(key,hit);
-              pr.then(function(x){if(!x||x.error){if(cache.get(key)===hit)cache.delete(key)}},function(){if(cache.get(key)===hit)cache.delete(key)});
+              pr.then(function(x){if(!x||x.error){if(cache.get(key)===hit)cache.delete(key)}else if(PERSIST.has(table))pset(key,x)},function(){if(cache.get(key)===hit)cache.delete(key)});
             }
             return hit.p.then(function(x){return clone(x)}).then(res,rej);
           };
@@ -2580,15 +2596,16 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var origFrom=sb.from.bind(sb);
     sb.from=function(table){return wrap(origFrom(table),String(table),[])};
     var origRpc=sb.rpc.bind(sb);
-    sb.rpc=function(){cache.clear();window.v541Warm(2500);return origRpc.apply(null,arguments)};
-    var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(u!==lastAuth){lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
+    sb.rpc=function(){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)};
+    var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(u!==lastAuth){if(lastAuth!==null||!u)pwipe();lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
   }catch(e){console.warn('v540 cache off',e)}
 })();
 async function loadTeamsV88(publicOnly=false){
   try{
     let q=sb.from("rowing_teams").select("code,name,category,gender,is_active,sort_order,wkg_target,season_goals").order("sort_order").order("name");
     if(publicOnly)q=q.eq("is_active",true);
-    const res=await q;
+    // V542 · las tres lecturas de equipos a la vez (antes iban una detrás de otra)
+    const [res,v542Att,v542Lv]=await Promise.all([q,sb.from('rowing_teams').select('code,attendance_module_enabled').then(x=>x,e=>({error:e})),sb.from('rowing_teams').select('code,events_rowers_live').then(x=>x,e=>({error:e}))]);
     if(!res.error&&res.data?.length){
       const rows=publicOnly?res.data:res.data.filter(x=>x.is_active!==false);
       if(rows.length)TEAM_OPTIONS=rows.map(x=>[x.code,x.name]);
@@ -2597,11 +2614,11 @@ async function loadTeamsV88(publicOnly=false){
       // si todavía no se ha ejecutado 20_eventos_v497.sql en Supabase, esto falla solo, sin romper la
       // carga de equipos (que es crítica para toda la app).
       try{
-        const att=await sb.from('rowing_teams').select('code,attendance_module_enabled');
+        const att=v542Att;
         if(!att.error)(att.data||[]).forEach(x=>TEAM_ATTENDANCE_V497.set(x.code,x.attendance_module_enabled!==false));
       }catch(e){}
       try{
-        const lv=await sb.from('rowing_teams').select('code,events_rowers_live');
+        const lv=v542Lv;
         TEAM_ROWERS_LIVE_V533=new Map();
         if(!lv.error)(lv.data||[]).forEach(x=>TEAM_ROWERS_LIVE_V533.set(x.code,x.events_rowers_live===true));
       }catch(e){}
@@ -2688,9 +2705,15 @@ async function loadPendingRegistrationCount(){
 let appStartingV96=false;
 async function startApp(){
   if(appStartingV96)return; appStartingV96=true;
-  await loadTeamsV88(false);
-  const {data:{user}}=await sb.auth.getUser();if(!user){appStartingV96=false;openLogin();return;}currentUser=user;
-  const [roleRes,profileRes,staffRes,membershipRes]=await Promise.all([
+  // V542 · arranque en paralelo: equipos, sesión (local, sin ir a la red), rol, perfil, grupos y
+  // estado de alta se piden todos a la vez en lugar de uno tras otro.
+  const v542TeamsP=loadTeamsV88(false);
+  let user=null;
+  try{const {data}=await sb.auth.getSession();user=data?.session?.user||null}catch(e){}
+  if(!user){try{const {data}=await sb.auth.getUser();user=data?.user||null}catch(e){}}
+  if(!user){appStartingV96=false;openLogin();return;}currentUser=user;
+  const v542RegP=loadRegistrationState();
+  const [,,roleRes,profileRes,staffRes,membershipRes]=await Promise.all([v542TeamsP,v542RegP,
     sb.from("user_roles").select("role").eq("user_id",user.id).single(),
     sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle(),
     sb.from("team_staff_roles").select("team_code,staff_role").eq("user_id",user.id),
@@ -2703,8 +2726,7 @@ async function startApp(){
   staffRoles=staffRes.error?[]:(staffRes.data||[]);
   if(isGlobalCoach){coachTeams=TEAM_OPTIONS.map(x=>x[0]);}
   else coachTeams=staffViewTeamCodes();
-  if(hasAnyCoachTeam())await loadPendingRegistrationCount();
-  await loadRegistrationState();
+  if(hasAnyCoachTeam())loadPendingRegistrationCount().then(()=>{try{draw()}catch(e){}});
   // V459 · se lanza en segundo plano (sin esperar) para que el mapa de etiquetas de la biblioteca
   // esté listo cuanto antes, lo pida la pantalla que lo pida -- si alguna pantalla dibuja un icono
   // de zona ANTES de que termine, v454BodyPartInfo ya tiene su propio respaldo por palabras clave.
@@ -2745,9 +2767,11 @@ async function startApp(){
   if(launchParams.get("tab")==="eventos"){tab="eventos";if(launchParams.get("eid"))v530PendingEvent={kind:launchParams.get("ek")||'club_event',id:Number(launchParams.get("eid")),team:launchParams.get("et")||''}}
   if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
-  await registerServiceWorkerV104();await syncExistingPushV109();await loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
-  await v300RefreshUnreadMsgCount();
+  // V542 · avisos, push y contador de mensajes ya no frenan la primera pantalla: van detrás.
+  (async()=>{try{await registerServiceWorkerV104();await syncExistingPushV109()}catch(e){}})();
+  loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
   refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  if(typeof v541Warm==='function')v541Warm(1500);
   if(v300ResumeScrollY!=null)setTimeout(()=>v347ScrollTo(v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
   if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),800);
