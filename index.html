@@ -2478,7 +2478,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="536";
+const APP_VERSION="537";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2624,6 +2624,11 @@ async function startApp(){
   renderIdentityHeaderV73();tab=currentMode==="athlete"&&!currentTeamCode?"pendiente":"hoy";
   let v300ResumeScrollY=null;
   try{
+    // V537 · si no hay "resume" de esta pestaña, se usa el último estado guardado (hasta 6 h).
+    const v537St=v537ReadState();
+    if(v537St&&!sessionStorage.getItem('rowtraining_resume_v300')&&v537St.tab&&v537St.tab!=='pendiente'){
+      sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab:v537St.tab,currentMode:v537St.currentMode,coachSelectedTeam:v537St.coachSelectedTeam,scrollY:v537St.scrollY,ts:Date.now()}));
+    }
     const v300Resume=JSON.parse(sessionStorage.getItem('rowtraining_resume_v300')||'null');
     sessionStorage.removeItem('rowtraining_resume_v300');
     if(v300Resume&&(Date.now()-(v300Resume.ts||0))<120000){
@@ -2778,8 +2783,20 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
   if(!('ontouchstart' in window))return;
   const tip=document.createElement('div');tip.className='pullRefreshV159';tip.textContent='↓ Suelta para actualizar';document.body.appendChild(tip);
   let startY=null,armed=false;
-  document.addEventListener('touchstart',e=>{if(v347ScrollTop()<=2&&e.touches.length===1){startY=e.touches[0].clientY;armed=false}}, {passive:true});
-  document.addEventListener('touchmove',e=>{if(startY==null)return;const d=e.touches[0].clientY-startY;if(d>65&&v347ScrollTop()<=2){armed=true;tip.classList.add('show')}else if(d<35){armed=false;tip.classList.remove('show')}}, {passive:true});
+  // V537 · antes bastaba un gesto corto hacia abajo en cualquier sitio (p.ej. subir en el chat de
+  // Mensajes) para recargar toda la app. Ahora no se activa dentro de ventanas, campos de texto ni
+  // zonas con scroll propio, y hace falta un gesto más largo.
+  const blockedStart=t=>{
+    if(!t||!t.closest)return false;
+    if(t.closest('.modalBack,input,textarea,select,[contenteditable="true"]'))return true;
+    for(let el=t;el&&el!==document.body;el=el.parentElement){
+      if(el.id==='v347Scroll')break;
+      if(el.scrollHeight>el.clientHeight+2){const oy=getComputedStyle(el).overflowY;if(oy==='auto'||oy==='scroll')return true}
+    }
+    return false;
+  };
+  document.addEventListener('touchstart',e=>{if(v347ScrollTop()<=2&&e.touches.length===1&&!blockedStart(e.target)){startY=e.touches[0].clientY;armed=false}else startY=null}, {passive:true});
+  document.addEventListener('touchmove',e=>{if(startY==null)return;const d=e.touches[0].clientY-startY;if(d>120&&v347ScrollTop()<=2){armed=true;tip.classList.add('show')}else if(d<60){armed=false;tip.classList.remove('show')}}, {passive:true});
   document.addEventListener('touchend',()=>{if(armed){tip.textContent='Actualizando…';setTimeout(refreshAppV159,80)}else tip.classList.remove('show');startY=null;armed=false}, {passive:true});
 })();
 
@@ -2958,7 +2975,27 @@ function v311OpenLanguagePicker(){
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.querySelectorAll('.v311LangOption').forEach(btn=>btn.onclick=()=>{layer.remove();v311SetLocale(btn.dataset.code)});
 }
+// V537 · "la app hace muchos pantallazos blancos: estás en Mensajes, pantalla blanca y vuelve a
+// inicio". Se guarda continuamente dónde estás (pestaña, modo, equipo, scroll); si la app se recarga
+// (actualización, el móvil la cierra en segundo plano, refresco) vuelve al mismo sitio, no a Hoy.
+const V537_STATE_KEY='rowtraining_last_state_v537';
+// V537 · si una pantalla falla al cargar, nunca dejarla en blanco: se muestra un aviso con "Reintentar".
+function v537EnsureNotBlank(){
+  try{
+    const c=document.getElementById('content');if(!c||!currentUser)return;
+    if(c.innerHTML.trim()==='')c.innerHTML=`<div class="card"><h2>No se pudo cargar esta pantalla</h2><p class="muted">Puede ser la conexión. Tus datos están bien.</p><button type="button" class="primary" id="v537Retry">Reintentar</button></div>`;
+    const b=document.getElementById('v537Retry');if(b)b.onclick=()=>{try{render()}catch(e){}};
+  }catch(e){}
+}
+window.addEventListener('error',()=>setTimeout(v537EnsureNotBlank,50));
+window.addEventListener('unhandledrejection',()=>setTimeout(v537EnsureNotBlank,50));
+function v537SaveState(){try{if(!currentUser)return;localStorage.setItem(V537_STATE_KEY,JSON.stringify({uid:currentUser.id,tab,currentMode,coachSelectedTeam,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}}
+function v537ReadState(){try{const st=JSON.parse(localStorage.getItem(V537_STATE_KEY)||'null');if(st&&st.uid===currentUser?.id&&Date.now()-(st.ts||0)<6*3600*1000)return st}catch(e){}return null}
+setInterval(()=>{if(document.visibilityState==='visible')v537SaveState()},5000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')v537SaveState()});
+window.addEventListener('pagehide',()=>v537SaveState());
 function draw(){
+  v537SaveState();
   const menuBtn=document.getElementById('navMenuBtnV300');
   if(menuBtn&&!menuBtn._wiredV300){menuBtn._wiredV300=true;menuBtn.onclick=v300OpenNavMenu}
   const badge=document.getElementById('navMenuBadgeV300');
@@ -7728,14 +7765,21 @@ async function checkForAppUpdate(){
     const r=await fetch(`/version.json?t=${Date.now()}`,{cache:"no-store"});
     if(!r.ok)return;
     const v=await r.json();
-    if(v?.version && String(v.version)!==APP_VERSION){
-      const target=String(v.version);
+    // V537 · solo si la versión publicada es MÁS NUEVA (antes, cualquier diferencia —incluido un
+    // version.json desactualizado— recargaba la app sin avisar y te mandaba a Hoy). Antes de recargar
+    // se guarda dónde estabas para volver al mismo sitio, y no se recarga si hay algo a medio
+    // escribir (un campo de texto con el foco o una ventana abierta).
+    const target=String(v?.version||'');
+    if(target&&Number(target)>Number(APP_VERSION)){
       const key=`rowtraining_reload_${target}`;
       if(sessionStorage.getItem(key)==="1") return;
+      const busy=(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))||document.querySelector('.modalBack');
+      if(busy){lastAppUpdateCheck=0;return}
       sessionStorage.setItem(key,"1");
+      try{sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam,workoutNotificationAthleteV129,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}
       const u=new URL(location.href);
       u.searchParams.set("appv",target);
-      setTimeout(()=>location.replace(u.toString()),800);
+      setTimeout(()=>location.replace(u.toString()),300);
     }
   }catch(e){}
 }
