@@ -2556,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="564";
+const APP_VERSION="565";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3503,7 +3503,7 @@ function render(){
   function v555CopyCanvases(src,dst){try{var a=src.querySelectorAll('canvas'),b=dst.querySelectorAll('canvas');for(var i=0;i<a.length&&i<b.length;i++){b[i].width=a[i].width;b[i].height=a[i].height;b[i].getContext('2d').drawImage(a[i],0,0)}}catch(e){}}
   function v555Freeze(el){
     if(document.getElementById('v555Freeze')||!el.firstElementChild)return;
-    var r=el.getBoundingClientRect();if(!r.width)return;
+    var r0=el.getBoundingClientRect();if(!r0.width)return;var r={top:Math.round(r0.top),left:Math.round(r0.left),width:r0.width,height:r0.height};
     var fr=el.cloneNode(true);fr.id='v555Freeze';fr.classList.remove('v363Dim','v541In');fr.removeAttribute('style');
     // V564 · al quitar los id de la copia se perdían los estilos que dependen de ellos (p.ej. el margen
     // de la zona del día en Planificación) y "Resumen de temporada" subía unos píxeles. Se copian los
@@ -3537,9 +3537,11 @@ function render(){
     var fr=document.getElementById('v555Freeze');
     el.classList.remove('v363Dim','v541In');
     el.style.transition='none';el.style.opacity='0';void el.offsetWidth;
-    el.style.transition='opacity .15s ease-out';el.style.opacity='1';
-    if(fr&&!fr._out){fr._out=1;fr.style.transition='opacity .12s ease-in';fr.style.opacity='0';setTimeout(function(){fr.remove()},150)}
-    clearTimeout(el._v555Clean);el._v555Clean=setTimeout(function(){el.style.transition='';el.style.opacity=''},180);
+    // V565 · sin superposición: la pantalla vieja se va muy rápido y la nueva entra justo después
+    // (antes se veían las dos mezcladas a la vez durante el fundido).
+    el.style.transition='opacity .16s ease-out .06s';el.style.opacity='1';
+    if(fr&&!fr._out){fr._out=1;fr.style.transition='opacity .07s linear';fr.style.opacity='0';setTimeout(function(){fr.remove()},90)}
+    clearTimeout(el._v555Clean);el._v555Clean=setTimeout(function(){el.style.transition='';el.style.opacity=''},260);
     if(overlay&&!el.querySelector('.v316LoadingWrap')){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
     if(window._v547AppShown&&window.v547HideSplash)setTimeout(window.v547HideSplash,60);
   }
