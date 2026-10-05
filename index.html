@@ -530,6 +530,15 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+/* V578 · campos de fecha/hora con el mismo aspecto que los desplegables (en iPhone el nativo salía
+   gris, con el texto arriba y más ancho que su caja). El campo real queda encima, invisible, para
+   que al tocar se abra el selector del sistema. */
+.v578D{position:relative;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;height:44px;border:1px solid var(--border,#dbe3ee);border-radius:12px;background:var(--surface,#fff);color:var(--text,#0f172a);margin:4px 0 0}
+.v578D>.v578L{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.v578D>.v578L.v578Empty{color:var(--muted,#64748b)}
+.v578D>input{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;margin:0!important;padding:0!important;border:0!important;-webkit-appearance:none;appearance:none;cursor:pointer;z-index:1}
+.v578D.v578Dis{opacity:.6}
+.v573Top .v578D{margin:0}
 /* V577 · barra de "Más" en una sola fila */
 .v577Bar{display:grid!important;grid-template-columns:repeat(var(--v577n,4),1fr)!important;gap:6px!important;padding:8px!important}
 .v577Bar>button{margin:0!important;padding:8px 2px 7px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;font-size:.76rem!important;font-weight:600;line-height:1.1;min-width:0;width:auto!important;border-radius:12px!important;position:relative;white-space:nowrap;letter-spacing:-.01em}
@@ -2603,7 +2612,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="577";
+const APP_VERSION="578";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2953,6 +2962,24 @@ async function v570OpenTrash(after){
     if(after)after();
   });
 }
+// V578 · mejora automática de todos los <input type=date|time> de la app (ver CSS .v578D)
+(function(){
+  const proto=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  const fmt=inp=>{const v=proto.get.call(inp);if(!v)return null;if(inp.type==='time')return v.slice(0,5);const d=new Date(v+'T12:00:00');if(isNaN(d))return v;return d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).replace(/\./g,'')};
+  function enhance(inp){
+    if(inp._v578||!inp.isConnected||inp.closest('.v578D')||inp.closest('#v555Freeze'))return;
+    inp._v578=true;
+    const w=document.createElement('span');w.className='v578D';const l=document.createElement('span');l.className='v578L';
+    inp.parentNode.insertBefore(w,inp);w.appendChild(l);w.appendChild(inp);
+    const up=()=>{const t=fmt(inp);l.textContent=(inp.type==='time'?'🕒 ':'📅 ')+(t||(inp.type==='time'?'--:--':'Elegir fecha'));l.classList.toggle('v578Empty',!t);w.classList.toggle('v578Dis',!!inp.disabled)};
+    try{Object.defineProperty(inp,'value',{configurable:true,get(){return proto.get.call(this)},set(v){proto.set.call(this,v);up()}})}catch(e){}
+    inp.addEventListener('input',up);inp.addEventListener('change',up);
+    up();
+  }
+  const scan=root=>{if(!root||!root.querySelectorAll)return;if(root.matches&&root.matches('input[type=date],input[type=time]'))enhance(root);root.querySelectorAll('input[type=date],input[type=time]').forEach(enhance)};
+  const start=()=>{scan(document.body);new MutationObserver(ms=>{for(const m of ms)m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)})}).observe(document.body,{childList:true,subtree:true})};
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+})();
 let appStartingV96=false;let v547PreUser=null;
 function v554WaitView(max){
   return new Promise(res=>{
