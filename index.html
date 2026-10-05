@@ -710,6 +710,22 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
 .v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
 .v583Fail{outline:2px solid #ef4444}
+.v588Tabs{flex-direction:row!important;overflow-x:auto;gap:0!important;margin:8px -4px 0!important;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.v588Tabs::-webkit-scrollbar{display:none}
+.v588Tabs .v493SumRow{flex:1 0 auto!important;width:auto!important;flex-direction:column!important;justify-content:center;gap:3px!important;padding:9px 12px 8px!important;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;background:transparent!important;font-size:12.5px!important;text-align:center;color:var(--text-muted)}
+.v588Tabs .v493SumRow.active{border-bottom-color:#2563eb!important;color:var(--text)!important;background:var(--accent-tint)!important}
+.v588Tabs .v493SumIcon{font-size:20px}.v588Lb b{margin-left:2px}
+.v588Org{font-size:13px;color:var(--text-muted);padding:8px 2px 0}
+.v493RsvpSummary .v588Search{width:100%;box-sizing:border-box;margin:10px 0 4px;border-radius:14px;padding:10px 14px;font-size:16px}
+.v588Remind{display:flex!important;align-items:center;gap:12px;width:100%;text-align:left;margin:8px 0 2px;padding:10px 12px!important;border-radius:12px!important;background:var(--surface-2)!important;color:var(--text)!important;border:1px solid var(--border)!important}
+.v588RemIc{font-size:22px}.v588RemTx{display:flex;flex-direction:column}.v588RemTx small{color:#d97706;font-weight:600}
+.v493SumPanel .rosterPerson.v588P{display:flex!important;align-items:center;gap:12px;padding:10px 4px!important;border:0!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;background:transparent!important}
+.v588List{gap:0!important}
+.v588Nm{flex:1;min-width:0;display:flex;flex-direction:column}.v588Nm b{font-weight:500;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v588Nm small{font-size:12.5px;color:var(--text-muted)}.v588Nm .v588Unseen{color:#d97706}.v588Nm .v588Ok{color:#16a34a}.v588Nm .v588No{color:#dc2626}
+.v588More{position:relative;flex:none;width:44px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:1px;color:var(--text-muted)}
+.v588More select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px}
+
 .v583Full [id$="ChatScroll"]{border:0!important;background:transparent!important;padding:2px 0!important}
 .v583Full .v583Head{border-bottom:1px solid var(--border);margin:0 -12px 4px;padding:6px 12px 8px}
 .v583Full .v583Head b{font-size:1rem;font-weight:600}
@@ -2654,7 +2670,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="588";
+const APP_VERSION="589";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2696,7 +2712,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var SLOW=new Set(['profiles','rowing_teams','user_roles','team_staff_roles','rower_team_memberships','training_library','ergo_library','notification_prefs','training_library_user_prefs','athlete_season_notes']);
     // V556 · las respuestas a eventos (session_rsvp) también van siempre en directo: así un "Voy" o "No voy"
     // se ve al momento, no tras el refresco de cada 3 minutos.
-    var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests','session_rsvp']);
+    var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests','session_rsvp','event_views']);
     var WRITE={insert:1,update:1,upsert:1,'delete':1},recipesStarted=false;
     var PERSIST=new Set(['rowing_teams','user_roles','team_staff_roles','rower_team_memberships','profiles']),PKEY='rowtraining_pc_v542',pstore=null,psaveT=null;
     function pload(){if(!pstore){try{pstore=JSON.parse(localStorage.getItem(PKEY)||'{}')||{}}catch(e){pstore={}}}return pstore}
@@ -3988,6 +4004,18 @@ function v495WireEventChatAccordions(root){
 }
 // V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
 // respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
+// V588 · "Visto / Sin ver": se anota la primera vez que alguien abre un evento y los organizadores lo ven en Respuestas.
+const V588_SEEN=new Map();
+async function v588SyncViews(kind,id){
+  const key=kind+':'+id;
+  try{
+    if(currentUser)sb.from('event_views').upsert({kind,event_id:id,user_id:currentUser.id},{onConflict:'kind,event_id,user_id',ignoreDuplicates:true}).then(()=>{},()=>{});
+    const r=await sb.from('event_views').select('user_id').eq('kind',kind).eq('event_id',id);
+    if(r.error){V588_SEEN.delete(key);return null}
+    const set=new Set((r.data||[]).map(x=>String(x.user_id)));if(currentUser)set.add(String(currentUser.id));
+    V588_SEEN.set(key,set);return set;
+  }catch(e){return null}
+}
 function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[]){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
@@ -3997,23 +4025,23 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const uid='v493sum'+Math.random().toString(36).slice(2,9);
   // V504 · "Respuestas" en filas con texto, al estilo de la ficha de evento de Spond, en vez de la
   // línea compacta de antes — cada fila sigue siendo la pestaña que filtra el listado de abajo.
-  const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v493SumIcon">${icon}</span><b>${list.length}</b> <span>${esc(label)}</span></button>`;
-  // V505 · inspirado en "Destinatarios" de Spond: foto/iniciales de cada persona, y si quien mira es
-  // entrenador/ayudante (canEdit), un selector para cambiarle la asistencia directamente a cualquiera
-  // sin pasar por el cuadro de "sustituto puntual" (que es solo para el propio equipo técnico).
+  const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v493SumIcon">${icon}</span><span class="v588Lb">${esc(label)} <b>${list.length}</b></span></button>`;
+  const seenSet=(canEdit||(orgIds||[]).includes(String(currentUser?.id)))?(statusByUser._seen||null):null;
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
-    const menu=canEdit?`<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option></select>`:'';
-    return `<div class="rosterPerson" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,28)}<span>${esc(p.full_name||'Sin nombre')}</span>${menu}</div>`;
+    const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>':'');
+    const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option></select></label>`:'';
+    return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
-  const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${list.length?`<div class="rosterList">${list.map(personRow).join('')}</div>`:'<p class="muted">Nadie en esta categoría.</p>'}</div>`;
+  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
+  const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${key==='pending'&&canEdit?remindBtn0:''}${list.length?`<div class="rosterList v588List">${list.map(personRow).join('')}</div>`:'<p class="muted" style="padding:12px 4px">Nadie en esta categoría.</p>'}</div>`;
   const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
-  const remindBtn=pendingList.length?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
+  const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
   // V505 · caja de búsqueda por nombre, como en "Destinatarios" de Spond — solo tiene sentido con
   // roster largos, así que se omite si hay 6 personas o menos.
-  const searchBox=roster.length>6?`<input type="search" class="v505RosterSearch" placeholder="Buscar por nombre…">`:'';
+  const searchBox=`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`;
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
-    <div class="v493SumRows">${row('in','asistirán','✅',inList,true)}${row('pending','sin contestar','❓',pendingList,false)}${row('out','rechazados','❌',outList,false)}${row('all','todos','👥',allList,false)}${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v493SumRow v512OrgRow"><span class="v493SumIcon">⭐</span><span><b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</span></div>`})():''}</div>
+    <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${panel('out',outList,false)}${panel('all',allList,false)}
     <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
@@ -4985,6 +5013,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     window._v561Live=true;const v561P=v495RsvpStatusMapsForEvents([ev2],tc);window._v561Live=false;const statusByEvent2=await v561P;
     const statusByUser=v514EffectiveStatus(ev2,roster2,statusByEvent2.get(`${ev2.kind}_${ev2.id}`)),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     const orgIds2=await v512FetchOrganizerIds(ev2,tc);
+    const seen2=await v588SyncViews(ev2.kind,ev2.id);statusByUser._seen=seen2;
     if(ev2.kind!=='session'&&Array.isArray(ev2.session_ids)&&ev2.session_ids.length){
       const ls=await sb.from('training_sessions').select('*').in('id',ev2.session_ids);
       ev2._linkedSessions=(ls.data||[]).sort((a,b)=>String(a.session_type).localeCompare(String(b.session_type)));
