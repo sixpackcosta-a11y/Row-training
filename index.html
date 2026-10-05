@@ -718,7 +718,9 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Day{text-align:center;margin:10px 0 4px}.v583Day span{background:var(--surface-2);color:var(--text-muted);font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;text-transform:capitalize}
 .v583Reacts{margin-top:-6px!important;position:relative;z-index:1}
 .v583Compose{align-items:center!important}
-.v583Compose textarea{border-radius:22px!important;padding:10px 16px!important;line-height:1.3;max-height:110px}
+.v583In{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:22px;padding:10px 16px;font-size:16px;line-height:1.3;min-height:22px;max-height:110px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;outline:none;-webkit-user-select:text;user-select:text;-webkit-appearance:none}
+.v583In:empty:before{content:attr(data-ph);color:var(--text-muted);pointer-events:none}
+.v583In:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb33}
 .v583Compose .v583EmojiBtn{border:0;background:transparent;width:36px;height:40px;font-size:22px}
 .v583Compose .v583Send{width:42px;height:42px;border-radius:50%!important;padding:0;font-size:17px;background:#2563eb!important;color:#fff!important;flex:none}
 
@@ -2652,7 +2654,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="587";
+const APP_VERSION="588";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7796,11 +7798,11 @@ async function v583Chat(anchor,cfg){
       if(!layer.isConnected)return;
       const vv=window.visualViewport,vh=vv?vv.height:innerHeight,off=vv?vv.offsetTop:0;
       const hdr=document.querySelector('header'),top=hdr?Math.max(0,hdr.getBoundingClientRect().bottom):0;
-      const kb=innerHeight-vh>120||(document.activeElement&&document.activeElement.tagName==='TEXTAREA');
+      const kb=innerHeight-vh>120||(document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable));
       const nav=document.getElementById('nav');let bottom=0;
       if(kb){bottom=/iPhone|iPad/.test(navigator.userAgent)?52:0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
       layer.style.top=(off+top)+'px';layer.style.height=Math.max(180,vh-top-bottom)+'px';
-      const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&document.activeElement.tagName==='TEXTAREA')bx.scrollTop=bx.scrollHeight;
+      const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
     const onFocus=()=>{window.scrollTo(0,0);setTimeout(fit,60);setTimeout(()=>{window.scrollTo(0,0);fit()},350)};
     fit();window.scrollTo(0,0);
@@ -7814,7 +7816,7 @@ async function v583Chat(anchor,cfg){
   const cached=V583_CACHE.get(cfg.key);
   const S={msgs:cached?cached.msgs.slice():[],reacts:cached?cached.reacts.slice():[]};
   const opt={names:cfg.names||null,locale:cfg.locale,reactions:!!cfg.fetchReactions};
-  container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end"><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button>${cfg.attach?'<button type="button" class="v583EmojiBtn v583AttBtn" aria-label="Adjuntar">📎</button><input type="file" class="v583AttIn" hidden accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.gpx,.zip,.fit,.tcx">':''}<textarea id="${cfg.inputId}" rows="1" placeholder="${cfg.placeholder}" style="flex:1;resize:none"></textarea><button type="button" id="${cfg.sendId}" class="primary v583Send" aria-label="${cfg.sendLabel}">➤</button></div>`;
+  container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end"><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button>${cfg.attach?'<button type="button" class="v583EmojiBtn v583AttBtn" aria-label="Adjuntar">📎</button><input type="file" class="v583AttIn" hidden accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.gpx,.zip,.fit,.tcx">':''}<div id="${cfg.inputId}" class="v583In" contenteditable="plaintext-only" role="textbox" aria-multiline="true" enterkeyhint="send" autocapitalize="sentences" data-ph="${cfg.placeholder}"></div><button type="button" id="${cfg.sendId}" class="primary v583Send" aria-label="${cfg.sendLabel}">➤</button></div>`;
   const box=container.querySelector('#'+cfg.boxId),input=container.querySelector('#'+cfg.inputId),sendBtn=container.querySelector('#'+cfg.sendId);
   let first=true;
   const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
@@ -7865,16 +7867,16 @@ async function v583Chat(anchor,cfg){
     save();paint(true);
     cfg.afterSend&&cfg.afterSend(text);
   };
+  Object.defineProperty(input,'value',{get(){return (input.innerText||'').replace(/\u00a0/g,' ')},set(v){input.textContent=v}});
   const send=()=>{
     const text=input.value.trim();if(!text)return;
     const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString()};
-    S.msgs.push(tmpMsg);input.value='';input.style.height='';paint(true);input.focus();
+    S.msgs.push(tmpMsg);input.textContent='';paint(true);input.focus();
     sendText(text,tmpMsg);
   };
   sendBtn.onclick=send;
   input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
-  input.oninput=()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,110)+'px'};
-  container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{const s=input.selectionStart??input.value.length,e=input.selectionEnd??s;input.value=input.value.slice(0,s)+em+input.value.slice(e);input.focus();try{input.setSelectionRange(s+em.length,s+em.length)}catch(_){}});
+  container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{input.focus();let ok=false;try{ok=document.execCommand('insertText',false,em)}catch(_){}if(!ok){input.textContent+=em}});
   if(cfg.attach){
     const fin=container.querySelector('.v583AttIn');
     container.querySelector('.v583AttBtn').onclick=()=>fin.click();
@@ -7885,7 +7887,7 @@ async function v583Chat(anchor,cfg){
       const text=input.value.trim();
       const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString(),_file:{blob:f,name:f.name||'archivo',type:f.type||'',size:f.size},att_name:f.name,att_type:f.type,att_size:f.size};
       if(v583IsImg(f.type))tmpMsg._local=URL.createObjectURL(f);
-      S.msgs.push(tmpMsg);input.value='';paint(true);sendText(text,tmpMsg);
+      S.msgs.push(tmpMsg);input.textContent='';paint(true);sendText(text,tmpMsg);
     };
   }
   // clics: reintentar, reaccionar (delegado, una sola vez)
@@ -7998,7 +8000,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
 }
 // V583 · al escribir (teclado abierto) la barra inferior se esconde: así no flota encima del teclado ni salta.
 (function(){
-  const isText=el=>el&&(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color)$/i.test(el.type||'text')));
+  const isText=el=>el&&(el.tagName==='TEXTAREA'||el.isContentEditable||(el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color)$/i.test(el.type||'text')));
   let t=null;
   document.addEventListener('focusin',e=>{if(!isText(e.target))return;clearTimeout(t);document.body.classList.add('v583Kb');
     if(e.target.id&&/ChatInput/.test(e.target.id))setTimeout(()=>{try{e.target.scrollIntoView({block:'end',behavior:'smooth'})}catch(_){}},320)});
