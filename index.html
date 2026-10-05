@@ -2556,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="561";
+const APP_VERSION="562";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4842,6 +4842,9 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
 // fila de chips (Todos + un chip por equipo, multiselección) en vez de selector de equipo + casilla de
 // Vista general. La selección se recuerda en este dispositivo.
 const V513_TEAMS_KEY='rowtraining_events_teams_v513';
+// V562 · si la lista de Eventos recién calculada es igual a la que ya se ve (la de la foto guardada),
+// no se vuelve a pintar: así la pantalla queda lista antes y no hay ni un parpadeo.
+function v562SetHtml(el,html){try{const t=document.createElement('template');t.innerHTML=html;if(el.innerHTML===t.innerHTML)return}catch(e){}el.innerHTML=html}
 // V545 · por defecto solo los próximos (desde hoy); selector arriba para ver los pasados.
 let V545_WHEN='next';
 function v545WhenHtml(){return `<div class="v545Seg" role="tablist"><button type="button" class="v545SegBtn${V545_WHEN==='next'?' on':''}" data-when="next">Próximos</button><button type="button" class="v545SegBtn${V545_WHEN==='past'?' on':''}" data-when="past">Pasados</button></div>`}
@@ -4920,7 +4923,7 @@ async function coachEventsView(){
     }catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
     if(tab!=='eventos'||currentMode!=='staff'||V545_WHEN!==when)return;
     const all=perTeam.flat();
-    area.innerHTML=all.length?v503GroupedRowsHtml(all,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
+    v562SetHtml(area,all.length?v503GroupedRowsHtml(all,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>');
     if(all.length)V538_SNAP.set(snapKey,area.innerHTML);
     wireRows();
     if(when!=='past')all.forEach(v514TryReminder);
@@ -4966,7 +4969,7 @@ async function athleteEventsView(){
   await v538PrefetchRosters(visible.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
   const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,cacheA)).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
   if(V545_WHEN!==when||!document.body.contains(area))return;
-  area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
+  v562SetHtml(area,withCounts.length?v503GroupedRowsHtml(withCounts,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.</div>');
   if(withCounts.length)V538_SNAP.set(snapKey,area.innerHTML);
   if(when!=='past')withCounts.forEach(v514TryReminder);
   wireRowsA();
