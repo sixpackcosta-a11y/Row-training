@@ -2423,7 +2423,7 @@ function v533IsTester(){return (typeof V495_EVENT_CHAT_TEST_EMAILS!=='undefined'
 // Cuando esté todo bien lo lanzamos." Mientras V534_EVENTS_LAUNCHED sea false, TODO lo de eventos
 // (pestaña, confirmaciones, convertir en evento, avisos…) existe solo para la cuenta de pruebas;
 // nadie más lo ve ni recibe avisos, ni remeras ni otros entrenadores/ayudantes.
-const V534_EVENTS_LAUNCHED=false;
+const V534_EVENTS_LAUNCHED=true;
 function v534EventsUI(){return V534_EVENTS_LAUNCHED||v533IsTester()}
 function v533RowerSeesEvents(team){if(!V534_EVENTS_LAUNCHED)return v533IsTester()&&v497AttendanceEnabledForTeam(team);return v497AttendanceEnabledForTeam(team)&&(v533TeamLive(team)||v533IsTester())}
 let TEAM_DEFAULT_SUB_V499=new Map(); // team_code -> user_id del sustituto por defecto (si el entrenador no puede ir)
@@ -2612,7 +2612,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="581";
+const APP_VERSION="582";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7716,7 +7716,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
 // a diferencia de v300* que es 1 a 1 (entrenador <-> una remera). De momento solo se muestra en el
 // panel de entrenador (Registro MAR); para remeras está apagado por este interruptor hasta que Nacho
 // lo dé por probado -- cuando quiera activarlo basta con poner esta constante a true.
-const V494_EVENT_CHAT_ENABLED_FOR_ROWERS=false;
+const V494_EVENT_CHAT_ENABLED_FOR_ROWERS=true;
 // V495 · mientras el interruptor general sigue en false, Nacho puede verlo él mismo en modo remero
 // (modo pruebas) añadiendo su email a esta lista, sin activarlo todavía para el resto de remeras.
 const V495_EVENT_CHAT_TEST_EMAILS=['sixpackcosta@gmail.com'];
