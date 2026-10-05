@@ -2680,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="604";
+const APP_VERSION="605";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4172,6 +4172,11 @@ async function v538PrefetchRosters(teams,cache){
   const need=[...new Set(teams.filter(Boolean))].filter(t=>!cache.has(t));
   if(!need.length)return;
   const p=(async()=>{
+    if(currentMode==='athlete'){
+      const out0=new Map();
+      for(const t of need){try{const [r,st]=await Promise.all([staffAthletesForTeam(t),v499StaffForTeam(t)]);if(r.length>1||st.length)out0.set(t,v499MergeRoster(r,st))}catch(e){}}
+      if(out0.size===need.length)return out0;
+    }
     const [m,gc,ts]=await Promise.all([
       sb.from('rower_team_memberships').select('user_id,team_code').in('team_code',need).eq('is_rower',true),
       sb.from('user_roles').select('user_id').eq('role','coach'),
