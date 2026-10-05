@@ -743,7 +743,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
   window.v547HideSplash=function(){var s=document.getElementById('v547Splash');if(!s||s._h)return;s._h=1;s.classList.add('out');setTimeout(function(){s.remove()},400)};
   window.v547SplashFail=function(msg){if(gone())return;var m=document.getElementById('v547Msg'),b=document.getElementById('v547Retry');if(m)m.textContent=msg||'No hay buena conexión ahora mismo.';if(b)b.style.display=''};
   setTimeout(function(){if(!gone()){var m=document.getElementById('v547Msg');if(m&&!m.textContent)m.textContent='Conexión lenta… seguimos intentándolo'}},5000);
-  setTimeout(function(){window.v547SplashFail()},20000);
+  setTimeout(function(){window.v547SplashFail()},35000);
   document.getElementById('v547Retry').onclick=function(){location.reload()};
 })();
 </script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script><script>if(!window.supabase)window.v547SplashFail('No se ha podido conectar. Comprueba la cobertura y reintenta.')</script><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:10px;min-width:0"><img class="v551Icon" src="assets/brand/icon-cabecera.png" alt=""><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:6px;min-width:0"><span class="v551Word" aria-label="Row Training"><span class="v551Row">ROW</span><span class="v551Tr">TRAINING</span></span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" class="v551Name" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159 hidden" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" style="display:none" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button><img class="v550Club" src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" title="Club de Remo Pedregalejo"></div></header><main><script>
@@ -813,14 +813,12 @@ function applyThemeV299(mode){
   // (solo pasados 150 ms, para que lo rápido no parpadee) y si tarda mucho sale el icono 🚣.
   window.v360FinishLoad=function(){
     if(window._v547AppShown&&window.v547HideSplash)setTimeout(window.v547HideSplash,60);
-    clearTimeout(el._v363SafetyTimer);clearTimeout(el._v540DimTimer);clearTimeout(el._v363HoldTimer);
+    clearTimeout(el._v363SafetyTimer);
+    if(el._v555Waiting&&!el._v555ForceDone)return; // V555 · la revelación (fundido cruzado) se encarga
     if(overlay){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
-    var pending=el._v541Pending;el._v541Pending=false;
     el.classList.remove('v363Dim');
-    if(pending){
-      el.classList.remove('v541In');void el.offsetWidth;el.classList.add('v541In');
-      clearTimeout(el._v541T);el._v541T=setTimeout(function(){el.classList.remove('v541In')},320);
-    }
+    if(el.style.opacity==='0'){el.style.transition='opacity .2s ease-out';el.style.opacity='1'}
+    var fr=document.getElementById('v555Freeze');if(fr&&!fr._out)fr.remove();
     if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
   };
   var raf=null;
@@ -2535,7 +2533,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="553";
+const APP_VERSION="556";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2575,7 +2573,9 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
 (function(){
   try{
     var SLOW=new Set(['profiles','rowing_teams','user_roles','team_staff_roles','rower_team_memberships','training_library','ergo_library','notification_prefs','training_library_user_prefs','athlete_season_notes']);
-    var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests']);
+    // V556 · las respuestas a eventos (session_rsvp) también van siempre en directo: así un "Voy" o "No voy"
+    // se ve al momento, no tras el refresco de cada 3 minutos.
+    var NEVER=new Set(['chat_messages','chat_message_reactions','event_chat_messages','app_notifications','registration_requests','session_rsvp']);
     var WRITE={insert:1,update:1,upsert:1,'delete':1},recipesStarted=false;
     var PERSIST=new Set(['rowing_teams','user_roles','team_staff_roles','rower_team_memberships','profiles']),PKEY='rowtraining_pc_v542',pstore=null,psaveT=null;
     function pload(){if(!pstore){try{pstore=JSON.parse(localStorage.getItem(PKEY)||'{}')||{}}catch(e){pstore={}}}return pstore}
@@ -2613,7 +2613,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       clearTimeout(warmT);warmT=setTimeout(async function(){
         var r=loadRecipes();if(!r||warming)return;
         var cut=Date.now()-5*864e5;
-        var list=Object.keys(r).filter(function(k){return r[k].l>=cut&&!cache.has(k)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,90);
+        var list=Object.keys(r).filter(function(k){var h=cache.get(k);return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,90);
         warming=true;
         try{
           var i=0;
@@ -2627,11 +2627,16 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
         }finally{warming=false}
       },delay==null?400:delay);
     };
+    // V554 · cada 3 minutos (con la app a la vista) se refrescan por detrás los datos de más de
+    // 2,5 min: al cambiar de pantalla todo sale al instante y nunca con más de ~3 min de retraso.
+    setInterval(function(){if(document.visibilityState==='visible'&&uid())window.v541Warm(0)},180000);
     var hiddenAt=0;
     document.addEventListener('visibilitychange',function(){
       if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
       if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800)}
     });
+    var inflight=0;function track(p){if(warming)return p;inflight++;var d=function(){inflight--};p.then(d,d);return p}
+    window.v554Inflight=function(){return inflight};
     function clone(r){try{return typeof structuredClone==='function'?structuredClone(r):JSON.parse(JSON.stringify(r))}catch(e){return r}}
     function wrap(target,table,rec){
       return new Proxy(target,{get:function(t,prop){
@@ -2643,7 +2648,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
               if(isWrite){cache.clear();pdrop(table)}
               var pw=v.call(t,function(x){return x});
               if(isWrite)pw=pw.then(function(x){cache.clear();pdrop(table);window.v541Warm(2500);return x});
-              return pw.then(res,rej);
+              return track(pw).then(res,rej);
             }
             var key;try{key=table+'|'+JSON.stringify(rec)}catch(e){return v.call(t,res,rej)}
             remember(key,table,rec);
@@ -2658,8 +2663,8 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
                 return hp.p.then(function(x){return clone(x)}).then(res,rej);
               }
             }
-            var ttl=SLOW.has(table)?600000:120000,now=Date.now(),hit=cache.get(key);
-            if(!hit||now-hit.t>ttl){
+            var ttl=SLOW.has(table)?900000:300000,now=Date.now(),hit=cache.get(key);
+            if(!hit||now-hit.t>ttl||(warming&&now-hit.t>150000)){
               var pr=v.call(t,function(x){return x}).then(function(x){
                 if(x&&x.error&&typeof v547IsNetErr==='function'&&v547IsNetErr(x.error)){var fb=oget(key);if(fb){try{v547Offline(true)}catch(e){}return fb}}
                 if(x&&!x.error){try{v547Offline(false)}catch(e){}oset(key,x)}
@@ -2672,7 +2677,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
               hit={t:now,p:pr};cache.set(key,hit);
               pr.then(function(x){if(!x||x.error||x.v547Offline){if(cache.get(key)===hit)cache.delete(key)}else if(PERSIST.has(table))pset(key,x)},function(){if(cache.get(key)===hit)cache.delete(key)});
             }
-            return hit.p.then(function(x){return clone(x)}).then(res,rej);
+            return track(hit.p).then(function(x){return clone(x)}).then(res,rej);
           };
         }
         if(typeof v==='function'){
@@ -2689,7 +2694,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var origFrom=sb.from.bind(sb);
     sb.from=function(table){return wrap(origFrom(table),String(table),[])};
     var origRpc=sb.rpc.bind(sb);
-    sb.rpc=function(){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)};
+    sb.rpc=function(name){if(!/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''))){cache.clear();pwipe();window.v541Warm(2500)}return origRpc.apply(null,arguments)}; // V554 · las rpc de solo lectura ya no vacían la memoria
     var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(ev==='SIGNED_OUT'){pwipe();owipe();cache.clear();lastAuth='';recipesStarted=false;return}if(u&&u!==lastAuth){if(lastAuth){pwipe();owipe()}lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
   }catch(e){console.warn('v540 cache off',e)}
 })();
@@ -2798,6 +2803,42 @@ async function loadPendingRegistrationCount(){
   }catch(e){}
 }
 let appStartingV96=false;let v547PreUser=null;
+function v554WaitView(max){
+  return new Promise(res=>{
+    const el=document.getElementById('content');if(!el)return res();
+    let last=Date.now();const st=Date.now();
+    const mo=new MutationObserver(()=>{last=Date.now()});mo.observe(el,{childList:true,subtree:true,characterData:true});
+    const iv=setInterval(()=>{const now=Date.now();if((now-last>350&&now-st>200&&!el.querySelector('.v316LoadingWrap'))||now-st>max){clearInterval(iv);mo.disconnect();res()}},60);
+  });
+}
+async function v554Preload(){
+  if(!document.getElementById('v547Splash'))return;
+  const msg=document.getElementById('v547Msg');if(msg&&!msg.textContent)msg.textContent='Preparando todo…';
+  const saved={tab,coachTeams:Array.isArray(coachTeams)?[...coachTeams]:coachTeams,coachSelectedTeam,selected,wn:workoutNotificationAthleteV129};
+  // Mensajes no se precarga: abrirla marca los mensajes como leídos.
+  let list=currentMode==='staff'?['hoy','semana','mes','registro','planificar','result','biblioteca','eventos','perfil','equipo']:(currentTeamCode?['hoy','semana','mes','hist','biblioteca','eventos','perfil']:[]);
+  list=list.filter(t=>t!==saved.tab);
+  const t0=Date.now();window._v554Preloading=true;
+  const restore=()=>{coachTeams=Array.isArray(saved.coachTeams)?[...saved.coachTeams]:saved.coachTeams;coachSelectedTeam=saved.coachSelectedTeam;selected=saved.selected;workoutNotificationAthleteV129=saved.wn};
+  try{
+    for(const t of list){
+      if(Date.now()-t0>14000)break;
+      tab=t;
+      try{render()}catch(e){}
+      await v554WaitView(4000);
+      restore();
+    }
+  }catch(e){}
+  finally{tab=saved.tab;restore();window._v554Preloading=false}
+  // esperar a que terminen las cargas que siguen en marcha, para que ninguna pantalla de las
+  // precargadas escriba encima de la de inicio cuando ya se está viendo
+  const w0=Date.now();let quietSince=0;
+  while(Date.now()-w0<7000){
+    const busy=typeof v554Inflight==='function'&&v554Inflight()>0;
+    if(!busy){if(!quietSince)quietSince=Date.now();else if(Date.now()-quietSince>400)break}else quietSince=0;
+    await new Promise(r=>setTimeout(r,80));
+  }
+}
 async function startApp(){
   if(appStartingV96)return; appStartingV96=true;
   // V542 · arranque en paralelo: equipos, sesión (local, sin ir a la red), rol, perfil, grupos y
@@ -2868,7 +2909,13 @@ async function startApp(){
   // V542 · avisos, push y contador de mensajes ya no frenan la primera pantalla: van detrás.
   (async()=>{try{await registerServiceWorkerV104();await syncExistingPushV109()}catch(e){}})();
   loadNotificationsV104();const bellV104=document.getElementById("notifyBellV104");if(bellV104)bellV104.onclick=openNotificationsV104;if(!window._notifPollV104)window._notifPollV104=setInterval(()=>{if(document.visibilityState==='visible'){loadNotificationsV104();if(currentMode==='athlete'){v300CheckNewComments();v300CheckNewChatMessages()}v300RefreshUnreadMsgCount().then(draw)}},60000);
-  refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  refreshTeamSchedule();selected=getTodayIndex();
+  // V554 · "no me importa que la pantalla de inicio tarde un poco más si así todo va fluido": detrás
+  // de la pantalla de inicio se abren una a una (sin que se vean) todas las pantallas principales,
+  // así sus datos quedan cargados y luego cada cambio de pestaña es instantáneo, con su fundido.
+  if(typeof v541Warm==='function')v541Warm(0);
+  await v554Preload();
+  draw();render();
   window._v547AppShown=true;setTimeout(()=>v547HideSplash(),2500);
   if(typeof v541Warm==='function')v541Warm(1500);
   setTimeout(()=>{if(tab!=='eventos')v543PrefetchEvents()},900);
@@ -3207,7 +3254,7 @@ function v537EnsureNotBlank(){
 }
 window.addEventListener('error',()=>setTimeout(v537EnsureNotBlank,50));
 window.addEventListener('unhandledrejection',()=>setTimeout(v537EnsureNotBlank,50));
-function v537SaveState(){try{if(!currentUser)return;localStorage.setItem(V537_STATE_KEY,JSON.stringify({uid:currentUser.id,tab,currentMode,coachSelectedTeam,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}}
+function v537SaveState(){try{if(!currentUser||window._v554Preloading)return;localStorage.setItem(V537_STATE_KEY,JSON.stringify({uid:currentUser.id,tab,currentMode,coachSelectedTeam,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}}
 function v537ReadState(){try{const st=JSON.parse(localStorage.getItem(V537_STATE_KEY)||'null');if(st&&st.uid===currentUser?.id&&Date.now()-(st.ts||0)<6*3600*1000)return st}catch(e){}return null}
 setInterval(()=>{if(document.visibilityState==='visible')v537SaveState()},5000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')v537SaveState()});
@@ -3375,33 +3422,53 @@ function render(){
 (function(){
   var v316OrigRender=render;
   var v316ReduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // V555 · "¿ves los saltitos? ni fundidos ni nada": nueva forma de cambiar de pantalla, como una app
+  // nativa. Al pulsar, la pantalla actual se queda congelada (una copia fija encima) mientras la nueva
+  // se monta por debajo, invisible. Solo cuando la nueva está COMPLETA (sin cargas pendientes ni
+  // cambios en curso) se cruzan las dos con un fundido. Así nunca se ve una pantalla a medio montar,
+  // ni el título solo, ni las sub-pestañas apareciendo después. Si tarda más de 0,7 s sale la pantalla
+  // de carga con el logo.
+  function v555CopyCanvases(src,dst){try{var a=src.querySelectorAll('canvas'),b=dst.querySelectorAll('canvas');for(var i=0;i<a.length&&i<b.length;i++){b[i].width=a[i].width;b[i].height=a[i].height;b[i].getContext('2d').drawImage(a[i],0,0)}}catch(e){}}
+  function v555Freeze(el){
+    if(document.getElementById('v555Freeze')||!el.firstElementChild)return;
+    var r=el.getBoundingClientRect();if(!r.width)return;
+    var fr=el.cloneNode(true);fr.id='v555Freeze';fr.classList.remove('v363Dim','v541In');fr.removeAttribute('style');
+    fr.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
+    v555CopyCanvases(el,fr);
+    fr.setAttribute('aria-hidden','true');
+    fr.style.cssText='position:fixed;top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,Math.min(r.height,window.innerHeight-r.top))+'px;overflow:hidden;z-index:45;pointer-events:none;margin:0;opacity:1';
+    document.body.appendChild(fr);
+  }
+  function v555Reveal(el,overlay){
+    clearInterval(el._v555Iv);el._v555Waiting=false;
+    if(typeof v330InjectSubTabs==='function')try{v330InjectSubTabs()}catch(e){}
+    var fr=document.getElementById('v555Freeze');
+    el.classList.remove('v363Dim','v541In');
+    el.style.transition='none';el.style.opacity='0';void el.offsetWidth;
+    el.style.transition='opacity .2s ease-out';el.style.opacity='1';
+    if(fr&&!fr._out){fr._out=1;fr.style.transition='opacity .16s ease-in .05s';fr.style.opacity='0';setTimeout(function(){fr.remove()},240)}
+    clearTimeout(el._v555Clean);el._v555Clean=setTimeout(function(){el.style.transition='';el.style.opacity=''},240);
+    if(overlay&&!el.querySelector('.v316LoadingWrap')){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
+    if(window._v547AppShown&&window.v547HideSplash)setTimeout(window.v547HideSplash,60);
+  }
   render=function(){
     var el=document.getElementById("content"),overlay=document.getElementById("v366LoadOverlay");
-    // V366 · #content baja un poco de opacidad (transición CSS continua, ver arriba) mientras
-    // se piden los datos de la vista nueva. Si tarda más de lo normal, aparece el icono grande
-    // superpuesto (único aviso de carga); si es rápido, ni siquiera llega a mostrarse. Todo
-    // sube/desaparece solo en cuanto el contenido definitivo está listo (ver el observer de
-    // más arriba). Nada de animación por keyframes: solo transiciones, para que nunca haya
-    // un salto ni un parpadeo a transparente.
-    if(!v316ReduceMotion&&el)el._v541Pending=true;
-    if(!v316ReduceMotion&&el&&el.firstElementChild){
-      // V540 · si la pantalla nueva está lista enseguida (casi siempre, con la memoria de datos),
-      // no se atenúa nada: cambio directo, sin parpadeo. Solo si tarda se atenúa / sale el icono.
-      clearTimeout(el._v540DimTimer);
-      el._v540DimTimer=setTimeout(function(){el.classList.add("v363Dim");el._v363DimAt=Date.now()},150);
-      el._v363DimAt=0;
-      if(overlay){
-        clearTimeout(overlay._v366Timer);
-        overlay._v366Timer=setTimeout(function(){overlay.classList.add("show")},700);
-      }
-      // Red de seguridad: si la vista actual deja el contenido final en un div interno (en vez
-      // de en #content directamente) el observer nunca ve esa mutación final y el atenuado/icono
-      // se quedarían enganchados. Forzamos que desaparezcan solos pasado un tiempo, aunque
-      // ninguna vista debería tardar tanto en cargar.
-      clearTimeout(el._v363SafetyTimer);
-      el._v363SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},4000);
-    }
-    v316OrigRender();
+    if(v316ReduceMotion||!el||window._v554Preloading){v316OrigRender();return}
+    v555Freeze(el);
+    el._v555Waiting=true;el._v541Pending=false;
+    el.style.transition='none';el.style.opacity='0';
+    if(!el._v555Mo){el._v555Last=Date.now();el._v555Mo=new MutationObserver(function(){el._v555Last=Date.now()});el._v555Mo.observe(el,{childList:true,subtree:true,characterData:true,attributes:false})}
+    if(overlay){clearTimeout(overlay._v366Timer);overlay._v366Timer=setTimeout(function(){if(el._v555Waiting||el.querySelector('.v316LoadingWrap'))overlay.classList.add("show")},700)}
+    clearTimeout(el._v363SafetyTimer);
+    el._v363SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},6000);
+    var start=Date.now();el._v555Last=Date.now();
+    clearInterval(el._v555Iv);
+    el._v555Iv=setInterval(function(){
+      var now=Date.now(),busy=typeof v554Inflight==='function'&&v554Inflight()>0;
+      var ready=!!el.firstElementChild&&!el.querySelector('.v316LoadingWrap')&&!busy&&now-el._v555Last>=60;
+      if((ready&&now-start>=30)||now-start>3500)v555Reveal(el,overlay);
+    },30);
+    try{v316OrigRender()}catch(e){v555Reveal(el,overlay);throw e}
   };
 })();
 
@@ -3436,6 +3503,7 @@ async function staffRegisterView(){
     xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
     const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
     const attOnReg=v497AttendanceEnabledForTeam(t)&&v534EventsUI();
+    if(!document.getElementById('staffRegArea'))return; // V554 · ya se cambió de pantalla
     staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     v495WireEventChatAccordions(staffRegArea);
@@ -8770,8 +8838,9 @@ async function coachSeasonView(){
 async function renderCoachSeason(){
   const team=seasonTeam.value; coachSelectedTeam=team; const ss=await sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date','2026-09-01').lte('session_date','2027-05-31'); const cc=await sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[team]); const sessions=ss.error?[]:(ss.data||[]), comps=cc.error?[]:(cc.data||[]);
   const months=[['2026-09','Septiembre'],['2026-10','Octubre'],['2026-11','Noviembre'],['2026-12','Diciembre'],['2027-01','Enero'],['2027-02','Febrero'],['2027-03','Marzo'],['2027-04','Abril'],['2027-05','Mayo']];
+  if(!document.getElementById('seasonArea'))return; // V554 · ya se cambió de pantalla
   seasonArea.innerHTML=`<div class="tableWrap"><table><thead><tr><th>Mes</th><th>Fase</th><th>GYM</th><th>ERGO</th><th>MAR</th><th>Descanso</th><th>Comp.</th></tr></thead><tbody>${months.map(([ym,n])=>{const xs=sessions.filter(x=>x.session_date.startsWith(ym)); const c=comps.filter(x=>x.competition_date.startsWith(ym)); const ct=t=>xs.filter(x=>x.session_type===t).length;const [ma,mb]=monthBounds(ym);const activeDates=new Set(xs.filter(x=>x.session_type!=='DESC').map(x=>x.session_date).concat(c.map(x=>x.competition_date)));let restDays=0;for(let d=ma;d<=mb;d=addDaysISO(d,1)){if(!activeDates.has(d))restDays++}return `<tr><td>${n}</td><td>${seasonPhaseForDate(ym+'-01')}</td><td>${ct('GYM')}</td><td>${ct('ERG')}</td><td>${ct('MAR')}</td><td>${restDays}</td><td>${c.length}</td></tr>`}).join('')}</tbody></table></div><div class="info"><b>Total temporada:</b> ${sessions.length} sesiones planificadas · ${comps.length} competiciones. Usa “Resultados” para comparar automáticamente sesiones MAR repetidas del equipo; esta vista permite comprobar la carga y distribución global antes de editar.</div>`;
-  const sea=await getSeaResultsForTeam(team,'2026-09-01','2027-05-31'); seasonArea.innerHTML+=`<h3>Resultados MAR · evolución del equipo</h3>${seaSummaryHtml(sea.results)}<div class="tableWrap"><table class="seaRowsTableV183"><thead><tr><th>Mes</th><th>Registros</th><th>Metros</th><th>/500 medio</th><th>PPM</th><th>RPE</th></tr></thead><tbody>${months.map(([ym,n])=>{const a=sea.results.filter(x=>x.session?.session_date?.startsWith(ym)),z=seaSummary(a);return `<tr><td data-label="Mes">${n}</td><td data-label="Registros">${z.n}</td><td data-label="Metros">${z.meters||'—'}</td><td data-label="/500 medio">${fmtMetricSeconds(z.pace)}</td><td data-label="PPM">${z.spm!=null?z.spm.toFixed(1):'—'}</td><td data-label="RPE">${z.rpe!=null?z.rpe.toFixed(1):'—'}</td></tr>`}).join('')}</tbody></table></div>`;
+  const sea=await getSeaResultsForTeam(team,'2026-09-01','2027-05-31'); if(!document.getElementById('seasonArea'))return; seasonArea.innerHTML+=`<h3>Resultados MAR · evolución del equipo</h3>${seaSummaryHtml(sea.results)}<div class="tableWrap"><table class="seaRowsTableV183"><thead><tr><th>Mes</th><th>Registros</th><th>Metros</th><th>/500 medio</th><th>PPM</th><th>RPE</th></tr></thead><tbody>${months.map(([ym,n])=>{const a=sea.results.filter(x=>x.session?.session_date?.startsWith(ym)),z=seaSummary(a);return `<tr><td data-label="Mes">${n}</td><td data-label="Registros">${z.n}</td><td data-label="Metros">${z.meters||'—'}</td><td data-label="/500 medio">${fmtMetricSeconds(z.pace)}</td><td data-label="PPM">${z.spm!=null?z.spm.toFixed(1):'—'}</td><td data-label="RPE">${z.rpe!=null?z.rpe.toFixed(1):'—'}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 
 function isoForSelected(){const d=schedule[selected][1]; return d===31?"2026-08-31":`2026-09-${String(d).padStart(2,"0")}`}
