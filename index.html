@@ -2556,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="560";
+const APP_VERSION="561";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2637,7 +2637,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       if(warmP)return warmP;
       var r=loadRecipes();if(!r)return Promise.resolve();
       var cut=Date.now()-5*864e5;
-      var list=Object.keys(r).filter(function(k){var h=cache.get(k);return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,max||90);
+      var list=Object.keys(r).filter(function(k){var h=cache.get(k);if(!h&&SWR.has(k))return false;return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,max||90);
       if(!list.length)return Promise.resolve();
       warming=true;
       var i=0;
@@ -2667,6 +2667,16 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
       if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800)}
     });
+    // V561 · Eventos y Mensajes: se enseña al instante lo último que se vio y, a la vez, se pide lo
+    // nuevo; si ha cambiado algo, la pantalla se actualiza sola (sin esperar). Así son instantáneas y
+    // siguen en directo.
+    var SWR=new Map();
+    function swrOk(table,rec){
+      if(window._v561Live)return false;
+      if(table==='session_rsvp')return true;
+      if(table==='chat_messages'){try{return rec.length&&rec[0][0]==='select'&&rec[0][1][0]==='rower_id,body,sender_id,created_at'}catch(e){return false}}
+      return false;
+    }
     var inflight=0,inflightT=new Set();function track(p){if(warming)return p;inflight++;var o={t:Date.now()};inflightT.add(o);var d=function(){inflight--;inflightT.delete(o)};p.then(d,d);return p}
     window.v554Inflight=function(){return inflight};
     window.v556InflightSince=function(t){var n=0;inflightT.forEach(function(o){if(o.t>=t)n++});return n};
@@ -2677,8 +2687,19 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
         if(prop==='then'){
           return function(res,rej){
             var isWrite=rec.some(function(c){return WRITE[c[0]]});
+            if(!isWrite&&NEVER.has(table)&&swrOk(table,rec)){
+              var skey;try{skey=table+'|'+JSON.stringify(rec)}catch(e){skey=null}
+              if(skey){
+                remember(skey,table,rec);
+                var old=SWR.get(skey);
+                var fresh=v.call(t,function(x){return x});if(!old)track(fresh);
+                fresh.then(function(x){if(x&&!x.error){var prev=SWR.get(skey),js=JSON.stringify(x.data);SWR.set(skey,{js:js,x:x});if(prev&&prev.js!==js){try{window.dispatchEvent(new CustomEvent('v561fresh',{detail:{table:table}}))}catch(e){}}}},function(){});
+                if(old)return Promise.resolve(clone(old.x)).then(res,rej);
+                return fresh.then(function(x){return clone(x)}).then(res,rej);
+              }
+            }
             if(isWrite||NEVER.has(table)){
-              if(isWrite){cache.clear();pdrop(table)}
+              if(isWrite){cache.clear();pdrop(table);SWR.forEach(function(v2,k2){if(k2.indexOf(table+'|')===0)SWR.delete(k2)})}
               var pw=v.call(t,function(x){return x});
               if(isWrite)pw=pw.then(function(x){cache.clear();pdrop(table);window.v541Warm(2500);return x});
               return track(pw).then(res,rej);
@@ -2856,6 +2877,13 @@ function v558SwipeBack(layer,card,onClose){
     if(dx>innerWidth*.33||v>.5){card.style.transform='translateX(100%)';setTimeout(()=>{layer._v558Closing=true;layer.remove();onClose&&onClose()},230)}
     else{card.style.transform='';layer.style.backgroundColor='';setTimeout(()=>{card.style.transition=''},260)}},{passive:true});
 }
+window.addEventListener('v561fresh',e=>{
+  try{
+    const t=e.detail&&e.detail.table;
+    if(document.querySelector('.modalBack')||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))return;
+    if((t==='chat_messages'&&tab==='mensajes')||(t==='session_rsvp'&&(tab==='eventos'||tab==='registro'))){clearTimeout(window._v561T);window._v561T=setTimeout(()=>{try{render()}catch(_){}},60)}
+  }catch(_){}
+});
 let appStartingV96=false;let v547PreUser=null;
 function v554WaitView(max){
   return new Promise(res=>{
@@ -3479,6 +3507,9 @@ function render(){
     var fr=el.cloneNode(true);fr.id='v555Freeze';fr.classList.remove('v363Dim','v541In');fr.removeAttribute('style');
     fr.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
     v555CopyCanvases(el,fr);
+    // V561 · la copia congelada perdía lo elegido en los desplegables (p.ej. el equipo en Análisis
+    // volvía a "Senior masculino" un instante): se copian los valores actuales de los campos.
+    try{var fa=el.querySelectorAll('select,input,textarea'),fb=fr.querySelectorAll('select,input,textarea');for(var i=0;i<fa.length&&i<fb.length;i++){var o=fa[i],c=fb[i];if(o.tagName==='SELECT'){c.selectedIndex=o.selectedIndex;[].forEach.call(c.options,function(op,j){if(j===o.selectedIndex)op.setAttribute('selected','');else op.removeAttribute('selected')})}else if(o.type==='checkbox'||o.type==='radio'){c.checked=o.checked}else{c.value=o.value}}}catch(e){}
     fr.setAttribute('aria-hidden','true');
     fr.style.cssText='position:fixed;top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,Math.min(r.height,window.innerHeight-r.top))+'px;overflow:hidden;z-index:45;pointer-events:none;margin:0;opacity:1';
     document.body.appendChild(fr);
@@ -4722,7 +4753,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     if(!ev2)ev2=(await v495FetchEvents(tc,'past')).find(e=>e.kind===kind&&e.id===id);
     if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
     const roster2=v514EventRoster(ev2,await v516FullRoster(ev2,tc,cacheD));
-    const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
+    window._v561Live=true;const v561P=v495RsvpStatusMapsForEvents([ev2],tc);window._v561Live=false;const statusByEvent2=await v561P;
     const statusByUser=v514EffectiveStatus(ev2,roster2,statusByEvent2.get(`${ev2.kind}_${ev2.id}`)),myStatus=currentUser?(statusByUser.get(String(currentUser.id))||null):null;
     const orgIds2=await v512FetchOrganizerIds(ev2,tc);
     if(ev2.kind!=='session'&&Array.isArray(ev2.session_ids)&&ev2.session_ids.length){
