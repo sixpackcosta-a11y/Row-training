@@ -714,7 +714,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v595Pick .inlineCheck{display:flex;gap:8px;align-items:center;padding:5px 0}
 .v595All{border-bottom:1px solid var(--border);margin-bottom:2px}
 
-.v588Tabs{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible!important;margin:8px 0 0!important}
+.v588Tabs{display:grid!important;grid-auto-flow:column;grid-auto-columns:1fr;overflow:visible!important;margin:8px 0 0!important}
 .v588Tabs .v493SumRow{flex:none!important;min-width:0;padding:8px 2px 7px!important;gap:2px!important}
 .v588Top{display:flex;align-items:center;justify-content:center;gap:5px}.v588Top b{font-size:16px;color:var(--text)}.v588Tabs .v493SumIcon{font-size:17px}
 .v588Tabs .v588Lb{font-size:11.5px;white-space:nowrap}
@@ -731,7 +731,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v493SumPanel .rosterPerson.v588P{display:flex!important;align-items:center;gap:12px;padding:10px 4px!important;border:0!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;background:transparent!important}
 .v588List{gap:0!important}
 .v588Nm{flex:1;min-width:0;display:flex;flex-direction:column}.v588Nm b{font-weight:500;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.v588Nm small{font-size:12.5px;color:var(--text-muted)}.v588Nm .v588Unseen{color:#d97706}.v588Nm .v588Ok{color:#16a34a}.v588Nm .v588No{color:#dc2626}
+.v588Nm small{font-size:12.5px;color:var(--text-muted)}.v588Nm .v588Wait{color:#7c3aed}.v588Nm .v588Unseen{color:#d97706}.v588Nm .v588Ok{color:#16a34a}.v588Nm .v588No{color:#dc2626}
 .v588More{position:relative;flex:none;width:44px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:1px;color:var(--text-muted)}
 .v588More select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px}
 
@@ -2679,7 +2679,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="597";
+const APP_VERSION="598";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3787,7 +3787,7 @@ async function staffRegisterView(){
     const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
     const attOnReg=v497AttendanceEnabledForTeam(t)&&v534EventsUI();
     if(!document.getElementById('staffRegArea'))return; // V554 · ya se cambió de pantalla
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true,[],x.session_date||'',x.event_time||''):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true,[],x.session_date||'',x.event_time||'',x.max_participants||null):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     v495WireEventChatAccordions(staffRegArea);
     v493WireRsvpSummaryTabs(staffRegArea,load);
@@ -3984,6 +3984,22 @@ function v499FriendlyRsvpError(e,prefix){
   if(/permission denied/i.test(t))return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar, y prueba otra vez.';
   return prefix+(e?.message||e);
 }
+// V598 · cuando se libera una plaza, avisa a la primera persona de la lista de espera (la base de datos decide a quién
+// y la marca como avisada para no repetirlo).
+async function v598Promote(kind,eventId,team){
+  try{
+    const r=await sb.rpc('promote_waitlist_v598',{p_kind:kind,p_event:eventId,p_team:team});
+    if(r.error||!Array.isArray(r.data)||!r.data.length)return;
+    const ids=r.data.map(x=>x.uid||x.user_id||x).filter(Boolean);
+    let name='el evento',date='';
+    try{
+      if(kind==='competition'){const e=await sb.from('competitions').select('name,competition_date').eq('id',eventId).maybeSingle();name=e.data?.name||name;date=e.data?.competition_date||''}
+      else if(kind==='club_event'){const e=await sb.from('club_events').select('title,event_date').eq('id',eventId).maybeSingle();name=e.data?.title||name;date=e.data?.event_date||''}
+      else{const e=await sb.from('training_sessions').select('event_name,session_type,session_date').eq('id',eventId).maybeSingle();name=(e.data&&v524SessionEventName(e.data))||name;date=e.data?.session_date||''}
+    }catch(_){}
+    await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'🎟️ Hay una plaza libre',body:`Se ha liberado una plaza en "${name}"${date?' ('+v495EventDateLabel(date)+')':''}. Entra en Eventos y confirma si vienes.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
+  }catch(e){console.warn('No se pudo avisar a la lista de espera',e)}
+}
 function v495WireRsvpButtons(root,afterChange){
   root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
     if(!currentUser)return;
@@ -3992,12 +4008,15 @@ function v495WireRsvpButtons(root,afterChange){
     try{
       const payload={user_id:currentUser.id,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
       const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
-      const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
+      const q=await sb.from('session_rsvp').upsert(payload,{onConflict}).select('status').maybeSingle();
       if(q.error)throw q.error;
-      row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.classList.toggle('active',x.dataset.status===status));
-      const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=status==='in'?'Has confirmado que vas':'Has avisado de que no vas';
-      row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status}}));
-      v530NotifyOrganizersRsvp(kind,eventId,teamCode,status);
+      const real=q.data?.status||status;
+      row.querySelectorAll('.v493RsvpBtn').forEach(x=>{x.classList.toggle('active',(x.dataset.status==='in'&&(real==='in'||real==='waitlist'))||(x.dataset.status==='out'&&real==='out'));if(x.dataset.status==='in')x.textContent=real==='waitlist'?'⏳ En espera':'✅ Voy'});
+      const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=real==='in'?'Has confirmado que vas':real==='waitlist'?'Estás en la lista de espera. Si queda una plaza libre te avisaremos.':'Has avisado de que no vas';
+      if(real==='waitlist'&&status==='in')v300ShowToast('El evento está completo: has quedado en lista de espera');
+      row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status:real}}));
+      v530NotifyOrganizersRsvp(kind,eventId,teamCode,real);
+      if(real==='out')v598Promote(kind,eventId,teamCode);
       // V500 · el botón se actualiza al instante (líneas de arriba), pero el panel de
       // "Confirmaciones" (quién va/no va/falta) de la misma tarjeta se había quedado con los datos
       // de cuando se cargó la vista — había que recargar la vista para verse reflejado ahí.
@@ -4026,11 +4045,13 @@ async function v588SyncViews(kind,id){
     V588_SEEN.set(key,set);return set;
   }catch(e){return null}
 }
-function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime=''){
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime='',evCap=null){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
   const pendingList=roster.filter(p=>!statusByUser.has(String(p.user_id))).sort(sortName);
+  const rankMap=V598_RANK.get((kind||'session')+'_'+sessionId)||new Map();
+  const waitList=roster.filter(p=>statusByUser.get(String(p.user_id))==='waitlist').sort((a,b)=>(rankMap.get(String(a.user_id))||999)-(rankMap.get(String(b.user_id))||999));
   const allList=[...roster].sort(sortName);
   const uid='v493sum'+Math.random().toString(36).slice(2,9);
   // V504 · "Respuestas" en filas con texto, al estilo de la ficha de evento de Spond, en vez de la
@@ -4039,7 +4060,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const seenSet=(canEdit||(orgIds||[]).includes(String(currentUser?.id)))?(statusByUser._seen||null):null;
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
-    const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>':'');
+    const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='waitlist'?`<small class="v588Wait">En espera${rankMap.get(String(p.user_id))?' · puesto '+rankMap.get(String(p.user_id)):''}</small>`:st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>':'');
     const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}</select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
@@ -4051,9 +4072,9 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   // roster largos, así que se omite si hay 6 personas o menos.
   const searchBox=roster.length>20?`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`:'';
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
-    <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
+    <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${evCap||waitList.length?row('wait','Lista de espera','⏳',waitList,false):''}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
-    ${panel('in',inList,true)}${panel('pending',pendingList,false)}${panel('out',outList,false)}${panel('all',allList,false)}
+    ${panel('in',inList,true)}${panel('pending',pendingList,false)}${evCap||waitList.length?panel('wait',waitList,false):''}${panel('out',outList,false)}${panel('all',allList,false)}
     <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
@@ -4082,11 +4103,13 @@ function v493WireRsvpSummaryTabs(root,afterChange){
       if(status==='pending'){
         const q=await sb.from('session_rsvp').delete().eq('user_id',uidP).eq('team_code',teamCode).eq(col,eventId);
         if(q.error)throw q.error;
+        v598Promote(kind,eventId,teamCode);
       }else{
         const payload={user_id:uidP,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
         const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
         const q=await sb.from('session_rsvp').upsert(payload,{onConflict});
         if(q.error)throw q.error;
+        if(status==='out')v598Promote(kind,eventId,teamCode);
       }
       if(afterChange)afterChange();
     }catch(e){alert(v499FriendlyRsvpError(e,'No se pudo guardar: '));sel.disabled=false}
@@ -4239,6 +4262,7 @@ async function v495FetchEvents(team,range){
   const customs=(ee2.error?[]:(ee2.data||[])).map(v516MapClubEvent);
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
 }
+const V598_WAIT=new Map(),V598_RANK=new Map();
 async function v495RsvpStatusMapsForEvents(events,team){
   // V502fix · "si acepto en el evento de veteranos me aparece también aceptado en el de veteranas":
   // una misma competición puede estar asignada a varios equipos a la vez (team_codes es un array:
@@ -4247,16 +4271,19 @@ async function v495RsvpStatusMapsForEvents(events,team){
   // otro equipo. Ahora se filtra siempre por el equipo que se está viendo, para que cada equipo
   // lleve su propia confirmación aunque compartan la misma competición.
   const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
-  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',sessionIds).eq('team_code',team));
-  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status').in('competition_id',compIds).eq('team_code',team));
+  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at').in('training_session_id',sessionIds).eq('team_code',team));
+  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at').in('competition_id',compIds).eq('team_code',team));
   // V516 · un evento propio puede incluir varios grupos: sus respuestas no se filtran por equipo.
-  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status').in('club_event_id',clubIds));
+  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status,responded_at').in('club_event_id',clubIds));
   const results=qs.length?await Promise.all(qs):[],byEvent=new Map();
   results.forEach(r=>(r.data||[]).forEach(row=>{
     const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
     if(!byEvent.has(k))byEvent.set(k,new Map());
     byEvent.get(k).set(String(row.user_id),row.status);
+    if(row.status==='waitlist'){if(!V598_WAIT.has(k+'|tmp'))V598_WAIT.set(k+'|tmp',[]);V598_WAIT.get(k+'|tmp').push({u:String(row.user_id),t:row.responded_at||''})}
   }));
+  // V598 · orden de la lista de espera (por hora de llegada) para mostrar "puesto n"
+  byEvent.forEach((m,k)=>{const arr=(V598_WAIT.get(k+'|tmp')||[]).sort((a,b)=>String(a.t).localeCompare(String(b.t)));const rk=new Map();arr.forEach((x,i)=>rk.set(x.u,i+1));V598_RANK.set(k,rk);V598_WAIT.delete(k+'|tmp')});
   return byEvent;
 }
 // V498 · regla relativa de apertura ("ábrela X días antes, a las H:MM"), en vez de una fecha fija,
@@ -4640,9 +4667,10 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V514 · "Quién ve las respuestas: solo organizadores" — el resto solo ve su propia respuesta.
   const amOrganizer=canEdit||orgIds.includes(String(currentUser?.id));
   const hideResponses=ev.responses_visibility==='organizers'&&!amOrganizer;
-  const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds,ev.event_date,ev.event_time||ev.start_time||'');
+  const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds,ev.event_date,ev.event_time||ev.start_time||'',ev.max_participants||null);
   const inCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').length;
-  const capLine=ev.max_participants?`<p class="v512TeamLine">👥 ${inCount}/${ev.max_participants} plazas${inCount>=ev.max_participants?' · <b>Completo</b>':''}</p>`:'';
+  const waitCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='waitlist').length;
+  const capLine=ev.max_participants?`<p class="v512TeamLine">👥 ${inCount}/${ev.max_participants} plazas${inCount>=ev.max_participants?' · <b>Completo</b>':''}${waitCount?` · ⏳ ${waitCount} en lista de espera`:''}</p>`:'';
   const timesLine=(ev.meet_time||ev.end_time)?`<p class="v512TeamLine">${ev.meet_time?`🤝 Encuentro: ${esc(ev.meet_time)}`:''}${ev.meet_time&&ev.end_time?' · ':''}${ev.end_time?`🏁 Termina: ${esc(ev.end_time)}`:''}</p>`:'';
   const cover=ev.cover_url?`<img class="v514Cover" src="${esc(ev.cover_url)}" alt="">`:'';
   // V512 · "cuando abro un evento no aparece de qué equipo es" — línea de equipo con su color, como
@@ -4794,7 +4822,7 @@ function v503OverviewRowHtml(ev,clash){
     const coverStyleC=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
     return `<button type="button" class="v503EventRow v527RowCancelled" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyleC}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub v527CancelTxt">Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}</div></div></button>`;
   }
-  const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}${ev.max_participants?`/${ev.max_participants}`:''}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span></div>`;
+  const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}/${ev._counts.total}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span>${ev._counts.wait?`<span>⏳ ${ev._counts.wait}</span>`:''}</div>`;
   const coverStyle=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
   return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
 }
@@ -4941,8 +4969,9 @@ function v514EffectiveStatus(ev,roster,statusByUser){
 function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
   return events.map(ev=>{
     const r=v514EventRoster(ev,roster);
-    const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0},pendingIds=[];
-    r.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else{counts.pending++;pendingIds.push(p.user_id)}});
+    const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0,wait:0},pendingIds=[];
+    r.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
+    counts.total=counts.in+counts.out+counts.pending+counts.wait;
     return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds};
   });
 }
@@ -12742,7 +12771,7 @@ function athleteWeekRangeV123(start,end){return `${shortDateES(start)} – ${sho
 // V495 · generalizado para que valga tanto para una sesión (MAR/GYM marcada "convocatoria") como para
 // una competición: kind='session'|'competition'.
 function v493RsvpWidgetHtml(eventId,teamCode,status,kind='session'){
-  return `<div class="v493RsvpRow" data-id="${eventId}" data-kind="${kind}" data-team="${esc(teamCode||'')}"><button type="button" class="v493RsvpBtn btn ${status==='in'?'active':''}" data-status="in">✅ Voy</button><button type="button" class="v493RsvpBtn btn ${status==='out'?'active':''}" data-status="out">❌ No voy</button><small class="muted v493RsvpStatus">${status==='in'?'Has confirmado que vas':status==='out'?'Has avisado de que no vas':'Sin confirmar todavía'}</small></div>`;
+  return `<div class="v493RsvpRow" data-id="${eventId}" data-kind="${kind}" data-team="${esc(teamCode||'')}"><button type="button" class="v493RsvpBtn btn ${status==='in'||status==='waitlist'?'active':''}" data-status="in">${status==='waitlist'?'⏳ En espera':'✅ Voy'}</button><button type="button" class="v493RsvpBtn btn ${status==='out'?'active':''}" data-status="out">❌ No voy</button><small class="muted v493RsvpStatus">${status==='in'?'Has confirmado que vas':status==='waitlist'?'Estás en la lista de espera. Si queda una plaza libre te avisaremos.':status==='out'?'Has avisado de que no vas':'Sin confirmar todavía'}</small></div>`;
 }
 function athleteWeekSessionV123(s,rsvpStatus){
   const type=String(s?.session_type||'').toUpperCase();
