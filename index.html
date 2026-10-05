@@ -530,6 +530,11 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v546Sched{margin:14px 0 10px;padding:14px;border-radius:14px;background:var(--surface-2,rgba(0,0,0,.05))}.v546Sched p{margin:6px 0 12px}
+.v546Sched .v546SendNow{width:100%;margin:0;border-radius:999px;padding:12px;font-weight:600}
+.v546Preview{margin:6px 0 4px}.v546Preview h4{margin:6px 0 6px;font-size:1.05em}
+.v546Line{padding:10px 2px;border-bottom:1px solid var(--line,rgba(0,0,0,.08))}
+.v546Preview .v493RsvpMsgAll{width:100%;margin:12px 0 0;border-radius:999px;padding:11px}
 .v545Bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;flex-wrap:wrap}.v545Bar>button{margin:0}
 .v545Seg{display:inline-flex;background:var(--surface-2,rgba(0,0,0,.06));border-radius:10px;padding:3px;gap:2px}
 .v545SegBtn{border:0!important;background:transparent!important;box-shadow:none!important;margin:0!important;padding:7px 14px!important;border-radius:8px!important;font-weight:600;color:var(--muted,#64748b)!important;font-size:.92em}
@@ -538,7 +543,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v544Actions>button{width:100%;margin:0;padding:10px 6px;font-size:.92em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .v544Actions>.v544Warn{color:#b45309}
 .v544Actions>.v544Del{grid-column:1/-1;background:transparent;border-color:transparent;color:#c0392b;padding:8px 6px;font-size:.88em}
-.v544Train{margin:10px 0}.v544Train>summary{font-weight:600}
+.v544Train{margin:10px 0}.v544Train>summary{font-weight:600}.v546Sum{flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v546Sum .muted{font-weight:400}
 .v536Box{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v536Head{font-weight:700;margin-bottom:6px}.v536Item{margin:6px 0}.v536ItemHead{display:flex;justify-content:space-between;align-items:center;gap:8px}.v536Unlink{padding:4px 9px;font-size:.8rem}.v536Opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.v536AssignBox{margin-top:6px}.v536EditorLink{display:block;margin:10px 0}
 .v531Bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-tint);border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:0 0 10px}.v531Bar.cancelled{background:#fee2e2;border-color:#fecaca}.v531Btns{display:flex;gap:8px;flex-wrap:wrap}.v531FormCard{margin:0 0 12px}
 .v530Row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);margin:0}.v530Row input[type=checkbox]{width:auto;margin:0;transform:scale(1.25)}.v530Row select{width:auto;margin:0}
@@ -2488,7 +2493,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="545";
+const APP_VERSION="546";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4145,7 +4150,10 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const addOrg=canEdit&&organizerIds!==null?`<button type="button" class="v512AddOrgToggle">+ Añadir organizador</button><div class="v512AddOrgBox hidden"><select class="v512AddOrgSelect"><option value="">— Elegir persona —</option>${candidates.map(p=>`<option value="${esc(p.user_id)}">${esc(p.full_name||'Sin nombre')}</option>`).join('')}</select><button type="button" class="v512AddOrgConfirm primary">Añadir y avisar</button></div>`:'';
   const organizerLine=(orgNames.length||addOrg)?`<div class="v512OrgLine">${orgNames.length?`<span class="muted">Organizador${orgNames.length>1?'es':''}:</span> ${orgNames.join(', ')}`:''}${addOrg}</div>`:'';
   const chat=opensFuture||ev.chat_enabled===false?'':(showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'');
-  const opensNote=opensFuture?`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`:'';
+  // V546 · como en Spond: si la invitación está programada, quien puede editar ve el aviso de
+  // "evento programado", a cuánta gente se invitará y un botón "Enviar ahora".
+  const v546Org=orgIds.length,v546Inv=roster.filter(p=>!orgIds.includes(String(p.user_id))).length;
+  const opensNote=!opensFuture?'':canEdit&&!cancelled?`<div class="v546Sched"><b>Este es un evento programado.</b><p>La invitación se enviará: <b>${esc(v498OpensAtLabel(opensAt))}</b>. A esa hora se podrá responder y comentar.</p><button type="button" class="v546SendNow">↻ Enviar ahora</button></div><div class="v546Preview"><h4>Respuestas</h4><div class="v546Line">👤 Se invitará a ${v546Inv} persona${v546Inv===1?'':'s'}</div>${v546Org?`<div class="v546Line">⭐ ${v546Org} organizador${v546Org===1?'':'es'} será${v546Org===1?'':'n'} invitado${v546Org===1?'':'s'}</div>`:''}${team&&roster.length?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(ev.event_title||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">💬 Enviar mensaje a los invitados</button>`:''}</div>`:`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`;
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   // V522 · el lugar abre la ubicación en el mapa (Google Maps; en el móvil se abre en la app de
   // mapas). Si se pegó directamente un enlace de mapas, se usa tal cual. Ahora también en
@@ -4162,7 +4170,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const cancelBtn=`<button type="button" class="v527CancelBtn${cancelled?'':' v544Warn'}">${cancelled?'↩️ Reactivar':'🚫 Cancelar'}</button>`;
   const editBtns=!canEdit?'':ev.kind==='session'?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entreno</button>${cancelBtn}<button type="button" class="v525UnEvent" data-id="${ev.id}">➖ Quitar de eventos</button><button type="button" class="v498DeleteEvent v544Del" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">✏️ Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">📄 Duplicar</button>`:''}${cancelBtn}<button type="button" class="v498DeleteEvent v544Del" data-kind="${ev.kind}" data-id="${ev.id}">🗑️ Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
-  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span>${cancelled?`<div class="v527CancelBanner">🚫 Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div>`:''}<h3${cancelled?' class="v527Strike"':''}>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<details class="libraryAccordion v544Train"><summary>🏋️ Entrenamiento${ev.title?` · <span class="muted">${esc(ev.title)}</span>`:''}</summary><div class="accordionBody">${trainingContentHtml(ev.content)}</div></details>`:(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
+  return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span>${cancelled?`<div class="v527CancelBanner">🚫 Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div>`:''}<h3${cancelled?' class="v527Strike"':''}>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<details class="libraryAccordion v544Train"><summary><span class="v546Sum">🏋️ Entrenamiento${ev.title?`<span class="muted"> · ${esc(ev.title)}</span>`:''}</span></summary><div class="accordionBody">${trainingContentHtml(ev.content)}</div></details>`:(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
 function v522MapsUrl(loc){
   const t=String(loc||'').trim();
@@ -4317,6 +4325,23 @@ function v527Dialog({title,html,okText,danger}){
     layer.querySelector('#v527No').onclick=()=>{layer.remove();resolve(null)};
     layer.querySelector('#v527Ok').onclick=()=>{const data={};layer.querySelectorAll('[data-f]').forEach(el=>data[el.dataset.f]=el.type==='checkbox'?el.checked:el.value);layer.remove();resolve(data)};
   });
+}
+// V546 · "Enviar ahora": abre ya las respuestas de ESTA fecha (las demás del periódico siguen con
+// su programación) y, si se quiere, avisa ya a los invitados.
+async function v546SendNow(ev,team){
+  const live=v533TeamLive(ev.kind==='club_event'?(ev.team_code||team):team);
+  const d=await v527Dialog({title:'Enviar invitación ahora',html:`<p>Se abrirán ya las respuestas y el chat de <b>${esc(ev.event_title)}</b> (${esc(shortDateES(ev.event_date))}), sin esperar a la hora programada.</p><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-f="notify" ${live?'checked':'disabled'}> Avisar ya a los invitados</label>${live?'':'<p class="muted"><small>Los avisos a las remeras siguen en pausa hasta que se lancen los eventos.</small></p>'}`,okText:'Enviar ahora'});
+  if(!d)return false;
+  const table=V498_TABLE_BY_KIND[ev.kind];
+  const now=new Date().toISOString();
+  const patch={rsvp_open_days_before:null,rsvp_open_time:null};
+  if(d.notify&&live)patch.opens_notified_at=now;
+  const u=await sb.from(table).update(patch).eq('id',ev.id);
+  if(u.error){alert('No se pudo enviar: '+u.error.message);return false}
+  if(d.notify&&live){
+    try{await sendNotificationV110({audience:v527Audience(ev,team),title:'📅 Ya puedes confirmar asistencia',body:`Confirma tu asistencia a "${ev.event_title}" (${shortDateES(ev.event_date)}) en Row Training.`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_new',type:'training'})}catch(e){}
+  }
+  return true;
 }
 async function v527SiblingSessions(ev){
   if(ev.kind!=='session')return [];
@@ -4559,6 +4584,10 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
       body.querySelectorAll('.v498DeleteEvent').forEach(b=>{b.onclick=async()=>{
         b.disabled=true;
         if(await v527Delete(ev2,tc)){close();if(afterChange)afterChange()}else b.disabled=false;
+      }});
+      body.querySelectorAll('.v546SendNow').forEach(b=>{b.onclick=async()=>{
+        b.disabled=true;
+        if(await v546SendNow(ev2,tc))reopen();else b.disabled=false;
       }});
       body.querySelectorAll('.v527CancelBtn').forEach(b=>{b.onclick=async()=>{
         b.disabled=true;
