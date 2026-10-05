@@ -5,8 +5,8 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
-const CACHE='rowtraining-app-v550';
-const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/logo-cabecera-oscuro.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
+const CACHE='rowtraining-app-v551';
+const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c=>Promise.all(PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()));
