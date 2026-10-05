@@ -593,6 +593,29 @@ button.coachDay{width:100%;font:inherit;color:inherit}
    carga se alarga, además aparece el icono grande centrado. */
 #content{transition:opacity .5s ease}
 #content.v363Dim{opacity:.4;transition:opacity .12s ease}
+/* V558 · sensación de app de iPhone */
+html{-webkit-tap-highlight-color:transparent}
+button,a,summary,label,select,.v330NavBtn,[role=button]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,summary,header,.v330BottomNav,.v513Chip,.v545Seg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{transition:transform .12s ease,opacity .12s ease,background-color .15s ease}
+button:active:not(:disabled){transform:scale(.97);opacity:.78}
+.v330NavBtn:active{transform:scale(.9)}
+.v503EventRow{transition:transform .12s ease,opacity .12s ease}.v503EventRow:active{transform:scale(.985);opacity:.8}
+@keyframes v558Fade{from{opacity:0}to{opacity:1}}
+@keyframes v558FadeOut{from{opacity:1}to{opacity:0}}
+@keyframes v558Up{from{transform:translateY(28px) scale(.98);opacity:.4}to{transform:none;opacity:1}}
+@keyframes v558Down{from{transform:none;opacity:1}to{transform:translateY(28px) scale(.98);opacity:0}}
+@keyframes v558PushIn{from{transform:translateX(100%)}to{transform:none}}
+@keyframes v558PushOut{from{transform:none}to{transform:translateX(100%)}}
+.modalBack{animation:v558Fade .2s ease}
+.modalBack>.modalCard{animation:v558Up .3s cubic-bezier(.2,.8,.2,1)}
+.modalBack.v558Out{animation:v558FadeOut .22s ease forwards;pointer-events:none}
+.modalBack.v558Out>.modalCard{animation:v558Down .22s ease forwards}
+.v503DetailBack{background:rgba(7,22,47,.28)}
+.v503DetailBack>.v503DetailCard{animation:v558PushIn .34s cubic-bezier(.2,.85,.25,1);box-shadow:-8px 0 30px rgba(0,0,0,.18);will-change:transform}
+.v503DetailBack.v558Out>.v503DetailCard{animation:v558PushOut .28s cubic-bezier(.4,0,.7,.2) forwards}
+@media (prefers-reduced-motion: reduce){.modalBack,.modalBack>.modalCard,.v503DetailBack>.v503DetailCard{animation:none!important}}
+
 #content.v541In{animation:v541Fade .26s ease-out both}@keyframes v541Fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion: reduce){#content.v541In{animation:none}}
 #app{position:relative}
@@ -2533,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="556";
+const APP_VERSION="558";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2635,8 +2658,9 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
       if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800)}
     });
-    var inflight=0;function track(p){if(warming)return p;inflight++;var d=function(){inflight--};p.then(d,d);return p}
+    var inflight=0,inflightT=new Set();function track(p){if(warming)return p;inflight++;var o={t:Date.now()};inflightT.add(o);var d=function(){inflight--;inflightT.delete(o)};p.then(d,d);return p}
     window.v554Inflight=function(){return inflight};
+    window.v556InflightSince=function(t){var n=0;inflightT.forEach(function(o){if(o.t>=t)n++});return n};
     function clone(r){try{return typeof structuredClone==='function'?structuredClone(r):JSON.parse(JSON.stringify(r))}catch(e){return r}}
     function wrap(target,table,rec){
       return new Proxy(target,{get:function(t,prop){
@@ -2694,7 +2718,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var origFrom=sb.from.bind(sb);
     sb.from=function(table){return wrap(origFrom(table),String(table),[])};
     var origRpc=sb.rpc.bind(sb);
-    sb.rpc=function(name){if(!/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''))){cache.clear();pwipe();window.v541Warm(2500)}return origRpc.apply(null,arguments)}; // V554 · las rpc de solo lectura ya no vacían la memoria
+    sb.rpc=function(name,args,opts){var ro=/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''));if(!ro){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)}var b=origRpc(name,args,opts);return (b&&typeof b.then==='function')?wrap(b,'rpc:'+name,[['rpc',[args===undefined?null:args]]]):b}; // V557 · las rpc de solo lectura también se guardan en memoria // V554 · las rpc de solo lectura ya no vacían la memoria
     var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(ev==='SIGNED_OUT'){pwipe();owipe();cache.clear();lastAuth='';recipesStarted=false;return}if(u&&u!==lastAuth){if(lastAuth){pwipe();owipe()}lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
   }catch(e){console.warn('v540 cache off',e)}
 })();
@@ -2801,6 +2825,27 @@ async function loadPendingRegistrationCount(){
       pendingRegistrationCount=(res.data||[]).filter(x=>isGlobalCoach?(!x.requested_team||allowed.includes(x.requested_team)):(!!x.requested_team&&allowed.includes(x.requested_team))).length;
     }
   }catch(e){}
+}
+// V558 · las ventanas (modales) se cierran con su animación en vez de desaparecer de golpe.
+(function(){
+  const origRemove=Element.prototype.remove;
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  Element.prototype.remove=function(){
+    if(!reduce&&this.classList&&this.classList.contains('modalBack')&&this.isConnected&&!this._v558Closing){
+      this._v558Closing=true;this.classList.add('v558Out');const self=this;
+      setTimeout(()=>origRemove.call(self),this.classList.contains('v503DetailBack')?270:210);return;
+    }
+    return origRemove.call(this);
+  };
+})();
+// V558 · deslizar desde el borde izquierdo para volver (como en iPhone) en las pantallas de detalle.
+function v558SwipeBack(layer,card,onClose){
+  let x0=null,y0=0,dx=0,t0=0,active=false;
+  card.addEventListener('touchstart',e=>{const t=e.touches[0];if(t.clientX>28)return;x0=t.clientX;y0=t.clientY;dx=0;t0=Date.now();active=false},{passive:true});
+  card.addEventListener('touchmove',e=>{if(x0==null)return;const t=e.touches[0];dx=t.clientX-x0;const dy=Math.abs(t.clientY-y0);if(!active){if(dx>8&&dx>dy){active=true;card.style.animation='none';card.style.transition='none'}else if(dy>10){x0=null;return}}if(active){card.style.transform=`translateX(${Math.max(0,dx)}px)`;layer.style.backgroundColor=`rgba(7,22,47,${Math.max(0,.28*(1-dx/innerWidth))})`}},{passive:true});
+  card.addEventListener('touchend',()=>{if(x0==null)return;x0=null;if(!active)return;const v=dx/Math.max(1,Date.now()-t0);card.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';
+    if(dx>innerWidth*.33||v>.5){card.style.transform='translateX(100%)';setTimeout(()=>{layer._v558Closing=true;layer.remove();onClose&&onClose()},230)}
+    else{card.style.transform='';layer.style.backgroundColor='';setTimeout(()=>{card.style.transition=''},260)}},{passive:true});
 }
 let appStartingV96=false;let v547PreUser=null;
 function v554WaitView(max){
@@ -3332,8 +3377,14 @@ function v330RenderBottomNav(){
     // V386 · "Más" también incluye Equipo y Sistema (pantallas sin la fila de accesos rápidos), así
     // que si ya estás ahí, pulsar "Más" debe seguir llevándote de vuelta a Perfil en vez de no
     // hacer nada (antes se quedaba bloqueado por compartir el mismo grupo "yo").
-    if(v330GroupForTab(tab)===g&&!(g==='yo'&&tab!==btn.dataset.default))return;
-    coachWeekFocusDate=null;tab=btn.dataset.default;draw();render();
+    // V558 · como en iPhone: tocar la pestaña en la que ya estás sube arriba del todo, y al volver a
+    // una pestaña se vuelve a la última sub-pantalla que tenías abierta en ella.
+    window._v558GroupTab=window._v558GroupTab||{};
+    const curG=v330GroupForTab(tab);
+    if(curG===g&&!(g==='yo'&&tab!==btn.dataset.default)){const sc=document.getElementById('v347Scroll');if(sc)sc.scrollTo({top:0,behavior:'smooth'});return}
+    if(curG)window._v558GroupTab[curG]=tab;
+    const back=window._v558GroupTab[g];
+    coachWeekFocusDate=null;tab=(back&&v330GroupForTab(back)===g&&g!=='yo')?back:btn.dataset.default;draw();render();
   });
 }
 // V391 · barra de accesos de "Más" unificada: antes vivía solo dentro de Perfil (fila de botones
@@ -3442,18 +3493,23 @@ function render(){
   function v555Reveal(el,overlay){
     clearInterval(el._v555Iv);el._v555Waiting=false;
     if(typeof v330InjectSubTabs==='function')try{v330InjectSubTabs()}catch(e){}
+    try{if(el._v558Restore!=null){var sc=document.getElementById('v347Scroll');if(sc)sc.scrollTop=el._v558Restore;el._v558Restore=null}}catch(e){}
     var fr=document.getElementById('v555Freeze');
     el.classList.remove('v363Dim','v541In');
     el.style.transition='none';el.style.opacity='0';void el.offsetWidth;
-    el.style.transition='opacity .2s ease-out';el.style.opacity='1';
-    if(fr&&!fr._out){fr._out=1;fr.style.transition='opacity .16s ease-in .05s';fr.style.opacity='0';setTimeout(function(){fr.remove()},240)}
-    clearTimeout(el._v555Clean);el._v555Clean=setTimeout(function(){el.style.transition='';el.style.opacity=''},240);
+    el.style.transition='opacity .15s ease-out';el.style.opacity='1';
+    if(fr&&!fr._out){fr._out=1;fr.style.transition='opacity .12s ease-in';fr.style.opacity='0';setTimeout(function(){fr.remove()},150)}
+    clearTimeout(el._v555Clean);el._v555Clean=setTimeout(function(){el.style.transition='';el.style.opacity=''},180);
     if(overlay&&!el.querySelector('.v316LoadingWrap')){clearTimeout(overlay._v366Timer);overlay.classList.remove('show')}
     if(window._v547AppShown&&window.v547HideSplash)setTimeout(window.v547HideSplash,60);
   }
   render=function(){
     var el=document.getElementById("content"),overlay=document.getElementById("v366LoadOverlay");
     if(v316ReduceMotion||!el||window._v554Preloading){v316OrigRender();return}
+    // V558 · cada pestaña recuerda dónde estabas (como en iPhone); si se recarga la misma, no se mueve.
+    try{var sc=document.getElementById('v347Scroll'),key=(typeof currentMode!=='undefined'?currentMode:'')+'|'+tab;window._v558Mem=window._v558Mem||{};
+      var cur=sc?sc.scrollTop:0;if(window._v558Key)window._v558Mem[window._v558Key]={y:cur,t:Date.now()};
+      var m=window._v558Mem[key];el._v558Restore=(key===window._v558Key)?cur:(m&&Date.now()-m.t<600000?m.y:0);window._v558Key=key}catch(e){}
     v555Freeze(el);
     el._v555Waiting=true;el._v541Pending=false;
     el.style.transition='none';el.style.opacity='0';
@@ -3464,10 +3520,12 @@ function render(){
     var start=Date.now();el._v555Last=Date.now();
     clearInterval(el._v555Iv);
     el._v555Iv=setInterval(function(){
-      var now=Date.now(),busy=typeof v554Inflight==='function'&&v554Inflight()>0;
-      var ready=!!el.firstElementChild&&!el.querySelector('.v316LoadingWrap')&&!busy&&now-el._v555Last>=60;
-      if((ready&&now-start>=30)||now-start>3500)v555Reveal(el,overlay);
-    },30);
+      // V556 · solo esperan las cargas de ESTA pantalla (no las de fondo) y como mucho 0,3 s: si para
+      // entonces ya hay pantalla, se muestra y lo que falte llega en su sitio.
+      var now=Date.now(),busy=typeof v556InflightSince==='function'&&v556InflightSince(start-5)>0&&now-start<300;
+      var ready=!!el.firstElementChild&&!el.querySelector('.v316LoadingWrap')&&!busy&&now-el._v555Last>=40;
+      if(ready||now-start>3500)v555Reveal(el,overlay);
+    },16);
     try{v316OrigRender()}catch(e){v555Reveal(el,overlay);throw e}
   };
 })();
@@ -4649,6 +4707,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     layer=document.createElement('div');layer.className='modalBack v503DetailBack';
     layer.innerHTML=`<div class="modalCard v503DetailCard"><div class="modalTitle"><button type="button" class="v503DetailBackBtn">← Volver</button></div><div class="v503DetailBody">${v316Loading('Cargando…')}</div></div>`;
     document.body.appendChild(layer);
+    v558SwipeBack(layer,layer.querySelector('.v503DetailCard'));
   }
   const cardEl=layer.querySelector('.v503DetailCard'),keepScroll=reuse?cardEl.scrollTop:0;
   const openChats=reuse?[...layer.querySelectorAll('.v494EventChatAccordion[open]')].length>0:false;
