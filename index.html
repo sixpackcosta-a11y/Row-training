@@ -699,6 +699,18 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v325AddReaction{border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325EmojiPicker{display:flex;flex-wrap:wrap;gap:2px;width:min(224px,88vw);position:absolute;bottom:100%;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 6px 18px #0004;z-index:5}
 .v325EmojiPicker.hidden{display:none}
+.v583EmojiBtn{flex:none;width:42px;height:42px;padding:0;font-size:22px;line-height:1;border-radius:12px;background:var(--surface-2);border:1px solid var(--border)}
+.v583EmojiSheet{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow-y:auto;z-index:9999;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:0 -8px 28px #0005;padding:10px 12px calc(12px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.v583EmojiTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.v583EClose{border:0;background:transparent;font-size:18px;padding:4px 8px;color:var(--text-muted)}
+.v583EGroup small{display:block;margin:8px 0 2px;color:var(--text-muted);font-weight:700}
+.v583EGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:2px}
+.v583E{border:0;background:transparent;font-size:26px;line-height:1;padding:6px 0;border-radius:8px}
+.v583E:active{background:var(--surface-2)}
+.v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
+.v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
+.v583Fail{outline:2px solid #ef4444}
+
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
 body.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
@@ -2612,7 +2624,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="582";
+const APP_VERSION="583";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7670,105 +7682,195 @@ function v300ChatBubblesHtml(messages,meId,reactions){
     return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0"><div style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString(locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div><div class="v325ReactionsRow" style="${mine?'justify-content:flex-end':''}">${v325ReactionsHtml(m.id,reactions,meId)}</div></div>`;
   }).join('');
 }
-async function v300RenderChatThread(container,rowerId,teamCode){
-  const isRower=currentMode==='athlete';
-  container.innerHTML=`<p class="muted">${v316Loading(isRower?v311T('cargando_conversacion'):'Cargando conversación…')}</p>`;
-  const messages=await v300FetchChat(rowerId);
-  const reactions=await v325FetchReactions(messages.map(m=>m.id));
-  container.innerHTML=`<div id="v300ChatScroll" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v300ChatBubblesHtml(messages,currentUser.id,reactions)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v300ChatInput" rows="1" placeholder="${isRower?v311T('escribe_mensaje'):'Escribe un mensaje…'}" style="flex:1;resize:none"></textarea><button type="button" id="v300ChatSend" class="primary">${isRower?v311T('enviar'):'Enviar'}</button></div>`;
-  const scrollBox=container.querySelector('#v300ChatScroll');scrollBox.scrollTop=scrollBox.scrollHeight;
-  scrollBox.querySelectorAll('.v325AddReaction').forEach(btn=>btn.onclick=()=>{
-    const picker=scrollBox.querySelector(`.v325EmojiPicker[data-picker-for="${btn.dataset.msg}"]`);
-    if(!picker)return;
-    scrollBox.querySelectorAll('.v325EmojiPicker').forEach(p=>{if(p!==picker)p.classList.add('hidden')});
-    picker.classList.toggle('hidden');
-  });
-  scrollBox.querySelectorAll('.v325EmojiOpt,.v325ReactionPill').forEach(btn=>btn.onclick=async()=>{
-    scrollBox.querySelectorAll('.v325EmojiPicker').forEach(p=>p.classList.add('hidden'));
-    const targetMsg=messages.find(m=>String(m.id)===btn.dataset.msg);
-    const{error}=await v325ToggleReaction(Number(btn.dataset.msg),btn.dataset.emoji,rowerId,teamCode,targetMsg?.body);
-    if(error){alert(/relation .* does not exist/i.test(error.message||'')?'Falta ejecutar 17_reacciones_mensajes.sql en Supabase antes de poder reaccionar.':`No se pudo guardar la reacción.\n\nDetalle: ${error.message||error}`);return}
-    const st=scrollBox.scrollTop;
-    await v300RenderChatThread(container,rowerId,teamCode);
-    const sb2=container.querySelector('#v300ChatScroll');if(sb2)sb2.scrollTop=st;
-  });
-  const input=container.querySelector('#v300ChatInput'),sendBtn=container.querySelector('#v300ChatSend');
-  const send=async()=>{
+// V583 · Mensajería rápida: envío optimista (el mensaje sale al instante y el aviso push va en segundo plano),
+// reacciones sin recargar, hilo en caché para abrir al momento, actualización suave cada pocos segundos y
+// selector de emojis propio (también para escribir).
+const V583_EMOJI_GROUPS=[
+ ['Caras',['😂','🤣','😄','😁','😆','😅','😊','🙂','😉','😍','🥰','😘','😎','🤩','🥳','😜','🤪','😬','🙃','🤔','😮','😲','😢','😭','😡','😴','🥵','🥶','🤕','😷']],
+ ['Gestos',['👍','👎','👏','🙌','🙏','💪','🤝','👌','✌️','🤞','👊','✊','🫶','👋','🤙','☝️']],
+ ['Corazones',['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','💖','💯']],
+ ['Remo y fiesta',['🚣','🚣‍♀️','🚣‍♂️','🏆','🥇','🥈','🥉','🏅','🔥','⚡','⭐','🌟','🎉','🎊','🌊','☀️','🌧️','💦','✅','❌','⚠️','⏰','📍','📅']]
+];
+const V583_QUICK=['👍','❤️','😂','🔥','👏','💪','😮'];
+const V583_CACHE=new Map();
+function v583Recents(){try{return JSON.parse(localStorage.getItem('rowtraining_v583_emoji')||'[]').slice(0,12)}catch(e){return[]}}
+function v583PushRecent(e){try{const r=[e,...v583Recents().filter(x=>x!==e)].slice(0,12);localStorage.setItem('rowtraining_v583_emoji',JSON.stringify(r))}catch(_){}}
+function v583CloseEmoji(){document.getElementById('v583Emoji')?.remove()}
+function v583OpenEmoji(onPick){
+  v583CloseEmoji();
+  const rec=v583Recents();
+  const el=document.createElement('div');el.id='v583Emoji';el.className='v583EmojiSheet';
+  const grid=(arr)=>arr.map(e=>`<button type="button" class="v583E" data-e="${e}">${e}</button>`).join('');
+  el.innerHTML=`<div class="v583EmojiTop"><b>Emojis</b><button type="button" class="v583EClose" aria-label="Cerrar">✕</button></div>${rec.length?`<div class="v583EGroup"><small>Recientes</small><div class="v583EGrid">${grid(rec)}</div></div>`:''}${V583_EMOJI_GROUPS.map(([n,a])=>`<div class="v583EGroup"><small>${n}</small><div class="v583EGrid">${grid(a)}</div></div>`).join('')}`;
+  document.body.appendChild(el);
+  el.querySelector('.v583EClose').onclick=v583CloseEmoji;
+  el.onclick=e=>{const b=e.target.closest('.v583E');if(!b)return;const em=b.dataset.e;v583PushRecent(em);v583CloseEmoji();onPick(em)};
+  setTimeout(()=>{const off=ev=>{if(!document.getElementById('v583Emoji')){document.removeEventListener('pointerdown',off,true);return}if(!ev.target.closest('#v583Emoji')){v583CloseEmoji();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
+}
+function v583Bubble(m,meId,o){
+  const mine=m.sender_id===meId,tmp=String(m.id).startsWith('tmp');
+  const name=(!mine&&o.names)?(o.names.get(String(m.sender_id))||'Alguien'):'';
+  const time=tmp?(m._failed?'⚠️ no enviado · toca para reintentar':'enviando…'):new Date(m.created_at).toLocaleString(o.locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  let react='';
+  if(o.reactions){
+    const groups=new Map();(o.reacts||[]).filter(r=>String(r.message_id)===String(m.id)).forEach(r=>{if(!groups.has(r.emoji))groups.set(r.emoji,[]);groups.get(r.emoji).push(r.user_id)});
+    const pills=[...groups.entries()].map(([e,u])=>`<button type="button" class="v325ReactionPill${u.includes(meId)?' mine':''}" data-emoji="${e}" data-msg="${m.id}">${e} <span>${u.length}</span></button>`).join('');
+    react=tmp?'':`<div class="v325ReactionsRow" style="${mine?'justify-content:flex-end':''}">${pills}<button type="button" class="v325AddReaction" data-msg="${m.id}" title="Reaccionar">🙂+</button></div>`;
+  }
+  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(time)}</div></div>${react}</div>`;
+}
+async function v583Chat(container,cfg){
+  const meId=currentUser.id;
+  if(container._v583Timer){clearInterval(container._v583Timer);container._v583Timer=null}
+  const cached=V583_CACHE.get(cfg.key);
+  const S={msgs:cached?cached.msgs.slice():[],reacts:cached?cached.reacts.slice():[]};
+  const opt={names:cfg.names||null,locale:cfg.locale,reactions:!!cfg.fetchReactions};
+  container.innerHTML=`<div id="${cfg.boxId}" style="max-height:${cfg.maxH};overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end"><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button><textarea id="${cfg.inputId}" rows="1" placeholder="${cfg.placeholder}" style="flex:1;resize:none"></textarea><button type="button" id="${cfg.sendId}" class="primary">${cfg.sendLabel}</button></div>`;
+  const box=container.querySelector('#'+cfg.boxId),input=container.querySelector('#'+cfg.inputId),sendBtn=container.querySelector('#'+cfg.sendId);
+  let first=true;
+  const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
+  const paint=(stick)=>{
+    opt.reacts=S.reacts;
+    const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+    const st=box.scrollTop;
+    box.innerHTML=S.msgs.length?S.msgs.map(m=>v583Bubble(m,meId,opt)).join(''):`<p class="muted" style="text-align:center;padding:20px 0">${cfg.empty}</p>`;
+    if(first||stick||near)box.scrollTop=box.scrollHeight;else box.scrollTop=st;
+    first=false;
+  };
+  const fetchSince=()=>{const real=S.msgs.filter(m=>!String(m.id).startsWith('tmp'));return real.length?real[real.length-1].created_at:null};
+  const merge=(rows)=>{
+    let added=false;
+    rows.forEach(r=>{if(!S.msgs.some(m=>String(m.id)===String(r.id))){
+      // si es mío y hay un envío pendiente con el mismo texto, lo sustituye
+      const ti=r.sender_id===meId?S.msgs.findIndex(m=>String(m.id).startsWith('tmp')&&m.body===r.body&&!m._failed):-1;
+      if(ti>=0)S.msgs.splice(ti,1,r);else S.msgs.push(r);added=true}});
+    S.msgs.sort((a,b)=>(String(a.id).startsWith('tmp')?1:0)-(String(b.id).startsWith('tmp')?1:0)||new Date(a.created_at)-new Date(b.created_at));
+    return added;
+  };
+  const loadReacts=async()=>{if(!cfg.fetchReactions)return;const ids=S.msgs.filter(m=>!String(m.id).startsWith('tmp')).map(m=>m.id);if(!ids.length)return;const r=await cfg.fetchReactions(ids);const before=JSON.stringify(S.reacts.map(x=>[x.message_id,x.emoji,x.user_id]).sort());S.reacts=S.reacts.filter(x=>x._tmp).concat(r);if(JSON.stringify(r.map(x=>[x.message_id,x.emoji,x.user_id]).sort())!==before){save();paint()}};
+  if(cached&&S.msgs.length)paint();
+  else box.innerHTML='<p class="muted" style="text-align:center;padding:20px 0">Cargando…</p>';
+  // carga completa (en paralelo con lo que ya se ve) y luego reacciones sin bloquear el pintado
+  const rows=await cfg.fetch(null);
+  if(!container.isConnected)return;
+  merge(rows);save();paint();
+  loadReacts();
+  // envío optimista
+  const sendText=async(text,tmpMsg)=>{
+    const r=await cfg.send(text);
+    if(r.error){tmpMsg._failed=true;paint();if(!cfg.silentErr)cfg.onError&&cfg.onError(r.error);return}
+    const real=r.row;
+    const i=S.msgs.indexOf(tmpMsg);
+    if(real){
+      if(S.msgs.some(m=>String(m.id)===String(real.id))){if(i>=0)S.msgs.splice(i,1)}else if(i>=0)S.msgs.splice(i,1,real);else S.msgs.push(real);
+    }else if(i>=0){tmpMsg.id='tmp'+Date.now();}
+    save();paint(true);
+    cfg.afterSend&&cfg.afterSend(text);
+  };
+  const send=()=>{
     const text=input.value.trim();if(!text)return;
-    sendBtn.disabled=true;
-    const{error,pushResult,pushError}=await v300SendChat(rowerId,teamCode,text);
-    sendBtn.disabled=false;
-    if(error){alert(error.message);return}
-    input.value='';
-    await v300RenderChatThread(container,rowerId,teamCode);
-    if(pushError){
-      v300ShowToast((isRower?v311T('push_error_msg'):'⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: ')+pushError);
-    }else if(pushResult&&!pushResult.recipients){
-      v300ShowToast(isRower?v311T('push_sin_destinatario'):'⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
-    }else if(pushResult&&pushResult.recipients&&!pushResult.push_sent){
-      v300ShowToast(isRower?v311T('push_no_entregado'):'⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
+    const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString()};
+    S.msgs.push(tmpMsg);input.value='';input.style.height='';paint(true);input.focus();
+    sendText(text,tmpMsg);
+  };
+  sendBtn.onclick=send;
+  input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+  input.oninput=()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,110)+'px'};
+  container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{const s=input.selectionStart??input.value.length,e=input.selectionEnd??s;input.value=input.value.slice(0,s)+em+input.value.slice(e);input.focus();try{input.setSelectionRange(s+em.length,s+em.length)}catch(_){}});
+  // clics: reintentar, reaccionar (delegado, una sola vez)
+  box.onclick=async ev=>{
+    const fail=ev.target.closest('.v583Fail');
+    if(fail){const m=S.msgs.find(x=>String(x.id)===fail.dataset.id);if(m){m._failed=false;paint();sendText(m.body,m)}return}
+    const add=ev.target.closest('.v325AddReaction');
+    const pill=ev.target.closest('.v325ReactionPill');
+    if(!cfg.fetchReactions||(!add&&!pill))return;
+    if(pill)return toggle(pill.dataset.msg,pill.dataset.emoji);
+    // barra rápida o selector completo
+    document.querySelectorAll('.v583Quick').forEach(q=>q.remove());
+    const q=document.createElement('div');q.className='v583Quick';
+    q.innerHTML=V583_QUICK.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join('')+'<button type="button" data-more="1" aria-label="Más">＋</button>';
+    document.body.appendChild(q);
+    const r=add.getBoundingClientRect();q.style.top=Math.max(8,r.top-52)+'px';q.style.left=Math.max(8,Math.min(innerWidth-q.offsetWidth-8,r.left-20))+'px';
+    q.onclick=e2=>{const b=e2.target.closest('button');if(!b)return;q.remove();if(b.dataset.more)v583OpenEmoji(em=>toggle(add.dataset.msg,em));else toggle(add.dataset.msg,b.dataset.e)};
+    setTimeout(()=>{const off=e3=>{if(!e3.target.closest('.v583Quick')){q.remove();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
+  };
+  const toggle=async(msgId,emoji)=>{
+    const mine=S.reacts.findIndex(r=>String(r.message_id)===String(msgId)&&r.emoji===emoji&&r.user_id===meId);
+    const target=S.msgs.find(m=>String(m.id)===String(msgId));
+    if(mine>=0){S.reacts.splice(mine,1);paint();save();
+      const q=await sb.from('chat_message_reactions').delete().eq('message_id',Number(msgId)).eq('user_id',meId).eq('emoji',emoji);
+      if(q.error){v300ShowToast('No se pudo quitar la reacción');loadReacts()}
+    }else{
+      S.reacts.push({id:'t'+Date.now(),message_id:Number(msgId),user_id:meId,emoji,_tmp:1});paint();save();
+      const q=await sb.from('chat_message_reactions').insert({message_id:Number(msgId),user_id:meId,emoji});
+      if(q.error){S.reacts=S.reacts.filter(r=>!(r._tmp&&String(r.message_id)===String(msgId)&&r.emoji===emoji));paint();
+        alert(/relation .* does not exist/i.test(q.error.message||'')?'Falta ejecutar 17_reacciones_mensajes.sql en Supabase antes de poder reaccionar.':`No se pudo guardar la reacción.\n\nDetalle: ${q.error.message||q.error}`);return}
+      cfg.reactPush&&cfg.reactPush(emoji,target?.body);
+      loadReacts();
     }
   };
-  sendBtn.onclick=send;
-  input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
-}
-// V494 · Chat GRUPAL por evento (sesión de MAR): todo el equipo convocado ve los mismos mensajes,
-// a diferencia de v300* que es 1 a 1 (entrenador <-> una remera). De momento solo se muestra en el
-// panel de entrenador (Registro MAR); para remeras está apagado por este interruptor hasta que Nacho
-// lo dé por probado -- cuando quiera activarlo basta con poner esta constante a true.
-const V494_EVENT_CHAT_ENABLED_FOR_ROWERS=true;
-// V495 · mientras el interruptor general sigue en false, Nacho puede verlo él mismo en modo remero
-// (modo pruebas) añadiendo su email a esta lista, sin activarlo todavía para el resto de remeras.
-const V495_EVENT_CHAT_TEST_EMAILS=['sixpackcosta@gmail.com'];
-function v495ChatVisibleForRower(){return V494_EVENT_CHAT_ENABLED_FOR_ROWERS||V495_EVENT_CHAT_TEST_EMAILS.includes(String(currentUser?.email||'').toLowerCase())}
-async function v494FetchEventChat(eventId,kind='session'){
-  try{
-    let q=sb.from('event_chat_messages').select('id,sender_id,body,created_at');
-    q=kind==='competition'?q.eq('competition_id',eventId):kind==='club_event'?q.eq('club_event_id',eventId):q.eq('training_session_id',eventId);
-    const r=await q.order('created_at',{ascending:true}).limit(300);
-    return r.error?[]:(r.data||[]);
-  }catch(e){return[]}
-}
-async function v494SendEventChat(eventId,teamCode,text,kind='session'){
-  const res=await sb.from('event_chat_messages').insert({training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null,team_code:teamCode,sender_id:currentUser.id,body:text});
-  let pushResult=null,pushError=null;
-  if(!res.error){
+  // actualización suave: solo mensajes nuevos, cada 5 s mientras la conversación esté abierta y visible
+  let n=0;
+  container._v583Timer=setInterval(async()=>{
+    if(!container.isConnected){clearInterval(container._v583Timer);container._v583Timer=null;return}
+    if(document.hidden)return;
+    n++;
     try{
-      const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
-      pushResult=await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'event_chat_message'});
-    }catch(e){pushError=e?.message||String(e)}
-  }
-  return {error:res.error,pushResult,pushError};
+      const since=fetchSince();
+      const rows=await cfg.fetch(since);
+      if(rows&&rows.length&&merge(rows)){save();paint();loadReacts()}
+      else if(cfg.fetchReactions&&n%3===0)loadReacts();
+    }catch(e){}
+  },5000);
 }
-function v494EventChatBubblesHtml(messages,meId,namesById){
-  if(!messages.length)return '<p class="muted" style="text-align:center;padding:20px 0">Aún no hay mensajes en este evento. Escribe el primero 👇</p>';
-  return messages.map(m=>{
-    const mine=m.sender_id===meId,name=namesById.get(String(m.sender_id))||'Alguien';
-    return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${!mine?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(new Date(m.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div></div></div>`;
-  }).join('');
-}
-async function v494RenderEventChatThread(container,sessionId,teamCode,kind='session'){
-  container.innerHTML=`<p class="muted">${v316Loading('Cargando chat del evento…')}</p>`;
-  const messages=await v494FetchEventChat(sessionId,kind);
-  const senderIds=[...new Set(messages.map(m=>String(m.sender_id)))];
-  const namesById=new Map();
-  if(senderIds.length){const nq=await sb.from('profiles').select('user_id,full_name').in('user_id',senderIds);(nq.data||[]).forEach(p=>namesById.set(String(p.user_id),p.full_name||'Sin nombre'))}
-  container.innerHTML=`<div id="v494ChatScroll_${sessionId}" style="max-height:50vh;overflow-y:auto;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px">${v494EventChatBubblesHtml(messages,currentUser.id,namesById)}</div><div style="display:flex;gap:8px;margin-top:10px"><textarea id="v494ChatInput_${sessionId}" rows="1" placeholder="Escribe al equipo…" style="flex:1;resize:none"></textarea><button type="button" id="v494ChatSend_${sessionId}" class="primary">Enviar</button></div>`;
-  const scrollBox=container.querySelector(`#v494ChatScroll_${sessionId}`);scrollBox.scrollTop=scrollBox.scrollHeight;
-  const input=container.querySelector(`#v494ChatInput_${sessionId}`),sendBtn=container.querySelector(`#v494ChatSend_${sessionId}`);
-  const send=async()=>{
-    const text=input.value.trim();if(!text)return;
-    sendBtn.disabled=true;
-    const{error,pushError}=await v494SendEventChat(sessionId,teamCode,text,kind);
-    sendBtn.disabled=false;
-    if(error){alert(/relation .* does not exist|column .* does not exist/i.test(error.message||'')?'Falta ejecutar 18_chat_evento.sql y 19_eventos_generalizado.sql en Supabase antes de poder usar el chat del evento.':error.message);return}
-    input.value='';
-    await v494RenderEventChatThread(container,sessionId,teamCode,kind);
-    if(pushError)v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+pushError);
+async function v300RenderChatThread(container,rowerId,teamCode){
+  const isRower=currentMode==='athlete';
+  const locale=isRower?(currentLocale==='es'?'es-ES':currentLocale==='nl'?'nl-NL':'en-GB'):'es-ES';
+  const empty=isRower?(currentLocale==='en'?'No messages yet. Write the first one 👇':currentLocale==='nl'?'Nog geen berichten. Schrijf het eerste 👇':'Aún no hay mensajes. Escribe el primero 👇'):'Aún no hay mensajes. Escribe el primero 👇';
+  const toasts=r=>{
+    if(r.pushError)v300ShowToast((isRower?v311T('push_error_msg'):'⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: ')+r.pushError);
+    else if(r.pushResult&&!r.pushResult.recipients)v300ShowToast(isRower?v311T('push_sin_destinatario'):'⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
+    else if(r.pushResult&&r.pushResult.recipients&&!r.pushResult.push_sent)v300ShowToast(isRower?v311T('push_no_entregado'):'⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
   };
-  sendBtn.onclick=send;
-  input.onkeydown=(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+  let lastPush=null;
+  await v583Chat(container,{
+    key:'c:'+rowerId,boxId:'v300ChatScroll',inputId:'v300ChatInput',sendId:'v300ChatSend',maxH:'55vh',locale,empty,
+    placeholder:isRower?v311T('escribe_mensaje'):'Escribe un mensaje…',sendLabel:isRower?v311T('enviar'):'Enviar',
+    fetch:async since=>{
+      try{
+        let q=sb.from('chat_messages').select('id,sender_id,body,created_at').eq('rower_id',rowerId);
+        q=since?q.gt('created_at',since).order('created_at',{ascending:true}).limit(100):q.order('created_at',{ascending:false}).limit(300);
+        const r=await q;if(r.error)return[];
+        return since?(r.data||[]):(r.data||[]).reverse();
+      }catch(e){return[]}
+    },
+    fetchReactions:v325FetchReactions,
+    send:async text=>{
+      const res=await sb.from('chat_messages').insert({rower_id:rowerId,team_code:teamCode,sender_id:currentUser.id,body:text}).select('id,sender_id,body,created_at').single();
+      if(res.error)return{error:res.error};
+      // el aviso push sale en segundo plano: no hace esperar al que escribe
+      (async()=>{
+        const out={pushResult:null,pushError:null};
+        try{
+          if(currentUser.id===rowerId)out.pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:text});
+          else{const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
+            out.pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`💬 Mensaje de ${coachLabel}`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'})}
+        }catch(e){out.pushError=e?.message||String(e)}
+        toasts(out);
+      })();
+      return{row:res.data};
+    },
+    onError:e=>alert(e.message||String(e)),
+    reactPush:(emoji,body)=>{
+      const preview=body?(body.length>60?body.slice(0,60)+'…':body):'';
+      (async()=>{try{
+        if(currentUser.id===rowerId)await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_reaction',source_id:String(Date.now())},title:`${emoji} Reacción de tu remero`,body:preview,url:'/?tab=mensajes',type:'chat_reaction'});
+        else{const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`${emoji} Reacción de ${coachLabel}`,body:preview,url:'/?tab=mensajes',type:'chat_reaction'})}
+      }catch(e){console.warn('No se pudo enviar la notificación de la reacción',e)}})();
+    }
+  });
 }
+const V583_NAMES=new Map();
 async function v300RefreshUnreadMsgCount(){
   try{
     if(currentMode==='athlete'&&currentUser){
@@ -7840,9 +7942,8 @@ async function coachMessagesView(){
     box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     const activeTeams=teamSel.value==='all'?teams:[teamSel.value];
     coachSelectedTeam=teamSel.value==='all'?coachSelectedTeam:teamSel.value;
-    const rosterByTeam=await Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)})));
+    const [rosterByTeam,msgsRes]=await Promise.all([Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)}))),sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400)]);
     const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
-    const msgsRes=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(1000);
     const lastByRower=new Map();(msgsRes.data||[]).forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
     const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
       if(x.last&&y.last)return new Date(y.last.created_at)-new Date(x.last.created_at);
