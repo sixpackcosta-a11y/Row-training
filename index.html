@@ -2670,7 +2670,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="591";
+const APP_VERSION="592";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7752,6 +7752,20 @@ const V583_EMOJI_GROUPS=[
 ];
 const V583_QUICK=['👍','❤️','😂','🔥','👏','💪','😮'];
 const V583_CACHE=new Map();
+// V592 · al ver una conversación, sus avisos de "mensaje nuevo" / "reacción" pasan a leídos (si no, la burbuja roja de Mensajes no se iba nunca).
+let _v592T=null;
+function v592ClearChatNotifs(rowerId){
+  clearTimeout(_v592T);
+  _v592T=setTimeout(async()=>{
+    try{
+      if(!currentUser)return;
+      let q=sb.from('app_notifications').update({is_read:true}).eq('user_id',currentUser.id).eq('is_read',false).in('type',['chat_message','chat_reaction']);
+      if(currentMode!=='athlete'&&rowerId)q=q.ilike('url','%'+rowerId+'%');
+      const r=await q;
+      if(!r.error&&typeof loadNotificationsV104==='function')await loadNotificationsV104();
+    }catch(e){}
+  },400);
+}
 const V583_SIGNED=new Map(),V583_LOCAL=new Map();
 const V583_ATT_COLS='id,sender_id,body,created_at,att_path,att_name,att_type,att_size';
 function v583DayLabel(d){const t=new Date(),y=new Date(Date.now()-864e5);if(d.toDateString()===t.toDateString())return 'Hoy';if(d.toDateString()===y.toDateString())return 'Ayer';return d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}
@@ -7875,7 +7889,7 @@ async function v583Chat(anchor,cfg){
   const rows=await cfg.fetch(null);
   if(!anchor.isConnected)return;
   merge(rows);save();paint();
-  loadReacts();
+  loadReacts();cfg.onSeen&&cfg.onSeen();
   // envío optimista
   const sendText=async(text,tmpMsg)=>{
     let att=null;
@@ -7971,7 +7985,7 @@ async function v583Chat(anchor,cfg){
     try{
       const since=fetchSince();
       const rows=await cfg.fetch(since);
-      if(rows&&rows.length&&merge(rows)){save();paint();loadReacts()}
+      if(rows&&rows.length&&merge(rows)){save();paint();loadReacts();cfg.onSeen&&cfg.onSeen()}
       else if(cfg.fetchReactions&&n%3===0)loadReacts();
     }catch(e){}
   },5000);
@@ -7987,7 +8001,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   };
   let lastPush=null;
   await v583Chat(container,{
-    full:true,title:v311T('mensajes_con_entrenador'),key:'c:'+rowerId,boxId:'v300ChatScroll',inputId:'v300ChatInput',sendId:'v300ChatSend',maxH:'55vh',locale,empty,
+    full:true,onSeen:()=>{v300UnreadMsgCount=0;v592ClearChatNotifs(rowerId)},title:v311T('mensajes_con_entrenador'),key:'c:'+rowerId,boxId:'v300ChatScroll',inputId:'v300ChatInput',sendId:'v300ChatSend',maxH:'55vh',locale,empty,
     placeholder:isRower?v311T('escribe_mensaje'):'Escribe un mensaje…',sendLabel:isRower?v311T('enviar'):'Enviar',
     fetch:async since=>{
       try{
