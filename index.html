@@ -2612,7 +2612,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="578";
+const APP_VERSION="579";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2683,9 +2683,9 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     function loadRecipes(){var u=uid();if(!u)return null;if(recipesUser!==u){recipesUser=u;try{recipes=JSON.parse(localStorage.getItem(RKEY+u)||'{}')||{}}catch(e){recipes={}}}return recipes}
     function remember(key,table,rec){
       var r=loadRecipes();if(!r||warming)return;
-      var x=r[key]||(r[key]={t:table,r:rec,n:0});x.n++;x.l=Date.now();
+      var x=r[key]||(r[key]={t:table,r:rec,n:0});x.n++;x.l=Date.now();try{var cm=(typeof currentMode!=='undefined'&&currentMode)||'';if(cm){x.m=x.m&&x.m!==cm?'both':cm}}catch(e){}
       clearTimeout(saveT);saveT=setTimeout(function(){
-        try{var cut=Date.now()-5*864e5,keys=Object.keys(r).filter(function(k){return r[k].l>=cut}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,150),o={};keys.forEach(function(k){o[k]=r[k]});recipes=o;localStorage.setItem(RKEY+recipesUser,JSON.stringify(o))}catch(e){}
+        try{var cut=Date.now()-5*864e5,keys=Object.keys(r).filter(function(k){return r[k].l>=cut}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,320),o={};keys.forEach(function(k){o[k]=r[k]});recipes=o;localStorage.setItem(RKEY+recipesUser,JSON.stringify(o))}catch(e){}
       },1500);
     }
     var warmP=null;
@@ -2693,7 +2693,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       if(warmP)return warmP;
       var r=loadRecipes();if(!r)return Promise.resolve();
       var cut=Date.now()-5*864e5;
-      var list=Object.keys(r).filter(function(k){var h=cache.get(k);if(!h&&SWR.has(k))return false;return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,max||90);
+      var list=Object.keys(r).filter(function(k){var h=cache.get(k);if(!h&&SWR.has(k))return false;return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){var cm=(typeof currentMode!=='undefined'&&currentMode)||'';var pa=(r[a].m===cm||r[a].m==='both')?0:1,pb=(r[b].m===cm||r[b].m==='both')?0:1;return pa-pb||r[b].n-r[a].n}).slice(0,max||90);
       if(!list.length)return Promise.resolve();
       warming=true;
       var i=0;
@@ -2714,7 +2714,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     }
     window.v541Warm=function(delay){clearTimeout(warmT);warmT=setTimeout(function(){doWarm()},delay==null?400:delay)};
     // V559 · precarga de datos (sin abrir pantallas) que se puede esperar desde la pantalla de inicio
-    window.v559WarmNow=function(){clearTimeout(warmT);return doWarm(150,6)};
+    window.v559WarmNow=function(){clearTimeout(warmT);return doWarm(240,6)};
     // V554 · cada 3 minutos (con la app a la vista) se refrescan por detrás los datos de más de
     // 2,5 min: al cambiar de pantalla todo sale al instante y nunca con más de ~3 min de retraso.
     setInterval(function(){if(document.visibilityState==='visible'&&uid())window.v541Warm(0)},180000);
@@ -2901,6 +2901,9 @@ async function switchModeV73(mode){
   if(mode==="staff"){coachTeams=staffViewTeamCodes();tab="hoy";if(hasAnyCoachTeam())await loadPendingRegistrationCount();}
   else{tab=currentTeamCode?"hoy":"pendiente";await loadRegistrationState();}
   renderIdentityHeaderV73();refreshTeamSchedule();selected=getTodayIndex();draw();render();
+  // V579 · al cambiar de modo se precargan enseguida los datos de las pantallas de ese modo
+  if(typeof v559WarmNow==='function')setTimeout(()=>v559WarmNow(),400);
+  if(mode==='athlete'&&typeof v543PrefetchEvents==='function')setTimeout(()=>v543PrefetchEvents(),900);
 }
 async function loadPendingRegistrationCount(){
   pendingRegistrationCount=0;if(!hasAnyCoachTeam())return;
