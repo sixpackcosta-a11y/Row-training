@@ -530,6 +530,13 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+/* V570 · nada puede hacer que la página se desplace hacia los lados (editor de GYM descolocado) */
+#v347Scroll{overflow-x:hidden}
+.coachTools>label{min-width:0;max-width:100%}.coachTools select,.coachTools input:not([type=checkbox]):not([type=radio]){max-width:100%;box-sizing:border-box}
+.tableWrap{max-width:100%;overflow-x:auto}.tableWrap td input:not([type=checkbox]){width:100%;min-width:52px;box-sizing:border-box}
+.gymEditHead{display:flex;flex-direction:column;gap:2px}
+/* V570 · papelera */
+.v570Trash .v570Row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.08))}.v570Trash .v570Row button{margin:0;flex:0 0 auto}
 /* V569 · cabecera del calendario de Planificación en una sola línea */
 .v569Cal{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:14px 0 10px}
 .v569Nav{display:flex;align-items:center;gap:6px;min-width:0}
@@ -547,7 +554,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v568Tools button{margin:0;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.78rem;font-weight:600;line-height:1.1;min-width:0;border-radius:12px}
 .v568Tools button span{font-size:1.15rem;line-height:1}
 .v568More{margin:2px 0 8px}.v568More>summary{font-size:.85rem;color:var(--muted,#64748b);cursor:pointer;padding:6px 2px;list-style:none}.v568More>summary::-webkit-details-marker{display:none}.v568More>summary::before{content:'⋯ ';font-weight:700}
-.v568MoreBody{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px}.v568MoreBody>*{margin:0;font-size:.8rem;padding:8px 4px;text-align:center}
+.v568MoreBody{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.v568MoreBody>*{margin:0;font-size:.8rem;padding:8px 4px;text-align:center}
 .v567Btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.v567Btns button{margin:0;padding:9px 4px;font-size:.85em}
 .v567TrBox{margin-top:10px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line,rgba(0,0,0,.08))}
 .v567Item,.v567Opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.06))}.v567Item:last-child,.v567Opt:last-child{border-bottom:0}
@@ -564,6 +571,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v544Actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line,rgba(0,0,0,.08))}
 .v544Actions>button{width:100%;margin:0;padding:10px 6px;font-size:.92em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .v544Actions>.v544Warn{color:#b45309}
+.v544Actions>.v571Wide{grid-column:1/-1}
 .v544Actions>.v544Del{grid-column:1/-1;background:transparent;border-color:transparent;color:#c0392b;padding:8px 6px;font-size:.88em}
 .v544Train{margin:10px 0}.v544Train>summary{font-weight:600}.v546Sum{flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v546Sum .muted{font-weight:400}
 .v536Box{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v536Head{font-weight:700;margin-bottom:6px}.v536Item{margin:6px 0}.v536ItemHead{display:flex;justify-content:space-between;align-items:center;gap:8px}.v536Unlink{padding:4px 9px;font-size:.8rem}.v536Opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.v536AssignBox{margin-top:6px}.v536EditorLink{display:block;margin:10px 0}
@@ -1194,11 +1202,11 @@ const ERGO_LIBRARY_DEFAULTS=[
  {code:"UT1-2X12-22",zone:"UT1",name:"UT1 · 2×12' @22 · rec 3'",teams:"both",phases:"base,development",url:"https://workout.ergdata.com/shared/andz4pbf"},
  {code:"UT1AT-PROG28",zone:"UT1-AT",name:"UT1-AT · 28' progresivo · 20→28 ppm",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/qjlppccd"},
  {code:"UT1AT-3X1500",zone:"UT1-AT",name:"UT1-AT · 3×(500@22 + 500@24 + 500@26) · rec 4'",teams:"both",phases:"development,precomp",url:"https://workout.ergdata.com/shared/mhfsanvv"},
- {code:"UT2-45-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 45' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
- {code:"UT2-60-CONT",zone:"UT2 · EXTRA",name:"Opcional Senior · 60' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
- {code:"UT2-3X15-20",zone:"UT2 · EXTRA",name:"Opcional Senior · 3×15' @20 ppm · rec 3'",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-45-CONT",zone:"UT2 · EXTRA",name:"Opcional SEN · 45' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-60-CONT",zone:"UT2 · EXTRA",name:"Opcional SEN · 60' continuo @18–20 ppm",teams:"senior",phases:"base,development",url:null},
+ {code:"UT2-3X15-20",zone:"UT2 · EXTRA",name:"Opcional SEN · 3×15' @20 ppm · rec 3'",teams:"senior",phases:"base,development",url:null},
  {code:"UT2-2X20-20",zone:"UT2 · EXTRA",name:"UT2 largo · 2×20' @20 ppm · rec 4'",teams:"senior",phases:"base,development",url:null},
- {code:"UT2-4X12-2022",zone:"UT2 · EXTRA",name:"Opcional Senior · 4×12' @20–22 ppm · rec 3'",teams:"senior",phases:"development",url:null},
+ {code:"UT2-4X12-2022",zone:"UT2 · EXTRA",name:"Opcional SEN · 4×12' @20–22 ppm · rec 3'",teams:"senior",phases:"development",url:null},
  {code:"TEST-1000",zone:"TEST",name:"TEST · 1000 m · máximo esfuerzo",teams:"veterans",phases:"base,development,precomp,competition",url:null},
  {code:"TEST-2000",zone:"TEST",name:"TEST · 2000 m · máximo esfuerzo",teams:"senior",phases:"base,development,precomp,competition",url:null}
 ];
@@ -1576,8 +1584,8 @@ const GYM_SESSION_DEFAULTS=[
  {key:'gym-upper-core',name:'Tren superior + core',objective:'Espalda / empuje / core',load:'Media',content:`OBJETIVO · Tren superior + core\nCARGA · Media · RIR 2–3\nCALENTAMIENTO · 7 min\nRemo sentado en polea · 3×10 · rec 75 s\nJalón al pecho · 3×10 · rec 75 s\nPress de pecho · 3×10 · rec 90 s\nFace pull · 3×12 · rec 60 s\nPallof press · 3×10/lado · rec 45 s\nDead bug · 3×8/lado · rec 45 s`},
  {key:'gym-core',name:'Core completo 25–30 min',objective:'Core / estabilidad',load:'Media',content:`OBJETIVO · Core y estabilidad\nCARGA · Media · técnica perfecta\nCALENTAMIENTO · 5 min\nPallof press · 3×10/lado · rec 45 s\nDead bug · 3×8/lado · rec 45 s\nPlancha frontal · 3×30–45 s · rec 45 s\nPlancha lateral · 3×25–40 s/lado · rec 45 s\nBird dog · 3×8/lado · rec 45 s\nFarmer carry · 3×30 m · rec 60 s`},
  {key:'gym-unilateral',name:'Pierna unilateral + core',objective:'Piernas / estabilidad',load:'Media',content:`OBJETIVO · Pierna unilateral + estabilidad\nCARGA · Media · RIR 2–3\nCALENTAMIENTO · 8 min\nSentadilla goblet a cajón · 3×8–10 · rec 90 s\nStep-up a cajón · 3×8/lado · rec 75 s\nZancada atrás · 3×8/lado · rec 75 s\nCurl femoral en máquina · 3×10 · rec 75 s\nPlancha lateral · 3×30 s/lado · rec 45 s\nPallof press · 2×10/lado · rec 45 s`},
- {key:'gym-senior-55',name:'Senior · fuerza controlada 50–60 min',objective:'Fuerza / rendimiento',load:'Alta controlada',content:`OBJETIVO · Fuerza útil para remo\nCARGA · Alta controlada · RIR 1–2 en principales\nCALENTAMIENTO · 10 min\nPrensa de piernas · 4×8 · rec 2 min\nPeso muerto rumano · 4×8 · rec 2 min\nRemo sentado en polea · 4×8–10 · rec 90 s\nJalón al pecho · 3×8–10 · rec 90 s\nPress de pecho · 3×8–10 · rec 90 s\nFarmer carry · 4×30–40 m · rec 60 s\nPallof press · 3×10/lado · rec 45 s`},
- {key:'gym-vet-45',name:'Veteranas · fuerza segura 40–45 min',objective:'Fuerza general segura',load:'Media',content:`OBJETIVO · Fuerza general segura\nCARGA · Media · RIR 2–3\nCALENTAMIENTO · 8 min\nPrensa de piernas · 3×10 · rec 90 s\nHip thrust · 3×10 · rec 90 s\nRemo sentado en polea · 3×10 · rec 75 s\nPress de pecho · 2×10 · rec 75 s\nPallof press · 2×10/lado · rec 45 s\nDead bug · 2×8/lado · rec 45 s`}
+ {key:'gym-senior-55',name:'SEN · fuerza controlada 50–60 min',objective:'Fuerza / rendimiento',load:'Alta controlada',content:`OBJETIVO · Fuerza útil para remo\nCARGA · Alta controlada · RIR 1–2 en principales\nCALENTAMIENTO · 10 min\nPrensa de piernas · 4×8 · rec 2 min\nPeso muerto rumano · 4×8 · rec 2 min\nRemo sentado en polea · 4×8–10 · rec 90 s\nJalón al pecho · 3×8–10 · rec 90 s\nPress de pecho · 3×8–10 · rec 90 s\nFarmer carry · 4×30–40 m · rec 60 s\nPallof press · 3×10/lado · rec 45 s`},
+ {key:'gym-vet-45',name:'VET · fuerza segura 40–45 min',objective:'Fuerza general segura',load:'Media',content:`OBJETIVO · Fuerza general segura\nCARGA · Media · RIR 2–3\nCALENTAMIENTO · 8 min\nPrensa de piernas · 3×10 · rec 90 s\nHip thrust · 3×10 · rec 90 s\nRemo sentado en polea · 3×10 · rec 75 s\nPress de pecho · 2×10 · rec 75 s\nPallof press · 2×10/lado · rec 45 s\nDead bug · 2×8/lado · rec 45 s`}
 ];
 function gymCategoryFromName(name){return /^SESI[ÓO]N\s*·/i.test(String(name||''))?'session':'exercise'}
 function parseGymDbRow(x){
@@ -2578,7 +2586,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="569";
+const APP_VERSION="572";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2906,6 +2914,28 @@ window.addEventListener('v561fresh',e=>{
     if((t==='chat_messages'&&tab==='mensajes')||(t==='session_rsvp'&&(tab==='eventos'||tab==='registro'))){clearTimeout(window._v561T);window._v561T=setTimeout(()=>{try{render()}catch(_){}},60)}
   }catch(_){}
 });
+// V570 · Papelera: todo entrenamiento que se borra se guarda 60 días en training_sessions_trash
+// (lo hace la base de datos sola, ver 42_papelera_sesiones.sql) y desde aquí se puede restaurar.
+async function v570OpenTrash(after){
+  const layer=document.createElement('div');layer.className='modalBack';
+  layer.innerHTML=`<div class="modalCard v570Trash" style="max-width:560px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">🗑️ Papelera</h2></div><p class="muted"><small>Entrenamientos borrados en los últimos 60 días. "Restaurar" los devuelve a la planificación tal cual estaban.</small></p><div id="v570List"><p class="muted">Cargando…</p></div><div class="actions"><button type="button" id="v570Close">Cerrar</button></div></div>`;
+  document.body.appendChild(layer);
+  layer.querySelector('#v570Close').onclick=()=>layer.remove();layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  const list=layer.querySelector('#v570List');
+  const r=await sb.from('training_sessions_trash').select('id,team_code,session_date,session_type,title,deleted_at').order('deleted_at',{ascending:false}).limit(150);
+  if(r.error){list.innerHTML=`<div class="info">${/training_sessions_trash|does not exist|schema cache/.test(r.error.message||'')?'Falta ejecutar <b>42_papelera_sesiones.sql</b> en Supabase. A partir de entonces, todo lo que se borre se podrá recuperar aquí.':esc(r.error.message)}</div>`;return}
+  const rows=r.data||[];
+  if(!rows.length){list.innerHTML='<p class="muted">La papelera está vacía.</p>';return}
+  list.innerHTML=rows.map(x=>`<div class="v570Row"><div><b>${esc(V536_TYPE_LABEL[String(x.session_type||'').toUpperCase()]||x.session_type||'')} · ${esc(x.title||'Sin título')}</b><br><small class="muted">${esc(teamLabel(x.team_code)||x.team_code||'')} · ${esc(x.session_date?v512DetailDateLabel(String(x.session_date).slice(0,10)):'')} · borrado el ${esc(new Date(x.deleted_at).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</small></div><button type="button" class="primary" data-id="${x.id}">Restaurar</button></div>`).join('');
+  list.querySelectorAll('button[data-id]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;b.textContent='Restaurando…';
+    const q=await sb.rpc('restore_training_session',{trash_id:Number(b.dataset.id)});
+    if(q.error){alert('No se pudo restaurar: '+q.error.message);b.disabled=false;b.textContent='Restaurar';return}
+    if(typeof v540ClearCache==='function')v540ClearCache();
+    b.closest('.v570Row').remove();if(!list.querySelector('.v570Row'))list.innerHTML='<p class="muted">La papelera está vacía.</p>';
+    if(after)after();
+  });
+}
 let appStartingV96=false;let v547PreUser=null;
 function v554WaitView(max){
   return new Promise(res=>{
@@ -4517,7 +4547,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V544 · botones de gestión en rejilla de 2 columnas (antes una fila por botón): arriba editar,
   // debajo cancelar / quitar, y eliminar a lo ancho al final.
   const cancelBtn=`<button type="button" class="v527CancelBtn${cancelled?'':' v544Warn'}">${cancelled?'↩️ Reactivar':'🚫 Cancelar'}</button>`;
-  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entreno</button>${cancelBtn}<button type="button" class="v525UnEvent" data-id="${ev.id}">➖ Quitar de eventos</button><button type="button" class="v498DeleteEvent v544Del" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">✏️ Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">📄 Duplicar</button>`:''}${cancelBtn}<button type="button" class="v498DeleteEvent v544Del" data-kind="${ev.kind}" data-id="${ev.id}">🗑️ Eliminar</button></div>`:'';
+  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entreno</button><button type="button" class="v571DupSession" data-id="${ev.id}">📄 Duplicar</button>${cancelBtn}<button type="button" class="v525UnEvent v571Wide" data-id="${ev.id}">➖ Quitar de eventos</button><button type="button" class="v498DeleteEvent v544Del" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">✏️ Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">📄 Duplicar</button>`:`<button type="button" class="v572DupComp" data-id="${ev.id}">📄 Duplicar</button>`}${cancelBtn}<button type="button" class="v498DeleteEvent v544Del" data-kind="${ev.kind}" data-id="${ev.id}">🗑️ Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
   return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span>${cancelled?`<div class="v527CancelBanner">🚫 Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div>`:''}<h3${cancelled?' class="v527Strike"':''}>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<details class="libraryAccordion v544Train"><summary><span class="v546Sum">🏋️ Entrenamiento${ev.title?`<span class="muted"> · ${esc(ev.title)}</span>`:''}</span></summary><div class="accordionBody">${trainingContentHtml(ev.content)}</div></details>`:(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
@@ -4899,6 +4929,48 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     if(canEdit){
       // V517 · duplicar un evento: abre el formulario de crear con todo copiado (cambias fecha, etc.)
       body.querySelectorAll('.v525EditSession').forEach(b=>b.onclick=()=>{close();openCoachPlanner(b.dataset.team,b.dataset.date,Number(b.dataset.id))});
+      // V572 · duplicar una competición para OTRO grupo (otra competición aparte, con su propia lista de
+      // asistentes) en vez de añadir el grupo a la misma y mezclar las respuestas.
+      body.querySelectorAll('.v572DupComp').forEach(b=>b.onclick=async()=>{
+        const teams=staffViewTeamCodes().filter(v497AttendanceEnabledForTeam);
+        const own=Array.isArray(ev2.team_codes)&&ev2.team_codes.length?ev2.team_codes:[tc];
+        const d=await v527Dialog({title:'Duplicar competición',html:`<p class="muted"><small>Se crea una competición nueva e independiente (con sus propias respuestas) por cada grupo que marques, con los mismos datos de <b>${esc(ev2.event_title||'')}</b>.</small></p>${teams.map(t=>`<label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-f="t_${esc(t)}"> ${esc(teamLabel(t))}${own.includes(t)?' <small class="muted">(ya en esta)</small>':''}</label>`).join('')}<label>Fecha<input type="date" data-f="date" value="${esc(ev2.event_date)}"></label>`,okText:'Duplicar'});
+        if(!d)return;
+        const chosen=teams.filter(t=>d['t_'+t]);const date=d.date||ev2.event_date;
+        if(!chosen.length)return alert('Marca al menos un grupo.');
+        b.disabled=true;
+        try{
+          const r=await sb.from('competitions').select('*').eq('id',Number(b.dataset.id)).single();
+          if(r.error)throw r.error;
+          const src={...r.data};
+          ['id','created_at','updated_at','team_codes','competition_date','opens_notified_at','reminder_sent_at','cancelled_at','cancel_reason','invitee_ids','excluded_ids','session_ids'].forEach(k=>delete src[k]);
+          const rows=chosen.map(t=>({...src,team_codes:[t],competition_date:date,...('created_by' in r.data?{created_by:currentUser?.id||r.data.created_by}:{})}));
+          const q=await sb.from('competitions').insert(rows).select('id');
+          if(q.error)throw q.error;
+          alert(`Competición duplicada para ${chosen.length} grupo${chosen.length>1?'s':''}.`);
+          close();if(afterChange)afterChange();
+        }catch(e){alert('No se pudo duplicar: '+(e.message||e));b.disabled=false}
+      });
+      // V571 · duplicar una convocatoria de entrenamiento (MAR / GIM+ERGO) para otro grupo u otro día
+      body.querySelectorAll('.v571DupSession').forEach(b=>b.onclick=async()=>{
+        const teams=staffViewTeamCodes().filter(v497AttendanceEnabledForTeam);
+        const d=await v527Dialog({title:'Duplicar convocatoria',html:`<p class="muted"><small>Se crea una copia de <b>${esc(ev2.event_title||'')}</b> (entrenamiento y opciones del evento) en los grupos que marques.</small></p><div class="v571Teams">${teams.map(t=>`<label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-f="t_${esc(t)}" ${t===(ev2.team_code||tc)?'':''}> ${esc(teamLabel(t))}${t===(ev2.team_code||tc)?' <small class="muted">(el de este evento)</small>':''}</label>`).join('')}</div><label>Fecha<input type="date" data-f="date" value="${esc(ev2.event_date)}"></label>`,okText:'Duplicar'});
+        if(!d)return;
+        const chosen=teams.filter(t=>d['t_'+t]);const date=d.date||ev2.event_date;
+        if(!chosen.length)return alert('Marca al menos un grupo.');
+        b.disabled=true;
+        try{
+          const r=await sb.from('training_sessions').select('*').eq('id',Number(b.dataset.id)).single();
+          if(r.error)throw r.error;
+          const src={...r.data};
+          ['id','created_at','updated_at','team_code','session_date','opens_notified_at','reminder_sent_at','cancelled_at','cancel_reason','invitee_ids','excluded_ids','recurrence_group','target_user_ids'].forEach(k=>delete src[k]);
+          const rows=chosen.map(t=>({...src,team_code:t,session_date:date,created_by:currentUser?.id||src.created_by||null,updated_at:new Date().toISOString()}));
+          const q=await sb.from('training_sessions').insert(rows).select('id');
+          if(q.error)throw q.error;
+          alert(`Convocatoria duplicada en ${chosen.length} grupo${chosen.length>1?'s':''}.`);
+          close();if(afterChange)afterChange();
+        }catch(e){alert('No se pudo duplicar: '+(e.message||e));b.disabled=false}
+      });
       body.querySelectorAll('.v525UnEvent').forEach(b=>b.onclick=async()=>{
         if(!confirm('¿Quitar este entrenamiento de Eventos? El entrenamiento sigue en la planificación; solo deja de pedir confirmación de asistencia.'))return;
         b.disabled=true;const q=await sb.from('training_sessions').update({is_event:false,updated_at:new Date().toISOString()}).eq('id',Number(b.dataset.id));
@@ -9053,7 +9125,7 @@ async function loadCoachCalendar(team,date){
 async function coachPlanner(){
  if(r!=="coach") return;
  const nowPlan=new Date(); const todayPlan=`${nowPlan.getFullYear()}-${String(nowPlan.getMonth()+1).padStart(2,'0')}-${String(nowPlan.getDate()).padStart(2,'0')}`; const date=plannerJumpDate||todayPlan; let ym=date.slice(0,7),view='month';
- content.innerHTML=`<div class="card"><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label></div><div class="v568DayRow"><label class="v568Date">Día<input id="planDate" type="date" value="${date}"></label><button id="loadPlan" class="primary">Cargar</button></div><div class="v568Tools"><button id="newSession" type="button"><span>＋</span>Entreno</button><button id="newRace" type="button"><span>🏁</span>Competición</button><button id="newIndividualPlanV249" type="button"><span>👤</span>Individual</button><button id="planBBtn" type="button"><span>☁️</span>Plan B</button></div><details class="v568More"><summary>Exportar / importar Excel y PDF</summary><div class="v568MoreBody"><button id="exportSeasonExcelV170" type="button">Exportar Excel</button><button id="exportSeasonPdfV170" type="button">Exportar PDF</button><label class="btn" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0">Importar Excel<input id="importSeasonExcelV170" type="file" accept=".xlsx,.xls" hidden></label></div></details><div id="planArea"></div><details class="libraryAccordion seasonInlineV180"><summary><span>Resumen de temporada 2026–27</span></summary><div class="accordionBody"><div class="info seasonInfoV180"><b>Excel bidireccional:</b> exporta la planificación real (todos los equipos si eres administrador, o los tuyos si eres entrenador de equipo), edítala y vuelve a importarla. Para eliminar una sesión escribe <b>ELIMINAR</b> en la columna Acción. Las filas nuevas sin ID se crean como sesiones nuevas.</div><select id="seasonTeam" hidden></select><div id="seasonArea"></div></div></details><div class="v569Cal"><div class="v569Nav" id="planNav"><button id="planPrev" type="button" aria-label="Mes anterior">‹</button><select id="planMonthPick" class="monthSelect" aria-label="Mes">${monthOptions(ym)}</select><button id="planNext" type="button" aria-label="Mes siguiente">›</button><div id="planMonthTitle" hidden></div></div><div class="v569Seg viewToggle"><button id="planViewMonth" type="button" class="active">Mes</button><button id="planViewSeason" type="button">Temporada</button></div></div><div id="planCalendar"></div></div>`;
+ content.innerHTML=`<div class="card"><div class="plannerGrid"><label>Equipo<select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("")}</select></label></div><div class="v568DayRow"><label class="v568Date">Día<input id="planDate" type="date" value="${date}"></label><button id="loadPlan" class="primary">Cargar</button></div><div class="v568Tools"><button id="newSession" type="button"><span>＋</span>Entreno</button><button id="newRace" type="button"><span>🏁</span>Competición</button><button id="newIndividualPlanV249" type="button"><span>👤</span>Individual</button><button id="planBBtn" type="button"><span>☁️</span>Plan B</button></div><details class="v568More"><summary>Más opciones · Excel, PDF y papelera</summary><div class="v568MoreBody"><button id="v570TrashBtn" type="button">🗑️ Papelera</button><button id="exportSeasonExcelV170" type="button">Exportar Excel</button><button id="exportSeasonPdfV170" type="button">Exportar PDF</button><label class="btn" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0">Importar Excel<input id="importSeasonExcelV170" type="file" accept=".xlsx,.xls" hidden></label></div></details><div id="planArea"></div><details class="libraryAccordion seasonInlineV180"><summary><span>Resumen de temporada 2026–27</span></summary><div class="accordionBody"><div class="info seasonInfoV180"><b>Excel bidireccional:</b> exporta la planificación real (todos los equipos si eres administrador, o los tuyos si eres entrenador de equipo), edítala y vuelve a importarla. Para eliminar una sesión escribe <b>ELIMINAR</b> en la columna Acción. Las filas nuevas sin ID se crean como sesiones nuevas.</div><select id="seasonTeam" hidden></select><div id="seasonArea"></div></div></details><div class="v569Cal"><div class="v569Nav" id="planNav"><button id="planPrev" type="button" aria-label="Mes anterior">‹</button><select id="planMonthPick" class="monthSelect" aria-label="Mes">${monthOptions(ym)}</select><button id="planNext" type="button" aria-label="Mes siguiente">›</button><div id="planMonthTitle" hidden></div></div><div class="v569Seg viewToggle"><button id="planViewMonth" type="button" class="active">Mes</button><button id="planViewSeason" type="button">Temporada</button></div></div><div id="planCalendar"></div></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
@@ -9079,6 +9151,7 @@ async function coachPlanner(){
  loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newIndividualPlanV249.onclick=()=>individualPlanEditorV249(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
+ { const tb=document.getElementById('v570TrashBtn');if(tb)tb.onclick=()=>v570OpenTrash(()=>{try{render()}catch(e){}}); }
  const exportExcelBtn=document.getElementById('exportSeasonExcelV170'),exportPdfBtn=document.getElementById('exportSeasonPdfV170'),importExcelInput=document.getElementById('importSeasonExcelV170');
  if(exportExcelBtn)exportExcelBtn.onclick=()=>exportSeasonExcelV170();if(exportPdfBtn)exportPdfBtn.onclick=()=>exportSeasonPdfV170();if(importExcelInput)importExcelInput.onchange=e=>{const f=e.target.files?.[0];if(f)importSeasonExcelV170(f);e.target.value=''};
  seasonTeam.innerHTML=[...planTeam.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('');seasonTeam.value=planTeam.value;
