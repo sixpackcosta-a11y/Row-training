@@ -2556,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="563";
+const APP_VERSION="564";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3505,6 +3505,14 @@ function render(){
     if(document.getElementById('v555Freeze')||!el.firstElementChild)return;
     var r=el.getBoundingClientRect();if(!r.width)return;
     var fr=el.cloneNode(true);fr.id='v555Freeze';fr.classList.remove('v363Dim','v541In');fr.removeAttribute('style');
+    // V564 · al quitar los id de la copia se perdían los estilos que dependen de ellos (p.ej. el margen
+    // de la zona del día en Planificación) y "Resumen de temporada" subía unos píxeles. Se copian los
+    // estilos de caja de esos bloques para que la copia sea idéntica.
+    try{
+      var P=['margin-top','margin-right','margin-bottom','margin-left','padding-top','padding-right','padding-bottom','padding-left','border-top-width','border-right-width','border-bottom-width','border-left-width','border-top-style','border-right-style','border-bottom-style','border-left-style','border-top-color','border-right-color','border-bottom-color','border-left-color','border-radius','background-color','color','font-size','font-weight','line-height','display','gap','box-shadow'];
+      var oa=[el].concat([].slice.call(el.querySelectorAll('*'))),ca=[fr].concat([].slice.call(fr.querySelectorAll('*')));
+      for(var k=1;k<oa.length&&k<ca.length;k++){var o=oa[k];if(o.closest('[id]')===el)continue;var cs=getComputedStyle(o),st=ca[k].style;for(var q=0;q<P.length;q++)st.setProperty(P[q],cs.getPropertyValue(P[q]))}
+    }catch(e){}
     fr.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
     v555CopyCanvases(el,fr);
     // V561 · la copia congelada perdía lo elegido en los desplegables (p.ej. el equipo en Análisis
