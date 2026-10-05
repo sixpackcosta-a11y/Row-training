@@ -2680,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="600";
+const APP_VERSION="601";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4047,6 +4047,7 @@ async function v588SyncViews(kind,id){
   }catch(e){return null}
 }
 function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime='',evCap=null){
+  { const oset=new Set((orgIds||[]).map(String)); if(oset.size)roster=roster.filter(p=>!oset.has(String(p.user_id))); }
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
@@ -4971,7 +4972,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
   return events.map(ev=>{
     const r=v514EventRoster(ev,roster);
     const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0,wait:0},pendingIds=[];
-    r.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
+    r.forEach(p=>{if(ev.created_by&&String(p.user_id)===String(ev.created_by))return;const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
     counts.total=counts.in+counts.out+counts.pending+counts.wait;
     return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds,_my:currentUser?statusByUser.get(String(currentUser.id))||null:null};
   });
