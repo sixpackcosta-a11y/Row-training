@@ -2670,7 +2670,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="589";
+const APP_VERSION="590";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7829,7 +7829,7 @@ async function v583Chat(anchor,cfg){
       const hdr=document.querySelector('header'),top=hdr?Math.max(0,hdr.getBoundingClientRect().bottom):0;
       const kb=innerHeight-vh>120||(document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable));
       const nav=document.getElementById('nav');let bottom=0;
-      if(kb){bottom=/iPhone|iPad/.test(navigator.userAgent)?52:0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
+      if(kb){bottom=0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
       layer.style.top=(off+top)+'px';layer.style.height=Math.max(180,vh-top-bottom)+'px';
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
