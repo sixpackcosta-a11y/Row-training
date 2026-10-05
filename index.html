@@ -2612,7 +2612,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="579";
+const APP_VERSION="581";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6866,7 +6866,8 @@ function v124ManualErgoHtml(e){
   const label=isRower?v311T('ergo_registro_manual'):'ERGO · Registro manual',fcMedia=isRower?v311T('fc_media'):'FC media',fcMax=isRower?v311T('fc_maxima_corta'):'FC máxima';
   return `<div class="last"><b>${label}</b> · ${e.distance_m??'—'} m · ${e.time_seconds!=null?fmtMetricSeconds(Number(e.time_seconds)):'—'} · /500 ${e.pace_500_seconds!=null?fmtMetricSeconds(Number(e.pace_500_seconds)):'—'} · ${e.spm??'—'} ppm${e.avg_hr?` · ${fcMedia} ${e.avg_hr}`:''}${e.max_hr?` · ${fcMax} ${e.max_hr}`:''}${e.rpe?` · RPE ${e.rpe}`:''}${e.notes?`<br><small>${esc(e.notes)}</small>`:''}${v124ManualPartialsHtml(e)}${v124ErgoPhotosHtml(e)}</div>`;
 }
-async function v124HydrateErgoPhotos(rows){const all=[...new Set((rows||[]).flatMap(x=>Array.isArray(x.photo_paths)?x.photo_paths:[]).filter(Boolean))];if(!all.length)return rows||[];try{const q=await sb.storage.from('ergo-media').createSignedUrls(all,3600);if(q.error)throw q.error;const map=new Map((q.data||[]).map(x=>[x.path,x.signedUrl||x.signedURL]));(rows||[]).forEach(x=>{x._photo_urls=(Array.isArray(x.photo_paths)?x.photo_paths:[]).map(p=>map.get(p)).filter(Boolean)})}catch(e){console.warn('No se pudieron abrir las fotos ERGO',e)}return rows||[]}
+const V581_SIGNED=new Map();
+async function v124HydrateErgoPhotos(rows){const all=[...new Set((rows||[]).flatMap(x=>Array.isArray(x.photo_paths)?x.photo_paths:[]).filter(Boolean))];if(!all.length)return rows||[];try{const now=Date.now(),need=all.filter(p=>{const e=V581_SIGNED.get(p);return !e||now-e.t>45*60000});if(need.length){const q=await sb.storage.from('ergo-media').createSignedUrls(need,3600);if(q.error)throw q.error;(q.data||[]).forEach(x=>V581_SIGNED.set(x.path,{t:now,u:x.signedUrl||x.signedURL}))}const map=new Map(all.map(p=>[p,V581_SIGNED.get(p)?.u]));(rows||[]).forEach(x=>{x._photo_urls=(Array.isArray(x.photo_paths)?x.photo_paths:[]).map(p=>map.get(p)).filter(Boolean)})}catch(e){console.warn('No se pudieron abrir las fotos ERGO',e)}return rows||[]}
 
 // V427 · en la pantalla de intervalos del PM5/ErgData, la fila resaltada (el parcial que estaba
 // seleccionado al hacer la foto) tiene menos contraste que el resto y Tesseract la pierde entera
@@ -8435,12 +8436,23 @@ async function connectConcept2(){
   location.href=u.toString();
 }
 
-async function concept2Status(){
+// V581 · el estado de Concept2 se pedía a internet CADA vez que se abría Actividad/Historial del
+// remero (y esa llamada es lenta): ahora se recuerda y se refresca por detrás como mucho cada 10 min.
+let v581C2=null;
+async function v581Concept2StatusNet(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session)return {connected:false};
   const r=await fetch("/api/concept2-sync",{headers:{Authorization:`Bearer ${session.access_token}`}});
   if(!r.ok)return {connected:false};
   return r.json();
+}
+async function concept2Status(opts={}){
+  const uid=currentUser?.id||'';const k='rowtraining_c2st_v581_'+uid;
+  if(!v581C2||v581C2.uid!==uid){v581C2={uid,t:0,v:null,p:null};try{const o=JSON.parse(localStorage.getItem(k)||'null');if(o&&o.v){v581C2.t=o.t;v581C2.v=o.v}}catch(e){}}
+  const fresh=()=>{if(v581C2.p)return v581C2.p;v581C2.p=v581Concept2StatusNet().then(v=>{v581C2.v=v;v581C2.t=Date.now();v581C2.p=null;try{localStorage.setItem(k,JSON.stringify({t:v581C2.t,v}))}catch(e){}return v},e=>{v581C2.p=null;throw e});return v581C2.p};
+  if(opts.force||!v581C2.v)return fresh();
+  if(Date.now()-v581C2.t>600000)fresh().catch(()=>{});
+  return v581C2.v;
 }
 
 let concept2SyncInFlight=null;
@@ -8691,7 +8703,7 @@ async function profileView(){
   document.getElementById("syncConcept2Btn").onclick=async()=>{
     const btn=document.getElementById("syncConcept2Btn");
     btn.disabled=true; const old=btn.textContent; btn.textContent=v311T('sincronizando');
-    try{await syncConcept2(true); if(tab==="perfil"){const st=await concept2Status();paintConcept2State(st);}}
+    try{await syncConcept2(true); if(tab==="perfil"){const st=await concept2Status({force:true});paintConcept2State(st);}}
     finally{if(document.getElementById("syncConcept2Btn")){btn.disabled=false;btn.textContent=old;}}
   };
   function paintConcept2State(st){
@@ -8706,7 +8718,7 @@ async function profileView(){
       document.getElementById("syncConcept2Btn").disabled=true;
     }
   }
-  concept2Status().then(paintConcept2State).catch(()=>paintConcept2State({connected:false}));
+  concept2Status().then(paintConcept2State).catch(()=>paintConcept2State({connected:false}));concept2Status({force:true}).then(paintConcept2State).catch(()=>{});
 
   // Auto-recalculate zones when HR values change.
   pf_max.addEventListener("change",()=>{ if(pf_rest.value) fillZones(); });
@@ -9253,8 +9265,13 @@ function v531DayEventBar(sessions,team,date){
   const general=sessions.filter(x=>!sessionTargetsV249(x).length);
   const pick=['MAR','GYM','ERG'].map(t=>general.find(x=>String(x.session_type).toUpperCase()===t)).find(Boolean);
   if(!pick)return;
+  // V580 · una sesión individual nunca es "el evento del día" (antes, si solo había una individual
+  // marcada, salía "Evento del día" y "Ver en Eventos" llevaba a "Ya no está disponible"). Si alguna
+  // individual quedó marcada como evento, se le quita la marca por detrás.
+  const indivEv=sessions.filter(x=>x.is_event&&sessionTargetsV249(x).length);
+  if(indivEv.length){sb.from('training_sessions').update({is_event:false,updated_at:new Date().toISOString()}).in('id',indivEv.map(x=>x.id)).then(()=>{},()=>{});indivEv.forEach(x=>x.is_event=false)}
   const evAll=sessions.filter(x=>x.is_event);
-  const evS=evAll.find(x=>!sessionTargetsV249(x).length)||evAll[0]||null;
+  const evS=evAll.find(x=>!sessionTargetsV249(x).length)||null;
   const extraEv=evAll.filter(x=>x!==evS);
   const types=[...new Set(sessions.map(x=>String(x.session_type).toUpperCase()).filter(t=>t!=='DESC'))].join(' + ');
   const html=evS
