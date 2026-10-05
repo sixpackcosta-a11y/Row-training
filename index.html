@@ -710,6 +710,8 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
 .v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
 .v583Fail{outline:2px solid #ef4444}
+body.v583Kb #nav.v330BottomNav{display:none!important}
+body.v583Kb main{padding-bottom:12px!important}
 
 .v325EmojiOpt{border:0;background:transparent;font-size:19px;line-height:1;padding:3px 5px;border-radius:6px;cursor:pointer}
 .v325EmojiOpt:hover{background:var(--surface-2)}
@@ -2624,7 +2626,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="583";
+const APP_VERSION="584";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7870,6 +7872,14 @@ async function v300RenderChatThread(container,rowerId,teamCode){
     }
   });
 }
+// V583 · al escribir (teclado abierto) la barra inferior se esconde: así no flota encima del teclado ni salta.
+(function(){
+  const isText=el=>el&&(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color)$/i.test(el.type||'text')));
+  let t=null;
+  document.addEventListener('focusin',e=>{if(!isText(e.target))return;clearTimeout(t);document.body.classList.add('v583Kb');
+    if(e.target.id&&/ChatInput/.test(e.target.id))setTimeout(()=>{try{e.target.scrollIntoView({block:'end',behavior:'smooth'})}catch(_){}},320)});
+  document.addEventListener('focusout',e=>{if(!isText(e.target))return;clearTimeout(t);t=setTimeout(()=>{if(!isText(document.activeElement))document.body.classList.remove('v583Kb')},120)});
+})();
 const V583_NAMES=new Map();
 async function v300RefreshUnreadMsgCount(){
   try{
