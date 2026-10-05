@@ -710,6 +710,11 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
 .v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
 .v583Fail{outline:2px solid #ef4444}
+.v588Tabs{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible!important;margin:8px 0 0!important}
+.v588Tabs .v493SumRow{flex:none!important;min-width:0;padding:8px 2px 7px!important;gap:2px!important}
+.v588Top{display:flex;align-items:center;justify-content:center;gap:5px}.v588Top b{font-size:16px;color:var(--text)}.v588Tabs .v493SumIcon{font-size:17px}
+.v588Tabs .v588Lb{font-size:11.5px;white-space:nowrap}
+
 .v588Tabs{flex-direction:row!important;overflow-x:auto;gap:0!important;margin:8px -4px 0!important;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .v588Tabs::-webkit-scrollbar{display:none}
 .v588Tabs .v493SumRow{flex:1 0 auto!important;width:auto!important;flex-direction:column!important;justify-content:center;gap:3px!important;padding:9px 12px 8px!important;border:0!important;border-bottom:3px solid transparent!important;border-radius:0!important;background:transparent!important;font-size:12.5px!important;text-align:center;color:var(--text-muted)}
@@ -2670,7 +2675,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="592";
+const APP_VERSION="593";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4025,7 +4030,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const uid='v493sum'+Math.random().toString(36).slice(2,9);
   // V504 · "Respuestas" en filas con texto, al estilo de la ficha de evento de Spond, en vez de la
   // línea compacta de antes — cada fila sigue siendo la pestaña que filtra el listado de abajo.
-  const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v493SumIcon">${icon}</span><span class="v588Lb">${esc(label)} <b>${list.length}</b></span></button>`;
+  const row=(key,label,icon,list,active)=>`<button type="button" class="v493SumRow${active?' active':''}" data-key="${key}"><span class="v588Top"><span class="v493SumIcon">${icon}</span><b>${list.length}</b></span><span class="v588Lb">${esc(label)}</span></button>`;
   const seenSet=(canEdit||(orgIds||[]).includes(String(currentUser?.id)))?(statusByUser._seen||null):null;
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
@@ -4039,7 +4044,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
   // V505 · caja de búsqueda por nombre, como en "Destinatarios" de Spond — solo tiene sentido con
   // roster largos, así que se omite si hay 6 personas o menos.
-  const searchBox=`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`;
+  const searchBox=roster.length>20?`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`:'';
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
     <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
