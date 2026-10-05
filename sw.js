@@ -1,3 +1,68 @@
+// Row Training · service worker
+// V548 · además de las notificaciones push (igual que antes), guarda la app en el móvil para que
+// abra aunque no haya cobertura:
+//  - La app (index.html): primero intenta la versión nueva de internet (como mucho 4 s); si no hay
+//    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
+//  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
+//  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
+const CACHE='rowtraining-app-v548';
+const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png'];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(c=>Promise.all(PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()));
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('rowtraining-app-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+
+function isAppPage(req,url){
+  return req.mode==='navigate'||(url.origin===self.location.origin&&(url.pathname==='/'||url.pathname==='/index.html'));
+}
+
+async function appPage(req,url){
+  const cache=await caches.open(CACHE);
+  const net=fetch(req,{cache:'no-store'}).then(res=>{
+    if(res&&res.ok)cache.put('/index.html',res.clone()).catch(()=>{});
+    return res;
+  });
+  // tras avisar de una versión nueva (?appv=…) se espera más a la red para no abrir la vieja
+  const timeout=new Promise(resolve=>setTimeout(()=>resolve(null),url.searchParams.has('appv')?15000:4000));
+  try{
+    const res=await Promise.race([net,timeout]);
+    if(res&&res.ok)return res;
+  }catch(e){}
+  const cached=await cache.match('/index.html')||await cache.match('/');
+  if(cached)return cached;
+  return net; // primera vez sin nada guardado: esperar a la red
+}
+
+async function staleWhileRevalidate(req){
+  const cache=await caches.open(CACHE);
+  const cached=await cache.match(req);
+  const net=fetch(req).then(res=>{
+    if(res&&(res.ok||res.type==='opaque'))cache.put(req,res.clone()).catch(()=>{});
+    return res;
+  }).catch(()=>null);
+  if(cached){net.catch(()=>{});return cached}
+  const res=await net;
+  return res||new Response('',{status:504});
+}
+
+self.addEventListener('fetch', event => {
+  const req=event.request;
+  if(req.method!=='GET')return;
+  let url;try{url=new URL(req.url)}catch(e){return}
+  if(url.protocol!=='https:'&&url.protocol!=='http:')return;
+  // datos y servicios: siempre directos a internet
+  if(/supabase\.co$/.test(url.hostname))return;
+  if(url.origin===self.location.origin&&(url.pathname.startsWith('/api/')||url.pathname==='/version.json'||url.pathname==='/sw.js'))return;
+  if(isAppPage(req,url)){event.respondWith(appPage(req,url));return}
+  const cdn=/(^|\.)cdn\.jsdelivr\.net$|(^|\.)unpkg\.com$|(^|\.)fonts\.googleapis\.com$|(^|\.)fonts\.gstatic\.com$/.test(url.hostname);
+  const ownStatic=url.origin===self.location.origin&&(url.pathname.startsWith('/assets/')||url.pathname==='/manifest.json'||/\.(png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(url.pathname));
+  if(cdn||ownStatic){event.respondWith(staleWhileRevalidate(req));return}
+});
+
 self.addEventListener('push', event => {
   let data={};
   try{ data=event.data?event.data.json():{}; }catch(e){ data={title:'Row Training',body:event.data?.text?.()||''}; }
