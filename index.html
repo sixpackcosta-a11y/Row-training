@@ -2680,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="605";
+const APP_VERSION="606";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7822,13 +7822,13 @@ const V583_QUICK=['👍','❤️','😂','🔥','👏','💪','😮'];
 const V583_CACHE=new Map();
 // V592 · al ver una conversación, sus avisos de "mensaje nuevo" / "reacción" pasan a leídos (si no, la burbuja roja de Mensajes no se iba nunca).
 let _v592T=null;
-function v592ClearChatNotifs(rowerId){
+function v592ClearChatNotifs(rowerId,types){
   clearTimeout(_v592T);
   _v592T=setTimeout(async()=>{
     try{
       if(!currentUser)return;
-      let q=sb.from('app_notifications').update({is_read:true}).eq('user_id',currentUser.id).eq('is_read',false).in('type',['chat_message','chat_reaction']);
-      if(currentMode!=='athlete'&&rowerId)q=q.ilike('url','%'+rowerId+'%');
+      let q=sb.from('app_notifications').update({is_read:true}).eq('user_id',currentUser.id).eq('is_read',false).in('type',types||['chat_message','chat_reaction']);
+      if(currentMode!=='athlete'&&rowerId&&!types)q=q.ilike('url','%'+rowerId+'%');
       const r=await q;
       if(!r.error&&typeof loadNotificationsV104==='function')await loadNotificationsV104();
     }catch(e){}
@@ -8157,6 +8157,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+(e?.message||e))}})();
       return{row:res.data};
     },
+    onSeen:()=>v592ClearChatNotifs(null,['event_chat_message','event_chat_reaction']),
     onError:e=>alert(/relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 18_chat_evento.sql y 19_eventos_generalizado.sql en Supabase antes de poder usar el chat del evento.':(e.message||String(e)))
   });
 }
@@ -12705,6 +12706,100 @@ const V311_DICT={
 function v311T(key){
   return (V311_DICT[currentLocale]&&V311_DICT[currentLocale][key])||V311_DICT.es[key]||key;
 }
+// V605 · traducción (inglés/neerlandés) de la sección Eventos y del chat de evento para remeras.
+// Esas pantallas se escribieron con texto fijo en español; en vez de tocar cientos de plantillas,
+// se traduce el texto ya pintado (frases exactas + patrones de fecha), solo en modo remero y con idioma ≠ es.
+const V605_EXACT={
+'Eventos':['Events','Evenementen'],'Próximos':['Upcoming','Aankomend'],'Pasados':['Past','Afgelopen'],
+'Esta semana':['This week','Deze week'],'La próxima semana':['Next week','Volgende week'],'Semana pasada':['Last week','Vorige week'],
+'Cargando eventos…':['Loading events…','Evenementen laden…'],
+'No hay convocatorias ni competiciones próximas.':['No upcoming events or races.','Geen aankomende evenementen of wedstrijden.'],
+'No hay eventos pasados en los últimos 6 meses.':['No past events in the last 6 months.','Geen afgelopen evenementen in de laatste 6 maanden.'],
+'Los eventos todavía no están disponibles.':["Events aren't available yet.",'Evenementen zijn nog niet beschikbaar.'],
+'Voy':["I'm in",'Ik kom'],'✅ Voy':["✅ I'm in",'✅ Ik kom'],'No voy':["I'm out",'Ik kom niet'],'❌ No voy':["❌ I'm out",'❌ Ik kom niet'],
+'Has confirmado que vas':["You've confirmed you're going",'Je hebt bevestigd dat je komt'],
+'Has avisado de que no vas':["You've said you're not going",'Je hebt aangegeven dat je niet komt'],
+'Estás en la lista de espera. Si queda una plaza libre te avisaremos.':["You're on the waiting list. We'll let you know if a spot opens up.",'Je staat op de wachtlijst. We laten het weten als er een plek vrijkomt.'],
+'⏳ En espera':['⏳ Waitlisted','⏳ Op de wachtlijst'],'En espera':['Waitlist','Wachtlijst'],
+'🎟️ Hay una plaza libre':['🎟️ A spot is available','🎟️ Er is een plek vrij'],
+'Respuestas':['Responses','Reacties'],'Asistiré':['Going','Aanwezig'],'Sin contestar':['No reply','Geen reactie'],'Rechazado':['Declined','Afgemeld'],'Todos':['All','Iedereen'],
+'Asistirá':['Going','Komt'],'No asiste':['Not going','Komt niet'],'Visto':['Seen','Gezien'],'Sin ver':['Not seen','Niet gezien'],
+'Nadie en esta categoría.':['Nobody in this category.','Niemand in deze categorie.'],
+'Evento completo':['Event full','Evenement vol'],
+'✉️ Enviar mensaje a todos los invitados':['✉️ Message everyone invited','✉️ Bericht aan alle uitgenodigden'],
+'💬 Enviar mensaje a los invitados':['💬 Message the invitees','💬 Bericht aan de uitgenodigden'],
+'🔔 Avisar a los que faltan por confirmar':["🔔 Remind those who haven't replied",'🔔 Herinner wie nog niet heeft gereageerd'],
+'💬 Chat del evento':['💬 Event chat','💬 Evenementchat'],'Chat del evento':['Event chat','Evenementchat'],
+'Aún no hay mensajes en este evento. Escribe el primero 👇':['No messages in this event yet. Write the first one 👇','Nog geen berichten in dit evenement. Schrijf het eerste 👇'],
+'Escribe al equipo…':['Write to the team…','Schrijf naar het team…'],
+'Enviar':['Send','Versturen'],'Adjuntar':['Attach','Bijvoegen'],'Hoy':['Today','Vandaag'],'Ayer':['Yesterday','Gisteren'],
+'enviando…':['sending…','versturen…'],'⚠️ no enviado · toca para reintentar':['⚠️ not sent · tap to retry','⚠️ niet verzonden · tik om opnieuw te proberen'],
+'El archivo pesa más de 10 MB':['The file is larger than 10 MB','Het bestand is groter dan 10 MB'],
+'Cargando…':['Loading…','Laden…'],
+'🔒 Las respuestas de este evento solo las ven los organizadores.':['🔒 Only the organizers can see the responses to this event.','🔒 Alleen de organisatoren zien de reacties op dit evenement.'],
+'Cancelado':['Cancelled','Geannuleerd'],'Ver ubicación en el mapa':['View location on map','Bekijk locatie op de kaart'],
+'Ver entrenamiento':['View session','Training bekijken'],'🏁 Competición':['🏁 Race','🏁 Wedstrijd'],'Competición':['Race','Wedstrijd'],'📅 Evento':['📅 Event','📅 Evenement'],
+'🚣 MAR · convocatoria':['🚣 MAR · call-up','🚣 MAR · oproep'],'🏋️ GIM+ERGO · convocatoria':['🏋️ GYM+ERGO · call-up','🏋️ GYM+ERGO · oproep'],
+'Se abre en breve':['Opening soon','Opent binnenkort'],'Tu entrenador':['Your coach','Je trainer'],'Te han añadido como organizador':["You've been added as an organizer",'Je bent toegevoegd als organisator'],
+'Cerrar':['Close','Sluiten'],'Cancelar':['Cancel','Annuleren'],'Guardar':['Save','Opslaan'],'Volver':['Back','Terug'],'← Volver':['← Back','← Terug'],
+'Elige primero a quién marcar como asistente.':['First choose who to mark as attending.','Kies eerst wie je als aanwezig wilt markeren.'],
+'📅 Te han invitado a eventos':["📅 You've been invited to events",'📅 Je bent uitgenodigd voor evenementen'],
+'📅 Ya puedes confirmar asistencia':['📅 You can now confirm attendance','📅 Je kunt nu je aanwezigheid bevestigen'],
+'Mensaje':['Message','Bericht'],'Emojis':['Emojis','Emoji’s']
+};
+const V605_WD={lunes:['Monday','maandag'],martes:['Tuesday','dinsdag'],'miércoles':['Wednesday','woensdag'],jueves:['Thursday','donderdag'],viernes:['Friday','vrijdag'],'sábado':['Saturday','zaterdag'],domingo:['Sunday','zondag']};
+const V605_MS={ene:['Jan','jan'],feb:['Feb','feb'],mar:['Mar','mrt'],abr:['Apr','apr'],may:['May','mei'],jun:['Jun','jun'],jul:['Jul','jul'],ago:['Aug','aug'],sep:['Sep','sep'],sept:['Sep','sep'],oct:['Oct','okt'],nov:['Nov','nov'],dic:['Dec','dec']};
+const V605_ML={enero:['January','januari'],febrero:['February','februari'],marzo:['March','maart'],abril:['April','april'],mayo:['May','mei'],junio:['June','juni'],julio:['July','juli'],agosto:['August','augustus'],septiembre:['September','september'],octubre:['October','oktober'],noviembre:['November','november'],diciembre:['December','december']};
+function v605Tr(s,li){
+  if(!s||!/[A-Za-zÁÉÍÓÚáéíóúñ¿¡]/.test(s))return s;
+  const lead=s.match(/^\s*/)[0],trail=s.match(/\s*$/)[0],core=s.trim();
+  if(!core)return s;
+  const ex=V605_EXACT[core];if(ex)return lead+ex[li]+trail;
+  let o=core,ch=false;const R=(re,f)=>{const n=o.replace(re,f);if(n!==o){o=n;ch=true}};
+  const en=li===0;
+  R(/^(.*)La invitación se enviará (\d+) días? antes$/,(m,p,n)=>p+(en?`The invitation will be sent ${n} day${n==1?'':'s'} before`:`De uitnodiging wordt ${n} dag${n==1?'':'en'} van tevoren verstuurd`));
+  R(/^Responde antes del (.+)$/,(m,d)=>(en?'Reply before ':'Reageer vóór ')+d);
+  R(/^(🔒 )?Podrás confirmar asistencia a partir del (.+)$/,(m,l,d)=>(l||'')+(en?'You can confirm attendance from ':'Je kunt je aanwezigheid bevestigen vanaf ')+d);
+  R(/^de (\d+) organizador(?:es)? (ha|han) aceptado$/,(m,n,h)=>en?`of ${n} organizer${n==1?'':'s'} accepted`:`van ${n} organisator${n==1?'':'en'} ${n==1?'heeft':'hebben'} geaccepteerd`);
+  R(/^(⏳ )?(\d+) en lista de espera$/,(m,e,n)=>(e||'')+n+(en?' on the waiting list':' op de wachtlijst'));
+  R(/^· ⏳ (\d+) en lista de espera$/,(m,n)=>'· ⏳ '+n+(en?' on the waiting list':' op de wachtlijst'));
+  R(/^En espera · puesto (\d+)$/,(m,n)=>(en?'Waitlist · position ':'Wachtlijst · plaats ')+n);
+  R(/Encuentro:/g,en?'Meeting:':'Verzamelen:');R(/Termina:/g,en?'Ends:':'Einde:');R(/Empieza a las/g,en?'Starts at':'Begint om');
+  R(/\b(lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b(?=\s*[,:·]|\s+\d|$)/g,w=>V605_WD[w][li]);
+  R(/(\d{1,2})( de)? (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/g,(m,d,de,mo)=>en?`${d} ${V605_ML[mo][0]}`:`${d} ${V605_ML[mo][1]}`);
+  R(/(\d{1,2}) (ene|feb|mar|abr|may|jun|jul|ago|sept|sep|oct|nov|dic)\b/g,(m,d,mo)=>`${d} ${V605_MS[mo][li]}`);
+  return ch?lead+o+trail:s;
+}
+const V605_SKIP='script,style,textarea,input,[contenteditable],.v583Msg,.v583In';
+let _v605Obs=null,_v605Busy=false,_v605Q=new Set(),_v605Raf=0;
+function v605Active(){return typeof currentLocale!=='undefined'&&currentLocale!=='es'&&typeof currentMode!=='undefined'&&currentMode==='athlete'}
+function v605Walk(root){
+  const li=currentLocale==='en'?0:1;
+  if(root.nodeType===3){const p=root.parentElement;if(p&&!p.closest(V605_SKIP)){const n=v605Tr(root.nodeValue,li);if(n!==root.nodeValue)root.nodeValue=n}return}
+  if(root.nodeType!==1||root.closest?.(V605_SKIP))return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>(n.parentElement&&!n.parentElement.closest(V605_SKIP))?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT});
+  let n;while((n=w.nextNode())){const t=v605Tr(n.nodeValue,li);if(t!==n.nodeValue)n.nodeValue=t}
+  const els=[root,...root.querySelectorAll('[placeholder],[data-ph],[aria-label],[title]')];
+  els.forEach(e=>['placeholder','data-ph','aria-label','title'].forEach(a=>{const v=e.getAttribute&&e.getAttribute(a);if(v){const t=v605Tr(v,li);if(t!==v)e.setAttribute(a,t)}}));
+}
+function v605Flush(){
+  _v605Raf=0;if(!v605Active()){_v605Q.clear();return}
+  const q=[..._v605Q];_v605Q.clear();_v605Busy=true;
+  try{q.forEach(n=>{if(n.isConnected)v605Walk(n)})}catch(e){}
+  _v605Busy=false;
+}
+function v605Start(){
+  if(_v605Obs||typeof MutationObserver==='undefined'||!document.body)return;
+  _v605Obs=new MutationObserver(ms=>{
+    if(_v605Busy||!v605Active())return;
+    ms.forEach(m=>{if(m.type==='childList')m.addedNodes.forEach(n=>_v605Q.add(n));else if(m.type==='characterData')_v605Q.add(m.target);else if(m.type==='attributes')_v605Q.add(m.target)});
+    if(_v605Q.size&&!_v605Raf)_v605Raf=requestAnimationFrame(v605Flush);
+  });
+  _v605Obs.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-ph','placeholder']});
+  if(v605Active()){_v605Q.add(document.body);_v605Raf=requestAnimationFrame(v605Flush)}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',v605Start);else v605Start();
+
 function v311MonthLabel(ym){
   const localeMap={es:'es-ES',en:'en-GB',nl:'nl-NL'};
   const [y,m]=ym.split('-').map(Number);
