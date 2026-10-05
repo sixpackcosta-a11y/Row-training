@@ -2675,7 +2675,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="593";
+const APP_VERSION="595";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3783,7 +3783,7 @@ async function staffRegisterView(){
     const rsvpBySession=new Map();(rsvpRowsAll.data||[]).forEach(r=>{const k=String(r.training_session_id);if(!rsvpBySession.has(k))rsvpBySession.set(k,new Map());rsvpBySession.get(k).set(String(r.user_id),r.status)});
     const attOnReg=v497AttendanceEnabledForTeam(t)&&v534EventsUI();
     if(!document.getElementById('staffRegArea'))return; // V554 · ya se cambió de pantalla
-    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
+    staffRegArea.innerHTML=xs.length?xs.map(x=>`<div class="card staffDayCard mar"><span class="tag">MAR</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}${attOnReg?v493RsvpSummaryHtml(x.id,x.title,roster,rsvpBySession.get(String(x.id))||new Map(),t,'session',true,[],x.session_date||'',x.event_time||''):''}${v307CrewBoatHtml(x.crew,x.id,false,t)}${attOnReg?`<details class="libraryAccordion v494EventChatAccordion" data-id="${x.id}" data-team="${esc(t)}"><summary>💬 Chat del evento <small class="muted">(solo lo ves tú por ahora, en pruebas)</small></summary><div class="accordionBody v494EventChatBody"></div></details>`:''}<div class="staffActions"><button class="regSea primary" data-id="${x.id}">Registrar resultado MAR</button></div></div>`).join(''):'<div class="info"><b>No hay sesión MAR programada para este día.</b><br><span class="muted">Selecciona otra fecha o equipo.</span></div>';
     staffRegArea.querySelectorAll('.regSea').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),t,d,staffRegisterView));
     v495WireEventChatAccordions(staffRegArea);
     v493WireRsvpSummaryTabs(staffRegArea,load);
@@ -4021,7 +4021,7 @@ async function v588SyncViews(kind,id){
     V588_SEEN.set(key,set);return set;
   }catch(e){return null}
 }
-function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[]){
+function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime=''){
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
   const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
@@ -4038,10 +4038,10 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
     const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option></select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
-  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
+  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
   const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${key==='pending'&&canEdit?remindBtn0:''}${list.length?`<div class="rosterList v588List">${list.map(personRow).join('')}</div>`:'<p class="muted" style="padding:12px 4px">Nadie en esta categoría.</p>'}</div>`;
   const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
-  const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
+  const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title=""${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
   // V505 · caja de búsqueda por nombre, como en "Destinatarios" de Spond — solo tiene sentido con
   // roster largos, así que se omite si hay 6 personas o menos.
   const searchBox=roster.length>20?`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`:'';
@@ -4635,7 +4635,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V514 · "Quién ve las respuestas: solo organizadores" — el resto solo ve su propia respuesta.
   const amOrganizer=canEdit||orgIds.includes(String(currentUser?.id));
   const hideResponses=ev.responses_visibility==='organizers'&&!amOrganizer;
-  const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds);
+  const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds,ev.event_date,ev.event_time||ev.start_time||'');
   const inCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').length;
   const capLine=ev.max_participants?`<p class="v512TeamLine">👥 ${inCount}/${ev.max_participants} plazas${inCount>=ev.max_participants?' · <b>Completo</b>':''}</p>`:'';
   const timesLine=(ev.meet_time||ev.end_time)?`<p class="v512TeamLine">${ev.meet_time?`🤝 Encuentro: ${esc(ev.meet_time)}`:''}${ev.meet_time&&ev.end_time?' · ':''}${ev.end_time?`🏁 Termina: ${esc(ev.end_time)}`:''}</p>`:'';
@@ -4962,11 +4962,18 @@ async function v514TryReminder(ev){
 function v499WireRemindButton(root,team){
   root.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{
     const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;
-    b.disabled=true;b.textContent='Avisando…';
+    const evName=b.dataset.title||'la convocatoria';
+    const evWhen=b.dataset.date?` (${v495EventDateLabel(b.dataset.date)}${b.dataset.time?' · '+String(b.dataset.time).slice(0,5):''})`:'';
+    // V593 · el recordatorio lleva un texto por defecto, pero se puede editar antes de enviarlo
+    const d=await v527Dialog({title:'Recordatorio a sin respuesta',okText:'Enviar',html:`<p class="muted" style="margin-top:0">Se enviará a <b>${ids.length}</b> persona${ids.length>1?'s':''} que aún no ha${ids.length>1?'n':''} respondido.</p><label>Título<input data-f="title" value="¿Vas a venir?" maxlength="80"></label><label style="display:block;margin-top:8px">Mensaje<textarea data-f="body" rows="4" maxlength="300">Aún no has confirmado tu asistencia a "${esc(evName)}"${esc(evWhen)}. Entra en Row Training y dinos si vienes o no.</textarea></label>`});
+    if(!d)return;
+    const title=(d.title||'').trim()||'¿Vas a venir?',body=(d.body||'').trim();
+    if(!body)return alert('El mensaje no puede estar vacío.');
+    const original=b.innerHTML;b.disabled=true;b.textContent='Avisando…';
     try{
-      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'¿Vas a esta convocatoria?',body:`Confirma tu asistencia a ${b.dataset.title||'la convocatoria'} en Row Training.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
+      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title,body,url:'/?tab=eventos',category:'event_reminder',type:'training'});
       b.textContent='Aviso enviado ✓';
-    }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.textContent='🔔 Avisar a los que faltan por confirmar'}
+    }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.innerHTML=original}
   });
 }
 // V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
