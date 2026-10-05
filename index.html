@@ -2680,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="601";
+const APP_VERSION="603";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4663,6 +4663,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const opensAt=v498ComputeOpensAt(ev),opensFuture=opensAt&&opensAt>new Date();
   // V512 · organizadores = quien lo creó (created_by) + los añadidos a mano (event_organizers).
   const orgIds=[...new Set([ev.created_by?String(ev.created_by):null,...(organizerIds||[])].filter(Boolean))];
+  if(!orgIds.length&&canEdit&&currentUser?.id)orgIds.push(String(currentUser.id));
   const nameOf=uid=>String(uid)===String(currentUser?.id)?'Tú':(roster.find(p=>String(p.user_id)===String(uid))?.full_name||null);
   const cancelled=!!ev.cancelled_at;
   const rsvp=opensFuture||cancelled?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
@@ -4972,7 +4973,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
   return events.map(ev=>{
     const r=v514EventRoster(ev,roster);
     const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0,wait:0},pendingIds=[];
-    r.forEach(p=>{if(ev.created_by&&String(p.user_id)===String(ev.created_by))return;const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
+    r.forEach(p=>{const orgU=ev.created_by?String(ev.created_by):((()=>{try{return canEditTeamJS(viewTeam)}catch(e){return false}})()&&currentUser?String(currentUser.id):null);if(orgU&&String(p.user_id)===orgU)return;const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
     counts.total=counts.in+counts.out+counts.pending+counts.wait;
     return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds,_my:currentUser?statusByUser.get(String(currentUser.id))||null:null};
   });
