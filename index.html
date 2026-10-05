@@ -656,6 +656,7 @@ button,summary,header,.v330BottomNav,.v513Chip,.v545Seg{-webkit-user-select:none
 button{transition:transform .12s ease,opacity .12s ease,background-color .15s ease}
 button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v330NavBtn:active{transform:scale(.9)}
+.v599Declined{opacity:.5;filter:grayscale(.7)}
 .v503EventRow{transition:transform .12s ease,opacity .12s ease}.v503EventRow:active{transform:scale(.985);opacity:.8}
 @keyframes v558Fade{from{opacity:0}to{opacity:1}}
 @keyframes v558FadeOut{from{opacity:1}to{opacity:0}}
@@ -2679,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="598";
+const APP_VERSION="600";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4072,9 +4073,9 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   // roster largos, así que se omite si hay 6 personas o menos.
   const searchBox=roster.length>20?`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`:'';
   return `<div class="v493RsvpSummary" id="${uid}"><b>Respuestas</b>
-    <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${evCap||waitList.length?row('wait','Lista de espera','⏳',waitList,false):''}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
+    <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${waitList.length?row('wait','En espera','⏳',waitList,false):''}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
-    ${panel('in',inList,true)}${panel('pending',pendingList,false)}${evCap||waitList.length?panel('wait',waitList,false):''}${panel('out',outList,false)}${panel('all',allList,false)}
+    ${panel('in',inList,true)}${panel('pending',pendingList,false)}${waitList.length?panel('wait',waitList,false):''}${panel('out',outList,false)}${panel('all',allList,false)}
     <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
@@ -4670,7 +4671,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds,ev.event_date,ev.event_time||ev.start_time||'',ev.max_participants||null);
   const inCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').length;
   const waitCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='waitlist').length;
-  const capLine=ev.max_participants?`<p class="v512TeamLine">👥 ${inCount}/${ev.max_participants} plazas${inCount>=ev.max_participants?' · <b>Completo</b>':''}${waitCount?` · ⏳ ${waitCount} en lista de espera`:''}</p>`:'';
+  const capLine=(ev.max_participants&&inCount>=ev.max_participants)?`<p class="v512TeamLine">🚫 <b>Evento completo</b>${waitCount?` · ⏳ ${waitCount} en lista de espera`:''}</p>`:'';
   const timesLine=(ev.meet_time||ev.end_time)?`<p class="v512TeamLine">${ev.meet_time?`🤝 Encuentro: ${esc(ev.meet_time)}`:''}${ev.meet_time&&ev.end_time?' · ':''}${ev.end_time?`🏁 Termina: ${esc(ev.end_time)}`:''}</p>`:'';
   const cover=ev.cover_url?`<img class="v514Cover" src="${esc(ev.cover_url)}" alt="">`:'';
   // V512 · "cuando abro un evento no aparece de qué equipo es" — línea de equipo con su color, como
@@ -4822,9 +4823,9 @@ function v503OverviewRowHtml(ev,clash){
     const coverStyleC=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
     return `<button type="button" class="v503EventRow v527RowCancelled" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyleC}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub v527CancelTxt">Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))} · ${esc(typeLabel)}</div></div></button>`;
   }
-  const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}/${ev._counts.total}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span>${ev._counts.wait?`<span>⏳ ${ev._counts.wait}</span>`:''}</div>`;
+  const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span>${ev._counts.wait?`<span>⏳ ${ev._counts.wait}</span>`:''}</div>`;
   const coverStyle=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
-  return `<button type="button" class="v503EventRow" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
+  return `<button type="button" class="v503EventRow${ev._my==='out'?' v599Declined':''}" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamLabel(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
 }
 // V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
 // y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
@@ -4972,7 +4973,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
     const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0,wait:0},pendingIds=[];
     r.forEach(p=>{const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
     counts.total=counts.in+counts.out+counts.pending+counts.wait;
-    return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds};
+    return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds,_my:currentUser?statusByUser.get(String(currentUser.id))||null:null};
   });
 }
 // V514 · recordatorio automático a quien no ha contestado. Igual que la apertura (v498), no hay cron
