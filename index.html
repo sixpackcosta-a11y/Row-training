@@ -530,6 +530,9 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+/* V577 · barra de "Más" en una sola fila */
+.v577Bar{display:grid!important;grid-template-columns:repeat(var(--v577n,4),1fr)!important;gap:6px!important;padding:8px!important}
+.v577Bar>button{margin:0!important;padding:8px 2px 7px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;font-size:.76rem!important;font-weight:600;line-height:1.1;min-width:0;width:auto!important;border-radius:12px!important;position:relative;white-space:nowrap;letter-spacing:-.01em}
 /* V576 · Análisis compacto */
 .v576Seg{display:flex!important;width:100%;box-sizing:border-box;margin:0 0 10px!important}.v576Seg button{flex:1}
 .athleteSelectorBar.v573Top{margin:0 0 6px}.v573Top.v576Eq{grid-template-columns:1fr 1fr!important}.v576Eq select{padding-left:10px;padding-right:22px;text-overflow:ellipsis}
@@ -2600,7 +2603,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="576";
+const APP_VERSION="577";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3334,7 +3337,7 @@ function v300OpenSettingsMenu(){
   const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
   const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
   const layer=document.createElement('div');layer.className='modalBack v300SettingsMenuBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button><button type="button" class="v300NavItem" data-a="__notifs__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">🔔</span><span>Notificaciones</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button><button type="button" class="v300NavItem" data-a="__notifs__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">🔔</span><span>Notificaciones</span></button><button type="button" class="v300NavItem" data-a="__help__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('ayuda')}<span>Ayuda</span></button>${currentMode==='staff'&&isGlobalCoach?`<button type="button" class="v300NavItem" data-a="__system__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('sistema')}<span>Sistema</span></button>`:''}<button type="button" class="v300NavItem" data-a="__logout__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:#c0392b;margin-top:6px">${v332Icon('salir')}<span>Cerrar sesión</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
@@ -3343,6 +3346,9 @@ function v300OpenSettingsMenu(){
     if(v==="__theme__"){applyThemeV299(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');return}
     if(v==="__language__"){v311OpenLanguagePicker();return}
     if(v==="__notifs__"){v530OpenNotifPrefs();return}
+    if(v==="__help__"){tab='ayuda';draw();render();return}
+    if(v==="__system__"){tab='sistema';draw();render();return}
+    if(v==="__logout__"){if(confirm('¿Cerrar sesión en este móvil?'))sb.auth.signOut().then(()=>location.reload());return}
   });
 }
 async function v530OpenNotifPrefs(){
@@ -3487,13 +3493,11 @@ function v390MasBarHtml(activeTab){
     ['perfil','Perfil','perfil'],
     ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo']]:[]),
     ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Modo remero':'Modo entrenador','compass']]:[]),
-    ['__settings__','Ajustes','ajustes'],
-    ['ayuda','Ayuda','ayuda'],
-    ...(isGlobalCoach?[['sistema','Sistema','sistema']]:[]),
-    ['__logout__','Salir','salir']
+    ['__settings__','Ajustes','ajustes']
+    // V577 · Ayuda, Sistema y Salir pasan a la ventana de Ajustes (barra de arriba más limpia)
   ];
   const navTabs=['perfil','equipo','sistema','ayuda'];
-  return `<div class="card v330ProfileQuickActions v390MasBar">${items.map(([action,label,icon])=>{
+  return `<div class="card v330ProfileQuickActions v390MasBar v577Bar" style="--v577n:${items.length}">${items.map(([action,label,icon])=>{
     const isActive=navTabs.includes(action)&&action===activeTab;
     const badge=(action==='equipo'&&pendingRegistrationCount)?`<span class="nBadge">${pendingRegistrationCount>9?'9+':pendingRegistrationCount}</span>`:'';
     return `<button type="button" class="v390MasBtn ${isActive?'active':''}" data-action="${action}">${v332Icon(icon)}${esc(label)}${badge}</button>`;
@@ -8539,7 +8543,7 @@ async function profileView(){
   const birthAge=pdata?.birth_date?Math.floor((Date.now()-new Date(pdata.birth_date+"T12:00:00").getTime())/(365.2425*24*3600*1000)):"";
   const effectiveAge=savedAge||birthAge||"";
 
-  content.innerHTML=`<div class="card v330ProfileQuickActions"><button type="button" id="v330OpenSettings">${v332Icon('ajustes')}${v311T('nav_ajustes')}</button><button type="button" id="v330OpenHelp">${v332Icon('ayuda')}${v311T('nav_ayuda')}</button>${hasStaffMode()?`<button type="button" id="v330SwitchMode">${v332Icon('compass')}Cambiar a modo entrenador</button>`:''}<button type="button" id="v330LogOut">${v332Icon('salir')}${v311T('nav_salir')}</button></div><div class="card"><h2>${v311T('perfil_titulo')}</h2>
+  content.innerHTML=`<div class="card v330ProfileQuickActions v577Bar" style="--v577n:${hasStaffMode()?2:1}"><button type="button" id="v330OpenSettings">${v332Icon('ajustes')}${v311T('nav_ajustes')}</button>${hasStaffMode()?`<button type="button" id="v330SwitchMode">${v332Icon('compass')}Cambiar a modo entrenador</button>`:''}</div><div class="card"><h2>${v311T('perfil_titulo')}</h2>
   <label>${v311T('idioma')}<select id="pf_locale"><option value="es" ${currentLocale==='es'?'selected':''}>Español</option><option value="en" ${currentLocale==='en'?'selected':''}>English</option><option value="nl" ${currentLocale==='nl'?'selected':''}>Nederlands</option></select></label>
   ${v505AvatarUploadBoxHtml(pdata||{},'pfAvatarInput','pfAvatarPreview')}
   <label>${v311T('nombre_label')}<input id="pf_name" value="${pdata?.full_name||""}"></label>
