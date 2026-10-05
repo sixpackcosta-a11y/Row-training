@@ -710,6 +710,25 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
 .v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
 .v583Fail{outline:2px solid #ef4444}
+.v583Full [id$="ChatScroll"]{border:0!important;background:transparent!important;padding:2px 0!important}
+.v583Full .v583Head{border-bottom:1px solid var(--border);margin:0 -12px 4px;padding:6px 12px 8px}
+.v583Full .v583Head b{font-size:1rem;font-weight:600}
+.v583Full .v583Back{border:0;background:transparent;color:#2563eb;font-size:15px;padding:4px 6px 4px 0}
+.v583Msg{-webkit-touch-callout:none}
+.v583Day{text-align:center;margin:10px 0 4px}.v583Day span{background:var(--surface-2);color:var(--text-muted);font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;text-transform:capitalize}
+.v583Reacts{margin-top:-6px!important;position:relative;z-index:1}
+.v583Compose{align-items:center!important}
+.v583Compose textarea{border-radius:22px!important;padding:10px 16px!important;line-height:1.3;max-height:110px}
+.v583Compose .v583EmojiBtn{border:0;background:transparent;width:36px;height:40px;font-size:22px}
+.v583Compose .v583Send{width:42px;height:42px;border-radius:50%!important;padding:0;font-size:17px;background:#2563eb!important;color:#fff!important;flex:none}
+
+.v583Img{display:block;max-width:100%;max-height:260px;border-radius:8px;cursor:zoom-in;background:#0002;min-width:120px;min-height:80px;object-fit:cover}
+.v583File{display:flex;gap:8px;align-items:center;color:inherit;text-decoration:none;background:#0000001a;border-radius:8px;padding:8px 10px}
+.v583FileIc{font-size:22px}.v583FileTx{display:flex;flex-direction:column;min-width:0}.v583FileTx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;font-size:13px}.v583FileTx small{opacity:.75}
+.v583Light{position:fixed;inset:0;z-index:10000;background:#000e;display:flex;align-items:center;justify-content:center}
+.v583Light img{max-width:96vw;max-height:90vh;object-fit:contain}
+.v583Light button{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;border:0;background:#fff3;color:#fff;font-size:20px;border-radius:99px;width:38px;height:38px}
+
 .v583Full{position:fixed;left:0;right:0;z-index:55;display:flex;flex-direction:column;background:var(--bg);padding:6px 12px 0;box-sizing:border-box}
 .v583Full .v583Body{flex:1;min-height:0;display:flex;flex-direction:column}
 .v583Full .v583Compose{padding-bottom:6px}
@@ -2633,7 +2652,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="585";
+const APP_VERSION="587";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7702,6 +7721,40 @@ const V583_EMOJI_GROUPS=[
 ];
 const V583_QUICK=['👍','❤️','😂','🔥','👏','💪','😮'];
 const V583_CACHE=new Map();
+const V583_SIGNED=new Map(),V583_LOCAL=new Map();
+const V583_ATT_COLS='id,sender_id,body,created_at,att_path,att_name,att_type,att_size';
+function v583DayLabel(d){const t=new Date(),y=new Date(Date.now()-864e5);if(d.toDateString()===t.toDateString())return 'Hoy';if(d.toDateString()===y.toDateString())return 'Ayer';return d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}
+function v583IsImg(t){return /^image\//.test(t||'')}
+function v583Size(n){return n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'}
+function v583AttHtml(m){
+  if(!m.att_path&&!m._file)return '';
+  const path=m.att_path||'',signed=V583_SIGNED.get(path),local=m._local||V583_LOCAL.get(path),name=m.att_name||m._file?.name||'archivo',type=m.att_type||m._file?.type||'';
+  if(v583IsImg(type))return `<img class="v583Img" data-path="${esc(path)}" src="${esc(signed?.u||local||'data:image/gif;base64,R0lGODlhAQABAAAAACw=')}" alt="${esc(name)}" loading="lazy">`;
+  return `<a class="v583File" data-path="${esc(path)}" ${signed?`href="${esc(signed.u)}" target="_blank" rel="noopener"`:''}><span class="v583FileIc">📎</span><span class="v583FileTx"><b>${esc(name)}</b><small>${m.att_size||m._file?.size?v583Size(m.att_size||m._file.size):''}</small></span></a>`;
+}
+async function v583Hydrate(root){
+  const els=[...root.querySelectorAll('[data-path]')].filter(e=>e.dataset.path);
+  const paths=[...new Set(els.map(e=>e.dataset.path))];
+  const now=Date.now(),need=paths.filter(p=>{const e=V583_SIGNED.get(p);return !e||now-e.t>45*60000});
+  if(need.length){try{const q=await sb.storage.from('chat-files').createSignedUrls(need,3600);(q.data||[]).forEach(x=>{if(x.signedUrl||x.signedURL)V583_SIGNED.set(x.path,{t:now,u:x.signedUrl||x.signedURL})})}catch(e){}}
+  els.forEach(e=>{const u=V583_SIGNED.get(e.dataset.path)?.u;if(!u)return;if(e.tagName==='IMG'){if(e.src!==u)e.src=u}else if(!e.getAttribute('href')){e.href=u;e.target='_blank';e.rel='noopener'}});
+}
+function v583Lightbox(src){
+  const l=document.createElement('div');l.className='v583Light';l.innerHTML=`<img src="${esc(src)}"><button type="button" aria-label="Cerrar">✕</button>`;
+  l.onclick=()=>l.remove();document.body.appendChild(l);
+}
+async function v583Compress(file){
+  if(!/^image\//i.test(file.type))return file;
+  if(file.size<250*1024&&/jpeg|png/.test(file.type))return file;
+  try{
+    const bmp=await createImageBitmap(file);const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.82));
+    if(b){const nf=new File([b],(file.name||'foto').replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});return nf.size<file.size||!/jpeg|png/.test(file.type)?nf:file}
+  }catch(e){}
+  return file;
+}
+
 function v583Recents(){try{return JSON.parse(localStorage.getItem('rowtraining_v583_emoji')||'[]').slice(0,12)}catch(e){return[]}}
 function v583PushRecent(e){try{const r=[e,...v583Recents().filter(x=>x!==e)].slice(0,12);localStorage.setItem('rowtraining_v583_emoji',JSON.stringify(r))}catch(_){}}
 function v583CloseEmoji(){document.getElementById('v583Emoji')?.remove()}
@@ -7719,14 +7772,14 @@ function v583OpenEmoji(onPick){
 function v583Bubble(m,meId,o){
   const mine=m.sender_id===meId,tmp=String(m.id).startsWith('tmp');
   const name=(!mine&&o.names)?(o.names.get(String(m.sender_id))||'Alguien'):'';
-  const time=tmp?(m._failed?'⚠️ no enviado · toca para reintentar':'enviando…'):new Date(m.created_at).toLocaleString(o.locale,{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const time=tmp?(m._failed?'⚠️ no enviado · toca para reintentar':'enviando…'):new Date(m.created_at).toLocaleTimeString(o.locale,{hour:'2-digit',minute:'2-digit'});
   let react='';
   if(o.reactions){
     const groups=new Map();(o.reacts||[]).filter(r=>String(r.message_id)===String(m.id)).forEach(r=>{if(!groups.has(r.emoji))groups.set(r.emoji,[]);groups.get(r.emoji).push(r.user_id)});
     const pills=[...groups.entries()].map(([e,u])=>`<button type="button" class="v325ReactionPill${u.includes(meId)?' mine':''}" data-emoji="${e}" data-msg="${m.id}">${e} <span>${u.length}</span></button>`).join('');
-    react=tmp?'':`<div class="v325ReactionsRow" style="${mine?'justify-content:flex-end':''}">${pills}<button type="button" class="v325AddReaction" data-msg="${m.id}" title="Reaccionar">🙂+</button></div>`;
+    react=(tmp||!pills)?'':`<div class="v325ReactionsRow v583Reacts" style="${mine?'justify-content:flex-end':''}">${pills}</div>`;
   }
-  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:8px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${esc(m.body)}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(time)}</div></div>${react}</div>`;
+  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${v583AttHtml(m)}${m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):''}<div style="font-size:10px;opacity:.7;margin-top:4px;text-align:right">${esc(time)}</div></div>${react}</div>`;
 }
 async function v583Chat(anchor,cfg){
   const meId=currentUser.id;
@@ -7743,9 +7796,9 @@ async function v583Chat(anchor,cfg){
       if(!layer.isConnected)return;
       const vv=window.visualViewport,vh=vv?vv.height:innerHeight,off=vv?vv.offsetTop:0;
       const hdr=document.querySelector('header'),top=hdr?Math.max(0,hdr.getBoundingClientRect().bottom):0;
-      const kb=innerHeight-vh>120;
+      const kb=innerHeight-vh>120||(document.activeElement&&document.activeElement.tagName==='TEXTAREA');
       const nav=document.getElementById('nav');let bottom=0;
-      if(!kb&&nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
+      if(kb){bottom=/iPhone|iPad/.test(navigator.userAgent)?52:0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
       layer.style.top=(off+top)+'px';layer.style.height=Math.max(180,vh-top-bottom)+'px';
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&document.activeElement.tagName==='TEXTAREA')bx.scrollTop=bx.scrollHeight;
     };
@@ -7761,7 +7814,7 @@ async function v583Chat(anchor,cfg){
   const cached=V583_CACHE.get(cfg.key);
   const S={msgs:cached?cached.msgs.slice():[],reacts:cached?cached.reacts.slice():[]};
   const opt={names:cfg.names||null,locale:cfg.locale,reactions:!!cfg.fetchReactions};
-  container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end"><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button><textarea id="${cfg.inputId}" rows="1" placeholder="${cfg.placeholder}" style="flex:1;resize:none"></textarea><button type="button" id="${cfg.sendId}" class="primary">${cfg.sendLabel}</button></div>`;
+  container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:8px;margin-top:10px;align-items:flex-end"><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button>${cfg.attach?'<button type="button" class="v583EmojiBtn v583AttBtn" aria-label="Adjuntar">📎</button><input type="file" class="v583AttIn" hidden accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.gpx,.zip,.fit,.tcx">':''}<textarea id="${cfg.inputId}" rows="1" placeholder="${cfg.placeholder}" style="flex:1;resize:none"></textarea><button type="button" id="${cfg.sendId}" class="primary v583Send" aria-label="${cfg.sendLabel}">➤</button></div>`;
   const box=container.querySelector('#'+cfg.boxId),input=container.querySelector('#'+cfg.inputId),sendBtn=container.querySelector('#'+cfg.sendId);
   let first=true;
   const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
@@ -7769,9 +7822,10 @@ async function v583Chat(anchor,cfg){
     opt.reacts=S.reacts;
     const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
     const st=box.scrollTop;
-    box.innerHTML=S.msgs.length?S.msgs.map(m=>v583Bubble(m,meId,opt)).join(''):`<p class="muted" style="text-align:center;padding:20px 0">${cfg.empty}</p>`;
+    box.innerHTML=S.msgs.length?(()=>{let last='',h='';S.msgs.forEach(m=>{const d=new Date(m.created_at),k=d.toDateString();if(k!==last){last=k;h+=`<div class="v583Day"><span>${esc(v583DayLabel(d))}</span></div>`}h+=v583Bubble(m,meId,opt)});return h})():`<p class="muted" style="text-align:center;padding:20px 0">${cfg.empty}</p>`;
     if(first||stick||near)box.scrollTop=box.scrollHeight;else box.scrollTop=st;
     first=false;
+    v583Hydrate(box);
   };
   const fetchSince=()=>{const real=S.msgs.filter(m=>!String(m.id).startsWith('tmp'));return real.length?real[real.length-1].created_at:null};
   const merge=(rows)=>{
@@ -7793,8 +7847,16 @@ async function v583Chat(anchor,cfg){
   loadReacts();
   // envío optimista
   const sendText=async(text,tmpMsg)=>{
-    const r=await cfg.send(text);
-    if(r.error){tmpMsg._failed=true;paint();if(!cfg.silentErr)cfg.onError&&cfg.onError(r.error);return}
+    let att=null;
+    if(tmpMsg._file){
+      const f=tmpMsg._file,safe=String(f.name||'archivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
+      const path=cfg.attach.prefix()+'/'+Date.now()+'-'+safe;
+      const up=await sb.storage.from('chat-files').upload(path,f.blob,{contentType:f.type||'application/octet-stream',cacheControl:'3600'});
+      if(up.error){tmpMsg._failed=true;paint();alert(/bucket not found|not found/i.test(up.error.message||'')?'Falta ejecutar 46_adjuntos_chat.sql en Supabase para poder enviar adjuntos.':'No se pudo subir el archivo: '+(up.error.message||up.error));return}
+      att={path,name:f.name,type:f.type,size:f.size};V583_LOCAL.set(path,tmpMsg._local||'');
+    }
+    const r=await cfg.send(text,att);
+    if(r.error){tmpMsg._failed=true;paint();if(!cfg.silentErr)cfg.onError&&cfg.onError(/att_/.test(r.error.message||'')?{message:'Falta ejecutar 46_adjuntos_chat.sql en Supabase para poder enviar adjuntos.'}:r.error);return}
     const real=r.row;
     const i=S.msgs.indexOf(tmpMsg);
     if(real){
@@ -7813,23 +7875,47 @@ async function v583Chat(anchor,cfg){
   input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
   input.oninput=()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,110)+'px'};
   container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{const s=input.selectionStart??input.value.length,e=input.selectionEnd??s;input.value=input.value.slice(0,s)+em+input.value.slice(e);input.focus();try{input.setSelectionRange(s+em.length,s+em.length)}catch(_){}});
+  if(cfg.attach){
+    const fin=container.querySelector('.v583AttIn');
+    container.querySelector('.v583AttBtn').onclick=()=>fin.click();
+    fin.onchange=async()=>{
+      let f=fin.files&&fin.files[0];fin.value='';if(!f)return;
+      f=await v583Compress(f);
+      if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+      const text=input.value.trim();
+      const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString(),_file:{blob:f,name:f.name||'archivo',type:f.type||'',size:f.size},att_name:f.name,att_type:f.type,att_size:f.size};
+      if(v583IsImg(f.type))tmpMsg._local=URL.createObjectURL(f);
+      S.msgs.push(tmpMsg);input.value='';paint(true);sendText(text,tmpMsg);
+    };
+  }
   // clics: reintentar, reaccionar (delegado, una sola vez)
   box.onclick=async ev=>{
+    const im=ev.target.closest('.v583Img');
+    if(im){v583Lightbox(im.src);return}
     const fail=ev.target.closest('.v583Fail');
     if(fail){const m=S.msgs.find(x=>String(x.id)===fail.dataset.id);if(m){m._failed=false;paint();sendText(m.body,m)}return}
-    const add=ev.target.closest('.v325AddReaction');
     const pill=ev.target.closest('.v325ReactionPill');
-    if(!cfg.fetchReactions||(!add&&!pill))return;
-    if(pill)return toggle(pill.dataset.msg,pill.dataset.emoji);
-    // barra rápida o selector completo
+    if(pill&&cfg.fetchReactions)return toggle(pill.dataset.msg,pill.dataset.emoji);
+  };
+  const openQuick=(msgEl)=>{
+    if(!cfg.fetchReactions||!msgEl||String(msgEl.dataset.id).startsWith('tmp'))return;
     document.querySelectorAll('.v583Quick').forEach(q=>q.remove());
+    const id=msgEl.dataset.id;
     const q=document.createElement('div');q.className='v583Quick';
     q.innerHTML=V583_QUICK.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join('')+'<button type="button" data-more="1" aria-label="Más">＋</button>';
     document.body.appendChild(q);
-    const r=add.getBoundingClientRect();q.style.top=Math.max(8,r.top-52)+'px';q.style.left=Math.max(8,Math.min(innerWidth-q.offsetWidth-8,r.left-20))+'px';
-    q.onclick=e2=>{const b=e2.target.closest('button');if(!b)return;q.remove();if(b.dataset.more)v583OpenEmoji(em=>toggle(add.dataset.msg,em));else toggle(add.dataset.msg,b.dataset.e)};
+    const r=msgEl.getBoundingClientRect();q.style.top=Math.max(70,r.top-54)+'px';q.style.left=Math.max(8,Math.min(innerWidth-q.offsetWidth-8,r.left))+'px';
+    if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+    q.onclick=e2=>{const b=e2.target.closest('button');if(!b)return;q.remove();if(b.dataset.more)v583OpenEmoji(em=>toggle(id,em));else toggle(id,b.dataset.e)};
     setTimeout(()=>{const off=e3=>{if(!e3.target.closest('.v583Quick')){q.remove();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
   };
+  // mantener pulsado (o doble toque) sobre un mensaje = reaccionar, como en WhatsApp
+  let lp=null,lpx=0,lpy=0;
+  box.addEventListener('pointerdown',e=>{const m=e.target.closest('.v583Msg');if(!m)return;lpx=e.clientX;lpy=e.clientY;clearTimeout(lp);lp=setTimeout(()=>{lp=null;openQuick(m)},420)});
+  ['pointerup','pointercancel','scroll'].forEach(ev=>box.addEventListener(ev,()=>{clearTimeout(lp);lp=null},true));
+  box.addEventListener('pointermove',e=>{if(lp&&(Math.abs(e.clientX-lpx)>8||Math.abs(e.clientY-lpy)>8)){clearTimeout(lp);lp=null}});
+  box.addEventListener('dblclick',e=>{const m=e.target.closest('.v583Msg');if(m)openQuick(m)});
+  box.addEventListener('contextmenu',e=>{if(e.target.closest('.v583Msg'))e.preventDefault()});
   const toggle=async(msgId,emoji)=>{
     const mine=S.reacts.findIndex(r=>String(r.message_id)===String(msgId)&&r.emoji===emoji&&r.user_id===meId);
     const target=S.msgs.find(m=>String(m.id)===String(msgId));
@@ -7874,23 +7960,27 @@ async function v300RenderChatThread(container,rowerId,teamCode){
     placeholder:isRower?v311T('escribe_mensaje'):'Escribe un mensaje…',sendLabel:isRower?v311T('enviar'):'Enviar',
     fetch:async since=>{
       try{
-        let q=sb.from('chat_messages').select('id,sender_id,body,created_at').eq('rower_id',rowerId);
-        q=since?q.gt('created_at',since).order('created_at',{ascending:true}).limit(100):q.order('created_at',{ascending:false}).limit(300);
-        const r=await q;if(r.error)return[];
+        const mk=cols=>{let q=sb.from('chat_messages').select(cols).eq('rower_id',rowerId);return since?q.gt('created_at',since).order('created_at',{ascending:true}).limit(100):q.order('created_at',{ascending:false}).limit(300)};
+        let r=await mk(window._v583NoAtt?'id,sender_id,body,created_at':V583_ATT_COLS);
+        if(r.error&&/att_/.test(r.error.message||'')){window._v583NoAtt=true;r=await mk('id,sender_id,body,created_at')}
+        if(r.error)return[];
         return since?(r.data||[]):(r.data||[]).reverse();
       }catch(e){return[]}
     },
     fetchReactions:v325FetchReactions,
-    send:async text=>{
-      const res=await sb.from('chat_messages').insert({rower_id:rowerId,team_code:teamCode,sender_id:currentUser.id,body:text}).select('id,sender_id,body,created_at').single();
+    attach:{prefix:()=>'chat/'+rowerId},
+    send:async (text,att)=>{
+      const pbody=text||(att?(v583IsImg(att.type)?'📷 Foto':'📎 '+att.name):'');
+      const row={rower_id:rowerId,team_code:teamCode,sender_id:currentUser.id,body:text};if(att){row.att_path=att.path;row.att_name=att.name;row.att_type=att.type;row.att_size=att.size}
+      const res=await sb.from('chat_messages').insert(row).select(window._v583NoAtt?'id,sender_id,body,created_at':V583_ATT_COLS).single();
       if(res.error)return{error:res.error};
       // el aviso push sale en segundo plano: no hace esperar al que escribe
       (async()=>{
         const out={pushResult:null,pushError:null};
         try{
-          if(currentUser.id===rowerId)out.pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:text});
+          if(currentUser.id===rowerId)out.pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:pbody});
           else{const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
-            out.pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`💬 Mensaje de ${coachLabel}`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'})}
+            out.pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},title:`💬 Mensaje de ${coachLabel}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',type:'chat_message'})}
         }catch(e){out.pushError=e?.message||String(e)}
         toasts(out);
       })();
@@ -7914,7 +8004,49 @@ async function v300RenderChatThread(container,rowerId,teamCode){
     if(e.target.id&&/ChatInput/.test(e.target.id))setTimeout(()=>{try{e.target.scrollIntoView({block:'end',behavior:'smooth'})}catch(_){}},320)});
   document.addEventListener('focusout',e=>{if(!isText(e.target))return;clearTimeout(t);t=setTimeout(()=>{if(!isText(document.activeElement))document.body.classList.remove('v583Kb')},120)});
 })();
+// V494/V495 · chat GRUPAL por evento. V583: restaurado y con adjuntos.
+const V494_EVENT_CHAT_ENABLED_FOR_ROWERS=true;
+const V495_EVENT_CHAT_TEST_EMAILS=['sixpackcosta@gmail.com'];
+function v495ChatVisibleForRower(){return V494_EVENT_CHAT_ENABLED_FOR_ROWERS||V495_EVENT_CHAT_TEST_EMAILS.includes(String(currentUser?.email||'').toLowerCase())}
 const V583_NAMES=new Map();
+async function v494RenderEventChatThread(container,sessionId,teamCode,kind='session'){
+  const names=V583_NAMES;
+  const ensureNames=async rows=>{
+    const need=[...new Set(rows.map(m=>String(m.sender_id)))].filter(i=>!names.has(i));
+    if(!need.length)return;
+    try{const nq=await sb.from('profiles').select('user_id,full_name').in('user_id',need);(nq.data||[]).forEach(p=>names.set(String(p.user_id),p.full_name||'Sin nombre'))}catch(e){}
+  };
+  await v583Chat(container,{
+    key:'e:'+kind+':'+sessionId,boxId:'v494ChatScroll_'+sessionId,inputId:'v494ChatInput_'+sessionId,sendId:'v494ChatSend_'+sessionId,maxH:'50vh',locale:'es-ES',names,
+    empty:'Aún no hay mensajes en este evento. Escribe el primero 👇',placeholder:'Escribe al equipo…',sendLabel:'Enviar',
+    fetch:async since=>{
+      try{
+        const mk=cols=>{let q=sb.from('event_chat_messages').select(cols);
+          q=kind==='competition'?q.eq('competition_id',sessionId):kind==='club_event'?q.eq('club_event_id',sessionId):q.eq('training_session_id',sessionId);
+          return since?q.gt('created_at',since).order('created_at',{ascending:true}).limit(100):q.order('created_at',{ascending:false}).limit(300)};
+        let r=await mk(window._v583NoAttE?'id,sender_id,body,created_at':V583_ATT_COLS);
+        if(r.error&&/att_/.test(r.error.message||'')){window._v583NoAttE=true;r=await mk('id,sender_id,body,created_at')}
+        if(r.error)return[];
+        const rows=since?(r.data||[]):(r.data||[]).reverse();
+        await ensureNames(rows);return rows;
+      }catch(e){return[]}
+    },
+    attach:{prefix:()=>'event/'+teamCode},
+    send:async (text,att)=>{
+      const pbody=text||(att?(v583IsImg(att.type)?'📷 Foto':'📎 '+att.name):'');
+      const row={training_session_id:kind==='session'?sessionId:null,competition_id:kind==='competition'?sessionId:null,club_event_id:kind==='club_event'?sessionId:null,team_code:teamCode,sender_id:currentUser.id,body:text};
+      if(att){row.att_path=att.path;row.att_name=att.name;row.att_type=att.type;row.att_size=att.size}
+      const res=await sb.from('event_chat_messages').insert(row).select(window._v583NoAttE?'id,sender_id,body,created_at':V583_ATT_COLS).single();
+      if(res.error)return{error:res.error};
+      (async()=>{try{
+        const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
+        await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',type:'event_chat_message'});
+      }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+(e?.message||e))}})();
+      return{row:res.data};
+    },
+    onError:e=>alert(/relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 18_chat_evento.sql y 19_eventos_generalizado.sql en Supabase antes de poder usar el chat del evento.':(e.message||String(e)))
+  });
+}
 async function v300RefreshUnreadMsgCount(){
   try{
     if(currentMode==='athlete'&&currentUser){
@@ -7998,7 +8130,7 @@ async function coachMessagesView(){
     box.innerHTML=rows.map(({a,last})=>{
       const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
       const unread=!!last&&last.sender_id!==currentUser.id&&new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0);
-      const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
+      const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
       return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
         <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
