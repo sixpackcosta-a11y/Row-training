@@ -2556,7 +2556,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="558";
+const APP_VERSION="560";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2632,24 +2632,33 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
         try{var cut=Date.now()-5*864e5,keys=Object.keys(r).filter(function(k){return r[k].l>=cut}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,150),o={};keys.forEach(function(k){o[k]=r[k]});recipes=o;localStorage.setItem(RKEY+recipesUser,JSON.stringify(o))}catch(e){}
       },1500);
     }
-    window.v541Warm=function(delay){
-      clearTimeout(warmT);warmT=setTimeout(async function(){
-        var r=loadRecipes();if(!r||warming)return;
-        var cut=Date.now()-5*864e5;
-        var list=Object.keys(r).filter(function(k){var h=cache.get(k);return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,90);
-        warming=true;
-        try{
-          var i=0;
-          async function worker(){
-            while(i<list.length){
-              var x=r[list[i++]];
-              try{var q=sb.from(x.t);for(var j=0;j<x.r.length;j++)q=q[x.r[j][0]].apply(q,x.r[j][1]);await q}catch(e){}
-            }
-          }
-          await Promise.all([worker(),worker(),worker(),worker()]);
-        }finally{warming=false}
-      },delay==null?400:delay);
-    };
+    var warmP=null;
+    function doWarm(max,conc){
+      if(warmP)return warmP;
+      var r=loadRecipes();if(!r)return Promise.resolve();
+      var cut=Date.now()-5*864e5;
+      var list=Object.keys(r).filter(function(k){var h=cache.get(k);return r[k].l>=cut&&(!h||Date.now()-h.t>150000)}).sort(function(a,b){return r[b].n-r[a].n}).slice(0,max||90);
+      if(!list.length)return Promise.resolve();
+      warming=true;
+      var i=0;
+      async function worker(){
+        while(i<list.length){
+          var x=r[list[i++]];
+          try{
+            var q;
+            if(String(x.t).indexOf('rpc:')===0){q=sb.rpc(String(x.t).slice(4),x.r[0]&&x.r[0][1]?x.r[0][1][0]:undefined)}
+            else{q=sb.from(x.t);for(var j=0;j<x.r.length;j++)q=q[x.r[j][0]].apply(q,x.r[j][1])}
+            await q;
+          }catch(e){}
+        }
+      }
+      var ws=[];for(var w=0;w<(conc||4);w++)ws.push(worker());
+      warmP=Promise.all(ws).then(function(){},function(){}).then(function(){warming=false;warmP=null});
+      return warmP;
+    }
+    window.v541Warm=function(delay){clearTimeout(warmT);warmT=setTimeout(function(){doWarm()},delay==null?400:delay)};
+    // V559 · precarga de datos (sin abrir pantallas) que se puede esperar desde la pantalla de inicio
+    window.v559WarmNow=function(){clearTimeout(warmT);return doWarm(150,6)};
     // V554 · cada 3 minutos (con la app a la vista) se refrescan por detrás los datos de más de
     // 2,5 min: al cambiar de pantalla todo sale al instante y nunca con más de ~3 min de retraso.
     setInterval(function(){if(document.visibilityState==='visible'&&uid())window.v541Warm(0)},180000);
@@ -2857,32 +2866,17 @@ function v554WaitView(max){
   });
 }
 async function v554Preload(){
+  // V559 · antes se abrían por detrás todas las pantallas para precargarlas, pero alguna que tardaba
+  // podía terminar más tarde y pintar su contenido encima de otra (p.ej. "Equipo / Roles" dentro de
+  // Planificación). Ahora solo se precargan los DATOS de todas las pantallas que sueles usar (sin
+  // pintar nada), así que es igual de rápido después y no puede mezclar pantallas.
   if(!document.getElementById('v547Splash'))return;
   const msg=document.getElementById('v547Msg');if(msg&&!msg.textContent)msg.textContent='Preparando todo…';
-  const saved={tab,coachTeams:Array.isArray(coachTeams)?[...coachTeams]:coachTeams,coachSelectedTeam,selected,wn:workoutNotificationAthleteV129};
-  // Mensajes no se precarga: abrirla marca los mensajes como leídos.
-  let list=currentMode==='staff'?['hoy','semana','mes','registro','planificar','result','biblioteca','eventos','perfil','equipo']:(currentTeamCode?['hoy','semana','mes','hist','biblioteca','eventos','perfil']:[]);
-  list=list.filter(t=>t!==saved.tab);
-  const t0=Date.now();window._v554Preloading=true;
-  const restore=()=>{coachTeams=Array.isArray(saved.coachTeams)?[...saved.coachTeams]:saved.coachTeams;coachSelectedTeam=saved.coachSelectedTeam;selected=saved.selected;workoutNotificationAthleteV129=saved.wn};
   try{
-    for(const t of list){
-      if(Date.now()-t0>14000)break;
-      tab=t;
-      try{render()}catch(e){}
-      await v554WaitView(4000);
-      restore();
-    }
+    const extra=[];
+    if(typeof v543PrefetchEvents==='function')extra.push(v543PrefetchEvents());
+    await Promise.race([Promise.all([typeof v559WarmNow==='function'?v559WarmNow():null,...extra]),new Promise(r=>setTimeout(r,12000))]);
   }catch(e){}
-  finally{tab=saved.tab;restore();window._v554Preloading=false}
-  // esperar a que terminen las cargas que siguen en marcha, para que ninguna pantalla de las
-  // precargadas escriba encima de la de inicio cuando ya se está viendo
-  const w0=Date.now();let quietSince=0;
-  while(Date.now()-w0<7000){
-    const busy=typeof v554Inflight==='function'&&v554Inflight()>0;
-    if(!busy){if(!quietSince)quietSince=Date.now();else if(Date.now()-quietSince>400)break}else quietSince=0;
-    await new Promise(r=>setTimeout(r,80));
-  }
 }
 async function startApp(){
   if(appStartingV96)return; appStartingV96=true;
@@ -2958,7 +2952,6 @@ async function startApp(){
   // V554 · "no me importa que la pantalla de inicio tarde un poco más si así todo va fluido": detrás
   // de la pantalla de inicio se abren una a una (sin que se vean) todas las pantallas principales,
   // así sus datos quedan cargados y luego cada cambio de pestaña es instantáneo, con su fundido.
-  if(typeof v541Warm==='function')v541Warm(0);
   await v554Preload();
   draw();render();
   window._v547AppShown=true;setTimeout(()=>v547HideSplash(),2500);
@@ -3489,6 +3482,10 @@ function render(){
     fr.setAttribute('aria-hidden','true');
     fr.style.cssText='position:fixed;top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,Math.min(r.height,window.innerHeight-r.top))+'px;overflow:hidden;z-index:45;pointer-events:none;margin:0;opacity:1';
     document.body.appendChild(fr);
+    // V560 · "baja la pantalla unos píxeles": el margen superior del primer bloque se comportaba
+    // distinto en la copia congelada y la desplazaba hacia abajo. Se corrige midiendo y alineando
+    // la copia exactamente encima de la pantalla real.
+    try{var a=el.firstElementChild.getBoundingClientRect(),b=fr.firstElementChild.getBoundingClientRect();var dy=b.top-a.top,dx=b.left-a.left;if(dy||dx){fr.style.top=(r.top-dy)+'px';fr.style.left=(r.left-dx)+'px';fr.style.height=Math.max(0,Math.min(r.height+Math.abs(dy),window.innerHeight-(r.top-dy)))+'px'}}catch(e){}
   }
   function v555Reveal(el,overlay){
     clearInterval(el._v555Iv);el._v555Waiting=false;
@@ -3514,7 +3511,7 @@ function render(){
     el._v555Waiting=true;el._v541Pending=false;
     el.style.transition='none';el.style.opacity='0';
     if(!el._v555Mo){el._v555Last=Date.now();el._v555Mo=new MutationObserver(function(){el._v555Last=Date.now()});el._v555Mo.observe(el,{childList:true,subtree:true,characterData:true,attributes:false})}
-    if(overlay){clearTimeout(overlay._v366Timer);overlay._v366Timer=setTimeout(function(){if(el._v555Waiting||el.querySelector('.v316LoadingWrap'))overlay.classList.add("show")},700)}
+    if(overlay){clearTimeout(overlay._v366Timer);overlay._v366Timer=setTimeout(function(){if((el._v555Waiting||el.querySelector('.v316LoadingWrap'))&&!document.getElementById('v547Splash'))overlay.classList.add("show")},700)}
     clearTimeout(el._v363SafetyTimer);
     el._v363SafetyTimer=setTimeout(function(){if(typeof v360FinishLoad==='function')v360FinishLoad()},6000);
     var start=Date.now();el._v555Last=Date.now();
