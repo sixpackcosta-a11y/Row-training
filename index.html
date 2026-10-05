@@ -726,6 +726,12 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v549Word{display:block;height:20px;width:auto;max-width:100%;min-width:0;object-fit:contain;object-position:left center}
 .v549LoginLogo{text-align:center;margin:4px 0 10px}.v549LoginLogo img{width:170px;max-width:60%;height:auto}
 .v549D{display:none!important}[data-theme="dark"] .v549D{display:inline-block!important}[data-theme="dark"] .v549L{display:none!important}
+.v552Load{background:#f3f6fa;z-index:9990}
+.v552Load .v547Bar{background:rgba(7,22,47,.12)}
+.v552Load img{width:190px;max-width:58vw;height:auto}
+.v552D{display:none!important}
+[data-theme="dark"] .v552Load{background:#07162f}[data-theme="dark"] .v552Load .v547Bar{background:rgba(255,255,255,.15)}
+[data-theme="dark"] .v552L{display:none!important}[data-theme="dark"] .v552D{display:block!important}
 .v547Off{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);z-index:9998;background:#334155;color:#fff;padding:8px 14px;border-radius:999px;font-size:.85rem;opacity:0;pointer-events:none;transition:all .3s ease;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 .v547Off.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
@@ -761,7 +767,7 @@ function applyThemeV299(mode){
 <div id="resetPassword" class="card authSubcard hidden"><h2>Crear nueva contraseña</h2><div class="authHint"><b>Enlace verificado.</b><br>Escribe una contraseña nueva para Row Training.</div><label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="newPassword2" type="password" autocomplete="new-password" minlength="8"></label><p class="passwordRules">Mínimo 8 caracteres. Utiliza una contraseña que no uses en otros servicios.</p><button id="saveNewPassword" class="primary" type="button">Guardar nueva contraseña</button><div id="newPasswordStatus" class="saveStatus hidden"></div></div>
 <div id="register" class="card registerCard hidden"><h2>Únete a Row Training</h2><p class="muted">Club de Remo Pedregalejo · Tiburon@s</p><div id="inviteTeamBox" class="inviteTeam hidden"></div><label>Nombre y apellidos<input id="regName" autocomplete="name" placeholder="Nombre del remero/a"></label><label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="tu@email.com"></label><label>Me identifico como<select id="regGender"><option value="">Prefiero no decirlo</option><option value="m">Hombre</option><option value="f">Mujer</option></select></label><label>Contraseña<input id="regPass" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label><label>Repite contraseña<input id="regPass2" type="password" autocomplete="new-password" minlength="8"></label><div class="info"><b>Inscripción controlada.</b><br>Tu cuenta quedará pendiente hasta que un entrenador te asigne y apruebe el equipo.</div><button id="doRegister" class="primary">Enviar inscripción</button> <button id="backLogin">Volver</button><div id="regStatus" class="saveStatus hidden"></div></div>
 <div id="publicGuide" class="card publicGuide hidden"></div>
-<div id="app" class="hidden"><div id="content"></div><div id="v366LoadOverlay" class="v366Overlay"><div class="v366OverlayIcon">🚣</div></div></div></main>
+<div id="app" class="hidden"><div id="content"></div><div id="v366LoadOverlay" class="v366Overlay v552Load"><div class="v547In"><img class="v552L" src="assets/brand/logo-login-claro.png" alt=""><img class="v552D" src="assets/brand/logo-login-oscuro.png" alt=""><div class="v547Bar"><span></span></div></div></div></div></main>
 </div><nav id="nav"></nav>
 <!-- V461 · se quita la etiqueta de versión visible en pantalla (era solo una ayuda mientras
      depurábamos varias builds seguidas); si hace falta más adelante, se puede volver a poner. -->
@@ -2529,7 +2535,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="551";
+const APP_VERSION="553";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
