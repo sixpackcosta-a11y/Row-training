@@ -710,6 +710,10 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Quick{position:fixed;z-index:9999;display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 6px;box-shadow:0 6px 20px #0005}
 .v583Quick button{border:0;background:transparent;font-size:22px;line-height:1;padding:4px 5px;border-radius:999px}
 .v583Fail{outline:2px solid #ef4444}
+.v595Pick{max-height:190px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px 10px;margin-bottom:10px}
+.v595Pick .inlineCheck{display:flex;gap:8px;align-items:center;padding:5px 0}
+.v595All{border-bottom:1px solid var(--border);margin-bottom:2px}
+
 .v588Tabs{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible!important;margin:8px 0 0!important}
 .v588Tabs .v493SumRow{flex:none!important;min-width:0;padding:8px 2px 7px!important;gap:2px!important}
 .v588Top{display:flex;align-items:center;justify-content:center;gap:5px}.v588Top b{font-size:16px;color:var(--text)}.v588Tabs .v493SumIcon{font-size:17px}
@@ -2675,7 +2679,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="595";
+const APP_VERSION="597";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3816,13 +3820,14 @@ async function rowingCoachReviewV135(log,team,backFn){
 // user_id,full_name, así que avatar_url nunca llegaba al roster que usa Eventos aunque la columna ya
 // existiera. Se añade avatar_url, con fallback a la consulta de antes si 27_avatares.sql aún no se
 // ha ejecutado (para no romper el roster entero por una columna que todavía no existe).
-async function staffAthletesForTeam(team){const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);const cols='user_id,full_name,avatar_url',colsFallback='user_id,full_name';if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);let q=await sb.from('profiles').select(cols).in('user_id',ids).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}let q=await sb.from('profiles').select(cols).eq('team_code',team).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
+async function staffAthletesForTeam(team){if(currentMode==='athlete'){try{const r=await sb.rpc('list_team_roster_v597',{p_team:team});if(!r.error&&Array.isArray(r.data)&&r.data.length)return r.data.filter(x=>x.member_role==='rower').map(x=>({user_id:x.user_id,full_name:x.full_name,avatar_url:x.avatar_url})).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es'))}catch(e){}}const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);const cols='user_id,full_name,avatar_url',colsFallback='user_id,full_name';if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);let q=await sb.from('profiles').select(cols).in('user_id',ids).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}let q=await sb.from('profiles').select(cols).eq('team_code',team).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
 // V499 · "debería aparecer el nombre del entrenador" — staffAthletesForTeam de arriba solo trae
 // remeras, nunca al entrenador/ayudante. Esta función trae el equipo técnico de un equipo: los
 // entrenadores/ayudantes con fila en team_staff_roles, más los entrenadores globales (isGlobalCoach,
 // que no necesitan fila por equipo porque ven/gestionan todos).
 async function v499StaffForTeam(team){
   try{
+    if(currentMode==='athlete'){const r0=await sb.rpc('list_team_roster_v597',{p_team:team});if(!r0.error&&Array.isArray(r0.data)&&r0.data.length)return r0.data.filter(x=>x.member_role==='staff').map(x=>({user_id:x.user_id,full_name:x.full_name,avatar_url:x.avatar_url}))}
     const [gc,ts]=await Promise.all([
       sb.from('user_roles').select('user_id').eq('role','coach'),
       sb.from('team_staff_roles').select('user_id').eq('team_code',team)
@@ -4035,13 +4040,13 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
     const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>':'');
-    const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option></select></label>`:'';
+    const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}</select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
-  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
+  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
   const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${key==='pending'&&canEdit?remindBtn0:''}${list.length?`<div class="rosterList v588List">${list.map(personRow).join('')}</div>`:'<p class="muted" style="padding:12px 4px">Nadie en esta categoría.</p>'}</div>`;
   const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
-  const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title=""${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
+  const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title=""${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
   // V505 · caja de búsqueda por nombre, como en "Destinatarios" de Spond — solo tiene sentido con
   // roster largos, así que se omite si hay 6 personas o menos.
   const searchBox=roster.length>20?`<input type="search" class="v505RosterSearch v588Search" placeholder="Buscar">`:'';
@@ -4069,7 +4074,7 @@ function v493WireRsvpSummaryTabs(root,afterChange){
   // asistencia de cualquier persona del roster sin que ella tenga que confirmarlo. "Sin decidir"
   // borra la fila (session_rsvp solo admite 'in'/'out', no un tercer estado guardado).
   root.querySelectorAll('.v505PersonStatus').forEach(sel=>sel.onchange=async()=>{
-    if(!currentUser)return;
+    if(!currentUser||sel.value==='remind')return;
     const uidP=sel.dataset.uid,eventId=Number(sel.dataset.event),kind=sel.dataset.kind||'session',teamCode=sel.dataset.team,status=sel.value;
     sel.disabled=true;
     const col=kind==='competition'?'competition_id':kind==='club_event'?'club_event_id':'training_session_id';
@@ -4959,22 +4964,36 @@ async function v514TryReminder(ev){
 }
 // V499 · "Avisar a los que faltan por confirmar" — antes solo vivía cableado dentro de la lista plana
 // de tarjetas de la vista normal; ahora hace falta también dentro de la pantalla de detalle.
+async function v595Remind(b,team,onlyId){
+  let people=[];try{people=JSON.parse(b.dataset.people||'[]')}catch(e){}
+  if(!people.length)people=(b.dataset.pending||'').split(',').filter(Boolean).map(id=>({id,n:'Persona'}));
+  if(onlyId)people=people.filter(p=>String(p.id)===String(onlyId));
+  if(!people.length)return false;
+  const evName=b.dataset.title||'la convocatoria';
+  const evWhen=b.dataset.date?` (${v495EventDateLabel(b.dataset.date)}${b.dataset.time?' · '+String(b.dataset.time).slice(0,5):''})`:'';
+  const list=people.length>1?`<div class="v595Pick"><label class="inlineCheck v595All"><input type="checkbox" data-f="all" checked onchange="this.closest('.v595Pick').querySelectorAll('.v595P').forEach(c=>c.checked=this.checked)"> <b>Todos (${people.length})</b></label>${people.map(p=>`<label class="inlineCheck"><input type="checkbox" class="v595P" data-f="p_${esc(p.id)}" checked> ${esc(p.n)}</label>`).join('')}</div>`:`<p style="margin:0 0 8px"><b>${esc(people[0].n)}</b></p>`;
+  const d=await v527Dialog({title:people.length>1?'Recordatorio a sin respuesta':'Recordatorio',okText:'Enviar',html:`<p class="muted" style="margin-top:0">Elige a quién se lo envías.</p>${list}<label>Título<input data-f="title" value="¿Vas a venir?" maxlength="80"></label><label style="display:block;margin-top:8px">Mensaje<textarea data-f="body" rows="4" maxlength="300">Aún no has confirmado tu asistencia a "${esc(evName)}"${esc(evWhen)}. Entra en Row Training y dinos si vienes o no.</textarea></label>`});
+  if(!d)return false;
+  const ids=people.filter(p=>people.length===1||d['p_'+p.id]).map(p=>p.id);
+  if(!ids.length){alert('No has elegido a nadie.');return false}
+  const title=(d.title||'').trim()||'¿Vas a venir?',body=(d.body||'').trim();
+  if(!body){alert('El mensaje no puede estar vacío.');return false}
+  const original=b.innerHTML;if(!onlyId){b.disabled=true;b.textContent='Avisando…'}
+  try{
+    await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title,body,url:'/?tab=eventos',category:'event_reminder',type:'training'});
+    if(onlyId)v300ShowToast('Recordatorio enviado ✓');else b.textContent=`Aviso enviado a ${ids.length} ✓`;
+    return true;
+  }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));if(!onlyId){b.disabled=false;b.innerHTML=original}return false}
+}
 function v499WireRemindButton(root,team){
-  root.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=async()=>{
-    const ids=(b.dataset.pending||'').split(',').filter(Boolean);if(!ids.length)return;
-    const evName=b.dataset.title||'la convocatoria';
-    const evWhen=b.dataset.date?` (${v495EventDateLabel(b.dataset.date)}${b.dataset.time?' · '+String(b.dataset.time).slice(0,5):''})`:'';
-    // V593 · el recordatorio lleva un texto por defecto, pero se puede editar antes de enviarlo
-    const d=await v527Dialog({title:'Recordatorio a sin respuesta',okText:'Enviar',html:`<p class="muted" style="margin-top:0">Se enviará a <b>${ids.length}</b> persona${ids.length>1?'s':''} que aún no ha${ids.length>1?'n':''} respondido.</p><label>Título<input data-f="title" value="¿Vas a venir?" maxlength="80"></label><label style="display:block;margin-top:8px">Mensaje<textarea data-f="body" rows="4" maxlength="300">Aún no has confirmado tu asistencia a "${esc(evName)}"${esc(evWhen)}. Entra en Row Training y dinos si vienes o no.</textarea></label>`});
-    if(!d)return;
-    const title=(d.title||'').trim()||'¿Vas a venir?',body=(d.body||'').trim();
-    if(!body)return alert('El mensaje no puede estar vacío.');
-    const original=b.innerHTML;b.disabled=true;b.textContent='Avisando…';
-    try{
-      await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title,body,url:'/?tab=eventos',category:'event_reminder',type:'training'});
-      b.textContent='Aviso enviado ✓';
-    }catch(e){alert('No se pudo enviar el aviso: '+(e.message||e));b.disabled=false;b.innerHTML=original}
-  });
+  root.querySelectorAll('.v493RsvpRemind').forEach(b=>b.onclick=()=>v595Remind(b,team,null));
+  // recordatorio a una sola persona desde su menú "•••"
+  root.querySelectorAll('.v505PersonStatus').forEach(sel=>sel.addEventListener('change',e=>{
+    if(sel.value!=='remind')return;
+    e.stopImmediatePropagation();
+    const b=sel.closest('.v493RsvpSummary')?.querySelector('.v493RsvpRemind');sel.value='pending';
+    if(b)v595Remind(b,team,sel.dataset.uid);
+  },true));
 }
 // V506 · pantalla completa superpuesta (como al tocar un evento en Spond) en vez de desplegar
 // in-situ. La usan la Vista general (canEdit=false, siempre de solo lectura) y ahora también la vista
@@ -8071,7 +8090,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
   const ensureNames=async rows=>{
     const need=[...new Set(rows.map(m=>String(m.sender_id)))].filter(i=>!names.has(i));
     if(!need.length)return;
-    try{const nq=await sb.from('profiles').select('user_id,full_name').in('user_id',need);(nq.data||[]).forEach(p=>names.set(String(p.user_id),p.full_name||'Sin nombre'))}catch(e){}
+    try{let nq=await sb.rpc('list_team_member_names_v597',{p_ids:need});if(nq.error||!(nq.data||[]).length)nq=await sb.from('profiles').select('user_id,full_name').in('user_id',need);(nq.data||[]).forEach(p=>names.set(String(p.user_id),p.full_name||'Sin nombre'))}catch(e){}
   };
   await v583Chat(container,{
     key:'e:'+kind+':'+sessionId,boxId:'v494ChatScroll_'+sessionId,inputId:'v494ChatInput_'+sessionId,sendId:'v494ChatSend_'+sessionId,maxH:'50vh',locale:'es-ES',names,
