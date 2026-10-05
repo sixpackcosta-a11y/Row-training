@@ -530,6 +530,10 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v493SumRow.active{background:var(--surface-2);border-radius:7px;color:var(--text)}.v493SumIcon{font-size:16px}.v493SumActions{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .v505Avatar{border-radius:50%;object-fit:cover;flex:0 0 auto}.v505AvatarInitials{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}.v505AvatarBox{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.v505AvatarBox label.btn,.v505AvatarBox label[for]{padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;background:var(--surface)}.v505AvatarBox input[type=file].hidden{display:none}.v505AvatarStatus{font-size:.8rem}
 .v505RosterSearch{width:100%;margin:6px 0}
+.v545Bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;flex-wrap:wrap}.v545Bar>button{margin:0}
+.v545Seg{display:inline-flex;background:var(--surface-2,rgba(0,0,0,.06));border-radius:10px;padding:3px;gap:2px}
+.v545SegBtn{border:0!important;background:transparent!important;box-shadow:none!important;margin:0!important;padding:7px 14px!important;border-radius:8px!important;font-weight:600;color:var(--muted,#64748b)!important;font-size:.92em}
+.v545SegBtn.on{background:var(--surface,#fff)!important;color:var(--text,#0f172a)!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
 .v544Actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line,rgba(0,0,0,.08))}
 .v544Actions>button{width:100%;margin:0;padding:10px 6px;font-size:.92em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .v544Actions>.v544Warn{color:#b45309}
@@ -2484,7 +2488,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="544";
+const APP_VERSION="545";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3668,10 +3672,10 @@ function v524DefaultEventName(type){return String(type||'').toUpperCase()==='MAR
 function v524SessionEventName(x){return (x.event_name&&String(x.event_name).trim())||v524DefaultEventName(x.session_type)}
 function v516MapClubEvent(x){return {...x,kind:'club_event',event_date:x.event_date,event_title:x.title||'Evento'}}
 // V516 · eventos propios en los que estoy invitada personalmente aunque sean de otro grupo.
-async function v516FetchInvitedClubEvents(){
+async function v516FetchInvitedClubEvents(range){
   if(!currentUser)return [];
   try{
-    const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
+    const start=range==='past'?addDaysISO(localISODate(),-183):addDaysISO(localISODate(),-7),end=range==='past'?addDaysISO(localISODate(),-1):addDaysISO(localISODate(),90);
     const r=await sb.from('club_events').select('*').contains('invitee_ids',[currentUser.id]).gte('event_date',start).lte('event_date',end);
     return r.error?[]:(r.data||[]).map(v516MapClubEvent);
   }catch(e){return []}
@@ -3762,8 +3766,9 @@ async function v516CountsForEvents(events,statusByEvent,viewTeam,cache){
   }
   return out;
 }
-async function v495FetchEvents(team){
-  const start=addDaysISO(localISODate(),-7),end=addDaysISO(localISODate(),90);
+// V545 · "Próximos / Pasados": range 'past' = los últimos 6 meses hasta ayer.
+async function v495FetchEvents(team,range){
+  const start=range==='past'?addDaysISO(localISODate(),-183):addDaysISO(localISODate(),-7),end=range==='past'?addDaysISO(localISODate(),-1):addDaysISO(localISODate(),90);
   const [ss,cc,ee]=await Promise.all([
     sb.from('training_sessions').select('*').eq('team_code',team).eq('is_event',true).is('target_user_ids',null).gte('session_date',start).lte('session_date',end).order('session_date'),
     sb.from('competitions').select('*').contains('team_codes',[team]).gte('competition_date',start).lte('competition_date',end).order('competition_date'),
@@ -4256,7 +4261,7 @@ function v503WeekLabel(d,todayMon){
   const mon=mondayOfISO(d),diffWeeks=Math.round((new Date(mon+'T12:00:00')-new Date(todayMon+'T12:00:00'))/(7*86400000));
   if(diffWeeks===0)return 'Esta semana';
   if(diffWeeks===1)return 'La próxima semana';
-  if(diffWeeks<0)return 'Semana pasada';
+  if(diffWeeks===-1)return 'Semana pasada';
   return `Semana del ${v495EventDateLabel(mon).replace(/^\S+\s*/,'')}`;
 }
 function v503OverviewRowHtml(ev,clash){
@@ -4281,8 +4286,9 @@ function v503OverviewRowHtml(ev,clash){
 // V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
 // y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
 // también la vista normal de un solo equipo.
-function v503GroupedRowsHtml(evs){
+function v503GroupedRowsHtml(evs,desc=false){
   const sorted=[...evs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))||String(a.event_time||'').localeCompare(String(b.event_time||'')));
+  if(desc)sorted.reverse();
   const dateTeams=new Map();
   sorted.forEach(ev=>{if(!dateTeams.has(ev.event_date))dateTeams.set(ev.event_date,new Set());dateTeams.get(ev.event_date).add(ev._viewTeam)});
   const todayMon=mondayOfISO(localISODate());
@@ -4477,7 +4483,8 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
   try{
     const cacheD=v538Cache();const staffList2=[];
     const [events2]=await Promise.all([v495FetchEvents(tc),v538PrefetchRosters([tc],cacheD)]);
-    const ev2=events2.find(e=>e.kind===kind&&e.id===id);
+    let ev2=events2.find(e=>e.kind===kind&&e.id===id);
+    if(!ev2)ev2=(await v495FetchEvents(tc,'past')).find(e=>e.kind===kind&&e.id===id);
     if(!ev2){body.innerHTML='<div class="info">Ya no está disponible.</div>';return}
     const roster2=v514EventRoster(ev2,await v516FullRoster(ev2,tc,cacheD));
     const statusByEvent2=await v495RsvpStatusMapsForEvents([ev2],tc);
@@ -4565,6 +4572,11 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
 // fila de chips (Todos + un chip por equipo, multiselección) en vez de selector de equipo + casilla de
 // Vista general. La selección se recuerda en este dispositivo.
 const V513_TEAMS_KEY='rowtraining_events_teams_v513';
+// V545 · por defecto solo los próximos (desde hoy); selector arriba para ver los pasados.
+let V545_WHEN='next';
+function v545WhenHtml(){return `<div class="v545Seg" role="tablist"><button type="button" class="v545SegBtn${V545_WHEN==='next'?' on':''}" data-when="next">Próximos</button><button type="button" class="v545SegBtn${V545_WHEN==='past'?' on':''}" data-when="past">Pasados</button></div>`}
+function v545FilterWhen(evs){const today=localISODate();return V545_WHEN==='past'?evs.filter(ev=>String(ev.event_date)<today):evs.filter(ev=>String(ev.event_date)>=today)}
+function v545WireWhen(root,onChange){root.querySelectorAll('.v545SegBtn').forEach(b=>b.onclick=()=>{if(V545_WHEN===b.dataset.when)return;V545_WHEN=b.dataset.when;root.querySelectorAll('.v545SegBtn').forEach(x=>x.classList.toggle('on',x.dataset.when===V545_WHEN));onChange()})}
 async function coachEventsView(){
   const teams=staffViewTeamCodes();
   if(!teams.length)return staffTodayView();
@@ -4576,7 +4588,7 @@ async function coachEventsView(){
   const isAll=()=>!selected.size||selected.size===enabledTeams.length;
   const activeTeams=()=>isAll()?enabledTeams:enabledTeams.filter(t=>selected.has(t));
   const save=()=>{try{localStorage.setItem(V513_TEAMS_KEY,JSON.stringify(isAll()?[]:[...selected]))}catch(e){}};
-  content.innerHTML=`<div class="card"><div id="v513Chips" class="v513Chips"></div><button type="button" id="v497NewClubEvent">+ Crear evento</button><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
+  content.innerHTML=`<div class="card"><div id="v513Chips" class="v513Chips"></div><div class="v545Bar"><span id="v545WhenBox">${v545WhenHtml()}</span><button type="button" id="v497NewClubEvent">+ Crear evento</button></div><div id="v497ClubEventForm" class="hidden"></div><div id="eventsArea">${v316Loading('Cargando eventos…')}</div></div>`;
   function paintChips(){
     const box=document.getElementById('v513Chips');if(!box)return;
     const all=isAll();
@@ -4610,8 +4622,9 @@ async function coachEventsView(){
     if(!enabledTeams.length){area.innerHTML='<div class="info">El módulo de convocatorias y asistencia está desactivado en todos tus equipos.<br><span class="muted">Puedes reactivarlo en Equipo → "Convocatorias y asistencia".</span></div>';return}
     const act=activeTeams();
     if(act.length===1)coachSelectedTeam=act[0];
-    const snapKey='staff:'+act.join(',');
+    const when=V545_WHEN,snapKey='staff:'+act.join(',')+(when==='past'?':past':'');
     const wireRows=()=>area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load));
+    if(area.dataset.v545When!==when){area.dataset.v545When=when;area.innerHTML=''}
     if(!area.querySelector('.v503EventRow')){
       if(V538_SNAP.has(snapKey)){area.innerHTML=V538_SNAP.get(snapKey);wireRows()}
       else area.innerHTML=v316Loading('Cargando eventos…'); // V535 · refresco silencioso
@@ -4620,7 +4633,7 @@ async function coachEventsView(){
     try{
       const rosterP=v538PrefetchRosters(act,cache);
       perTeam=await Promise.all(act.map(async tc=>{
-        const events=await v495FetchEvents(tc);
+        const events=v545FilterWhen(await v495FetchEvents(tc,when));
         const [statusByEvent]=await Promise.all([v495RsvpStatusMapsForEvents(events,tc),v538PrefetchRosters(events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cache)]);
         return {tc,events,statusByEvent};
       }));
@@ -4635,14 +4648,15 @@ async function coachEventsView(){
       }
       perTeam=lists;
     }catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
-    if(tab!=='eventos'||currentMode!=='staff')return;
+    if(tab!=='eventos'||currentMode!=='staff'||V545_WHEN!==when)return;
     const all=perTeam.flat();
-    area.innerHTML=all.length?v503GroupedRowsHtml(all):'<div class="info">No hay convocatorias ni competiciones próximas.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
+    area.innerHTML=all.length?v503GroupedRowsHtml(all,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.<br><span class="muted">Marca una sesión de MAR o GYM como "Es convocatoria" al crearla o editarla para que aparezca aquí; las competiciones salen automáticamente.</span></div>';
     if(all.length)V538_SNAP.set(snapKey,area.innerHTML);
     wireRows();
-    all.forEach(v514TryReminder);
+    if(when!=='past')all.forEach(v514TryReminder);
   }
   paintChips();
+  v545WireWhen(document.getElementById('v545WhenBox'),load);
   load();
 }
 // V506 · "para los remeros lo quiero igual" — mismo cambio que la vista del entrenador: filas
@@ -4651,21 +4665,27 @@ async function coachEventsView(){
 // siguen siendo solo del entrenador).
 async function athleteEventsView(){
   const team=currentTeamCode;
-  const snapKey='athlete:'+team;
+  const when=V545_WHEN,snapKey='athlete:'+team+(when==='past'?':past':'');
   const wireRowsA=()=>document.getElementById('eventsArea')?.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
-  if(!document.getElementById('eventsArea')?.querySelector('.v503EventRow')){
-    content.innerHTML=`<div class="card"><h2>Eventos</h2><div id="eventsArea">${V538_SNAP.get(snapKey)||v316Loading('Cargando eventos…')}</div></div>`;
+  const prevArea=document.getElementById('eventsArea');
+  if(!prevArea||!document.getElementById('v545WhenBox')||prevArea.dataset.v545When!==when||!prevArea.querySelector('.v503EventRow')){
+    if(!document.getElementById('v545WhenBox')||!prevArea){
+      content.innerHTML=`<div class="card"><h2>Eventos</h2><div class="v545Bar"><span id="v545WhenBox">${v545WhenHtml()}</span></div><div id="eventsArea"></div></div>`;
+      v545WireWhen(document.getElementById('v545WhenBox'),athleteEventsView);
+    }
+    const a0=document.getElementById('eventsArea');a0.dataset.v545When=when;
+    a0.innerHTML=V538_SNAP.get(snapKey)||v316Loading('Cargando eventos…');
     if(V538_SNAP.has(snapKey))wireRowsA();
   }
   const area=document.getElementById('eventsArea');
   if(!v533RowerSeesEvents(team)){area.innerHTML='<div class="info">Los eventos todavía no están disponibles.</div>';return}
   let events,invited;const cacheA=v538Cache();
-  try{[events,invited]=await Promise.all([v495FetchEvents(team),v516FetchInvitedClubEvents(),v538PrefetchRosters([team],cacheA)])}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  try{[events,invited]=await Promise.all([v495FetchEvents(team,when),v516FetchInvitedClubEvents(when),v538PrefetchRosters([team],cacheA)]);events=v545FilterWhen(events);invited=v545FilterWhen(invited)}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
   const ids=new Set(events.filter(e=>e.kind==='club_event').map(e=>String(e.id)));
   invited.forEach(ev=>{if(!ids.has(String(ev.id)))events.push(ev)});
   events.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
-  if(tab!=='eventos'||currentMode!=='athlete')return;
+  if(tab!=='eventos'||currentMode!=='athlete'||V545_WHEN!==when)return;
   const v543ExtraP=v538PrefetchRosters(events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
   const statusByEvent=await v495RsvpStatusMapsForEvents(events,team);
   await v543ExtraP;
@@ -4675,11 +4695,12 @@ async function athleteEventsView(){
   const visible=events.filter(ev=>!(Array.isArray(ev.excluded_ids)&&ev.excluded_ids.map(String).includes(me))&&(!Array.isArray(ev.invitee_ids)||!ev.invitee_ids.length||ev.invitee_ids.map(String).includes(me)||String(ev.created_by)===me));
   await v538PrefetchRosters(visible.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
   const withCounts=(await v516CountsForEvents(visible,statusByEvent,team,cacheA)).map(ev=>({...ev,_hideCounts:ev.responses_visibility==='organizers'&&String(ev.created_by)!==me}));
-  area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts):'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
+  if(V545_WHEN!==when||!document.body.contains(area))return;
+  area.innerHTML=withCounts.length?v503GroupedRowsHtml(withCounts,when==='past'):when==='past'?'<div class="info">No hay eventos pasados en los últimos 6 meses.</div>':'<div class="info">No hay convocatorias ni competiciones próximas.</div>';
   if(withCounts.length)V538_SNAP.set(snapKey,area.innerHTML);
-  withCounts.forEach(v514TryReminder);
+  if(when!=='past')withCounts.forEach(v514TryReminder);
   wireRowsA();
-  events.forEach(ev=>v498TryClaimAndNotify(ev,ev.kind==='club_event'?ev.team_code:team));
+  if(when!=='past')events.forEach(ev=>v498TryClaimAndNotify(ev,ev.kind==='club_event'?ev.team_code:team));
 }
 async function v307FetchCrewMap(sessionIds){
   const map=new Map();
