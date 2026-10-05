@@ -2680,7 +2680,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="603";
+const APP_VERSION="604";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2872,7 +2872,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var origFrom=sb.from.bind(sb);
     sb.from=function(table){return wrap(origFrom(table),String(table),[])};
     var origRpc=sb.rpc.bind(sb);
-    sb.rpc=function(name,args,opts){var ro=/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''));if(!ro){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)}var b=origRpc(name,args,opts);return (b&&typeof b.then==='function')?wrap(b,'rpc:'+name,[['rpc',[args===undefined?null:args]]]):b}; // V557 · las rpc de solo lectura también se guardan en memoria // V554 · las rpc de solo lectura ya no vacían la memoria
+    sb.rpc=function(name,args,opts){var ro=/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''))&&!/_v59[78]$/.test(String(name||''));if(!ro){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)}var b=origRpc(name,args,opts);return (b&&typeof b.then==='function')?wrap(b,'rpc:'+name,[['rpc',[args===undefined?null:args]]]):b}; // V557 · las rpc de solo lectura también se guardan en memoria // V554 · las rpc de solo lectura ya no vacían la memoria
     var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(ev==='SIGNED_OUT'){pwipe();owipe();cache.clear();lastAuth='';recipesStarted=false;return}if(u&&u!==lastAuth){if(lastAuth){pwipe();owipe()}lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
   }catch(e){console.warn('v540 cache off',e)}
 })();
