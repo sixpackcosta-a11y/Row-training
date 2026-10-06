@@ -2709,7 +2709,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="619";
+const APP_VERSION="620";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8315,6 +8315,9 @@ async function v300RefreshUnreadMsgCount(){
         v300UnreadMsgCount=q.count||0;
       }else v300UnreadMsgCount=0;
     }else v300UnreadMsgCount=0;
+    // V620 · si ya no queda ningún mensaje sin leer pero sigue habiendo avisos de chat sin leer
+    // (p. ej. de un mensaje leído desde otro dispositivo), se dan por leídos para que no quede el globo rojo.
+    if(!v300UnreadMsgCount&&v334UnreadNotifCount&&Date.now()-(window._v620Clr||0)>60000){window._v620Clr=Date.now();v592ClearChatNotifs(null,['chat_message','chat_reaction'])}
     v300UnreadMsgCount+=await v617TeamUnreadTotal();
   }catch(e){}
 }
