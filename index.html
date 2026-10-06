@@ -2880,7 +2880,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="683";
+const APP_VERSION="684";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8746,7 +8746,9 @@ async function v583Chat(anchor,cfg){
     cfg.afterSend&&cfg.afterSend(text);
   };
   Object.defineProperty(input,'value',{get(){return (input.innerText||'').replace(/\u00a0/g,' ')},set(v){input.textContent=v}});
+  let pend=null; // V684 · archivo pegado a la espera de que se confirme el envío
   const send=()=>{
+    if(pend&&!S.edit){const f=pend.f,tx=input.value.trim();clearPend();input.textContent='';queueFile(f,tx);return}
     const text=input.value.trim();if(!text)return;
     if(S.edit){
       const m=S.edit;S.edit=null;clearReply();input.textContent='';
@@ -8857,13 +8859,22 @@ async function v583Chat(anchor,cfg){
       try{const r=document.createRange();r.selectNodeContents(input);r.collapse(false);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)}catch(_){}
       input.dispatchEvent(new Event('input'));};
   }
-  const syncBtns=()=>{const has=!!input.value.trim();if(micBtn){sendBtn.style.display=has?'':'none';micBtn.style.display=has?'none':''}};
+  const syncBtns=()=>{const has=!!input.value.trim()||!!pend;if(micBtn){sendBtn.style.display=has?'':'none';micBtn.style.display=has?'none':''}};
   syncBtns();new MutationObserver(syncBtns).observe(input,{childList:true,characterData:true,subtree:true});input.addEventListener('input',syncBtns);
   const queueFile=(f,text)=>{
     const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text||'',created_at:new Date().toISOString(),reply_to:S.reply?S.reply.id:null,_file:{blob:f,name:f.name||'archivo',type:f.type||'',size:f.size},att_name:f.name,att_type:f.type,att_size:f.size};
     if(v583IsImg(f.type)||/^audio\//.test(f.type||''))tmpMsg._local=URL.createObjectURL(f);
     clearReply();S.msgs.push(tmpMsg);paint(true);sendText(text||'',tmpMsg);
   };
+  const pendBar=document.createElement('div');pendBar.className='v623Reply v684Pend hidden';compose.parentNode.insertBefore(pendBar,compose);
+  function clearPend(){if(pend&&pend.url){try{URL.revokeObjectURL(pend.url)}catch(_){}}pend=null;pendBar.classList.add('hidden');pendBar.innerHTML='';try{syncBtns()}catch(_){}}
+  function setPend(f){
+    clearPend();
+    const isImg=v583IsImg(f.type),url=isImg?URL.createObjectURL(f):null;pend={f,url};
+    pendBar.innerHTML=`<div style="display:flex;align-items:center;gap:10px;min-width:0">${isImg?`<img src="${url}" alt="" style="height:64px;max-width:96px;object-fit:cover;border-radius:8px">`:'<span style="font-size:26px">📎</span>'}<span style="min-width:0"><b>Listo para enviar</b><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name||'archivo')} · puedes añadir un texto</span></span></div><button type="button" aria-label="Descartar">✕</button>`;
+    pendBar.classList.remove('hidden');pendBar.querySelector('button').onclick=clearPend;
+    try{syncBtns()}catch(_){}input.focus();
+  }
   // V666 · pegar: imagen/archivo del portapapeles se envía como adjunto; el texto se pega siempre como texto plano
   input.addEventListener('paste',async e=>{
     const cd=e.clipboardData;if(!cd)return;
@@ -8875,8 +8886,7 @@ async function v583Chat(anchor,cfg){
       if(!f.name||f.name==='image.png'||/^image\./.test(f.name)){try{f=new File([f],'captura-'+Date.now()+'.'+((f.type||'image/png').split('/')[1]||'png').replace('jpeg','jpg'),{type:f.type||'image/png'})}catch(_){}}
       try{f=await v583Compress(f)}catch(_){}
       if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
-      const text=input.value.trim();input.textContent='';
-      queueFile(f,text);v300ShowToast('Imagen pegada');
+      setPend(f);
       return;
     }
     const t=cd.getData('text/plain');
