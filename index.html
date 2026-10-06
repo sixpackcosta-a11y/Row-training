@@ -2461,7 +2461,12 @@ function v530OpenPendingEvent(){
   const p=v530PendingEvent;v530PendingEvent=null;if(!p||!p.id)return;
   const team=p.team||(currentMode==='staff'?coachSelectedTeam:currentTeamCode);
   const staff=currentMode==='staff';
-  v503OpenEventDetail(team,p.kind,p.id,staff,()=>{if(tab==='eventos')render()},staff?true:v495ChatVisibleForRower());
+  const cb=()=>{if(tab==='eventos')render()},chat=staff?true:v495ChatVisibleForRower();
+  v503OpenEventDetail(team,p.kind,p.id,staff,cb,chat);
+  // V659 · al llegar desde un aviso la app acaba de despertar y a veces las respuestas llegan antes de que
+  // el servidor las tenga todas: se vuelve a pedir en silencio (sin parpadeo ni perder el scroll) para que
+  // la ficha enseñe lo que dice el aviso.
+  [1800,5000].forEach(ms=>setTimeout(()=>{const d=document.querySelector('.v503DetailBack');if(d&&!d.querySelector('input:focus,textarea:focus'))v503OpenEventDetail(team,p.kind,p.id,staff,cb,chat,true)},ms));
 }
 // V649 · todo el equipo técnico del club (entrenadores y ayudantes de cualquier equipo), para elegir organizadores.
 async function v649AllStaff(){
@@ -2852,7 +2857,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="659";
+const APP_VERSION="660";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
