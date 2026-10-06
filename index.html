@@ -753,6 +753,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v623Chev{display:none;position:absolute;top:5px;right:5px;width:20px;height:20px;border:0;border-radius:50%;background:inherit;color:inherit;opacity:.85;padding:0;z-index:2;align-items:center;justify-content:center}.v623Chev svg{width:14px;height:14px;display:block}
 @media (hover:hover) and (pointer:fine){.v583Msg:hover .v623Chev{display:flex}.v583Msg:hover{padding-right:30px!important}}
 .v583Msg,.v583Msg img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.v583Row{position:relative}.v623Swipe{position:absolute;left:-42px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(100,116,139,.35);display:flex;align-items:center;justify-content:center;font-size:16px;opacity:0;pointer-events:none}.v623Swp .v583Row{touch-action:pan-y}
 .v623Menu{border-radius:14px!important;display:flex!important;flex-direction:column;min-width:190px;padding:6px!important;gap:2px}.v623Menu button{text-align:left;border:0;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:15px}.v623Menu button:active{background:var(--surface-2)}.v623Menu button.dng{color:#dc2626}.v623EmRow{display:flex;gap:2px;padding:2px 2px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}.v623Menu .v623EmRow button{padding:6px 7px;font-size:20px;text-align:center}
 .v623Quote{border-left:3px solid rgba(37,99,235,.9);background:rgba(0,0,0,.08);border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;text-align:left;overflow:hidden}.v623Quote b{display:block;font-size:12px}.v623Quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
 .v623Reply.hidden{display:none!important}
@@ -2717,7 +2718,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="629";
+const APP_VERSION="630";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8188,6 +8189,7 @@ async function v583Chat(anchor,cfg){
   }
   // clics: reintentar, reaccionar (delegado, una sola vez)
   box.onclick=async ev=>{
+    if(Date.now()-swipedAt<500)return;
     const chev=ev.target.closest('.v623Chev');
     if(chev){openQuick(chev.closest('.v583Msg'));return}
     const im=ev.target.closest('.v583Img');
@@ -8221,12 +8223,42 @@ async function v583Chat(anchor,cfg){
     setTimeout(()=>{const off=e3=>{if(!e3.target.closest('.v583Quick')){q.remove();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
   };
   // mantener pulsado (o doble toque) sobre un mensaje = reaccionar, como en WhatsApp
-  let lp=null,lpx=0,lpy=0,lpDone=0;
+  let lp=null,lpx=0,lpy=0,lpDone=0,swipedAt=0;
   box.addEventListener('pointerdown',e=>{const m=e.target.closest('.v583Msg');if(!m)return;lpx=e.clientX;lpy=e.clientY;clearTimeout(lp);lp=setTimeout(()=>{lp=null;lpDone=Date.now();openQuick(m)},420)});
   ['pointerup','pointercancel','scroll'].forEach(ev=>box.addEventListener(ev,()=>{clearTimeout(lp);lp=null},true));
   box.addEventListener('pointermove',e=>{if(lp&&(Math.abs(e.clientX-lpx)>8||Math.abs(e.clientY-lpy)>8)){clearTimeout(lp);lp=null}});
   box.addEventListener('dblclick',e=>{const m=e.target.closest('.v583Msg');if(m)openQuick(m)});
   box.addEventListener('contextmenu',e=>{if(e.target.closest('.v583Msg'))e.preventDefault()});
+  // arrastrar un mensaje hacia la derecha = responder (en el móvil, como en WhatsApp)
+  if(cfg.msgActions){
+    box.classList.add('v623Swp');box.style.overflowX='hidden';
+    const SW=64;let sw=null;
+    box.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse')return;
+      const m=e.target.closest('.v583Msg');if(!m||String(m.dataset.id).startsWith('tmp'))return;
+      sw={x:e.clientX,y:e.clientY,m,row:m.closest('.v583Row'),on:false,hit:false,ic:null};
+    });
+    box.addEventListener('pointermove',e=>{
+      if(!sw)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;
+      if(!sw.on){
+        if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){sw=null;return}
+        if(dx>14&&dx>Math.abs(dy)*1.5){sw.on=true;clearTimeout(lp);lp=null;sw.row.style.transition='none';sw.ic=document.createElement('span');sw.ic.className='v623Swipe';sw.ic.textContent='↩️';sw.row.appendChild(sw.ic)}
+        else return;
+      }
+      const d=Math.max(0,Math.min(dx,SW+26));
+      sw.row.style.transform=`translateX(${d}px)`;if(sw.ic)sw.ic.style.opacity=String(Math.min(1,d/SW));
+      if(d>=SW&&!sw.hit){sw.hit=true;if(navigator.vibrate)try{navigator.vibrate(10)}catch(_){}}
+      else if(d<SW-6)sw.hit=false;
+    });
+    const endSw=()=>{
+      if(!sw)return;const x=sw;sw=null;if(!x.on)return;
+      swipedAt=Date.now();
+      x.row.style.transition='transform .18s ease';x.row.style.transform='';
+      setTimeout(()=>{x.ic&&x.ic.remove();x.row.style.transition=''},220);
+      if(x.hit){const m=S.msgs.find(y=>String(y.id)===String(x.m.dataset.id));if(m)setReply(m)}
+    };
+    ['pointerup','pointercancel'].forEach(ev=>box.addEventListener(ev,endSw));
+  }
   const toggle=async(msgId,emoji)=>{
     const mine=S.reacts.findIndex(r=>String(r.message_id)===String(msgId)&&r.emoji===emoji&&r.user_id===meId);
     const target=S.msgs.find(m=>String(m.id)===String(msgId));
