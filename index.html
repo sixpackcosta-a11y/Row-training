@@ -2375,7 +2375,7 @@ async function v530NotifyOrganizersRsvp(kind,eventId,team,status,reason){
     const ev=r.data;if(!ev)return;
     const orgs=new Set([ev.created_by?String(ev.created_by):null,...(await v512FetchOrganizerIds({kind,id:eventId},team))].filter(Boolean));
     orgs.delete(String(currentUser?.id));
-    if(!orgs.size)return;
+    if(!orgs.size){console.warn('RSVP: el evento no tiene organizadores a los que avisar');return}
     const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
     const date=kind==='session'?ev.session_date:kind==='competition'?ev.competition_date:ev.event_date;
     const who=currentUserProfile?.full_name||'Alguien';
@@ -2739,7 +2739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="645";
+const APP_VERSION="647";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10354,6 +10354,8 @@ function printableSeasonHtmlV170(d){
 .v642Seg .v642Tab{display:flex!important;align-items:center;justify-content:center;gap:6px}
 .v583Full.v642Sw .v583Body{animation:v642F .24s ease}
 @keyframes v642F{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#msgTeamChips{flex-wrap:nowrap;gap:4px}#msgTeamChips .v513Chip{flex:1 1 0;min-width:0;justify-content:center;padding:7px 2px;font-size:.78rem;gap:4px;white-space:nowrap}#msgTeamChips .v513ChipDot{width:7px;height:7px;flex:0 0 auto}
+.v530Row>span{flex:1 1 0;min-width:0}.v530Row select{flex:0 0 auto;width:auto!important;max-width:52%;min-width:0;font-size:.9rem}
 </style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
