@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><script>(function(){try{var t=localStorage.getItem("rowTrainingTheme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Row Training</title><meta name="application-name" content="Row Training"><meta name="apple-mobile-web-app-title" content="Row Training"><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png"><link rel="shortcut icon" href="assets/brand/favicon.ico"><link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon-180.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" href="/favicon.ico" sizes="any">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><script>(function(){try{var t=localStorage.getItem("rowTrainingTheme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Row Training</title><meta name="application-name" content="Row Training"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Row Training"><meta name="theme-color" content="#07162f"><link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png"><link rel="shortcut icon" href="assets/brand/favicon.ico"><link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon-180.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* V314 · Manrope en vez de Inter, con pesos realmente ligeros (300 en texto normal/secundario,
@@ -2220,7 +2220,9 @@ async function loadNotificationsV104(){
   v334UpdateMensajesBellBadge();
 }
 async function enablePushV104(){
-  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){alert('Este dispositivo o navegador no admite notificaciones push.');return false}
+  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){const sa=(navigator.standalone===true)||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+    const miss=[!('Notification' in window)&&'Notification',!('serviceWorker' in navigator)&&'ServiceWorker',!('PushManager' in window)&&'PushManager'].filter(Boolean).join(', ');
+    alert('Este dispositivo o navegador no admite notificaciones push.\n\nDiagnóstico: falta '+miss+' · '+(sa?'abierta como app':'NO abierta como app (estás en el navegador)')+' · '+(navigator.userAgent.match(/(iPhone OS|CPU OS) [\d_]+/)||['?'])[0]+'\n\nSi estás en la app y falta ServiceWorker/PushManager, revisa Ajustes > Privacidad y seguridad > Modo aislamiento (debe estar desactivado).');return false}
   const perm=await Notification.requestPermission();if(perm!=='granted'){alert('No se han activado las notificaciones. Puedes habilitarlas después desde los ajustes del navegador.');return false}
   const reg=await registerServiceWorkerV104();if(!reg)return false;
   let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8ArrayV104(VAPID_PUBLIC_KEY_V104)});
@@ -2736,7 +2738,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="632";
+const APP_VERSION="634";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
