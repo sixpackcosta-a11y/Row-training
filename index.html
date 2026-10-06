@@ -1049,6 +1049,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v672Panel{padding:14px 16px}.v672H{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:17px}.v672N{background:#e11d48;color:#fff;border-radius:99px;font-size:12px;padding:1px 8px;font-weight:700}.v672Row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text);padding:10px 2px;font-size:14.5px;line-height:1.35}.v672Row:first-of-type{border-top:0}.v672Ic{flex:0 0 auto}.v672Tx{flex:1;min-width:0}.v672Ch{color:var(--text-muted);font-size:20px}
 .v674Boats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 2px 10px 30px;font-size:13.5px}.v674Boats button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:5px 12px;font-size:13.5px}.v674Boats button.on{background:#0f2a4a;color:#fff;border-color:#0f2a4a}
 .v678Cat{padding:14px 16px}.v678Item{border-top:1px solid var(--border)}.v678Item:first-of-type{border-top:0}.v678Open{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:12px 2px}.v678Ic{font-size:22px;flex:0 0 auto}.v678Tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.v678Tx small{font-size:13px;overflow:hidden;text-overflow:ellipsis}.v678Adm{display:flex;gap:8px;padding:0 2px 10px 36px}.v678Adm button{padding:5px 12px;font-size:13.5px}
+.v685Chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}.v685Chips button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:6px 12px;font-size:13.5px}.v685Chips button.on{background:#0f2a4a;color:#fff;border-color:#0f2a4a}.v685Grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.v685Th{padding:0!important;border:0!important;aspect-ratio:1;overflow:hidden;border-radius:8px}.v685Th img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px}.v685Lk{padding:8px 2px;border-bottom:1px solid var(--border)}.v685Lk a{display:block;word-break:break-all;font-weight:600}.v685Lk .v631Hit{border:0;padding:2px 0}.v685List{max-height:50vh;overflow:auto}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2880,7 +2881,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="684";
+const APP_VERSION="685";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8586,13 +8587,38 @@ function v631Setup(c){
     const lay=v631Modal(title,`<div class="v631List">${rows.length?rows.map(hitRow).join(''):`<p class="muted">${empty}</p>`}</div>`);
     lay.querySelector('.v631List').onclick=e=>{const b=e.target.closest('.v631Hit');if(!b)return;lay.remove();scrollTo(b.dataset.id)};
   };
+  // V685 · buscar en el chat con filtros como WhatsApp: Todo · Fotos · Enlaces · Documentos · Audios (+ texto)
   const openSearch=()=>{
-    const lay=v631Modal('Buscar en el chat','<input class="v631Find" placeholder="Escribe para buscar…" style="width:100%;margin:8px 0"><div class="v631List"></div><p class="muted"><small>Busca entre los mensajes cargados (los más recientes).</small></p>');
-    const f=lay.querySelector('.v631Find'),l=lay.querySelector('.v631List');
-    f.oninput=()=>{const q=v631Norm(f.value.trim());if(!q){l.innerHTML='';return}
-      const hits=S.msgs.filter(m=>!String(m.id).startsWith('tmp')&&v631Norm(txt(m)).includes(q)).slice(-40).reverse();
-      l.innerHTML=hits.length?hits.map(hitRow).join(''):'<p class="muted">Sin resultados</p>'};
-    l.onclick=e=>{const b=e.target.closest('.v631Hit');if(!b)return;lay.remove();scrollTo(b.dataset.id)};
+    const lay=v631Modal('Buscar en el chat',`<input class="v631Find" placeholder="Escribe para buscar…" style="width:100%;margin:8px 0"><div class="v685Chips">${[['all','Todo'],['img','🖼 Fotos'],['link','🔗 Enlaces'],['doc','📄 Documentos'],['aud','🎤 Audios']].map(([k,l],i)=>`<button type="button" data-k="${k}" class="${i?'':'on'}">${l}</button>`).join('')}</div><div class="v631List v685List"></div><p class="muted"><small>Busca entre los mensajes cargados (los 300 más recientes).</small></p>`);
+    const f=lay.querySelector('.v631Find'),l=lay.querySelector('.v631List');let kind='all';
+    const urlsOf=m=>(String(m.body||'').match(/https?:\/\/[^\s<>"']+|www\.[^\s<>"']+/gi)||[]);
+    const isImg=m=>m.att_path&&v583IsImg(m.att_type||''),isAud=m=>m.att_path&&/^audio\//.test(m.att_type||''),isDoc=m=>m.att_path&&!isImg(m)&&!isAud(m);
+    const when=m=>new Date(m.created_at).toLocaleDateString(cfg.locale||'es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const draw=()=>{
+      const q=v631Norm(f.value.trim());
+      let ms=S.msgs.filter(m=>!String(m.id).startsWith('tmp')).slice().reverse();
+      if(kind==='img')ms=ms.filter(isImg);else if(kind==='doc')ms=ms.filter(isDoc);else if(kind==='aud')ms=ms.filter(isAud);else if(kind==='link')ms=ms.filter(m=>urlsOf(m).length);
+      if(q)ms=ms.filter(m=>v631Norm(txt(m)+' '+(m.att_name||'')).includes(q));
+      else if(kind==='all'){l.innerHTML='';return}
+      ms=ms.slice(0,60);
+      if(!ms.length){l.innerHTML='<p class="muted">Sin resultados</p>';return}
+      if(kind==='img'){
+        l.innerHTML=`<div class="v685Grid">${ms.map(m=>`<button type="button" class="v631Hit v685Th" data-id="${m.id}"><img class="v583Img" data-path="${esc(m.att_path)}" src="${esc(V583_SIGNED.get(m.att_path)?.u||m._local||'data:image/gif;base64,R0lGODlhAQABAAAAACw=')}" alt=""></button>`).join('')}</div>`;
+        v583Hydrate(l);return;
+      }
+      if(kind==='link'){
+        l.innerHTML=ms.map(m=>urlsOf(m).map(u=>`<div class="v685Lk"><a href="${esc(/^https?:/i.test(u)?u:'https://'+u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,'').slice(0,60))}</a><button type="button" class="v631Hit" data-id="${m.id}"><small>${esc(nameOf(m)||'Alguien')} · ${esc(when(m))} · ir al mensaje</small></button></div>`).join('')).join('');
+        return;
+      }
+      if(kind==='doc'||kind==='aud'){
+        l.innerHTML=ms.map(m=>`<button type="button" class="v631Hit" data-id="${m.id}"><b>${kind==='aud'?'🎤 Audio':'📄 '+esc(m.att_name||'Documento')}</b> <small>${esc(nameOf(m)||'Alguien')} · ${esc(when(m))}</small></button>`).join('');
+        return;
+      }
+      l.innerHTML=ms.map(hitRow).join('');
+    };
+    f.oninput=draw;
+    lay.querySelector('.v685Chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;kind=b.dataset.k;lay.querySelectorAll('.v685Chips button').forEach(x=>x.classList.toggle('on',x===b));draw()};
+    l.onclick=e=>{if(e.target.closest('a'))return;const b=e.target.closest('.v631Hit');if(!b)return;lay.remove();scrollTo(b.dataset.id)};
     setTimeout(()=>f.focus(),50);
   };
   const openStars=async()=>{
