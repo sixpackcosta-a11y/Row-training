@@ -2690,7 +2690,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="614";
+const APP_VERSION="615";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7955,8 +7955,9 @@ async function v583Chat(anchor,cfg){
     window._v583Cleanup&&window._v583Cleanup();
     layer=document.createElement('div');layer.className='v583Full';document.body.appendChild(layer);container=layer;anchor.innerHTML='';
     const hd=anchor._v583Head||{};
-    layer.innerHTML=`<div class="v583Head">${hd.onBack?'<button type="button" class="v583Back">← Conversaciones</button>':''}<b>${esc(hd.title||cfg.title||'')}</b></div><div class="v583Body"></div>`;
+    layer.innerHTML=`<div class="v583Head">${hd.onBack?'<button type="button" class="v583Back">← Conversaciones</button>':''}<b>${esc(hd.title||cfg.title||'')}</b>${cfg.headRight?cfg.headRight():''}</div><div class="v583Body"></div>`;
     container=layer.querySelector('.v583Body');
+    layer.querySelector('.v605Avisos')?.addEventListener('click',()=>openNotificationsV104());
     if(hd.onBack)layer.querySelector('.v583Back').onclick=()=>{window._v583Cleanup&&window._v583Cleanup();hd.onBack()};
     const fit=()=>{
       if(!layer.isConnected)return;
@@ -8122,7 +8123,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   };
   let lastPush=null;
   await v583Chat(container,{
-    full:true,onSeen:()=>{v300UnreadMsgCount=0;v592ClearChatNotifs(rowerId)},title:v311T('mensajes_con_entrenador'),key:'c:'+rowerId,boxId:'v300ChatScroll',inputId:'v300ChatInput',sendId:'v300ChatSend',maxH:'55vh',locale,empty,
+    full:true,headRight:()=>currentMode==='athlete'?`<button type="button" class="v334MsgBellBtn v605Avisos" style="margin-left:auto" aria-label="${v311T('avisos_btn')}">${v332Icon('campana',18)}<span>${v311T('avisos_btn')}</span><span class="nBadge v605AvisosBadge ${v334UnreadNotifCount?'':'hidden'}">${(v334UnreadNotifCount||0)>9?'9+':(v334UnreadNotifCount||0)}</span></button>`:'',onSeen:()=>{v300UnreadMsgCount=0;v592ClearChatNotifs(rowerId)},title:v311T('mensajes_con_entrenador'),key:'c:'+rowerId,boxId:'v300ChatScroll',inputId:'v300ChatInput',sendId:'v300ChatSend',maxH:'55vh',locale,empty,
     placeholder:isRower?v311T('escribe_mensaje'):'Escribe un mensaje…',sendLabel:isRower?v311T('enviar'):'Enviar',
     fetch:async since=>{
       try{
@@ -8248,9 +8249,11 @@ async function v300CheckNewChatMessages(){
   }catch(e){}
 }
 function v334UpdateMensajesBellBadge(){
+  v605SyncAvisosBadge();
   const b=document.getElementById('v334MsgBellBadge');if(!b)return;
   const n=v334UnreadNotifCount||0;b.textContent=n>9?'9+':String(n);b.classList.toggle('hidden',!n);
 }
+function v605SyncAvisosBadge(){const n=v334UnreadNotifCount||0;document.querySelectorAll('.v605AvisosBadge').forEach(b=>{b.textContent=n>9?'9+':String(n);b.classList.toggle('hidden',!n)})}
 async function messagesView(){
   if(!currentTeamCode){content.innerHTML=`<div class="card"><h2>💬 ${v311T('nav_mensajes')}</h2><p class="muted">${v311T('necesitas_equipo_msg')}</p></div>`;return}
   const bellHtml=currentMode==='athlete'?`<button type="button" id="v334MsgBellBtn" class="v334MsgBellBtn" aria-label="${v311T('avisos_btn')}" title="${v311T('avisos_btn')}">${v332Icon('campana',18)}<span>${v311T('avisos_btn')}</span><span id="v334MsgBellBadge" class="nBadge hidden">0</span></button>`:'';
