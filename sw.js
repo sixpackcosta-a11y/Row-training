@@ -5,7 +5,7 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
-const CACHE='rowtraining-app-v561';
+const CACHE='rowtraining-app-v562';
 const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
 self.addEventListener('install', event => {
@@ -66,16 +66,25 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let data={};
   try{ data=event.data?event.data.json():{}; }catch(e){ data={title:'Row Training',body:event.data?.text?.()||''}; }
-  const title=data.title||'Row Training';
-  const options={
-    body:data.body||'',
-    icon:'/assets/brand/icon-192.png',
-    badge:'/assets/brand/badge-96.png',
-    data:{url:data.url||'/'},
-    tag:data.tag||undefined,
-    renotify:true
-  };
-  event.waitUntil(self.registration.showNotification(title,options));
+  // V666 · agrupación: todos los avisos sin abrir se funden en UNA sola notificación
+  // ("N avisos nuevos") que al desplegarse lista cada uno.
+  event.waitUntil((async()=>{
+    const GROUP='rowtraining-group';
+    let prev=[];
+    try{const cur=await self.registration.getNotifications({tag:GROUP});prev=cur[0]?.data?.items||[]}catch(e){}
+    const item={title:data.title||'Row Training',body:data.body||'',url:data.url||'/'};
+    const items=[item,...prev].slice(0,8);
+    const n=items.length;
+    const one=n===1;
+    await self.registration.showNotification(one?item.title:`Row Training · ${n} avisos nuevos`,{
+      body:one?item.body:items.slice(0,6).map(i=>'• '+(i.body||i.title)).join('\n'),
+      icon:'/assets/brand/icon-192.png',
+      badge:'/assets/brand/badge-96.png',
+      data:{url:one?item.url:'/',items},
+      tag:GROUP,
+      renotify:true
+    });
+  })());
 });
 self.addEventListener('notificationclick', event => {
   event.notification.close();
