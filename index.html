@@ -2739,7 +2739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="642";
+const APP_VERSION="643";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8234,7 +8234,7 @@ async function v583Chat(anchor,cfg){
   let container=anchor,layer=null;
   if(cfg.full){
     window._v583Cleanup&&window._v583Cleanup();
-    layer=document.createElement('div');layer.className='v583Full';document.body.appendChild(layer);container=layer;anchor.innerHTML='';
+    layer=document.createElement('div');layer.className='v583Full'+(window._v642Sw?' v642Sw':'');document.body.appendChild(layer);container=layer;anchor.innerHTML='';
     const hd=anchor._v583Head||{};
     layer.innerHTML=`<div class="v583Head">${hd.onBack?'<button type="button" class="v583Back">← Conversaciones</button>':''}<b>${esc(hd.title||cfg.title||'')}</b>${cfg.headRight?cfg.headRight():''}</div>${anchor._v617Tabs?anchor._v617Tabs.html():''}<div class="v583Body"></div>`;
     layer.querySelectorAll('.v617Tab').forEach(b=>b.onclick=()=>{if(!b.classList.contains('active'))anchor._v617Tabs.onTab(b.dataset.k)});
@@ -8972,18 +8972,29 @@ async function messagesView(){
   if(typeof v360FinishLoad==='function')v360FinishLoad();
   const container=document.getElementById('v300ChatContainer');
   await v617LoadPref();
+  await v642RenderMsgTabs(container,false);
+}
+// V642 · cambiar de pestaña (Entrenador / equipo) sin reconstruir toda la pantalla: la píldora azul se
+// desliza y solo el contenido del chat aparece con un fundido suave.
+async function v642RenderMsgTabs(container,swap){
   const teamOn=currentMode==='athlete'&&!!currentTeamCode&&window._v617Mode!=='off';
-  if(teamOn){
-    const tabNow=window._v617Tab==='team'?'team':'coach';
-    const [tu,cu]=await Promise.all([tabNow==='coach'?v617TeamUnread(currentTeamCode):0,tabNow==='team'?v617CoachUnreadAthlete():0]);
-    const lbl={es:'Entrenador',en:'Coach',nl:'Coach'}[currentLocale]||'Entrenador';
-    const dot=n=>n?`<i class="v617Dot">${n>9?'9+':n}</i>`:'';
-    container._v617Tabs={html:()=>`<div class="v617Tabs"><button type="button" class="v617Tab ${tabNow==='coach'?'active':''}" data-k="coach">💬 ${lbl}${dot(cu)}</button><button type="button" class="v617Tab ${tabNow==='team'?'active':''}" data-k="team">👥 ${esc(teamShort(currentTeamCode))}${dot(tu)}</button></div>`,onTab:k=>{window._v617Tab=k;messagesView()}};
-    if(tabNow==='team'){await v617RenderTeamChat(container,currentTeamCode);await v300RefreshUnreadMsgCount();draw();return}
-  }
-  await v300RenderChatThread(container,currentUser.id,currentTeamCode);
-  localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
-  await v300RefreshUnreadMsgCount();draw();
+  window._v642Sw=!!swap;
+  try{
+    if(teamOn){
+      const tabNow=window._v617Tab==='team'?'team':'coach',cur=tabNow==='team'?1:0;
+      const [tu,cu]=await Promise.all([tabNow==='coach'?v617TeamUnread(currentTeamCode):0,tabNow==='team'?v617CoachUnreadAthlete():0]);
+      const lbl={es:'Entrenador',en:'Coach',nl:'Coach'}[currentLocale]||'Entrenador';
+      const dot=n=>n?`<i class="v617Dot">${n>9?'9+':n}</i>`:'';
+      container._v617Tabs={html:()=>`<div class="v617Tabs"><span class="v617Pill" data-to="${cur}" style="--i:${cur}"></span><button type="button" class="v617Tab ${tabNow==='coach'?'active':''}" data-k="coach">💬 ${lbl}${dot(cu)}</button><button type="button" class="v617Tab ${tabNow==='team'?'active':''}" data-k="team">👥 ${esc(teamShort(currentTeamCode))}${dot(tu)}</button></div>`,onTab:k=>{
+        const pl=document.querySelector('.v583Full .v617Pill');if(pl)pl.style.setProperty('--i',k==='team'?1:0);
+        document.querySelectorAll('.v583Full .v617Tab').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
+        window._v617Tab=k;v642RenderMsgTabs(container,true)}};
+      if(tabNow==='team'){await v617RenderTeamChat(container,currentTeamCode);await v300RefreshUnreadMsgCount();draw();return}
+    }
+    await v300RenderChatThread(container,currentUser.id,currentTeamCode);
+    localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
+    await v300RefreshUnreadMsgCount();draw();
+  }finally{window._v642Sw=false}
 }
 async function coachMessagesView(){
   const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
@@ -10330,6 +10341,12 @@ function printableSeasonHtmlV170(d){
   .v503DetailBody .workoutList,.v503DetailBody .workoutCompact{margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}
   .v503DetailBody .tableWrap{margin-left:-4px;margin-right:-4px}
 }
+.v617Tabs{position:relative}
+.v617Pill{position:absolute;top:6px;bottom:8px;left:0;width:calc((100% - 6px)/2);background:#2563eb;border-radius:999px;transition:transform .3s cubic-bezier(.3,.8,.3,1);transform:translateX(calc(var(--i,0)*(100% + 6px)));z-index:0}
+.v617Tab{position:relative;z-index:1;transition:color .2s}
+.v617Tab.active{background:transparent!important;border-color:transparent!important}
+.v583Full.v642Sw .v583Body{animation:v642F .24s ease}
+@keyframes v642F{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 </style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
