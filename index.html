@@ -2500,7 +2500,8 @@ async function openNotificationsV104(){
  const unreadCount=appNotificationsV104.filter(n=>!n.is_read).length;
  const readCount=appNotificationsV104.filter(n=>n.is_read).length;
  const listHtml=visible.length?visible.map(n=>`<div class="notifyItemV104 ${n.is_read?'':'unread'}" data-id="${esc(String(n.id))}" data-url="${esc(n.url||'')}"><div class="notifyTopV104"><b>${esc(n.title)}</b><div style="display:flex;gap:8px;align-items:center"><small class="muted">${new Date(n.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small><button type="button" class="deleteNotifV225" data-id="${esc(String(n.id))}" aria-label="Eliminar notificación" title="Eliminar" style="padding:4px 8px;min-width:auto">🗑️</button></div></div>${n.body?`<div style="margin-top:5px">${esc(n.body)}</div>`:''}</div>`).join(''):`<div class="info">${filter==='unread'?'No tienes notificaciones sin leer.':'No tienes notificaciones.'}</div>`;
- panel.innerHTML=`<div class="notifyCardV104"><div class="notifyTopV104"><div><h2 style="margin:0">🔔 Notificaciones</h2><p class="muted" style="margin:4px 0 0">Avisos de Row Training y nuevas altas.</p></div><button id="closeNotifV104">✕</button></div><div class="pushStateV104"><span class="pushDotV104 ${on?'on':''}"></span><b>${on?'Push activado en este dispositivo':'Push no activado'}</b><div class="muted" style="margin-top:4px">${on?'Recibirás avisos aunque Row Training no esté abierta.':'Actívalo para recibir avisos de nuevas altas y cambios importantes.'}</div></div><div class="notifyActionsV104">${on?'<button id="testPushBtnV104">Enviar prueba</button><button id="disablePushBtnV104">Desactivar en este dispositivo</button>':'<button id="enablePushBtnV104" class="primary">Activar notificaciones</button>'}<button id="markAllV104">Marcar todo leído${unreadCount?` (${unreadCount})`:''}</button>${readCount?'<button id="deleteReadV225">Eliminar leídas</button>':''}</div><div style="display:flex;gap:8px;margin:12px 0"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button></div>${notifyComposerHtmlV110()}<hr>${listHtml}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
+ const comp=notifyComposerHtmlV110();
+ panel.innerHTML=`<div class="notifyCardV104 v650Notif"><div class="notifyTopV104"><h2 style="margin:0">🔔 Notificaciones</h2><button id="closeNotifV104">✕</button></div><div class="v650PushRow"><span class="pushDotV104 ${on?'on':''}"></span><span class="v650PushTx">${on?'Push activado en este dispositivo':'Push no activado'}</span>${on?'<button id="disablePushBtnV104" class="v650Link">Desactivar</button>':'<button id="enablePushBtnV104" class="primary v650Sm">Activar</button>'}</div><div class="v650Bar"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button><span style="flex:1"></span><button id="markAllV104" class="v650Ic" title="Marcar todo leído" ${unreadCount?'':'disabled'}>✓ Leídas</button>${readCount?'<button id="deleteReadV225" class="v650Ic" title="Eliminar leídas">🗑️</button>':''}</div>${listHtml}${comp?`<details class="v650Comp"><summary>✉️ Enviar aviso</summary>${comp}</details>`:''}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
  panel.onclick=e=>{if(e.target===panel)panel.remove()};
  panel.querySelector('#closeNotifV104')?.addEventListener('click',()=>panel.remove());
  panel.querySelector('#enablePushBtnV104')?.addEventListener('click',async()=>{if(await enablePushV104())openNotificationsV104()});
@@ -2755,7 +2756,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="648";
+const APP_VERSION="650";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5164,6 +5165,30 @@ async function v536SetLink(kind,eventId,sessionId,add){
 }
 function v536LinkError(e){return /session_ids/.test(e?.message||'')?'Falta ejecutar 41_entrenamiento_en_evento.sql en Supabase.':(e?.message||String(e))}
 const V536_TYPE_LABEL={MAR:'🚣 MAR',GYM:'🏋️ GYM',ERG:'🚣‍♀️ ERGO',DESC:'Descanso'};
+
+// V649 · remata la ficha: quita "Enviar mensaje a los invitados" y mueve los botones de gestión a un menú ⋯.
+function v649SkinDetail(layer,body){
+  const card=layer.querySelector('.v503DetailCard'),head=card.querySelector('.modalTitle');
+  head.querySelectorAll('.v649More,.v649Menu').forEach(x=>x.remove());card.querySelectorAll('.v649Menu').forEach(x=>x.remove());
+  body.querySelectorAll('.v493RsvpMsgAll').forEach(b=>b.remove());
+  const act=body.querySelector('.v544Actions');if(!act)return;
+  act.classList.add('v649Hid');
+  const more=document.createElement('button');more.type='button';more.className='v649More';more.textContent='⋯';more.setAttribute('aria-label','Más opciones');
+  head.appendChild(more);
+  more.onclick=e=>{
+    e.stopPropagation();
+    const old=card.querySelector('.v649Menu');if(old){old.remove();return}
+    const m=document.createElement('div');m.className='v649Menu';
+    [...act.querySelectorAll('button')].forEach(b=>{
+      const x=document.createElement('button');x.type='button';x.textContent=b.textContent.trim();
+      if(b.classList.contains('v544Del')||b.classList.contains('v498DeleteEvent'))x.classList.add('v649Red');
+      x.onclick=ev=>{ev.stopPropagation();m.remove();b.click()};
+      m.appendChild(x);
+    });
+    card.appendChild(m);
+    setTimeout(()=>{const off=()=>{m.remove();document.removeEventListener('click',off)};document.addEventListener('click',off)},0);
+  };
+}
 async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,reuse=false){
   // V535 · "al aceptar o rechazar se actualice solo, pero sin el pantallazo blanco": al refrescar
   // tras un cambio se reutiliza la misma pantalla (sin quitarla ni poner "Cargando…"), se cambia el
@@ -5204,6 +5229,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     if(canEdit){try{await v649AllStaff()}catch(e){}}
     body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2,orgIds2);
     if(reuse){cardEl.scrollTop=keepScroll;if(activeTab)setTimeout(()=>body.querySelector(`.v493SumRow[data-key="${activeTab}"]`)?.click(),0);if(openChats){const d=body.querySelector('.v494EventChatAccordion');if(d)d.open=true}}
+    v649SkinDetail(layer,body);
     v495WireRsvpButtons(body,reopen);
     v495WireEventChatAccordions(body);
     v493WireRsvpSummaryTabs(body,reopen);
@@ -8806,6 +8832,7 @@ async function v300CheckNewChatMessages(){
 }
 function v334UpdateMensajesBellBadge(){
   v605SyncAvisosBadge();
+  if(!v334UnreadNotifCount)document.querySelectorAll('.v650NB').forEach(x=>x.remove());else document.querySelectorAll('.v650NB').forEach(x=>x.textContent=v334UnreadNotifCount>9?'9+':String(v334UnreadNotifCount));
   const b=document.getElementById('v334MsgBellBadge');if(!b)return;
   const n=v334UnreadNotifCount||0;b.textContent=n>9?'9+':String(n);b.classList.toggle('hidden',!n);
 }
@@ -9021,7 +9048,7 @@ async function coachMessagesView(){
   // ocultó junto al menú hamburguesa al pasar a la barra inferior), no quedaba ningún camino para
   // abrir el panel de notificaciones (altas pendientes, avisos, activar/desactivar push...). Se
   // añade aquí, en Mensajes, con el mismo contador de no leídas que ya usaba la barra inferior.
-  const notifBtnHtml=`<button type="button" id="v401OpenNotifBtn" style="position:relative">🔔 Notificaciones${v334UnreadNotifCount?`<span style="position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px">${v334UnreadNotifCount>9?'9+':v334UnreadNotifCount}</span>`:''}</button>`;
+  const notifBtnHtml=`<button type="button" id="v401OpenNotifBtn" style="position:relative">🔔 Notificaciones${v334UnreadNotifCount?`<span class="v650NB" style="position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px">${v334UnreadNotifCount>9?'9+':v334UnreadNotifCount}</span>`:''}</button>`;
   if(!teams.length){content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><p class="muted">No tienes ningún equipo asignado.</p></div>`;document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;return}
   const initialFilter=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:'all';
   content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><div id="msgTeamChips" class="v513Chips" style="margin-top:10px"></div><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
@@ -10374,6 +10401,53 @@ function printableSeasonHtmlV170(d){
 @keyframes v642F{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #msgTeamChips{flex-wrap:nowrap;gap:4px}#msgTeamChips .v513Chip{flex:1 1 0;min-width:0;justify-content:center;padding:7px 2px;font-size:.78rem;gap:4px;white-space:nowrap}#msgTeamChips .v513ChipDot{width:7px;height:7px;flex:0 0 auto}
 .v530Row>span{flex:1 1 0;min-width:0}.v530Row select{flex:0 0 auto;width:auto!important;max-width:52%;min-width:0;font-size:.9rem}
+
+/* V649 · ficha de evento al estilo Spond: plana, filas con separador, pills Voy/No voy, ⋯ para gestión */
+.v503DetailBody>.card{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;border-radius:0!important}
+.v503DetailBody .card>.tag{display:inline-block;font-size:12px;margin:2px 0 6px}
+.v503DetailBody .card>h3{font-size:26px;line-height:1.2;margin:2px 0 10px;font-weight:700}
+.v503DetailBody .v512DateLine,.v503DetailBody .v512TeamLine,.v503DetailBody .v522Loc,.v503DetailBody .v512OrgLine{margin:0!important;padding:13px 2px!important;border-top:1px solid var(--border);font-size:15.5px;color:var(--text);font-weight:400}
+.v503DetailBody .v512TeamLine{color:var(--text)}
+.v503DetailBody .v512OrgLine{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.v503DetailBody .v522Loc a{color:var(--text);text-decoration:none}
+.v503DetailBody .v493RsvpRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px;padding-top:14px;border-top:1px solid var(--border)}
+.v503DetailBody .v493RsvpRow .v493RsvpBtn{border-radius:999px!important;padding:12px 8px!important;font-size:16px;font-weight:600;background:var(--surface-2);border:1px solid var(--border);color:var(--text)}
+.v503DetailBody .v493RsvpRow .v493RsvpBtn.active[data-status="in"]{background:#16a34a!important;border-color:#16a34a!important;color:#fff!important}
+.v503DetailBody .v493RsvpRow .v493RsvpBtn.active[data-status="out"]{background:#dc2626!important;border-color:#dc2626!important;color:#fff!important}
+.v503DetailBody .v493RsvpRow .v493RsvpStatus{grid-column:1/-1;text-align:center;font-size:13px}
+.v503DetailBody .v493RsvpSummary{margin-top:18px;border-top:1px solid var(--border);padding-top:16px}
+.v503DetailBody .v493RsvpSummary>b{font-size:20px;display:block;margin-bottom:6px}
+.v503DetailBody .v493SumRows.v588Tabs{display:flex!important;flex-direction:column!important;overflow:visible!important;border:0!important;margin:0!important}
+.v503DetailBody .v493SumRows.v588Tabs .v493SumRow{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;width:100%!important;padding:14px 2px!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;background:transparent!important;text-align:left}
+.v503DetailBody .v493SumRows.v588Tabs .v493SumRow:first-child{border-top:0!important}
+.v503DetailBody .v493SumRows.v588Tabs .v493SumRow.active{background:var(--accent-tint)!important}
+.v503DetailBody .v588Top{display:contents}
+.v503DetailBody .v588Top .v493SumIcon{order:1;font-size:20px;width:26px;text-align:center}
+.v503DetailBody .v588Top b{order:3;font-size:17px;margin-left:auto}
+.v503DetailBody .v588Lb{order:2;font-size:16px!important;color:var(--text)}
+.v503DetailBody .v493SumRow::after{content:'›';order:4;color:var(--text-muted);font-size:22px;line-height:1}
+.v503DetailBody .v588Remind{border-radius:999px!important;justify-content:center;background:var(--surface-2)!important;border:1px solid var(--border)!important;margin-top:14px!important}
+.v503DetailBody details.libraryAccordion{border:0!important;background:transparent!important;box-shadow:none!important;border-top:1px solid var(--border)!important;border-radius:0!important;padding:0!important;margin:16px 0 0!important}
+.v503DetailBody details.libraryAccordion>summary{font-size:20px;font-weight:700;padding:16px 2px 10px}
+.v503DetailBody .v536Box{border:0!important;background:transparent!important;border-top:1px solid var(--border)!important;border-radius:0!important;padding:16px 2px 0!important;margin-top:16px}
+.v503DetailBody .v536Head{font-size:20px;font-weight:700}
+.v503DetailBody .v544Actions.v649Hid{display:none!important}
+.v503DetailCard>.modalTitle{display:flex;align-items:center;justify-content:space-between}
+.v649More{border:0;background:transparent;font-size:26px;line-height:1;padding:4px 12px;color:var(--text);cursor:pointer}
+.v649Menu{position:absolute;right:10px;top:48px;z-index:20;min-width:230px;background:var(--surface,#fff);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column}
+.v649Menu button{border:0;background:transparent;text-align:left;padding:12px 12px;font-size:15.5px;border-radius:10px;color:var(--text)}
+.v649Menu button:active{background:var(--surface-2)}
+.v649Menu button.v649Red{color:#dc2626}
+.v503DetailCard{position:relative}
+
+.v650Notif .v650PushRow{display:flex;align-items:center;gap:8px;padding:8px 0 10px;font-size:14.5px}
+.v650Notif .v650PushTx{flex:1;min-width:0}
+.v650Notif .v650Link{border:0;background:transparent;color:var(--text-muted);text-decoration:underline;padding:4px 6px;font-size:13.5px;min-width:auto}
+.v650Notif .v650Sm{padding:7px 14px;font-size:14px}
+.v650Notif .v650Bar{display:flex;align-items:center;gap:6px;margin:0 0 10px}
+.v650Notif .v650Bar button{padding:7px 12px;font-size:14px;min-width:auto;white-space:nowrap}
+.v650Notif .v650Comp{margin-top:14px;border-top:1px solid var(--border);padding-top:6px}
+.v650Notif .v650Comp>summary{font-weight:700;padding:10px 2px;cursor:pointer;font-size:16px}
 </style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
