@@ -549,7 +549,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .v576Seg.segR::before{transform:translateX(calc(100% + 2px))}
 .v576Seg button.active,.v569Seg.v576Seg button.active{background:transparent!important;box-shadow:none!important;color:#fff!important}
 .v576Seg.segGoR button:first-child{color:var(--muted,#64748b)!important}.v576Seg.segGoR button:last-child{color:#fff!important}.v576Seg.segGoL button:last-child{color:var(--muted,#64748b)!important}.v576Seg.segGoL button:first-child{color:#fff!important}
-.athleteSelectorBar.v573Top{margin:0 0 6px}.v573Top.v576Eq{grid-template-columns:1fr 1fr!important}.v576Eq select{padding-left:10px;padding-right:22px;text-overflow:ellipsis}
+.athleteSelectorBar.v573Top{margin:0 0 6px}.v573Top.v576Eq{grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr)!important}.v576Eq select{padding-left:10px;padding-right:22px;text-overflow:ellipsis}
 .v576Sel{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 4px;min-height:28px}.v576Sel .muted{font-size:.82rem}
 .v576Link{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--accent,#2563eb)!important;padding:4px 2px!important;margin:0!important;font-size:.85rem;font-weight:600}
 /* V576 · iPhone: el selector de fecha nativo era más ancho que su caja y se salía por la derecha */
@@ -2482,7 +2482,9 @@ let v300PendingCommentOpen=null;
 let v300PendingMessageRower=null;
 let coachLibrarySection="ERGO",gymEditorRows=[];
 let libraryViewMode="compact",libraryShowHidden=false,libraryFavoritesOnly=false,libraryArchiveMode="active";
-let TEAM_OPTIONS=[["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]];
+const V614_TEAM_ORDER=["veteranas","veteranos_m","senior_m","senior_f"];
+function v614SortTeams(a){return a.slice().sort((x,y)=>{const i=V614_TEAM_ORDER.indexOf(x[0]),j=V614_TEAM_ORDER.indexOf(y[0]);return (i<0?99:i)-(j<0?99:j)})}
+let TEAM_OPTIONS=v614SortTeams([["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]]);
 let TEAM_GOALS_V281=new Map(); // team_code -> {target:number|null, notes:string|null}
 let TEAM_ATTENDANCE_V497=new Map(); // team_code -> boolean (módulo de convocatorias/asistencia activo), por defecto true si no hay dato
 function v497AttendanceEnabledForTeam(team){const v=TEAM_ATTENDANCE_V497.get(team);return v!==false}
@@ -2688,7 +2690,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="613";
+const APP_VERSION="614";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2892,7 +2894,7 @@ async function loadTeamsV88(publicOnly=false){
     const [res,v542Att,v542Lv]=await Promise.all([q,sb.from('rowing_teams').select('code,attendance_module_enabled').then(x=>x,e=>({error:e})),sb.from('rowing_teams').select('code,events_rowers_live').then(x=>x,e=>({error:e}))]);
     if(!res.error&&res.data?.length){
       const rows=publicOnly?res.data:res.data.filter(x=>x.is_active!==false);
-      if(rows.length)TEAM_OPTIONS=rows.map(x=>[x.code,x.name]);
+      if(rows.length)TEAM_OPTIONS=v614SortTeams(rows.map(x=>[x.code,x.name]));
       res.data.forEach(x=>TEAM_GOALS_V281.set(x.code,{target:x.wkg_target!=null?Number(x.wkg_target):null,notes:x.season_goals||null}));
       // V497 · columna nueva (attendance_module_enabled) en consulta aparte y con su propio try/catch:
       // si todavía no se ha ejecutado 20_eventos_v497.sql en Supabase, esto falla solo, sin romper la
