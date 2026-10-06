@@ -2877,7 +2877,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="669";
+const APP_VERSION="671";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5083,6 +5083,13 @@ function v503OverviewRowHtml(ev,clash){
 // V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
 // y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
 // también la vista normal de un solo equipo.
+// V669 · ⚠️ solo cuando el horario del entrenamiento (sin contar la quedada) se pisa con un evento de OTRO equipo el mismo día (sin hora de fin se supone 90 min)
+function v669Overlaps(ev,all){
+  const mins=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?(+m[1])*60+(+m[2]):null};
+  const rng=e=>{const st=mins(e.event_time);if(st==null)return null;const en=mins(e.end_time);return [st,(en!=null&&en>st)?en:st+90]};
+  const r=rng(ev);if(!r)return false;
+  return all.some(o=>o!==ev&&o.event_date===ev.event_date&&o._viewTeam!==ev._viewTeam&&(()=>{const q=rng(o);return q&&q[0]<r[1]&&r[0]<q[1]})());
+}
 function v503GroupedRowsHtml(evs,desc=false){
   const sorted=[...evs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))||String(a.event_time||'').localeCompare(String(b.event_time||'')));
   if(desc)sorted.reverse();
@@ -5093,7 +5100,7 @@ function v503GroupedRowsHtml(evs,desc=false){
   sorted.forEach(ev=>{
     const wl=v503WeekLabel(ev.event_date,todayMon);
     if(wl!==lastWeek){rows+=`<h3 class="v503WeekHead">${esc(wl)}</h3>`;lastWeek=wl}
-    rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1);
+    rows+=v503OverviewRowHtml(ev,dateTeams.get(ev.event_date).size>1&&v669Overlaps(ev,sorted));
   });
   return rows;
 }
