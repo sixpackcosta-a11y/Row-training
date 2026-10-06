@@ -2739,7 +2739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="637";
+const APP_VERSION="642";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -2989,6 +2989,13 @@ async function notifyPendingRegistration(){
       body:JSON.stringify({full_name:currentRegistration.full_name||currentUserProfile?.full_name||currentUser.user_metadata?.full_name||'',requested_team:currentRegistration.requested_team||null})
     });
   }catch(e){}
+}
+// V638 · en Mensajes cada persona del equipo técnico ve solo los chats de los equipos que gestiona
+// (sus roles de equipo). Un administrador sin roles de equipo asignados sigue viendo todos.
+function v640AllTeams(){return (typeof TEAM_OPTIONS!=='undefined'&&TEAM_OPTIONS.length)?TEAM_OPTIONS.map(x=>x[0]):staffViewTeamCodes()}
+function v638MsgTeams(){
+  const own=[...new Set((staffRoles||[]).map(x=>x.team_code))].filter(t=>staffViewTeamCodes().includes(t));
+  return own.length?own:staffViewTeamCodes();
 }
 function staffViewTeamCodes(){
   if(isGlobalCoach)return TEAM_OPTIONS.map(x=>x[0]);
@@ -3883,7 +3890,7 @@ async function rowingCoachReviewV135(log,team,backFn){
 // user_id,full_name, así que avatar_url nunca llegaba al roster que usa Eventos aunque la columna ya
 // existiera. Se añade avatar_url, con fallback a la consulta de antes si 27_avatares.sql aún no se
 // ha ejecutado (para no romper el roster entero por una columna que todavía no existe).
-async function staffAthletesForTeam(team){if(currentMode==='athlete'){try{const r=await sb.rpc('list_team_roster_v597',{p_team:team});if(!r.error&&Array.isArray(r.data)&&r.data.length)return r.data.filter(x=>x.member_role==='rower').map(x=>({user_id:x.user_id,full_name:x.full_name,avatar_url:x.avatar_url})).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es'))}catch(e){}}const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);const cols='user_id,full_name,avatar_url',colsFallback='user_id,full_name';if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);let q=await sb.from('profiles').select(cols).in('user_id',ids).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}let q=await sb.from('profiles').select(cols).eq('team_code',team).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
+async function staffAthletesForTeam(team){{try{const r=await sb.rpc('list_team_roster_v597',{p_team:team});if(!r.error&&Array.isArray(r.data)&&r.data.length)return r.data.filter(x=>x.member_role==='rower').map(x=>({user_id:x.user_id,full_name:x.full_name,avatar_url:x.avatar_url})).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es'))}catch(e){}}const m=await sb.from('rower_team_memberships').select('user_id').eq('team_code',team).eq('is_rower',true);const cols='user_id,full_name,avatar_url',colsFallback='user_id,full_name';if(!m.error&&m.data?.length){const ids=m.data.map(x=>x.user_id);let q=await sb.from('profiles').select(cols).in('user_id',ids).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).in('user_id',ids).order('full_name');return q.error?[]:(q.data||[])}let q=await sb.from('profiles').select(cols).eq('team_code',team).order('full_name');if(q.error)q=await sb.from('profiles').select(colsFallback).eq('team_code',team).order('full_name');return q.error?[]:(q.data||[])}
 // V499 · "debería aparecer el nombre del entrenador" — staffAthletesForTeam de arriba solo trae
 // remeras, nunca al entrenador/ayudante. Esta función trae el equipo técnico de un equipo: los
 // entrenadores/ayudantes con fila en team_staff_roles, más los entrenadores globales (isGlobalCoach,
@@ -8750,7 +8757,7 @@ async function v300RefreshUnreadMsgCount(){
     }else if(currentMode==='staff'&&hasAnyCoachTeam()){
       const seenKey='rowtraining_v300_chat_seen_staff_'+currentUser.id;
       const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
-      const teams=staffViewTeamCodes();
+      const teams=v640AllTeams();
       if(teams.length){
         let q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).is('read_at',null);
         if(q.error)q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
@@ -8830,7 +8837,7 @@ async function v617TeamUnread(team){
   }catch(e){return 0}
 }
 async function v617TeamUnreadTotal(){
-  const teams=currentMode==='athlete'?(currentTeamCode?[currentTeamCode]:[]):(hasAnyCoachTeam()?staffViewTeamCodes():[]);
+  const teams=currentMode==='athlete'?(currentTeamCode?[currentTeamCode]:[]):(hasAnyCoachTeam()?v638MsgTeams():[]);
   if(!teams.length)return 0;
   const n=await Promise.all(teams.map(v617TeamUnread));return n.reduce((a,b)=>a+b,0);
 }
@@ -8979,7 +8986,7 @@ async function messagesView(){
   await v300RefreshUnreadMsgCount();draw();
 }
 async function coachMessagesView(){
-  const teams=staffViewTeamCodes();
+  const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
   // V401 · desde que "Más" dejó de mostrar la campana de notificaciones para el entrenador (se
   // ocultó junto al menú hamburguesa al pasar a la barra inferior), no quedaba ningún camino para
   // abrir el panel de notificaciones (altas pendientes, avisos, activar/desactivar push...). Se
@@ -8991,6 +8998,13 @@ async function coachMessagesView(){
   document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;
   const teamSel=document.getElementById('msgTeamFilter'),box=document.getElementById('v300MsgInbox');
 
+  // V642 · buscador por nombre entre todos los equipos
+  box.insertAdjacentHTML('beforebegin','<input id="v642Find" type="search" placeholder="🔍 Buscar remero/a por nombre…" autocomplete="off" style="width:100%;margin-top:10px">');
+  const findIn=document.getElementById('v642Find');
+  const applyFind=()=>{const q=v631Norm(findIn.value.trim());
+    box.querySelectorAll('.v300InboxRow').forEach(b=>{b.style.display=(!q||v631Norm(b.dataset.name).includes(q))?'':'none'});
+    box.querySelectorAll('.v617TeamRow').forEach(b=>{b.style.display=q?'none':''})};
+  findIn.oninput=applyFind;
   const loadInbox=async()=>{
     box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     const activeTeams=teamSel.value==='all'?teams:[teamSel.value];
@@ -8999,7 +9013,7 @@ async function coachMessagesView(){
     let msgsData=msgsRes.data||[],hasRead=!msgsRes.error;
     if(msgsRes.error){const m2=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400);msgsData=m2.data||[]}
     let tmsgs=[];try{const tq=await sb.from('team_chat_messages').select('team_code,body,sender_id,created_at,att_type').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(200);if(!tq.error)tmsgs=tq.data||[]}catch(e){}
-    const teamHtml=activeTeams.map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px"><div style="min-width:0"><b>${unread?'🔵 ':''}👥 Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</small></button>`}).join('');
+    const teamHtml=activeTeams.filter(t=>v638MsgTeams().includes(t)).map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px"><div style="min-width:0"><b>${unread?'🔵 ':''}👥 Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</small></button>`}).join('');
     const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
     const lastByRower=new Map();msgsData.forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
     const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
@@ -9014,12 +9028,13 @@ async function coachMessagesView(){
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
       return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
-        <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
+        <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b>${activeTeams.length>1?` <small class="muted">· ${esc(teamShort(a.team))}</small>`:''}<div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
         <small class="muted" style="flex-shrink:0">${time}</small>
       </button>`;
     }).join('');
     box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
     box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));
+    applyFind();
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
 
