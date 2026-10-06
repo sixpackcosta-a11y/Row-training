@@ -2489,7 +2489,7 @@ async function v530NotifyOrganizersRsvp(kind,eventId,team,status,reason){
     const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
     const date=kind==='session'?ev.session_date:kind==='competition'?ev.competition_date:ev.event_date;
     const who=currentUserProfile?.full_name||'Alguien';
-    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}${status==='out'&&reason?` · «${reason.slice(0,200)}»`:''}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
+    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:status==='waitlist'?`⏳ ${who} en lista de espera`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}${status==='out'&&reason?` · «${reason.slice(0,200)}»`:''}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
   }catch(e){}
 }
 function v530EventUrl(kind,id,team){return `/?tab=eventos&ek=${encodeURIComponent(kind||'')}&eid=${encodeURIComponent(id||'')}&et=${encodeURIComponent(team||'')}`}
@@ -2852,7 +2852,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="656";
+const APP_VERSION="657";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
