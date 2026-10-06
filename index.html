@@ -2651,7 +2651,7 @@ let coachLibrarySection="ERGO",gymEditorRows=[];
 let libraryViewMode="compact",libraryShowHidden=false,libraryFavoritesOnly=false,libraryArchiveMode="active";
 const V614_TEAM_ORDER=["veteranas","veteranos_m","senior_m","senior_f"];
 function v614SortTeams(a){return a.slice().sort((x,y)=>{const i=V614_TEAM_ORDER.indexOf(x[0]),j=V614_TEAM_ORDER.indexOf(y[0]);return (i<0?99:i)-(j<0?99:j)})}
-let TEAM_OPTIONS=v614SortTeams([["veteranas","Veteranas femenino"],["senior_m","Senior masculino"],["senior_f","Senior femenino"],["veteranos_m","Veteranos masculino"]]);
+let TEAM_OPTIONS=v614SortTeams([["veteranas","Veteranas femenino"],["senior_m","Absoluto masculino"],["senior_f","Absoluto femenino"],["veteranos_m","Veteranos masculino"]]);
 let TEAM_GOALS_V281=new Map(); // team_code -> {target:number|null, notes:string|null}
 let TEAM_ATTENDANCE_V497=new Map(); // team_code -> boolean (módulo de convocatorias/asistencia activo), por defecto true si no hay dato
 function v497AttendanceEnabledForTeam(team){const v=TEAM_ATTENDANCE_V497.get(team);return v!==false}
@@ -2689,7 +2689,7 @@ function teamLabel(code){
  const x=TEAM_OPTIONS.find(t=>t[0]===code); return x?x[1]:(code||"Sin equipo asignado");
 }
 // V613 · abreviatura para los sitios con poco espacio (selectores, chips, filas de Eventos); los equipos nuevos sin abreviatura usan su nombre completo.
-const TEAM_SHORT={veteranas:'VET-F',veteranos_m:'VET-M',senior_m:'SEN-M',senior_f:'SEN-F'};
+const TEAM_SHORT={veteranas:'VET-F',veteranos_m:'VET-M',senior_m:'ABS-M',senior_f:'ABS-F'};
 function teamShort(code){return TEAM_SHORT[code]||teamLabel(code)}
 // V502 · "aplicar un color para cada equipo como en Spond puede estar bien para una visión clara de
 // eventos" — un color estable por equipo (mismo equipo = mismo color siempre, sin tener que
@@ -2857,7 +2857,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="660";
+const APP_VERSION="661";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3887,7 +3887,7 @@ function render(){
     fr.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
     v555CopyCanvases(el,fr);
     // V561 · la copia congelada perdía lo elegido en los desplegables (p.ej. el equipo en Análisis
-    // volvía a "Senior masculino" un instante): se copian los valores actuales de los campos.
+    // volvía a "Absoluto masculino" un instante): se copian los valores actuales de los campos.
     try{var fa=el.querySelectorAll('select,input,textarea'),fb=fr.querySelectorAll('select,input,textarea');for(var i=0;i<fa.length&&i<fb.length;i++){var o=fa[i],c=fb[i];if(o.tagName==='SELECT'){c.selectedIndex=o.selectedIndex;[].forEach.call(c.options,function(op,j){if(j===o.selectedIndex)op.setAttribute('selected','');else op.removeAttribute('selected')})}else if(o.type==='checkbox'||o.type==='radio'){c.checked=o.checked}else{c.value=o.value}}}catch(e){}
     fr.setAttribute('aria-hidden','true');
     fr.style.cssText='position:fixed;top:'+r.top+'px;left:'+r.left+'px;width:'+r.width+'px;height:'+Math.max(0,Math.min(r.height,window.innerHeight-r.top))+'px;overflow:hidden;z-index:45;pointer-events:none;margin:0;opacity:1';
@@ -10481,7 +10481,7 @@ async function exportSeasonExcelV170(){
 function printableSeasonHtmlV170(d){
   const sections=d.codes.map(code=>{const rows=d.sessions.filter(x=>x.team_code===code);return `<h2>${esc(teamLabel(code))}</h2><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Sesión</th><th>Contenido</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.session_date||'')}</td><td>${esc(x.session_type||'')}</td><td>${esc(x.title||'')}</td><td>${esc(x.content||'').replace(/\n/g,'<br>')}</td></tr>`).join('')}</tbody></table>`}).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><title>Planificación Row Training 2026-27</title><style>body{font-family:Arial,sans-serif;color:#111;margin:24px}h1{font-size:22px}h2{margin-top:28px;font-size:18px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin:8px 0 24px;font-size:10px}th,td{border:1px solid #bbb;padding:5px;vertical-align:top}th{background:#eee}@page{size:A4 landscape;margin:10mm}tr{page-break-inside:avoid}/* V632 · aprovechar el ancho en móvil: menos aire lateral en tarjetas anidadas */
-</style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
+</style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Absoluto masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
   const w=window.open('','_blank');
@@ -11184,7 +11184,7 @@ function ergDataStatusHtmlV103(uid,statusMap,compact=false){
   return `<span class="ergStatusV103 ${connected?'connected':'offline'}" title="${esc(title)}"><span class="ergDotV103"></span>${label}</span>`;
 }
 async function results(){
-  content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Senior masculino · Senior femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">${v316Loading()}</p></div>`;
+  content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Absoluto masculino · Absoluto femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">${v316Loading()}</p></div>`;
 
   const {data:profiles,error:e1}=await sb.from("profiles").select("user_id,full_name,height_cm,team_code");
   const {data:roles,error:eRole}=await sb.from("user_roles").select("user_id,role");
