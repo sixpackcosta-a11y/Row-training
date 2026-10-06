@@ -2877,7 +2877,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="667";
+const APP_VERSION="668";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9046,11 +9046,17 @@ async function v300RefreshUnreadMsgCount(){
     }else if(currentMode==='staff'&&hasAnyCoachTeam()){
       const seenKey='rowtraining_v300_chat_seen_staff_'+currentUser.id;
       const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
-      const teams=v640AllTeams();
+      // V668 · el globo cuenta LO MISMO que la lista de Mensajes: conversaciones (no mensajes sueltos) de MIS equipos
+      // cuyo último mensaje es de la remera y sigue sin leer. Antes sumaba todos los mensajes sin leer de todos los equipos.
+      const teams=v638MsgTeams();
       if(teams.length){
-        let q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).is('read_at',null);
-        if(q.error)q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
-        v300UnreadMsgCount=q.count||0;
+        let q=await sb.from('chat_messages').select('rower_id,sender_id,created_at,read_at').in('team_code',teams).order('created_at',{ascending:false}).limit(400);
+        const hasRead=!q.error;
+        if(q.error)q=await sb.from('chat_messages').select('rower_id,sender_id,created_at').in('team_code',teams).order('created_at',{ascending:false}).limit(400);
+        const last=new Map();(q.data||[]).forEach(m=>{if(!last.has(m.rower_id))last.set(m.rower_id,m)});
+        let n=0;last.forEach((m,rid)=>{if(m.sender_id===currentUser.id)return;
+          if(hasRead?!m.read_at:new Date(m.created_at)>new Date(localStorage.getItem('rowtraining_v300_chat_thread_seen_'+rid)||0))n++});
+        v300UnreadMsgCount=n;
       }else v300UnreadMsgCount=0;
     }else v300UnreadMsgCount=0;
     // V620 · si ya no queda ningún mensaje sin leer pero sigue habiendo avisos de chat sin leer
@@ -9129,7 +9135,7 @@ async function v617TeamUnread(team){
 async function v617TeamUnreadTotal(){
   const teams=currentMode==='athlete'?(currentTeamCode?[currentTeamCode]:[]):(hasAnyCoachTeam()?v638MsgTeams():[]);
   if(!teams.length)return 0;
-  const n=await Promise.all(teams.map(v617TeamUnread));return n.reduce((a,b)=>a+b,0);
+  const n=await Promise.all(teams.map(v617TeamUnread));return n.reduce((a,b)=>a+(b>0?1:0),0); // V668: un chat de equipo con novedades = 1, como en la lista
 }
 async function v617CoachUnreadAthlete(){
   try{const lastSeen=localStorage.getItem('rowtraining_v300_chat_seen_'+currentUser.id)||'1970-01-01T00:00:00.000Z';
