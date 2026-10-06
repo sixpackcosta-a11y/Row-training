@@ -2877,7 +2877,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="665";
+const APP_VERSION="667";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8219,6 +8219,26 @@ const V583_ATT_COLS='id,sender_id,body,created_at,att_path,att_name,att_type,att
 function v583DayLabel(d){const t=new Date(),y=new Date(Date.now()-864e5);if(d.toDateString()===t.toDateString())return 'Hoy';if(d.toDateString()===y.toDateString())return 'Ayer';return d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}
 function v583IsImg(t){return /^image\//.test(t||'')}
 function v583Size(n){return n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'}
+async function v666Copy(m){
+  const txt=m.poll?(m.poll.q||m.body):(m.body||'');
+  const isImg=m.att_path&&v583IsImg(m.att_type||'');
+  if(isImg&&window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+    try{
+      let u=V583_SIGNED.get(m.att_path)?.u;
+      if(!u){const q=await sb.storage.from('chat-files').createSignedUrl(m.att_path,3600);u=q.data?.signedUrl||q.data?.signedURL}
+      const toPng=async()=>{const r=await fetch(u);const b=await r.blob();if(b.type==='image/png')return b;
+        const bmp=await createImageBitmap(b);const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;c.getContext('2d').drawImage(bmp,0,0);
+        return await new Promise((res,rej)=>c.toBlob(x=>x?res(x):rej(new Error('png')),'image/png'))};
+      // Safari exige crear el ClipboardItem dentro del gesto, con la promesa del blob
+      const item={'image/png':toPng()};
+      if(txt)item['text/plain']=Promise.resolve(new Blob([txt],{type:'text/plain'}));
+      try{await navigator.clipboard.write([new ClipboardItem(item)])}
+      catch(_){await navigator.clipboard.write([new ClipboardItem({'image/png':toPng()})])}
+      v300ShowToast('Imagen copiada');return;
+    }catch(e){console.warn('v666 copy img',e)}
+  }
+  try{if(txt){await navigator.clipboard.writeText(txt);v300ShowToast('Copiado')}else v300ShowToast('No se pudo copiar la imagen')}catch(_){v300ShowToast('No se pudo copiar')}
+}
 function v583AttHtml(m){
   if(!m.att_path&&!m._file)return '';
   const path=m.att_path||'',signed=V583_SIGNED.get(path),local=m._local||V583_LOCAL.get(path),name=m.att_name||m._file?.name||'archivo',type=m.att_type||m._file?.type||'';
@@ -8637,7 +8657,7 @@ async function v583Chat(anchor,cfg){
     const q=document.createElement('div');q.className='v583Quick v623Menu';
     q.innerHTML=(cfg.fetchReactions?'<div class="v623EmRow">'+V583_QUICK.map(e=>`<button type="button" data-e="${e}">${e}</button>`).join('')+'<button type="button" data-more="1">＋</button></div>':'')
       +'<button type="button" data-a="reply">↩️ Responder</button>'
-      +((m.body||m.poll)?'<button type="button" data-a="copy">📋 Copiar</button>':'')
+      +((m.body||m.poll||(m.att_path&&v583IsImg(m.att_type||'')))?'<button type="button" data-a="copy">📋 Copiar</button>':'')
       +'<button type="button" data-a="fwd">↪️ Reenviar</button>'
       +`<button type="button" data-a="star">${starred?'☆ Quitar destacado':'⭐ Destacar'}</button>`
       +(canPin?`<button type="button" data-a="pin">${m.pinned_at?'📌 Desfijar':'📌 Fijar'}</button>`:'')
@@ -8653,7 +8673,7 @@ async function v583Chat(anchor,cfg){
       if(b.dataset.more){v583OpenEmoji(em=>toggle(id,em));return}
       if(b.dataset.e){toggle(id,b.dataset.e);return}
       if(a==='reply'){if(S.edit){S.edit=null;input.textContent=''}setReply(m)}
-      else if(a==='copy'){try{await navigator.clipboard.writeText(m.poll?(m.poll.q||m.body):m.body);v300ShowToast('Copiado')}catch(_){}}
+      else if(a==='copy'){v666Copy(m)}
       else if(a==='fwd')v631ForwardPicker(m);
       else if(a==='star')X&&X.toggleStar(m);
       else if(a==='pin'){const on=!m.pinned_at,old=m.pinned_at;m.pinned_at=on?new Date().toISOString():null;save();paint();
@@ -8687,6 +8707,24 @@ async function v583Chat(anchor,cfg){
     if(v583IsImg(f.type)||/^audio\//.test(f.type||''))tmpMsg._local=URL.createObjectURL(f);
     clearReply();S.msgs.push(tmpMsg);paint(true);sendText(text||'',tmpMsg);
   };
+  // V666 · pegar: imagen/archivo del portapapeles se envía como adjunto; el texto se pega siempre como texto plano
+  input.addEventListener('paste',async e=>{
+    const cd=e.clipboardData;if(!cd)return;
+    let files=[...(cd.files||[])];
+    if(!files.length)files=[...(cd.items||[])].filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);
+    if(files.length&&cfg.attach){
+      e.preventDefault();
+      let f=files[0];
+      if(!f.name||f.name==='image.png'||/^image\./.test(f.name)){try{f=new File([f],'captura-'+Date.now()+'.'+((f.type||'image/png').split('/')[1]||'png').replace('jpeg','jpg'),{type:f.type||'image/png'})}catch(_){}}
+      try{f=await v583Compress(f)}catch(_){}
+      if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+      const text=input.value.trim();input.textContent='';
+      queueFile(f,text);v300ShowToast('Imagen pegada');
+      return;
+    }
+    const t=cd.getData('text/plain');
+    if(t){e.preventDefault();let ok=false;try{ok=document.execCommand('insertText',false,t)}catch(_){}if(!ok){input.textContent+=t}input.dispatchEvent(new Event('input'))}
+  });
   if(micBtn){
     let mr=null,chunks=[],stream=null,t0=0,tick=null,cancelled=false;
     const recT=container.querySelector('.v583RecT');
