@@ -2881,7 +2881,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="686";
+const APP_VERSION="687";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4081,7 +4081,7 @@ async function v672TodayPanel(){
         const closed=opens&&new Date(opens)>new Date();
         const m=maps.get(e.kind+'_'+e.id)||new Map();
         const pend=closed?0:rowers.filter(r=>!m.has(String(r.user_id))).length;
-        let inn=0;m.forEach(st=>{if(st==='in')inn++});
+        let inn=0;const rid=new Set(rowers.map(r=>String(r.user_id)));m.forEach((st,uid)=>{if(st==='in'&&rid.has(String(uid)))inn++});
         return {...e,_pend:pend,_tot:rowers.length,_in:inn,_closed:!!closed};
       });
     }));
@@ -4193,7 +4193,9 @@ async function v499StaffForTeam(team){
 // Eventos incluya también al entrenador/ayudante cuando responde, deduplicado por user_id.
 function v499MergeRoster(rowers,staff){
   const seen=new Set(),out=[];
-  [...(rowers||[]),...(staff||[])].forEach(p=>{const k=String(p.user_id);if(seen.has(k))return;seen.add(k);out.push(p)});
+  // V687 · quien viene del equipo técnico y no está entre las remeras del equipo se marca _staff: sale en la lista
+  // aparte "Equipo técnico" pero NO cuenta como participante (ni en los contadores ni en el límite).
+  [...(rowers||[]),...(staff||[]).map(p=>({...p,_staff:true}))].forEach(p=>{const k=String(p.user_id);if(seen.has(k))return;seen.add(k);out.push(p)});
   return out.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'}));
 }
 async function v307AllClubRowersV307(){
@@ -4425,6 +4427,7 @@ async function v588SyncViews(kind,id){
 }
 function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime='',evCap=null){
   { const oset=new Set((orgIds||[]).map(String)); if(oset.size)roster=roster.filter(p=>!oset.has(String(p.user_id))); }
+  const v687Staff=(roster||[]).filter(p=>p._staff&&statusByUser.has(String(p.user_id)));roster=(roster||[]).filter(p=>!p._staff);
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
   // V657 · quien respondió más tarde sale arriba (orden de respuesta, no alfabético); sin hora → al final.
   const tOf=p=>V657_T.get((kind||'session')+'_'+sessionId+'|'+p.user_id)||'';
@@ -4457,6 +4460,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
     <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${waitList.length?row('wait','En espera','⏳',waitList,false):''}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${waitList.length?panel('wait',waitList,false):''}${panel('out',outList,false)}${panel('all',allList,false)}
+    ${v687Staff.length?`<p class="muted v687Tech"><small>👤 Equipo técnico (no cuenta como participante): ${v687Staff.map(p=>`${esc(String(p.user_id)===String(currentUser?.id)?'Tú':(p.full_name||'Sin nombre'))} ${statusByUser.get(String(p.user_id))==='in'?'✅':statusByUser.get(String(p.user_id))==='out'?'❌':'⏳'}`).join(' · ')}</small></p>`:''}
     <div class="v493SumActions">${remindBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
@@ -5065,7 +5069,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const amOrganizer=canEdit||orgIds.includes(String(currentUser?.id));
   const hideResponses=ev.responses_visibility==='organizers'&&!amOrganizer;
   const summary=opensFuture?'':hideResponses?'<p class="muted"><small>🔒 Las respuestas de este evento solo las ven los organizadores.</small></p>':v493RsvpSummaryHtml(ev.id,ev.event_title,roster,statusByUser,team,ev.kind,canEdit,orgIds,ev.event_date,ev.event_time||ev.start_time||'',ev.max_participants||null);
-  const inCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').length;
+  const inCount=roster.filter(p=>!p._staff&&!orgIds.includes(String(p.user_id))&&statusByUser.get(String(p.user_id))==='in').length;
   const waitCount=roster.filter(p=>statusByUser.get(String(p.user_id))==='waitlist').length;
   const capLine=(ev.max_participants&&inCount>=ev.max_participants)?`<p class="v512TeamLine">🚫 <b>Evento completo</b>${waitCount?` · ⏳ ${waitCount} en lista de espera`:''}</p>`:'';
   const timesLine=(ev.meet_time||ev.end_time)?`<p class="v512TeamLine">${ev.meet_time?`🤝 Encuentro: ${esc(ev.meet_time)}`:''}${ev.meet_time&&ev.end_time?' · ':''}${ev.end_time?`🏁 Termina: ${esc(ev.end_time)}`:''}</p>`:'';
@@ -5084,7 +5088,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   const chat=opensFuture||ev.chat_enabled===false?'':(showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'');
   // V546 · como en Spond: si la invitación está programada, quien puede editar ve el aviso de
   // "evento programado", a cuánta gente se invitará y un botón "Enviar ahora".
-  const v546Org=orgIds.length,v546Inv=roster.filter(p=>!orgIds.includes(String(p.user_id))).length;
+  const v546Org=orgIds.length,v546Inv=roster.filter(p=>!p._staff&&!orgIds.includes(String(p.user_id))).length;
   const opensNote=!opensFuture?'':canEdit&&!cancelled?`<div class="v546Sched"><b>Este es un evento programado.</b><p>La invitación se enviará: <b>${esc(v498OpensAtLabel(opensAt))}</b>. A esa hora se podrá responder y comentar.</p><button type="button" class="v546SendNow">↻ Enviar ahora</button></div><div class="v546Preview"><h4>Respuestas</h4><div class="v546Line">👤 Se invitará a ${v546Inv} persona${v546Inv===1?'':'s'}</div>${v546Org?`<div class="v546Line">⭐ ${v546Org} organizador${v546Org===1?'':'es'} será${v546Org===1?'':'n'} invitado${v546Org===1?'':'s'}</div>`:''}${team&&roster.length?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(ev.event_title||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">💬 Enviar mensaje a los invitados</button>`:''}</div>`:`<p class="muted"><small>🔒 Podrás confirmar asistencia a partir del ${esc(v498OpensAtLabel(opensAt))}</small></p>`;
   const deadline=ev.response_deadline?`<p class="muted"><small>Responde antes del ${esc(v495EventDateLabel(ev.response_deadline))}</small></p>`:'';
   // V522 · el lugar abre la ubicación en el mapa (Google Maps; en el móvil se abre en la app de
@@ -5374,7 +5378,7 @@ function v503CountsForEvents(events,roster,statusByEvent,viewTeam){
   return events.map(ev=>{
     const r=v514EventRoster(ev,roster);
     const statusByUser=v514EffectiveStatus(ev,r,statusByEvent.get(`${ev.kind}_${ev.id}`)),counts={in:0,out:0,pending:0,wait:0},pendingIds=[];
-    r.forEach(p=>{const orgU=ev.created_by?String(ev.created_by):((()=>{try{return canEditTeamJS(viewTeam)}catch(e){return false}})()&&currentUser?String(currentUser.id):null);if(orgU&&String(p.user_id)===orgU)return;const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
+    r.forEach(p=>{if(p._staff)return;const orgU=ev.created_by?String(ev.created_by):((()=>{try{return canEditTeamJS(viewTeam)}catch(e){return false}})()&&currentUser?String(currentUser.id):null);if(orgU&&String(p.user_id)===orgU)return;const st=statusByUser.get(String(p.user_id));if(st==='in')counts.in++;else if(st==='out')counts.out++;else if(st==='waitlist')counts.wait++;else{counts.pending++;pendingIds.push(p.user_id)}});
     counts.total=counts.in+counts.out+counts.pending+counts.wait;
     return {...ev,_viewTeam:viewTeam,_counts:counts,_pendingIds:pendingIds,_my:currentUser?statusByUser.get(String(currentUser.id))||null:null};
   });
