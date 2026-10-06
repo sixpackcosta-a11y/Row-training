@@ -949,7 +949,8 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 }
 /* V637 · ficha de evento y otras capas a pantalla completa: más ancho útil en móvil */
 @media(max-width:700px){
-  .v503DetailCard,.modalCard.v503DetailCard{padding:8px 6px!important}
+  .v503DetailBack{padding:6px 6px 6px!important}
+  .v503DetailCard,.modalCard.v503DetailCard{padding:10px 12px!important;border-radius:16px!important;height:100%;max-height:100%}
   .v503DetailBody .card,.v503DetailBody section,.v503DetailBody .info{padding-left:8px!important;padding-right:8px!important;margin-left:0!important;margin-right:0!important}
   .v503DetailBody details>summary{padding-left:8px!important;padding-right:8px!important}
   .v503DetailBody .accordionBody,.v503DetailBody details>div{padding-left:4px!important;padding-right:4px!important}
@@ -2851,7 +2852,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="654";
+const APP_VERSION="656";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4293,8 +4294,14 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
 function v493WireRsvpSummaryTabs(root,afterChange){
   root.querySelectorAll('.v493RsvpSummary').forEach(box=>{
     box.querySelectorAll('.v493SumRow[data-key]').forEach(btn=>btn.onclick=()=>{
+      // V655 · sin saltos: la zona de personas no encoge al cambiar de pestaña (se queda con la altura
+      // de la más alta vista) y se conserva la posición del scroll.
+      let sc=box.parentElement;while(sc&&!(sc.scrollHeight>sc.clientHeight+2&&/(auto|scroll)/.test(getComputedStyle(sc).overflowY)))sc=sc.parentElement;
+      const top=sc?sc.scrollTop:0,cur=[...box.querySelectorAll('.v493SumPanel')].find(p=>!p.classList.contains('hidden'));
+      box._mh=Math.max(box._mh||0,cur?cur.offsetHeight:0);
       box.querySelectorAll('.v493SumRow[data-key]').forEach(b=>b.classList.toggle('active',b===btn));
-      box.querySelectorAll('.v493SumPanel').forEach(p=>p.classList.toggle('hidden',p.dataset.key!==btn.dataset.key));
+      box.querySelectorAll('.v493SumPanel').forEach(p=>{const h=p.dataset.key!==btn.dataset.key;p.classList.toggle('hidden',h);p.style.minHeight=h?'':(box._mh+'px')});
+      if(sc)sc.scrollTop=top;
     });
   });
   // V505 · caja de búsqueda por nombre dentro del resumen de Respuestas.
