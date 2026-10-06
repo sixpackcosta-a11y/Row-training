@@ -1046,6 +1046,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v664In .teamEditGrid,.v664In .plannerGrid{grid-template-columns:1fr!important}
 .v664In .plannerGrid label{min-width:0}
 .v664Sub{font-weight:700;margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--border)}
+.v672Panel{padding:14px 16px}.v672H{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:17px}.v672N{background:#e11d48;color:#fff;border-radius:99px;font-size:12px;padding:1px 8px;font-weight:700}.v672Row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text);padding:10px 2px;font-size:14.5px;line-height:1.35}.v672Row:first-of-type{border-top:0}.v672Ic{flex:0 0 auto}.v672Tx{flex:1;min-width:0}.v672Ch{color:var(--text-muted);font-size:20px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2877,7 +2878,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="671";
+const APP_VERSION="673";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3973,8 +3974,58 @@ async function staffTodayView(){
   // permite ir a Semana, era redundante) y el selector de Equipo sube justo debajo del título,
   // en su propia fila compacta, en vez de compartir hueco con un botón.
   content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}${x.is_event?' · convocatoria':''}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  try{v672TodayPanel()}catch(e){console.warn('v672',e)}
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
 }
+// V672 · "Qué me falta" · tarjeta al inicio de Hoy (entrenador): altas, respuestas pendientes de los próximos 7 días,
+// chats sin contestar y solapes de horario entre equipos. Se pinta sin bloquear la pantalla.
+async function v672TodayPanel(){
+  const first=content.firstElementChild;if(!first||!first.classList.contains('card'))return;
+  if(!hasAnyCoachTeam())return;
+  const box=document.createElement('div');box.className='card v672Panel';box.innerHTML='<h3 class="v672H">📋 Qué me falta</h3><p class="muted" style="margin:4px 0">Mirando tus equipos…</p>';
+  content.insertBefore(box,first);
+  const teams=v638MsgTeams();if(!teams.length){box.remove();return}
+  const today=localISODate(),end=addDaysISO(today,7);
+  const items=[];
+  if(pendingRegistrationCount)items.push({ic:'🙋',tx:`<b>${pendingRegistrationCount}</b> ${pendingRegistrationCount===1?'alta pendiente':'altas pendientes'} de aprobar`,go:()=>{tab='altas';render()}});
+  if(v300UnreadMsgCount)items.push({ic:'💬',tx:`<b>${v300UnreadMsgCount}</b> ${v300UnreadMsgCount===1?'chat sin contestar':'chats sin contestar'}`,go:()=>{tab='mensajes';render()}});
+  const all=[];
+  try{
+    const per=await Promise.all(teams.map(async t=>{
+      if(!v497AttendanceEnabledForTeam(t))return [];
+      const [evs,roster]=await Promise.all([v495FetchEvents(t),staffAthletesForTeam(t)]);
+      const up=evs.filter(e=>e.event_date>=today&&e.event_date<=end&&!e.cancelled_at&&!(e.kind==='club_event'&&e.team_code&&e.team_code!==t&&!(e.extra_team_codes||[]).includes(t))).map(e=>({...e,_viewTeam:t}));
+      if(!up.length)return [];
+      const maps=await v495RsvpStatusMapsForEvents(up,t);
+      const rowers=(roster||[]).filter(r=>r.user_id);
+      return up.map(e=>{
+        let opens=null;try{opens=v498ComputeOpensAt(e)}catch(_){}
+        const closed=opens&&new Date(opens)>new Date();
+        const m=maps.get(e.kind+'_'+e.id)||new Map();
+        const pend=closed?0:rowers.filter(r=>!m.has(String(r.user_id))).length;
+        let inn=0;m.forEach(st=>{if(st==='in')inn++});
+        return {...e,_pend:pend,_tot:rowers.length,_in:inn,_closed:!!closed};
+      });
+    }));
+    per.forEach(l=>all.push(...l));
+  }catch(e){console.warn('v672 events',e)}
+  const dayName=d=>{const x=new Date(d+'T12:00:00');return d===today?'hoy':d===addDaysISO(today,1)?'mañana':x.toLocaleDateString('es-ES',{weekday:'long',day:'numeric'})};
+  // V673 · falta gente: confirmadas por debajo del mínimo que has puesto en el evento (respeta el límite máximo)
+  all.filter(e=>e.min_participants&&!e._closed&&e._in<e.min_participants).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))).forEach(e=>{
+    const falta=e.min_participants-e._in,cupo=e.max_participants?` · límite ${e.max_participants}`:'';
+    items.push({ic:'👥',tx:`Faltan <b>${falta}</b> · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}) · van ${e._in} de ${e.min_participants} mín.${cupo}${e._pend?` · ${e._pend} sin responder`:''}</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})});
+  all.filter(e=>e._pend>0).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))).forEach(e=>
+    items.push({ic:'❓',tx:`<b>${e._pend}</b> sin responder · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())}));
+  const clashSeen=new Set();
+  all.forEach(e=>{if(clashSeen.has(e.kind+e.id+e._viewTeam))return;if(v669Overlaps(e,all)){clashSeen.add(e.kind+e.id+e._viewTeam);
+    items.push({ic:'⚠️',tx:`Se pisan en horario · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}${e.event_time?' '+esc(e.event_time):''})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})}});
+  if(!box.isConnected)return;
+  if(!items.length){box.innerHTML='<h3 class="v672H">📋 Qué me falta</h3><p style="margin:6px 0 0">✅ Todo al día. Nada pendiente.</p>';return}
+  const shown=items.slice(0,8);
+  box.innerHTML=`<h3 class="v672H">📋 Qué me falta <span class="v672N">${items.length}</span></h3>`+shown.map((it,i)=>`<button type="button" class="v672Row" data-i="${i}"><span class="v672Ic">${it.ic}</span><span class="v672Tx">${it.tx}</span><span class="v672Ch">›</span></button>`).join('')+(items.length>shown.length?`<p class="muted" style="margin:6px 0 0">… y ${items.length-shown.length} más</p>`:'');
+  box.querySelectorAll('.v672Row').forEach(b=>b.onclick=()=>{try{shown[Number(b.dataset.i)].go()}catch(e){console.warn(e)}});
+}
+function v672TodayPanelRefresh(){if(tab==='hoy'&&currentMode==='staff')staffTodayView()}
 async function staffRegisterView(){
   const teams=staffViewTeamCodes();
   if(!teams.length)return staffTodayView();
@@ -4626,7 +4677,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     sec('Organizadores',`<div id="v518Orgs" class="v518Orgs"></div><div class="v518OrgAdd"><select id="v518OrgSel"><option value="">— Añadir organizador —</option></select><button type="button" id="v518OrgAddBtn">Añadir</button></div><p class="muted"><small>${existing?'':'Tú ya eres organizador. '}A quien añadas le llegará un aviso para que confirme si va.</small></p>`)+
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
-    sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
+    sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>Mínimo necesario<input id="v673Min" type="number" min="1" placeholder="Sin mínimo" value="${x.min_participants??''}"></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
     (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">${x.__convert?'Solo este día':'Solo este evento'}</option><option value="following">${isSess?`${x.__convert?'Periódico: este y todos los siguientes':'Este y los siguientes'} (${esc((w=>w.endsWith('s')?w:w+'s')(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00'))))} de ${esc(String(x.session_type||'').toUpperCase())}${x.__convert?' ya planificados':' que sean evento'})`:'Este y los siguientes de la serie'}</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>${x.__convert?'Avisar a las remeras (si la invitación no está programada para más tarde)':'Avisar a los invitados del cambio'}</span></label>`):'')+
     `<div class="actions"><button type="button" id="v497CeSave" class="primary">${existing?.__convert?'Convertir en evento':existing?'Guardar cambios':'Crear evento'}</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
   const $=id=>document.getElementById(id);
@@ -4742,6 +4793,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     const title=$('v497CeTitle').value.trim(),date=$('v497CeDate').value;
     if((!title&&!isSess)||!date)return alert('Completa al menos el título y la fecha.');
     const maxP=$('v514Max').value?Number($('v514Max').value):null,defStatus=$('v514Default').value||null;
+    const minP=$('v673Min').value?Number($('v673Min').value):null;if(minP&&maxP&&minP>maxP)return alert('El mínimo no puede ser mayor que el límite de participantes.');const minPatch=(minP!=null||x.min_participants!=null)?{min_participants:minP}:{};
     if(maxP&&defStatus==='in')return alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');
     if(Number($('v514MeetBefore').value)&&!$('v497CeTime').value)return alert('Para poner hora de encuentro, indica primero la hora de comienzo.');
     if(inviteMode==='some'&&!invitees.size)return alert('Has elegido "Elegir personas" pero no has marcado a nadie.');
@@ -4750,7 +4802,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     try{
       if(coverFile)coverUrl=await v514UploadEventCover(coverFile);
     }catch(e){return fail(missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql en Supabase (crea el espacio para las imágenes).':'No se pudo subir la imagen: '+(e.message||e))}
-    const base={title,event_time:$('v497CeTime').value||null,meet_time:(Number($('v514MeetBefore').value)&&$('v497CeTime').value)?v514ShiftTime($('v497CeTime').value,-Number($('v514MeetBefore').value)):null,end_time:$('v514End').value||null,location:$('v497CeLocation').value.trim()||null,notes:$('v497CeNotes').value.trim()||null,response_deadline:$('v497CeDeadline').value||null,rsvp_open_days_before:$('v497CeOpenDays').value?Number($('v497CeOpenDays').value):null,rsvp_open_time:$('v497CeOpenTime').value||null,max_participants:maxP,cover_url:coverUrl,reminder_hours_before:$('v514Reminder').value?Number($('v514Reminder').value):null,default_status:defStatus,chat_enabled:$('v514Chat').value!=='0',responses_visibility:$('v514Vis').value};
+    const base={title,event_time:$('v497CeTime').value||null,meet_time:(Number($('v514MeetBefore').value)&&$('v497CeTime').value)?v514ShiftTime($('v497CeTime').value,-Number($('v514MeetBefore').value)):null,end_time:$('v514End').value||null,location:$('v497CeLocation').value.trim()||null,notes:$('v497CeNotes').value.trim()||null,response_deadline:$('v497CeDeadline').value||null,rsvp_open_days_before:$('v497CeOpenDays').value?Number($('v497CeOpenDays').value):null,rsvp_open_time:$('v497CeOpenTime').value||null,max_participants:maxP,...minPatch,cover_url:coverUrl,reminder_hours_before:$('v514Reminder').value?Number($('v514Reminder').value):null,default_status:defStatus,chat_enabled:$('v514Chat').value!=='0',responses_visibility:$('v514Vis').value};
     // V516 · un solo evento para todos los grupos marcados (como en Spond con varios subgrupos):
     // equipo principal + extra_team_codes, y si se eligen personas, invitee_ids (de cualquier grupo).
     const t0=lockTeam||(teamsSel.has(team)?team:[...teamsSel][0]);
@@ -4771,7 +4823,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     const colErr=e=>isComp&&missingCols(e)?'Falta ejecutar 32_competiciones_opciones.sql en Supabase.':/extra_team_codes/.test(e?.message||'')?'Falta ejecutar 30_eventos_varios_grupos.sql en Supabase.':missingCols(e)?'Falta ejecutar 29_eventos_opciones.sql y 30_eventos_varios_grupos.sql en Supabase.':e.message;
     if(existing&&isSess){
       const now=new Date().toISOString();
-      const patch={event_name:title||null,event_time:base.event_time,meet_time:base.meet_time,end_time:base.end_time,location:base.location,cover_url:base.cover_url,rsvp_open_days_before:base.rsvp_open_days_before,rsvp_open_time:base.rsvp_open_time,max_participants:base.max_participants,reminder_hours_before:base.reminder_hours_before,default_status:base.default_status,chat_enabled:base.chat_enabled,responses_visibility:base.responses_visibility,invitee_ids:inv&&inv.length?inv:null,updated_at:now};
+      const patch={event_name:title||null,event_time:base.event_time,meet_time:base.meet_time,end_time:base.end_time,location:base.location,cover_url:base.cover_url,rsvp_open_days_before:base.rsvp_open_days_before,rsvp_open_time:base.rsvp_open_time,max_participants:base.max_participants,...(('min_participants' in base)?{min_participants:base.min_participants}:{}),reminder_hours_before:base.reminder_hours_before,default_status:base.default_status,chat_enabled:base.chat_enabled,responses_visibility:base.responses_visibility,invitee_ids:inv&&inv.length?inv:null,updated_at:now};
       const converting=!!existing.__convert;
       if(converting)patch.is_event=true;
       const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
@@ -10858,7 +10910,7 @@ function sessionEditor(x=null){
   <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
   <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No periódico (solo este día)</option><option value="yes" id="seRepeatYesOpt">Periódico</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted" id="seRepeatSummary"></p></div></div>
-  <div class="v514Sec"><div class="v514SecTitle">Más ajustes</div><div class="plannerGrid"><label>Límite de participantes<input id="seMax" type="number" min="1" placeholder="Ninguno" value="${x?.max_participants??''}"></label><label id="sessResponseDeadlineWrap">Plazo límite de respuesta<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label><label>Recordatorio automático<select id="seRem">${[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']].map(([v,l])=>`<option value="${v}" ${String(x?.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="seDef"><option value="">Sin respuesta</option><option value="in" ${x?.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat)<select id="seChat"><option value="1" ${x?.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x?.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="seVis"><option value="all" ${x?.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x?.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Más ajustes</div><div class="plannerGrid"><label>Límite de participantes<input id="seMax" type="number" min="1" placeholder="Ninguno" value="${x?.max_participants??''}"></label><label>Mínimo necesario<input id="v673Min" type="number" min="1" placeholder="Sin mínimo" value="${x?.min_participants??''}"></label><label id="sessResponseDeadlineWrap">Plazo límite de respuesta<input id="sessResponseDeadline" type="date" value="${x?.response_deadline||''}"></label><label>Recordatorio automático<select id="seRem">${[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']].map(([v,l])=>`<option value="${v}" ${String(x?.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="seDef"><option value="">Sin respuesta</option><option value="in" ${x?.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat)<select id="seChat"><option value="1" ${x?.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x?.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="seVis"><option value="all" ${x?.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x?.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div></div>
  </div>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <label class="notifyToggleV110"><input id="notifyRowerChangeV110" type="checkbox"><span><b>Enviar notificación a los remeros</b><br>Márcalo solo si quieres avisar de este alta o cambio. Los retoques internos pueden guardarse sin avisar.</span></label>
@@ -10992,10 +11044,11 @@ function sessionEditor(x=null){
    if(isEventNow){
      const g=id=>document.getElementById(id)?.value||'';
      const maxP=g('seMax')?Number(g('seMax')):null,defS=g('seDef')||null;
+     const minP=g('v673Min')?Number(g('v673Min')):null;if(minP&&maxP&&minP>maxP){alert('El mínimo no puede ser mayor que el límite de participantes.');return}const minPatch=(minP!=null||x?.min_participants!=null)?{min_participants:minP}:{};
      if(maxP&&defS==='in'){alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');return}
      if(Number(g('seMeet'))&&!g('seTime')){alert('Para poner hora de encuentro, indica primero la hora de comienzo.');return}
      if(seCoverFile){try{seCoverUrl=await v514UploadEventCover(seCoverFile)}catch(e){alert('No se pudo subir la imagen (¿falta ejecutar 29_eventos_opciones.sql?): '+(e.message||e));return}}
-     eventFields={event_name:g('seName').trim()||null,event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
+     eventFields={event_name:g('seName').trim()||null,event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,...minPatch,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
    }
    const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,...eventFields,updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
