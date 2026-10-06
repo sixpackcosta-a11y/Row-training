@@ -2880,7 +2880,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="681";
+const APP_VERSION="683";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9210,7 +9210,10 @@ async function v300RefreshUnreadMsgCount(){
         let q=await sb.from('chat_messages').select('rower_id,sender_id,created_at,read_at').in('team_code',teams).order('created_at',{ascending:false}).limit(400);
         const hasRead=!q.error;
         if(q.error)q=await sb.from('chat_messages').select('rower_id,sender_id,created_at').in('team_code',teams).order('created_at',{ascending:false}).limit(400);
-        const last=new Map();(q.data||[]).forEach(m=>{if(!last.has(m.rower_id))last.set(m.rower_id,m)});
+        // V682 · solo cuentan conversaciones con personas que SALEN en la lista de Mensajes (plantilla actual de mis equipos)
+        const inList=new Set();
+        await Promise.all(teams.map(async t=>{try{(await staffAthletesForTeam(t)).forEach(x=>inList.add(String(x.user_id)))}catch(e){}}));
+        const last=new Map();(q.data||[]).forEach(m=>{if(!last.has(m.rower_id)&&(!inList.size||inList.has(String(m.rower_id)))&&new Date(m.created_at).getTime()>(window._v682Zero||0))last.set(m.rower_id,m)});
         let n=0;last.forEach((m,rid)=>{if(m.sender_id===currentUser.id)return;
           if(hasRead?!m.read_at:new Date(m.created_at)>new Date(localStorage.getItem('rowtraining_v300_chat_thread_seen_'+rid)||0))n++});
         v300UnreadMsgCount=n;
@@ -9509,6 +9512,15 @@ async function coachMessagesView(){
     box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
     box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));
     applyFind();
+    // V682 · la lista manda: si no enseña ninguna conversación en azul, lo que haya hasta ahora cuenta como visto
+    // y el globo de Mensajes se pone a cero (no puede quedar un número que la lista no justifica).
+    try{
+      if(!/🔵/.test(box.innerHTML)){
+        window._v682Zero=Date.now();
+        activeTeams.forEach(t=>{try{localStorage.setItem(v617SeenKey(t),new Date().toISOString())}catch(_){}});
+        v300RefreshUnreadMsgCount().then(draw);
+      }
+    }catch(_){}
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
 
