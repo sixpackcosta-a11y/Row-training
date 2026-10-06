@@ -2880,7 +2880,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="678";
+const APP_VERSION="680";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3801,7 +3801,7 @@ function v390MasBarHtml(activeTab){
   const items=[
     ['perfil','Perfil','perfil'],
     ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo'],['recursos','Recursos','recursos']]:[]),
-    ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Modo remero':'Modo entrenador','compass']]:[]),
+    ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Remero':'Entrenador','compass']]:[]),
     ['__settings__','Ajustes','ajustes']
     // V577 · Ayuda, Sistema y Salir pasan a la ventana de Ajustes (barra de arriba más limpia)
   ];
