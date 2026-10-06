@@ -2880,7 +2880,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="680";
+const APP_VERSION="681";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3991,7 +3991,7 @@ async function staffResourcesView(){
   const rows=q.data||[],admin=!!isGlobalCoach;
   const cats=[...new Set(rows.map(r=>r.category||'General'))];
   const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
-  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button>${admin?`<div class="v678Adm"><button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button></div>`:''}</div>`;
+  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
   content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📁 Recursos</h2>${admin?'<button type="button" class="primary" id="v678Add">+ Añadir recurso</button>':''}</div><p class="muted" style="margin:6px 0 0">Enlaces y archivos para el equipo técnico: cámaras del mar, formación, documentos…</p></div>`
     +(cats.length?cats.map(c=>`<div class="card v678Cat"><h3 style="margin:0 0 4px">${esc(c)}</h3>${rows.filter(r=>(r.category||'General')===c).map(item).join('')}</div>`).join(''):`<div class="card"><p class="muted" style="margin:0">Todavía no hay recursos.${admin?' Pulsa "+ Añadir recurso" para empezar.':' El administrador los irá añadiendo.'}</p></div>`);
   const byId=id=>rows.find(r=>String(r.id)===String(id));
@@ -4010,6 +4010,11 @@ async function staffResourcesView(){
     const d=await sb.from('staff_resources').delete().eq('id',r.id);
     if(d.error)return alert('No se pudo borrar: '+d.error.message);
     staffResourcesView();
+  });
+  content.querySelectorAll('.v678Share').forEach(b=>b.onclick=()=>{
+    const r=byId(b.dataset.id);if(!r)return;
+    if(r.kind==='link'){const u=/^https?:\/\//i.test(r.url||'')?r.url:'https://'+(r.url||'');v631ForwardPicker({body:`📁 ${r.title}${r.description?'\n'+r.description:''}\n${u}`})}
+    else v631ForwardPicker({body:`📁 ${r.title}`,att_path:r.file_path,att_name:r.file_name,att_type:r.file_type,att_size:r.file_size,_srcBucket:'staff-resources'});
   });
   content.querySelectorAll('.v678Edit').forEach(b=>b.onclick=()=>v678Form(byId(b.dataset.id),cats));
   const add=document.getElementById('v678Add');if(add)add.onclick=()=>v678Form(null,cats);
@@ -8493,8 +8498,16 @@ async function v631ForwardSend(dest,m){
   if(m.att_path){
     const safe=String(m.att_name||'archivo').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
     const np=(dest.kind==='team'?'team/'+dest.team:'chat/'+dest.rower)+'/'+Date.now()+'-'+safe;
-    const cp=await sb.storage.from('chat-files').copy(m.att_path,np);
-    if(cp.error)return{error:cp.error};
+    if(m._srcBucket&&m._srcBucket!=='chat-files'){ // V681 · recurso de entrenadores: se baja del almacén de recursos y se sube al chat
+      const dl=await sb.storage.from(m._srcBucket).download(m.att_path);
+      if(dl.error)return{error:dl.error};
+      if(dl.data.size>12*1048576)return{error:{message:'El archivo pesa más de 12 MB y no cabe en un chat. Comparte mejor un enlace.'}};
+      const upl=await sb.storage.from('chat-files').upload(np,dl.data,{contentType:m.att_type||dl.data.type||'application/octet-stream',cacheControl:'3600'});
+      if(upl.error)return{error:upl.error};
+    }else{
+      const cp=await sb.storage.from('chat-files').copy(m.att_path,np);
+      if(cp.error)return{error:cp.error};
+    }
     att={path:np,name:m.att_name,type:m.att_type,size:m.att_size};
   }
   const body=m.poll?('📊 '+(m.poll.q||m.body||'Encuesta')):(m.body||'');
