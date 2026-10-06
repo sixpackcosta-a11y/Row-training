@@ -2852,7 +2852,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="657";
+const APP_VERSION="658";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4259,8 +4259,11 @@ async function v588SyncViews(kind,id){
 function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kind,canEdit=false,orgIds=[],evDate='',evTime='',evCap=null){
   { const oset=new Set((orgIds||[]).map(String)); if(oset.size)roster=roster.filter(p=>!oset.has(String(p.user_id))); }
   const sortName=(a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'});
-  const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortName);
-  const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortName);
+  // V657 · quien respondió más tarde sale arriba (orden de respuesta, no alfabético); sin hora → al final.
+  const tOf=p=>V657_T.get((kind||'session')+'_'+sessionId+'|'+p.user_id)||'';
+  const sortResp=(a,b)=>{const x=tOf(a),y=tOf(b);return x===y?sortName(a,b):(!x?1:!y?-1:(x<y?1:-1))};
+  const inList=roster.filter(p=>statusByUser.get(String(p.user_id))==='in').sort(sortResp);
+  const outList=roster.filter(p=>statusByUser.get(String(p.user_id))==='out').sort(sortResp);
   const pendingList=roster.filter(p=>!statusByUser.has(String(p.user_id))).sort(sortName);
   const rankMap=V598_RANK.get((kind||'session')+'_'+sessionId)||new Map();
   const waitList=roster.filter(p=>statusByUser.get(String(p.user_id))==='waitlist').sort((a,b)=>(rankMap.get(String(a.user_id))||999)-(rankMap.get(String(b.user_id))||999));
@@ -4485,7 +4488,7 @@ async function v495FetchEvents(team,range){
   const customs=(ee2.error?[]:(ee2.data||[])).map(v516MapClubEvent);
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
 }
-const V598_WAIT=new Map(),V598_RANK=new Map();
+const V598_WAIT=new Map(),V598_RANK=new Map(),V657_T=new Map();
 async function v495RsvpStatusMapsForEvents(events,team){
   // V502fix · "si acepto en el evento de veteranos me aparece también aceptado en el de veteranas":
   // una misma competición puede estar asignada a varios equipos a la vez (team_codes es un array:
@@ -4503,6 +4506,7 @@ async function v495RsvpStatusMapsForEvents(events,team){
     const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
     if(!byEvent.has(k))byEvent.set(k,new Map());
     byEvent.get(k).set(String(row.user_id),row.status);
+    V657_T.set(k+'|'+row.user_id,row.responded_at||'');
     if(row.status==='waitlist'){if(!V598_WAIT.has(k+'|tmp'))V598_WAIT.set(k+'|tmp',[]);V598_WAIT.get(k+'|tmp').push({u:String(row.user_id),t:row.responded_at||''})}
   }));
   // V598 · orden de la lista de espera (por hora de llegada) para mostrar "puesto n"
