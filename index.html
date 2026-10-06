@@ -756,10 +756,11 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Row{position:relative}.v623Swipe{position:absolute;left:-42px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(100,116,139,.35);display:flex;align-items:center;justify-content:center;font-size:16px;opacity:0;pointer-events:none}.v623Swp .v583Row{touch-action:pan-y}
 .v623Menu{border-radius:14px!important;display:flex!important;flex-direction:column;min-width:190px;padding:6px!important;gap:2px}.v623Menu button{text-align:left;border:0;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:15px}.v623Menu button:active{background:var(--surface-2)}.v623Menu button.dng{color:#dc2626}.v623EmRow{display:flex;gap:2px;padding:2px 2px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}.v623Menu .v623EmRow button{padding:6px 7px;font-size:20px;text-align:center}
 .v623Quote{border-left:3px solid rgba(37,99,235,.9);background:rgba(0,0,0,.08);border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;text-align:left;overflow:hidden}.v623Quote b{display:block;font-size:12px}.v623Quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
-.v631Top{position:sticky;top:0;z-index:5}
-.v631PinBn{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:7px 12px;background:var(--card,#fff);border:0;border-bottom:1px solid var(--border,#ddd);font-size:13px;cursor:pointer}
+.v631Top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-height:0}
+.v631PinBn.hidden{display:none!important}
+.v631PinBn{display:flex;gap:8px;align-items:center;flex:1;min-width:0;text-align:left;padding:6px 10px;background:var(--surface-2,rgba(127,127,127,.12));color:inherit;border:0;border-left:3px solid #2f80ed;border-radius:6px;font-size:13px;cursor:pointer}
 .v631PinBn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.v631More{border:0;background:none;font-size:20px;line-height:1;padding:4px 8px;cursor:pointer}
+.v631More{border:0;background:none;color:inherit;opacity:.6;font-size:20px;line-height:1;padding:0 8px;height:26px;cursor:pointer;flex:0 0 auto}
 .v631Typ{font-size:12px;font-style:italic;padding:2px 12px;opacity:.7;min-height:16px}
 .v631Flash{animation:v631f 1.6s}
 @keyframes v631f{0%,60%{box-shadow:0 0 0 3px #2f80ed}100%{box-shadow:none}}
@@ -2738,7 +2739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="634";
+const APP_VERSION="635";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
