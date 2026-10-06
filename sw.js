@@ -70,8 +70,8 @@ self.addEventListener('push', event => {
   // ("N avisos nuevos") que al desplegarse lista cada uno.
   event.waitUntil((async()=>{
     const GROUP='rowtraining-group';
-    let prev=[];
-    try{const cur=await self.registration.getNotifications({tag:GROUP});prev=cur[0]?.data?.items||[]}catch(e){}
+    let prev=[],old=[];
+    try{old=await self.registration.getNotifications({tag:GROUP});old.sort((x,y)=>(y.timestamp||0)-(x.timestamp||0));prev=old[0]?.data?.items||[]}catch(e){}
     const item={title:data.title||'Row Training',body:data.body||'',url:data.url||'/'};
     const items=[item,...prev].slice(0,8);
     const n=items.length;
@@ -84,6 +84,8 @@ self.addEventListener('push', event => {
       tag:GROUP,
       renotify:true
     });
+    // iOS no reemplaza por etiqueta: se cierran las agrupaciones anteriores para que no se apilen
+    try{old.forEach(n=>n.close())}catch(e){}
   })());
 });
 self.addEventListener('notificationclick', event => {
