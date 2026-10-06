@@ -2316,7 +2316,7 @@ function v530OpenPendingEvent(){
   const staff=currentMode==='staff';
   v503OpenEventDetail(team,p.kind,p.id,staff,()=>{if(tab==='eventos')render()},staff?true:v495ChatVisibleForRower());
 }
-async function v530NotifyOrganizersRsvp(kind,eventId,team,status){
+async function v530NotifyOrganizersRsvp(kind,eventId,team,status,reason){
   try{
     const r=await sb.from(V498_TABLE_BY_KIND[kind]).select('*').eq('id',eventId).maybeSingle();
     const ev=r.data;if(!ev)return;
@@ -2326,7 +2326,7 @@ async function v530NotifyOrganizersRsvp(kind,eventId,team,status){
     const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
     const date=kind==='session'?ev.session_date:kind==='competition'?ev.competition_date:ev.event_date;
     const who=currentUserProfile?.full_name||'Alguien';
-    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
+    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}${status==='out'&&reason?` · «${reason.slice(0,200)}»`:''}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
   }catch(e){}
 }
 function v530EventUrl(kind,id,team){return `/?tab=eventos&ek=${encodeURIComponent(kind||'')}&eid=${encodeURIComponent(id||'')}&et=${encodeURIComponent(team||'')}`}
@@ -2681,7 +2681,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="609";
+const APP_VERSION="610";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4002,10 +4002,27 @@ async function v598Promote(kind,eventId,team){
     await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'🎟️ Hay una plaza libre',body:`Se ha liberado una plaza en "${name}"${date?' ('+v495EventDateLabel(date)+')':''}. Entra en Eventos y confirma si vienes.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
   }catch(e){console.warn('No se pudo avisar a la lista de espera',e)}
 }
+// V610 · al decir "No voy" se ofrece dar un motivo (como en Spond); el motivo le llega a los organizadores en el aviso.
+function v610DeclineDialog(){
+  return new Promise(resolve=>{
+    const L=currentLocale==='en'?{t:'Decline',q:'Do you want to tell the organizer why you can’t attend?',w:'Send with a comment',n:'Decline without giving a reason',ph:'Reason (optional)',s:'Send',b:'Back'}:currentLocale==='nl'?{t:'Afwijzen',q:'Wil je de organisator laten weten waarom je niet kunt komen?',w:'Versturen met opmerking',n:'Afwijzen zonder reden',ph:'Reden (optioneel)',s:'Versturen',b:'Terug'}:{t:'Rechazar',q:'¿Quieres decirle al organizador por qué no puedes asistir?',w:'Enviar con comentario',n:'Rechazar sin dar un motivo',ph:'Motivo (opcional)',s:'Enviar',b:'Volver'};
+    const layer=document.createElement('div');layer.className='modalBack';
+    const done=v=>{layer.remove();resolve(v)};
+    const step1=()=>{layer.innerHTML=`<div class="modalCard" style="max-width:420px;text-align:center"><div class="modalTitle" style="justify-content:space-between"><h2 style="margin:0;font-size:1.15rem;flex:1">${L.t}</h2><button type="button" id="v610X" aria-label="${L.b}">✕</button></div><p class="muted" style="margin:14px 0">${L.q}</p><div style="display:grid;gap:10px"><button type="button" class="primary" id="v610W">${L.w}</button><button type="button" id="v610N">${L.n}</button></div></div>`;
+      layer.querySelector('#v610X').onclick=()=>done(null);layer.querySelector('#v610N').onclick=()=>done({reason:''});layer.querySelector('#v610W').onclick=step2};
+    const step2=()=>{layer.innerHTML=`<div class="modalCard" style="max-width:420px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">${L.t}</h2></div><textarea id="v610T" rows="3" maxlength="300" placeholder="${L.ph}" style="width:100%;margin-top:10px"></textarea><div class="actions" style="margin-top:10px"><button type="button" class="primary" id="v610S">${L.s}</button><button type="button" id="v610B">${L.b}</button></div></div>`;
+      const t=layer.querySelector('#v610T');setTimeout(()=>t.focus(),50);
+      layer.querySelector('#v610S').onclick=()=>done({reason:t.value.trim()});layer.querySelector('#v610B').onclick=step1};
+    layer.onclick=e=>{if(e.target===layer)done(null)};
+    document.body.appendChild(layer);step1();
+  });
+}
 function v495WireRsvpButtons(root,afterChange){
   root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
     if(!currentUser)return;
     const row=b.closest('.v493RsvpRow'),eventId=Number(row.dataset.id),kind=row.dataset.kind||'session',teamCode=row.dataset.team,status=b.dataset.status;
+    let declineReason='';
+    if(status==='out'&&!b.classList.contains('active')){const dd=await v610DeclineDialog();if(!dd)return;declineReason=dd.reason||''}
     row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=true);
     try{
       const payload={user_id:currentUser.id,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
@@ -4017,7 +4034,7 @@ function v495WireRsvpButtons(root,afterChange){
       const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=real==='in'?'Has confirmado que vas':real==='waitlist'?'Estás en la lista de espera. Si queda una plaza libre te avisaremos.':'Has avisado de que no vas';
       if(real==='waitlist'&&status==='in')v300ShowToast('El evento está completo: has quedado en lista de espera');
       row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status:real}}));
-      v530NotifyOrganizersRsvp(kind,eventId,teamCode,real);
+      v530NotifyOrganizersRsvp(kind,eventId,teamCode,real,declineReason);
       if(real==='out')v598Promote(kind,eventId,teamCode);
       // V500 · el botón se actualiza al instante (líneas de arriba), pero el panel de
       // "Confirmaciones" (quién va/no va/falta) de la misma tarjeta se había quedado con los datos
