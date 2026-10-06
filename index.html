@@ -749,6 +749,10 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Day{text-align:center;margin:10px 0 4px}.v583Day span{background:var(--surface-2);color:var(--text-muted);font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;text-transform:capitalize}
 .v583Reacts{margin-top:-6px!important;position:relative;z-index:1}
 .v583Compose{align-items:flex-end!important;gap:6px!important}
+.v494EventChatAccordion>.v494EventChatBody{padding:4px 0!important}.v494EventChatBody [id^="v494ChatScroll_"]{border:0!important;background:transparent!important;padding:2px 0!important}
+.v623Menu{display:flex!important;flex-direction:column;min-width:190px;padding:6px!important;gap:2px}.v623Menu button{text-align:left;border:0;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:15px}.v623Menu button:active{background:var(--surface-2)}.v623Menu button.dng{color:#dc2626}
+.v623Quote{border-left:3px solid rgba(37,99,235,.9);background:rgba(0,0,0,.08);border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;text-align:left;overflow:hidden}.v623Quote b{display:block;font-size:12px}.v623Quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
+.v623Reply{display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px 10px;border-left:3px solid #2563eb;background:var(--surface-2);border-radius:8px;font-size:13px}.v623Reply div{flex:1;min-width:0}.v623Reply b{display:block}.v623Reply span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)}.v623Reply button{border:0;background:transparent;font-size:18px;color:var(--text-muted)}
 .v617Tabs{display:flex;gap:6px;padding:6px 0 8px}.v617Tab{flex:1;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 10px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.v617Tab.active{background:#2563eb;border-color:#2563eb;color:#fff}.v617Dot{font-style:normal;background:#ef4444;color:#fff;border-radius:99px;min-width:18px;height:18px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
 .v617Mention{display:flex;gap:6px;overflow-x:auto;padding:6px 0 0;-webkit-overflow-scrolling:touch}.v617Mention button{flex:0 0 auto;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:6px 12px;font-size:14px}.v617Mention.hidden{display:none}
 .v583Pill{flex:1;min-width:0;display:flex;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:0 4px 0 2px}
@@ -2709,7 +2713,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="621";
+const APP_VERSION="623";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4078,6 +4082,17 @@ function v495WireEventChatAccordions(root){
     if(!det.open||det.dataset.loaded)return;det.dataset.loaded='1';
     v494RenderEventChatThread(det.querySelector('.v494EventChatBody'),Number(det.dataset.id),det.dataset.team,det.dataset.kind||'session');
   }));
+  // V622 · si el evento ya tiene mensajes, el chat se abre solo
+  root.querySelectorAll('.v494EventChatAccordion').forEach(async det=>{
+    try{
+      if(det.open||det.dataset.autochk)return;det.dataset.autochk='1';
+      const kind=det.dataset.kind||'session',id=Number(det.dataset.id);
+      let q=sb.from('event_chat_messages').select('id',{count:'exact',head:true});
+      q=kind==='competition'?q.eq('competition_id',id):kind==='club_event'?q.eq('club_event_id',id):q.eq('training_session_id',id);
+      const res=await q;
+      if(!res.error&&(res.count||0)>0&&det.isConnected&&!det.open)det.open=true;
+    }catch(e){}
+  });
 }
 // V493 · resumen de confirmaciones (RSVP) para el entrenador: cuenta quién va, quién no, y quién no ha
 // respondido todavía, con botón para avisarles por push (reutiliza sendNotificationV110, ya existente).
@@ -4124,7 +4139,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
     <div class="v493SumRows v588Tabs">${row('in','Asistiré','✅',inList,true)}${row('pending','Sin contestar','❓',pendingList,false)}${waitList.length?row('wait','En espera','⏳',waitList,false):''}${row('out','Rechazado','❌',outList,false)}${row('all','Todos','👥',allList,false)}</div>${orgIds&&orgIds.length?(()=>{const acc=orgIds.filter(u=>statusByUser.get(String(u))==='in').length,n=orgIds.length;return `<div class="v588Org">⭐ <b>${acc}</b> de ${n} organizador${n>1?'es':''} ${acc===1?'ha':'han'} aceptado</div>`})():''}
     ${searchBox}
     ${panel('in',inList,true)}${panel('pending',pendingList,false)}${waitList.length?panel('wait',waitList,false):''}${panel('out',outList,false)}${panel('all',allList,false)}
-    <div class="v493SumActions">${remindBtn}${msgAllBtn}</div></div>`;
+    <div class="v493SumActions">${remindBtn}</div></div>`;
 }
 // V499 · wiring de las pestañas de arriba — reutilizable en cualquier vista que muestre
 // v493RsvpSummaryHtml (Eventos y Registro MAR).
@@ -7956,6 +7971,13 @@ function v583OpenEmoji(onPick){
   el.onclick=e=>{const b=e.target.closest('.v583E');if(!b)return;const em=b.dataset.e;v583PushRecent(em);v583CloseEmoji();onPick(em)};
   setTimeout(()=>{const off=ev=>{if(!document.getElementById('v583Emoji')){document.removeEventListener('pointerdown',off,true);return}if(!ev.target.closest('#v583Emoji')){v583CloseEmoji();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
 }
+function v623Quote(m,meId,o){
+  if(!m.reply_to)return '';
+  const q=(o.msgs||[]).find(x=>String(x.id)===String(m.reply_to));
+  const nm=q?(String(q.sender_id)===String(meId)?'Tú':((o.names&&o.names.get(String(q.sender_id)))||'Alguien')):'';
+  const tx=q?(q.body||(q.att_path||q.att_name?'📎 Adjunto':'')).slice(0,90):'Mensaje anterior';
+  return `<div class="v623Quote">${nm?`<b>${esc(nm)}</b>`:''}<span>${esc(tx)}</span></div>`;
+}
 function v583Bubble(m,meId,o){
   const mine=m.sender_id===meId,tmp=String(m.id).startsWith('tmp');
   const name=(!mine&&o.names)?(o.names.get(String(m.sender_id))||'Alguien'):'';
@@ -7966,7 +7988,7 @@ function v583Bubble(m,meId,o){
     const pills=[...groups.entries()].map(([e,u])=>`<button type="button" class="v325ReactionPill${u.includes(meId)?' mine':''}" data-emoji="${e}" data-msg="${m.id}">${e} <span>${u.length}</span></button>`).join('');
     react=(tmp||!pills)?'':`<div class="v325ReactionsRow v583Reacts" style="${mine?'justify-content:flex-end':''}">${pills}</div>`;
   }
-  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${v583AttHtml(m)}${m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):''}<div style="font-size:10px;margin-top:4px;text-align:right"><span style="opacity:.7">${esc(time)}</span>${(mine&&o.receipts&&!tmp)?(m.read_at?'<span class="v583Tick rd" title="Leído">✓✓</span>':'<span class="v583Tick" title="Enviado">✓</span>'):''}</div></div>${react}</div>`;
+  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${v623Quote(m,meId,o)}${v583AttHtml(m)}${m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):''}<div style="font-size:10px;margin-top:4px;text-align:right"><span style="opacity:.7">${esc(time)}</span>${(mine&&o.receipts&&!tmp)?(m.read_at?'<span class="v583Tick rd" title="Leído">✓✓</span>':(m._rc>0?'<span class="v583Tick" title="Entregado">✓✓</span>':'<span class="v583Tick" title="Enviado">✓</span>')):''}</div></div>${react}</div>`;
 }
 async function v583Chat(anchor,cfg){
   const meId=currentUser.id;
@@ -8008,7 +8030,7 @@ async function v583Chat(anchor,cfg){
   let first=true;
   const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
   const paint=(stick)=>{
-    opt.reacts=S.reacts;
+    opt.reacts=S.reacts;opt.msgs=S.msgs;
     const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
     const st=box.scrollTop;
     box.innerHTML=S.msgs.length?(()=>{let last='',h='';S.msgs.forEach(m=>{const d=new Date(m.created_at),k=d.toDateString();if(k!==last){last=k;h+=`<div class="v583Day"><span>${esc(v583DayLabel(d))}</span></div>`}h+=v583Bubble(m,meId,opt)});return h})():`<p class="muted" style="text-align:center;padding:20px 0">${cfg.empty}</p>`;
@@ -8034,6 +8056,7 @@ async function v583Chat(anchor,cfg){
   if(!anchor.isConnected)return;
   merge(rows);save();paint();
   loadReacts();cfg.onSeen&&cfg.onSeen();
+  if(cfg.fetchReads)(async()=>{try{const pend=S.msgs.filter(m=>m.sender_id===meId&&!m.read_at&&!String(m.id).startsWith('tmp')).map(m=>m.id).slice(-60);if(!pend.length)return;const rr=await cfg.fetchReads(pend);let ch=false;(rr||[]).forEach(x=>{const m=S.msgs.find(y=>String(y.id)===String(x.id));if(!m)return;if(x.rc!=null&&x.rc!==m._rc){m._rc=x.rc;ch=true}if(!m.read_at&&x.read_at){m.read_at=x.read_at;ch=true}});if(ch){save();paint()}}catch(e){}})();
   // envío optimista
   const sendText=async(text,tmpMsg)=>{
     let att=null;
@@ -8044,7 +8067,7 @@ async function v583Chat(anchor,cfg){
       if(up.error){tmpMsg._failed=true;paint();alert(/bucket not found|not found/i.test(up.error.message||'')?'Falta ejecutar 46_adjuntos_chat.sql en Supabase para poder enviar adjuntos.':'No se pudo subir el archivo: '+(up.error.message||up.error));return}
       att={path,name:f.name,type:f.type,size:f.size};V583_LOCAL.set(path,tmpMsg._local||'');
     }
-    const r=await cfg.send(text,att);
+    const r=await cfg.send(text,att,tmpMsg.reply_to||null);
     if(r.error){tmpMsg._failed=true;paint();if(!cfg.silentErr)cfg.onError&&cfg.onError(/att_/.test(r.error.message||'')?{message:'Falta ejecutar 46_adjuntos_chat.sql en Supabase para poder enviar adjuntos.'}:r.error);return}
     const real=r.row;
     const i=S.msgs.indexOf(tmpMsg);
@@ -8057,12 +8080,44 @@ async function v583Chat(anchor,cfg){
   Object.defineProperty(input,'value',{get(){return (input.innerText||'').replace(/\u00a0/g,' ')},set(v){input.textContent=v}});
   const send=()=>{
     const text=input.value.trim();if(!text)return;
-    const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString()};
-    S.msgs.push(tmpMsg);input.textContent='';paint(true);input.focus();
+    const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text,created_at:new Date().toISOString(),reply_to:S.reply?S.reply.id:null};
+    clearReply();S.msgs.push(tmpMsg);input.textContent='';paint(true);input.focus();
     sendText(text,tmpMsg);
   };
   sendBtn.onclick=send;
   const micBtn=container.querySelector('.v583Mic'),compose=container.querySelector('.v583Compose');
+  const replyBar=document.createElement('div');replyBar.className='v623Reply hidden';compose.parentNode.insertBefore(replyBar,compose);
+  function clearReply(){S.reply=null;replyBar.classList.add('hidden');replyBar.innerHTML=''}
+  function setReply(m){
+    S.reply=m;const nm=String(m.sender_id)===String(meId)?'Tú':((cfg.names&&cfg.names.get(String(m.sender_id)))||'Alguien');
+    replyBar.innerHTML=`<div><b>${esc(nm)}</b><span>${esc(m.body||'📎 Adjunto')}</span></div><button type="button" aria-label="Quitar">✕</button>`;
+    replyBar.classList.remove('hidden');replyBar.querySelector('button').onclick=clearReply;input.focus();
+  }
+  const showInfo=async m=>{
+    const d=await cfg.info(m);if(!d)return;
+    const lay=document.createElement('div');lay.className='modalBack';
+    const fmt=t=>t?new Date(t).toLocaleString(cfg.locale||'es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    lay.innerHTML=`<div class="modalCard" style="max-width:420px"><div class="modalTitle"><h2 style="margin:0">Info del mensaje</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><p class="muted" style="margin:6px 0 10px">${esc((m.body||'Adjunto').slice(0,120))}</p><h4 style="margin:10px 0 4px">✓✓ Leído por (${d.read.length})</h4>${d.read.length?d.read.map(x=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>${esc(x.name)}</span><small class="muted">${esc(fmt(x.at))}</small></div>`).join(''):'<p class="muted">Nadie todavía</p>'}<h4 style="margin:14px 0 4px">Sin leer (${d.pending.length})</h4>${d.pending.length?d.pending.map(n=>`<div style="padding:6px 0;border-bottom:1px solid var(--border)">${esc(n)}</div>`).join(''):'<p class="muted">Todo el mundo lo ha leído</p>'}</div>`;
+    document.body.appendChild(lay);lay.onclick=e=>{if(e.target===lay)lay.remove()};lay.querySelector('.v300CloseDetail').onclick=()=>lay.remove();
+  };
+  const openMenu=msgEl=>{
+    const id=msgEl.dataset.id,m=S.msgs.find(x=>String(x.id)===String(id));if(!m)return;
+    document.querySelectorAll('.v583Quick').forEach(q=>q.remove());
+    const mine=String(m.sender_id)===String(meId),canDel=!!(cfg.canDelete&&cfg.canDelete(m));
+    const q=document.createElement('div');q.className='v583Quick v623Menu';
+    q.innerHTML=`<button type="button" data-a="reply">↩️ Responder</button>${m.body?'<button type="button" data-a="copy">📋 Copiar</button>':''}${mine&&cfg.info?'<button type="button" data-a="info">ℹ️ Info del mensaje</button>':''}${canDel?'<button type="button" class="dng" data-a="del">🗑 Eliminar</button>':''}`;
+    document.body.appendChild(q);
+    const r=msgEl.getBoundingClientRect(),w=q.offsetWidth,h=q.offsetHeight;
+    q.style.top=Math.max(70,Math.min(innerHeight-h-12,r.bottom+6))+'px';
+    q.style.left=Math.max(8,Math.min(innerWidth-w-8,mine?r.right-w:r.left))+'px';
+    if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+    q.onclick=async e2=>{const b=e2.target.closest('button');if(!b)return;q.remove();const a=b.dataset.a;
+      if(a==='reply')setReply(m);
+      else if(a==='copy'){try{await navigator.clipboard.writeText(m.body);v300ShowToast('Copiado')}catch(_){}}
+      else if(a==='info')showInfo(m);
+      else if(a==='del'){if(!confirm('¿Borrar este mensaje para todo el equipo?'))return;const res=await cfg.del(m);if(res&&res.error){alert('No se pudo borrar: '+(res.error.message||res.error));return}S.msgs=S.msgs.filter(x=>String(x.id)!==String(id));save();paint()}};
+    setTimeout(()=>{const off=e3=>{if(!e3.target.closest('.v583Quick')){q.remove();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
+  };
   if(cfg.members){
     const bar=document.createElement('div');bar.className='v617Mention hidden';compose.parentNode.insertBefore(bar,compose);
     const norm=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -8083,9 +8138,9 @@ async function v583Chat(anchor,cfg){
   const syncBtns=()=>{const has=!!input.value.trim();if(micBtn){sendBtn.style.display=has?'':'none';micBtn.style.display=has?'none':''}};
   syncBtns();new MutationObserver(syncBtns).observe(input,{childList:true,characterData:true,subtree:true});input.addEventListener('input',syncBtns);
   const queueFile=(f,text)=>{
-    const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text||'',created_at:new Date().toISOString(),_file:{blob:f,name:f.name||'archivo',type:f.type||'',size:f.size},att_name:f.name,att_type:f.type,att_size:f.size};
+    const tmpMsg={id:'tmp'+Date.now()+Math.random().toString(36).slice(2,6),sender_id:meId,body:text||'',created_at:new Date().toISOString(),reply_to:S.reply?S.reply.id:null,_file:{blob:f,name:f.name||'archivo',type:f.type||'',size:f.size},att_name:f.name,att_type:f.type,att_size:f.size};
     if(v583IsImg(f.type)||/^audio\//.test(f.type||''))tmpMsg._local=URL.createObjectURL(f);
-    S.msgs.push(tmpMsg);paint(true);sendText(text||'',tmpMsg);
+    clearReply();S.msgs.push(tmpMsg);paint(true);sendText(text||'',tmpMsg);
   };
   if(micBtn){
     let mr=null,chunks=[],stream=null,t0=0,tick=null,cancelled=false;
@@ -8133,9 +8188,12 @@ async function v583Chat(anchor,cfg){
     if(fail){const m=S.msgs.find(x=>String(x.id)===fail.dataset.id);if(m){m._failed=false;paint();sendText(m.body,m)}return}
     const pill=ev.target.closest('.v325ReactionPill');
     if(pill&&cfg.fetchReactions)return toggle(pill.dataset.msg,pill.dataset.emoji);
+    const mm=ev.target.closest('.v583Msg');
+    if(mm&&cfg.msgActions&&!ev.target.closest('audio,video,a,button,.v583File')&&Date.now()-lpDone>700)openQuick(mm);
   };
   const openQuick=(msgEl)=>{
     if(!msgEl||String(msgEl.dataset.id).startsWith('tmp'))return;
+    if(cfg.msgActions)return openMenu(msgEl);
     const id=msgEl.dataset.id,target0=S.msgs.find(m=>String(m.id)===String(id));
     const canDel=!!(cfg.canDelete&&target0&&cfg.canDelete(target0));
     if(!cfg.fetchReactions&&!canDel)return;
@@ -8155,8 +8213,8 @@ async function v583Chat(anchor,cfg){
     setTimeout(()=>{const off=e3=>{if(!e3.target.closest('.v583Quick')){q.remove();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
   };
   // mantener pulsado (o doble toque) sobre un mensaje = reaccionar, como en WhatsApp
-  let lp=null,lpx=0,lpy=0;
-  box.addEventListener('pointerdown',e=>{const m=e.target.closest('.v583Msg');if(!m)return;lpx=e.clientX;lpy=e.clientY;clearTimeout(lp);lp=setTimeout(()=>{lp=null;openQuick(m)},420)});
+  let lp=null,lpx=0,lpy=0,lpDone=0;
+  box.addEventListener('pointerdown',e=>{const m=e.target.closest('.v583Msg');if(!m)return;lpx=e.clientX;lpy=e.clientY;clearTimeout(lp);lp=setTimeout(()=>{lp=null;lpDone=Date.now();openQuick(m)},420)});
   ['pointerup','pointercancel','scroll'].forEach(ev=>box.addEventListener(ev,()=>{clearTimeout(lp);lp=null},true));
   box.addEventListener('pointermove',e=>{if(lp&&(Math.abs(e.clientX-lpx)>8||Math.abs(e.clientY-lpy)>8)){clearTimeout(lp);lp=null}});
   box.addEventListener('dblclick',e=>{const m=e.target.closest('.v583Msg');if(m)openQuick(m)});
@@ -8188,7 +8246,7 @@ async function v583Chat(anchor,cfg){
       if(rows&&rows.length&&merge(rows)){save();paint();loadReacts();cfg.onSeen&&cfg.onSeen()}
       else if(cfg.fetchReactions&&n%3===0)loadReacts();
       if(cfg.fetchExisting&&n%3===0){const ids=S.msgs.filter(m=>!String(m.id).startsWith('tmp')).map(m=>m.id).slice(-150);if(ids.length){const ex=await cfg.fetchExisting(ids);if(ex){const set=new Set(ex.map(String));const gone=ids.filter(i=>!set.has(String(i)));if(gone.length){S.msgs=S.msgs.filter(m=>!gone.some(g=>String(g)===String(m.id)));save();paint()}}}}
-      if(cfg.fetchReads){const pend=S.msgs.filter(m=>m.sender_id===meId&&!m.read_at&&!String(m.id).startsWith('tmp')).map(m=>m.id).slice(-60);if(pend.length){const rr=await cfg.fetchReads(pend);let ch=false;(rr||[]).forEach(x=>{const m=S.msgs.find(y=>String(y.id)===String(x.id));if(m&&!m.read_at&&x.read_at){m.read_at=x.read_at;ch=true}});if(ch){save();paint()}}}
+      if(cfg.fetchReads){const pend=S.msgs.filter(m=>m.sender_id===meId&&!m.read_at&&!String(m.id).startsWith('tmp')).map(m=>m.id).slice(-60);if(pend.length){const rr=await cfg.fetchReads(pend);let ch=false;(rr||[]).forEach(x=>{const m=S.msgs.find(y=>String(y.id)===String(x.id));if(!m)return;if(x.rc!=null&&x.rc!==m._rc){m._rc=x.rc;ch=true}if(!m.read_at&&x.read_at){m.read_at=x.read_at;ch=true}});if(ch){save();paint()}}}
     }catch(e){}
   },5000);
 }
@@ -8401,7 +8459,8 @@ async function v617RenderTeamChat(container,team){
   const isStaff=()=>currentMode==='staff'||members.some(m=>String(m.user_id)===String(currentUser.id)&&m.member_role==='staff');
   const loc=currentMode==='athlete'?currentLocale:'es';
   const T={empty:{es:'Aún no hay mensajes en el chat del equipo. Escribe el primero 👇',en:'No messages in the team chat yet. Write the first one 👇',nl:'Nog geen berichten in de teamchat. Schrijf het eerste 👇'},ph:{es:'Escribe al equipo…',en:'Write to the team…',nl:'Schrijf naar het team…'},send:{es:'Enviar',en:'Send',nl:'Verstuur'}};
-  const COLS=()=>window._v583NoAttT?'id,sender_id,body,created_at':V583_ATT_COLS;
+  const COLS=()=>(window._v583NoAttT?'id,sender_id,body,created_at':V583_ATT_COLS)+(window._v623NoReply?'':',reply_to');
+  const others=sid=>members.filter(m=>String(m.user_id)!==String(sid));
   const ensureNames=async rows=>{
     const need=[...new Set(rows.map(m=>String(m.sender_id)))].filter(i=>!V583_NAMES.has(i));
     if(!need.length)return;
@@ -8412,11 +8471,30 @@ async function v617RenderTeamChat(container,team){
     key:'t:'+team,boxId:'v617TeamChatScroll',inputId:'v617TeamChatInput',sendId:'v617TeamChatSend',maxH:'50vh',locale:loc==='es'?'es-ES':loc==='nl'?'nl-NL':'en-GB',names:V583_NAMES,
     empty:T.empty[loc]||T.empty.es,placeholder:T.ph[loc]||T.ph.es,sendLabel:T.send[loc]||T.send.es,
     members:()=>members,
+    msgActions:true,
+    fetchReads:async ids=>{
+      try{
+        const q=await sb.from('team_chat_reads').select('message_id,user_id,read_at').in('message_id',ids);
+        if(q.error)return[];
+        const need=others(currentUser.id).length,by=new Map();
+        (q.data||[]).forEach(x=>{const k=String(x.message_id);if(!by.has(k))by.set(k,[]);by.get(k).push(x)});
+        return ids.map(id=>{const l=(by.get(String(id))||[]).filter(x=>String(x.user_id)!==String(currentUser.id));const done=need>0&&l.length>=need;
+          return{id,rc:l.length,read_at:done?l.map(x=>x.read_at).sort().pop():null}});
+      }catch(e){return[]}
+    },
+    info:async m=>{
+      const q=await sb.from('team_chat_reads').select('user_id,read_at').eq('message_id',m.id);
+      const got=new Map((q.data||[]).map(x=>[String(x.user_id),x.read_at]));
+      const oth=others(m.sender_id);
+      return{read:oth.filter(x=>got.has(String(x.user_id))).map(x=>({name:x.full_name,at:got.get(String(x.user_id))})).sort((a,b)=>String(a.at).localeCompare(String(b.at))),
+             pending:oth.filter(x=>!got.has(String(x.user_id))).map(x=>x.full_name)};
+    },
     fetch:async since=>{
       try{
         const mk=cols=>{let q=sb.from('team_chat_messages').select(cols).eq('team_code',team);return since?q.gt('created_at',since).order('created_at',{ascending:true}).limit(100):q.order('created_at',{ascending:false}).limit(300)};
         let r=await mk(COLS());
-        if(r.error&&/att_/.test(r.error.message||'')){window._v583NoAttT=true;r=await mk('id,sender_id,body,created_at')}
+        if(r.error&&/reply_to/.test(r.error.message||'')){window._v623NoReply=true;r=await mk(COLS())}
+        if(r.error&&/att_/.test(r.error.message||'')){window._v583NoAttT=true;r=await mk(COLS())}
         if(r.error)return[];
         const rows=since?(r.data||[]):(r.data||[]).reverse();
         await ensureNames(rows);return rows;
@@ -8426,11 +8504,13 @@ async function v617RenderTeamChat(container,team){
     canDelete:m=>String(m.sender_id)===String(currentUser.id)||isStaff(),
     del:async m=>{const q=await sb.from('team_chat_messages').delete().eq('id',m.id).select('id');if(q.error)return{error:q.error};if(!(q.data||[]).length)return{error:{message:'No tienes permiso para borrarlo.'}};return{}},
     attach:{prefix:()=>'team/'+team},
-    send:async (text,att)=>{
+    send:async (text,att,replyTo)=>{
       const pbody=text||(att?(v583IsImg(att.type)?'📷 Foto':/^audio\//.test(att.type||'')?'🎤 Audio':'📎 '+att.name):'');
       const row={team_code:team,sender_id:currentUser.id,body:text};
       if(att){row.att_path=att.path;row.att_name=att.name;row.att_type=att.type;row.att_size=att.size}
-      const res=await sb.from('team_chat_messages').insert(row).select(COLS()).single();
+      if(replyTo&&!window._v623NoReply)row.reply_to=replyTo;
+      let res=await sb.from('team_chat_messages').insert(row).select(COLS()).single();
+      if(res.error&&/reply_to/.test(res.error.message||'')){window._v623NoReply=true;delete row.reply_to;res=await sb.from('team_chat_messages').insert(row).select(COLS()).single()}
       if(res.error)return{error:res.error};
       (async()=>{try{
         const me=String(currentUser.id),lower=String(text||'').toLowerCase();
@@ -8445,7 +8525,7 @@ async function v617RenderTeamChat(container,team){
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar el aviso push.')}})();
       return{row:res.data};
     },
-    onSeen:()=>{localStorage.setItem(v617SeenKey(team),new Date().toISOString());v592ClearChatNotifs(null,['team_chat_message']);v621ClearOs('team')},
+    onSeen:()=>{localStorage.setItem(v617SeenKey(team),new Date().toISOString());v592ClearChatNotifs(null,['team_chat_message']);v621ClearOs('team');if(!document.hidden&&!window._v623NoRead)sb.rpc('mark_team_chat_read_v623',{p_team:team}).then(x=>{if(x&&x.error)window._v623NoRead=true},()=>{})},
     onError:e=>alert(/relation .* does not exist|column .* does not exist/i.test(e.message||'')?'Falta ejecutar 53_chat_equipo.sql en Supabase antes de poder usar el chat del equipo.':(e.message||String(e)))
   });
 }
