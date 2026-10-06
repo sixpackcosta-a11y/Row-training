@@ -1022,6 +1022,9 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v650Notif .v650Tgl{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:99px;background:var(--border,#cbd5e1);position:relative;flex:none;border:0;padding:0;transition:background .2s}
 .v650Notif .v650Tgl::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .v650Notif .v650Tgl:checked{background:#16a34a}.v650Notif .v650Tgl:checked::after{transform:translateX(18px)}
+.v649RemRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 2px;border-bottom:1px solid var(--border)}
+.v649RemTx{font-size:13px;color:#d97706;min-width:0}
+.v649RemRow .v588Remind{display:inline-flex!important;width:auto!important;margin:0!important;padding:6px 12px!important;border-radius:999px!important;border:0!important;background:var(--accent-tint,#e8f0fe)!important;color:#2563eb!important;font-size:13px!important;font-weight:700;white-space:nowrap;flex:none;text-align:center}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2848,7 +2851,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="653";
+const APP_VERSION="654";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4272,7 +4275,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
     const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}</select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
-  const remindBtn0=pendingList.length?`<button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}"><span class="v588RemIc">🔔</span><span class="v588RemTx"><b>Enviar recordatorio a sin respuesta</b><small>${pendingList.length} persona${pendingList.length>1?'s':''} no ha${pendingList.length>1?'n':''} respondido</small></span></button>`:'';
+  const remindBtn0=pendingList.length?`<div class="v649RemRow"><span class="v649RemTx">${pendingList.length} persona${pendingList.length>1?'s':''} sin responder</span><button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}">🔔 Recordar</button></div>`:'';
   const panel=(key,list,active)=>`<div class="v493SumPanel${active?'':' hidden'}" data-key="${key}">${key==='pending'&&canEdit?remindBtn0:''}${list.length?`<div class="rosterList v588List">${list.map(personRow).join('')}</div>`:'<p class="muted" style="padding:12px 4px">Nadie en esta categoría.</p>'}</div>`;
   const msgAllBtn=team?`<button type="button" class="v493RsvpMsgAll" data-team="${esc(team)}" data-title="${esc(sessionTitle||'el evento')}" data-all="${esc(roster.map(p=>p.user_id).join(','))}">✉️ Enviar mensaje a todos los invitados</button>`:'';
   const remindBtn=(pendingList.length&&!canEdit)?`<button type="button" class="v493RsvpRemind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title=""${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}">🔔 Avisar a los que faltan por confirmar</button>`:'';
