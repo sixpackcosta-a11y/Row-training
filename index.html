@@ -2369,11 +2369,27 @@ function v530OpenPendingEvent(){
   const staff=currentMode==='staff';
   v503OpenEventDetail(team,p.kind,p.id,staff,()=>{if(tab==='eventos')render()},staff?true:v495ChatVisibleForRower());
 }
+// V649 · todo el equipo técnico del club (entrenadores y ayudantes de cualquier equipo), para elegir organizadores.
+async function v649AllStaff(){
+  if(window._v649Staff&&Date.now()-(window._v649At||0)<300000)return window._v649Staff;
+  try{
+    const [gc,ts]=await Promise.all([sb.from('user_roles').select('user_id').eq('role','coach'),sb.from('team_staff_roles').select('user_id')]);
+    const ids=new Set([...(gc.error?[]:(gc.data||[])),...(ts.error?[]:(ts.data||[]))].map(x=>String(x.user_id)));
+    if(ids.size){
+      let pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',[...ids]);
+      if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',[...ids]);
+      if(!pr.error){window._v649Staff=(pr.data||[]).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'}));window._v649At=Date.now()}
+    }
+  }catch(e){}
+  return window._v649Staff||[];
+}
 async function v530NotifyOrganizersRsvp(kind,eventId,team,status,reason){
   try{
     const r=await sb.from(V498_TABLE_BY_KIND[kind]).select('*').eq('id',eventId).maybeSingle();
     const ev=r.data;if(!ev)return;
     const orgs=new Set([ev.created_by?String(ev.created_by):null,...(await v512FetchOrganizerIds({kind,id:eventId},team))].filter(Boolean));
+    // V649 · eventos ya publicados sin organizador (creados antes de guardar quién los creó): se avisa al equipo técnico del equipo
+    if(!orgs.size){try{(await v499StaffForTeam(team)).forEach(x=>orgs.add(String(x.user_id)))}catch(e){}}
     orgs.delete(String(currentUser?.id));
     if(!orgs.size){console.warn('RSVP: el evento no tiene organizadores a los que avisar');return}
     const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
@@ -2739,7 +2755,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="647";
+const APP_VERSION="648";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4512,10 +4528,11 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   container.querySelectorAll('.v514SegBtn').forEach(b=>b.onclick=()=>{inviteMode=b.dataset.mode;paintSeg();paintPeople()});
   async function paintOrgs(){
     const box=$('v518Orgs'),sel=$('v518OrgSel');if(!box||!sel)return;
-    const people=v499MergeRoster((await Promise.all([...teamsSel].map(rosterFor))).flat(),[]);
+    const people=v499MergeRoster([...(await Promise.all([...teamsSel].map(rosterFor))).flat(),...await v649AllStaff()],[]);
+    const staffOnly=await v649AllStaff();
     const nameOf=id=>String(id)===String(currentUser?.id)?'Tú':(people.find(p=>String(p.user_id)===String(id))?.full_name||'Persona de otro grupo');
     box.innerHTML=[...orgSel].map(id=>`<span class="v513Chip on">${esc(nameOf(id))} <button type="button" class="v518OrgDel" data-id="${esc(id)}">✕</button></span>`).join('')||'<span class="muted"><small>Sin organizadores añadidos.</small></span>';
-    sel.innerHTML='<option value="">— Añadir organizador —</option>'+people.filter(p=>!orgSel.has(String(p.user_id))&&String(p.user_id)!==String(currentUser?.id)).map(p=>`<option value="${esc(p.user_id)}">${esc(p.full_name||'Sin nombre')}</option>`).join('');
+    sel.innerHTML='<option value="">— Añadir organizador —</option>'+staffOnly.filter(p=>!orgSel.has(String(p.user_id))&&String(p.user_id)!==String(currentUser?.id)).map(p=>`<option value="${esc(p.user_id)}">${esc(p.full_name||'Sin nombre')}</option>`).join('');
     box.querySelectorAll('.v518OrgDel').forEach(b=>b.onclick=()=>{orgSel.delete(b.dataset.id);paintOrgs()});
   }
   $('v518OrgAddBtn').onclick=()=>{const v=$('v518OrgSel').value;if(!v)return;orgSel.add(String(v));paintOrgs()};
@@ -4766,7 +4783,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V512 · organizadores = quien lo creó (created_by) + los añadidos a mano (event_organizers).
   const orgIds=[...new Set([ev.created_by?String(ev.created_by):null,...(organizerIds||[])].filter(Boolean))];
   if(!orgIds.length&&canEdit&&currentUser?.id)orgIds.push(String(currentUser.id));
-  const nameOf=uid=>String(uid)===String(currentUser?.id)?'Tú':(roster.find(p=>String(p.user_id)===String(uid))?.full_name||null);
+  const nameOf=uid=>String(uid)===String(currentUser?.id)?'Tú':(roster.find(p=>String(p.user_id)===String(uid))?.full_name||(window._v649Staff||[]).find(p=>String(p.user_id)===String(uid))?.full_name||null);
   const cancelled=!!ev.cancelled_at;
   const rsvp=opensFuture||cancelled?'':v493RsvpWidgetHtml(ev.id,team,myStatus,ev.kind);
   // V514 · "Quién ve las respuestas: solo organizadores" — el resto solo ve su propia respuesta.
@@ -4786,7 +4803,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V512 · "Añadir organizador" como en Spond (sustituye al cuadro de "marcar la asistencia de otra
   // persona"): la persona añadida recibe un aviso y es ella quien acepta.
   const orgNames=orgIds.map(uid=>{const n=nameOf(uid);if(!n)return '';const removable=canEdit&&organizerIds&&organizerIds.includes(uid)&&String(uid)!==String(ev.created_by);return `<span class="v512OrgName">${esc(n)}${removable?` <button type="button" class="v512RemoveOrg" data-uid="${esc(uid)}" title="Quitar organizador">✕</button>`:''}</span>`}).filter(Boolean);
-  const candidates=canEdit?roster.filter(p=>!orgIds.includes(String(p.user_id))):[];
+  const candidates=canEdit?((window._v649Staff&&window._v649Staff.length)?window._v649Staff:(staffList||[])).filter(p=>!orgIds.includes(String(p.user_id))&&String(p.user_id)!==String(currentUser?.id)):[];
   const addOrg=canEdit&&organizerIds!==null?`<button type="button" class="v512AddOrgToggle">+ Añadir organizador</button><div class="v512AddOrgBox hidden"><select class="v512AddOrgSelect"><option value="">— Elegir persona —</option>${candidates.map(p=>`<option value="${esc(p.user_id)}">${esc(p.full_name||'Sin nombre')}</option>`).join('')}</select><button type="button" class="v512AddOrgConfirm primary">Añadir y avisar</button></div>`:'';
   const organizerLine=(orgNames.length||addOrg)?`<div class="v512OrgLine">${orgNames.length?`<span class="muted">Organizador${orgNames.length>1?'es':''}:</span> ${orgNames.join(', ')}`:''}${addOrg}</div>`:'';
   const chat=opensFuture||ev.chat_enabled===false?'':(showChat?`<details class="libraryAccordion v494EventChatAccordion" data-id="${ev.id}" data-team="${esc(team||'')}" data-kind="${ev.kind}"><summary>💬 Chat del evento</summary><div class="accordionBody v494EventChatBody"></div></details>`:'');
@@ -5184,6 +5201,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
       ev2._linkedSessions=(ls.data||[]).sort((a,b)=>String(a.session_type).localeCompare(String(b.session_type)));
     }else ev2._linkedSessions=[];
     const activeTab=reuse?body.querySelector('.v493SumRow.active')?.dataset.key:null;
+    if(canEdit){try{await v649AllStaff()}catch(e){}}
     body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2,orgIds2);
     if(reuse){cardEl.scrollTop=keepScroll;if(activeTab)setTimeout(()=>body.querySelector(`.v493SumRow[data-key="${activeTab}"]`)?.click(),0);if(openChats){const d=body.querySelector('.v494EventChatAccordion');if(d)d.open=true}}
     v495WireRsvpButtons(body,reopen);
