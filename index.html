@@ -2739,7 +2739,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="643";
+const APP_VERSION="644";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8237,7 +8237,7 @@ async function v583Chat(anchor,cfg){
     layer=document.createElement('div');layer.className='v583Full'+(window._v642Sw?' v642Sw':'');document.body.appendChild(layer);container=layer;anchor.innerHTML='';
     const hd=anchor._v583Head||{};
     layer.innerHTML=`<div class="v583Head">${hd.onBack?'<button type="button" class="v583Back">← Conversaciones</button>':''}<b>${esc(hd.title||cfg.title||'')}</b>${cfg.headRight?cfg.headRight():''}</div>${anchor._v617Tabs?anchor._v617Tabs.html():''}<div class="v583Body"></div>`;
-    layer.querySelectorAll('.v617Tab').forEach(b=>b.onclick=()=>{if(!b.classList.contains('active'))anchor._v617Tabs.onTab(b.dataset.k)});
+    layer.querySelectorAll('.v617Tab,.v642Tab').forEach(b=>b.onclick=()=>{if(!b.classList.contains('active'))anchor._v617Tabs.onTab(b.dataset.k)});
     container=layer.querySelector('.v583Body');
     layer.querySelector('.v605Avisos')?.addEventListener('click',()=>openNotificationsV104());
     if(hd.onBack)layer.querySelector('.v583Back').onclick=()=>{window._v583Cleanup&&window._v583Cleanup();hd.onBack()};
@@ -8985,9 +8985,10 @@ async function v642RenderMsgTabs(container,swap){
       const [tu,cu]=await Promise.all([tabNow==='coach'?v617TeamUnread(currentTeamCode):0,tabNow==='team'?v617CoachUnreadAthlete():0]);
       const lbl={es:'Entrenador',en:'Coach',nl:'Coach'}[currentLocale]||'Entrenador';
       const dot=n=>n?`<i class="v617Dot">${n>9?'9+':n}</i>`:'';
-      container._v617Tabs={html:()=>`<div class="v617Tabs"><span class="v617Pill" data-to="${cur}" style="--i:${cur}"></span><button type="button" class="v617Tab ${tabNow==='coach'?'active':''}" data-k="coach">💬 ${lbl}${dot(cu)}</button><button type="button" class="v617Tab ${tabNow==='team'?'active':''}" data-k="team">👥 ${esc(teamShort(currentTeamCode))}${dot(tu)}</button></div>`,onTab:k=>{
-        const pl=document.querySelector('.v583Full .v617Pill');if(pl)pl.style.setProperty('--i',k==='team'?1:0);
-        document.querySelectorAll('.v583Full .v617Tab').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
+      container._v617Tabs={html:()=>`<div class="v569Seg viewToggle v576Seg v642Seg${cur?' segR':''}"><button type="button" class="v642Tab ${tabNow==='coach'?'active':''}" data-k="coach">💬 ${lbl}${dot(cu)}</button><button type="button" class="v642Tab ${tabNow==='team'?'active':''}" data-k="team">👥 ${esc(teamShort(currentTeamCode))}${dot(tu)}</button></div>`,onTab:k=>{
+        const sg=document.querySelector('.v583Full .v642Seg');
+        if(sg){sg.querySelectorAll('.v642Tab').forEach(b=>b.classList.toggle('active',b.dataset.k===k));
+          if(k==='team'){sg.classList.add('segR','segGoR');sg.classList.remove('segGoL')}else{sg.classList.remove('segR','segGoR');sg.classList.add('segGoL')}}
         window._v617Tab=k;v642RenderMsgTabs(container,true)}};
       if(tabNow==='team'){await v617RenderTeamChat(container,currentTeamCode);await v300RefreshUnreadMsgCount();draw();return}
     }
@@ -10341,10 +10342,8 @@ function printableSeasonHtmlV170(d){
   .v503DetailBody .workoutList,.v503DetailBody .workoutCompact{margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}
   .v503DetailBody .tableWrap{margin-left:-4px;margin-right:-4px}
 }
-.v617Tabs{position:relative}
-.v617Pill{position:absolute;top:6px;bottom:8px;left:0;width:calc((100% - 6px)/2);background:#2563eb;border-radius:999px;transition:transform .3s cubic-bezier(.3,.8,.3,1);transform:translateX(calc(var(--i,0)*(100% + 6px)));z-index:0}
-.v617Tab{position:relative;z-index:1;transition:color .2s}
-.v617Tab.active{background:transparent!important;border-color:transparent!important}
+.v642Seg{margin:6px 0 8px!important}
+.v642Seg .v642Tab{display:flex!important;align-items:center;justify-content:center;gap:6px}
 .v583Full.v642Sw .v583Body{animation:v642F .24s ease}
 @keyframes v642F{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 </style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Senior masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
