@@ -2685,7 +2685,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="611";
+const APP_VERSION="612";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10674,6 +10674,8 @@ async function coachSeaResultsView(){
   // arriba, sin ese hueco de por medio).
   // V422 · se quita también el <h2> "Análisis MAR · Equipo": duplicaba el botón "MAR · Equipo" que
   // ya está activo justo encima. Menos margen entre el toggle y el primer control.
+  try{const preTeam=(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))?coachSelectedTeam:(allowed[0]&&allowed[0][0]);if(preTeam)await getSeaResultsForTeam(preTeam,'2026-09-01','2027-05-31')}catch(e){}
+  if(r!=="coach")return;
   content.innerHTML=`<div class="card"><div class="v569Seg viewToggle v576Seg"><button class="active" type="button">MAR · Equipo</button><button id="analysisAthletes" type="button">Remeros</button></div><div class="v573Top v576Eq"><label>Equipo<select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label><label>Periodo<select id="seaPeriod">${monthOptions(monthFilter)}<option value="all" ${monthFilter==='all'?'selected':''}>Toda la temporada</option></select></label></div><div class="v576Sel"><span id="seaSelectionInfo" class="muted"></span><button id="clearSeaSelection" type="button" class="v576Link">Limpiar selección</button></div><div id="seaCal"></div><h3 style="margin:14px 0 6px">Comparación seleccionada</h3><div id="seaCompare"></div><h3 style="margin:14px 0 6px">Evolución automática de ejercicios repetidos</h3><div id="seaAuto"></div></div>`;
   document.getElementById('analysisAthletes').onclick=e=>{const sg=e.currentTarget.closest('.v576Seg');if(sg){sg.classList.add('segR','segGoR')}setTimeout(()=>results(),230)};
   const teamSel=document.getElementById('seaResTeam'),periodSel=document.getElementById('seaPeriod'),cal=document.getElementById('seaCal'),cmp=document.getElementById('seaCompare'),auto=document.getElementById('seaAuto'),info=document.getElementById('seaSelectionInfo');
@@ -10748,7 +10750,7 @@ function ageFromBirthV103(v){
 function metricValueV103(v,suffix=''){return v===null||v===undefined||v===''?'<span class="profilePendingV103">Pendiente</span>':`${esc(String(v))}${suffix}`}
 function zonesCompactV103(m){if(!m)return 'Pendiente';return ['UT2','UT1','AT','TR','AN'].map(z=>{const k=z.toLowerCase();return `${z} ${m[k+'_min']??'—'}–${m[k+'_max']??'—'}`}).join(' · ')}
 async function results(){
-  content.innerHTML=`<div class="card"><div class="v569Seg viewToggle v576Seg segR"><button type="button">MAR · Equipo</button><button class="active" type="button">Remeros</button></div><p class="muted">${v316Loading()}</p></div>`;
+  // V612 · sin pantalla intermedia: la vista anterior (con el interruptor ya deslizado) se queda hasta que llegan los datos y se cambia de una vez.
   const visibleTeams=(currentMode==='staff'&&!isGlobalCoach)?editableTeamCodes():TEAM_OPTIONS.map(x=>x[0]);
   const [pr,mt,wo,gy,er,c2,ss,rm,cx,ms,an]=await Promise.all([
     sb.from('profiles').select('user_id,full_name,height_cm,birth_date,team_code').order('full_name'),
