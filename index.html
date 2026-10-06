@@ -1048,6 +1048,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v664Sub{font-weight:700;margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--border)}
 .v672Panel{padding:14px 16px}.v672H{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:17px}.v672N{background:#e11d48;color:#fff;border-radius:99px;font-size:12px;padding:1px 8px;font-weight:700}.v672Row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text);padding:10px 2px;font-size:14.5px;line-height:1.35}.v672Row:first-of-type{border-top:0}.v672Ic{flex:0 0 auto}.v672Tx{flex:1;min-width:0}.v672Ch{color:var(--text-muted);font-size:20px}
 .v674Boats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 2px 10px 30px;font-size:13.5px}.v674Boats button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:5px 12px;font-size:13.5px}.v674Boats button.on{background:#0f2a4a;color:#fff;border-color:#0f2a4a}
+.v678Cat{padding:14px 16px}.v678Item{border-top:1px solid var(--border)}.v678Item:first-of-type{border-top:0}.v678Open{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:12px 2px}.v678Ic{font-size:22px;flex:0 0 auto}.v678Tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.v678Tx small{font-size:13px;overflow:hidden;text-overflow:ellipsis}.v678Adm{display:flex;gap:8px;padding:0 2px 10px 36px}.v678Adm button{padding:5px 12px;font-size:13.5px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2879,7 +2880,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="675";
+const APP_VERSION="678";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3584,6 +3585,7 @@ function v332Icon(name,size=18){
     eventos:'<path d="M5 3v4"/><path d="M5 3h12l3 4-3 4H5"/><path d="M5 20v-9"/>',
     altas:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a7 7 0 0114 0v1"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>',
     equipo:'<circle cx="8.5" cy="8" r="3.5"/><path d="M2 20v-1a6.5 6.5 0 0113 0v1"/><circle cx="17" cy="9" r="2.5"/><path d="M15 20v-1a5 5 0 00-2-4"/>',
+    recursos:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>',
     sistema:'<rect x="3" y="9" width="18" height="10" rx="1.5"/><path d="M8 9V6a4 4 0 018 0v3"/>',
     biblioteca:'<path d="M4 4.5A2.5 2.5 0 016.5 2H19a1 1 0 011 1v16a1 1 0 01-1 1H6.5A2.5 2.5 0 014 17.5v-13z"/><path d="M4 17.5A2.5 2.5 0 016.5 15H20"/>',
     hist:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>',
@@ -3730,7 +3732,7 @@ function v330GroupForTab(t){
   if(currentMode==='staff'){
     if(t==='registro')return 'trabajo';
     if(t==='planificar'||t==='result')return 'actividad';
-    if(t==='equipo'||t==='sistema')return 'yo';
+    if(t==='equipo'||t==='sistema'||t==='recursos')return 'yo';
   }
   return null;
 }
@@ -3798,12 +3800,12 @@ function v390MasBarHtml(activeTab){
   // existe en modo remero para volver). Se añade aquí un botón explícito y simétrico.
   const items=[
     ['perfil','Perfil','perfil'],
-    ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo']]:[]),
+    ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo'],['recursos','Recursos','recursos']]:[]),
     ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Modo remero':'Modo entrenador','compass']]:[]),
     ['__settings__','Ajustes','ajustes']
     // V577 · Ayuda, Sistema y Salir pasan a la ventana de Ajustes (barra de arriba más limpia)
   ];
-  const navTabs=['perfil','equipo','sistema','ayuda'];
+  const navTabs=['perfil','equipo','recursos','sistema','ayuda'];
   return `<div class="card v330ProfileQuickActions v390MasBar v577Bar" style="--v577n:${items.length}">${items.map(([action,label,icon])=>{
     const isActive=navTabs.includes(action)&&action===activeTab;
     const badge=(action==='equipo'&&pendingRegistrationCount)?`<span class="nBadge">${pendingRegistrationCount>9?'9+':pendingRegistrationCount}</span>`:'';
@@ -3826,7 +3828,7 @@ function v330InjectSubTabs(){
   const group=v330GroupForTab(tab);
   // V391 · "Más" (Perfil/Equipo/Sistema) usa la barra compartida v390MasBarHtml/v390BindMasBar,
   // fija arriba en las tres pantallas, con el botón activo marcado según dónde esté el entrenador.
-  if(currentMode==='staff'&&group==='yo'&&(tab==='perfil'||tab==='equipo'||tab==='sistema')){
+  if(currentMode==='staff'&&group==='yo'&&(tab==='perfil'||tab==='equipo'||tab==='sistema'||tab==='recursos')){
     const el=document.getElementById('content');
     if(!el||!el.firstElementChild||el.querySelector('.v390MasBar'))return;
     const wrap=document.createElement('div');
@@ -3860,7 +3862,7 @@ function render(){
     if(tab==="hoy")return staffTodayView();if(tab==="semana"){if(!coachWeekStart||coachWeekStart==="2026-08-31")coachWeekStart=mondayOfISO(localISODate());return coachWeekView()}if(tab==="registro")return staffRegisterView();
     // V379 · "Mes" se activa para el entrenador (antes solo el remero la tenía), dentro del grupo Trabajo.
     if(tab==="mes"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachMonthView();}
-    if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
+    if(tab==="recursos"&&hasAnyCoachTeam())return staffResourcesView();if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
@@ -3977,6 +3979,74 @@ async function staffTodayView(){
   content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}${x.is_event?' · convocatoria':''}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
   try{v672TodayPanel()}catch(e){console.warn('v672',e)}
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
+}
+// V678 · Recursos para entrenadores: enlaces (cámaras del mar, webs, vídeos) y archivos de formación.
+// Los ve todo el equipo técnico; solo el administrador añade/edita/borra (SQL 67_recursos_entrenadores.sql).
+const V678_CATS=['Cámaras y mar','Formación','Documentos','Enlaces útiles'];
+async function staffResourcesView(){
+  content.innerHTML=`<div class="card"><p class="muted">${v316Loading('Cargando recursos…')}</p></div>`;
+  const q=await sb.from('staff_resources').select('*').order('category').order('title');
+  if(tab!=='recursos')return;
+  if(q.error){content.innerHTML=`<div class="card"><h2>Recursos</h2><p>${/does not exist|relation/i.test(q.error.message||'')?'Falta ejecutar 67_recursos_entrenadores.sql en Supabase.':esc(q.error.message)}</p></div>`;return}
+  const rows=q.data||[],admin=!!isGlobalCoach;
+  const cats=[...new Set(rows.map(r=>r.category||'General'))];
+  const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
+  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button>${admin?`<div class="v678Adm"><button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button></div>`:''}</div>`;
+  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📁 Recursos</h2>${admin?'<button type="button" class="primary" id="v678Add">+ Añadir recurso</button>':''}</div><p class="muted" style="margin:6px 0 0">Enlaces y archivos para el equipo técnico: cámaras del mar, formación, documentos…</p></div>`
+    +(cats.length?cats.map(c=>`<div class="card v678Cat"><h3 style="margin:0 0 4px">${esc(c)}</h3>${rows.filter(r=>(r.category||'General')===c).map(item).join('')}</div>`).join(''):`<div class="card"><p class="muted" style="margin:0">Todavía no hay recursos.${admin?' Pulsa "+ Añadir recurso" para empezar.':' El administrador los irá añadiendo.'}</p></div>`);
+  const byId=id=>rows.find(r=>String(r.id)===String(id));
+  content.querySelectorAll('.v678Open').forEach(b=>b.onclick=async()=>{
+    const r=byId(b.dataset.id);if(!r)return;
+    if(r.kind==='link'){const u=/^https?:\/\//i.test(r.url||'')?r.url:'https://'+(r.url||'');window.open(u,'_blank','noopener');return}
+    const w=window.open('about:blank','_blank');
+    const sg=await sb.storage.from('staff-resources').createSignedUrl(r.file_path,3600);
+    const u=sg.data?.signedUrl||sg.data?.signedURL;
+    if(!u){try{w&&w.close()}catch(_){}alert('No se pudo abrir el archivo.');return}
+    if(w)w.location.href=u;else location.href=u;
+  });
+  content.querySelectorAll('.v678Del').forEach(b=>b.onclick=async()=>{
+    const r=byId(b.dataset.id);if(!r||!confirm(`¿Borrar "${r.title}"?`))return;
+    if(r.kind==='file'&&r.file_path){try{await sb.storage.from('staff-resources').remove([r.file_path])}catch(_){}}
+    const d=await sb.from('staff_resources').delete().eq('id',r.id);
+    if(d.error)return alert('No se pudo borrar: '+d.error.message);
+    staffResourcesView();
+  });
+  content.querySelectorAll('.v678Edit').forEach(b=>b.onclick=()=>v678Form(byId(b.dataset.id),cats));
+  const add=document.getElementById('v678Add');if(add)add.onclick=()=>v678Form(null,cats);
+}
+function v678Form(r,cats){
+  const allCats=[...new Set([...V678_CATS,...cats])];
+  const lay=v631Modal(r?'Editar recurso':'Nuevo recurso',`<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+    <label>Título<input id="v678T" value="${esc(r?.title||'')}" placeholder="Cámara playa del Pedregal"></label>
+    <label>Categoría<input id="v678C" list="v678CL" value="${esc(r?.category||allCats[0])}"><datalist id="v678CL">${allCats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
+    <label>Descripción (opcional)<input id="v678D" value="${esc(r?.description||'')}" placeholder="Se ve el estado del mar en directo"></label>
+    ${r?'':`<label>Tipo<select id="v678K"><option value="link">🔗 Enlace</option><option value="file">📄 Archivo</option></select></label>`}
+    <label id="v678UrlBox" ${r&&r.kind==='file'?'class="hidden"':''}>Enlace<input id="v678U" type="url" value="${esc(r?.url||'')}" placeholder="https://…"></label>
+    <label id="v678FileBox" class="hidden">Archivo (máx. 30 MB)<input id="v678F" type="file"></label>
+    <button type="button" class="primary" id="v678Save">Guardar</button></div>`);
+  const $=id=>lay.querySelector('#'+id),kind=()=>r?r.kind:$('v678K').value;
+  const sync=()=>{const k=kind();$('v678UrlBox').classList.toggle('hidden',k!=='link');$('v678FileBox').classList.toggle('hidden',k!=='file'||!!r)};
+  if(!r)$('v678K').onchange=sync;sync();
+  $('v678Save').onclick=async()=>{
+    const title=$('v678T').value.trim(),category=$('v678C').value.trim()||'General',description=$('v678D').value.trim()||null,k=kind();
+    if(!title)return alert('Pon un título.');
+    const btn=$('v678Save');btn.disabled=true;btn.textContent='Guardando…';
+    const fail=m=>{alert(m);btn.disabled=false;btn.textContent='Guardar'};
+    let fields={title,category,description,updated_at:new Date().toISOString()};
+    if(k==='link'){const u=$('v678U').value.trim();if(!u)return fail('Pon el enlace.');fields={...fields,kind:'link',url:u}}
+    else if(!r){
+      const f=$('v678F').files&&$('v678F').files[0];if(!f)return fail('Elige un archivo.');
+      if(f.size>30*1048576)return fail('El archivo pesa más de 30 MB.');
+      const safe=String(f.name).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
+      const path=`recursos/${Date.now()}-${safe}`;
+      const up=await sb.storage.from('staff-resources').upload(path,f,{contentType:f.type||'application/octet-stream',cacheControl:'3600'});
+      if(up.error)return fail(/bucket not found|not found/i.test(up.error.message||'')?'Falta ejecutar 67_recursos_entrenadores.sql en Supabase.':'No se pudo subir: '+up.error.message);
+      fields={...fields,kind:'file',file_path:path,file_name:f.name,file_type:f.type||null,file_size:f.size};
+    }
+    const res=r?await sb.from('staff_resources').update(fields).eq('id',r.id):await sb.from('staff_resources').insert(fields);
+    if(res.error)return fail('No se pudo guardar: '+res.error.message);
+    lay.remove();staffResourcesView();
+  };
 }
 // V672 · "Qué me falta" · tarjeta al inicio de Hoy (entrenador): altas, respuestas pendientes de los próximos 7 días,
 // chats sin contestar y solapes de horario entre equipos. Se pinta sin bloquear la pantalla.
