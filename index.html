@@ -750,7 +750,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Reacts{margin-top:-6px!important;position:relative;z-index:1}
 .v583Compose{align-items:flex-end!important;gap:6px!important}
 .v494EventChatAccordion>.v494EventChatBody{padding:4px 0!important}.v494EventChatBody [id^="v494ChatScroll_"]{border:0!important;background:transparent!important;padding:2px 0!important}
-.v623Menu{display:flex!important;flex-direction:column;min-width:190px;padding:6px!important;gap:2px}.v623Menu button{text-align:left;border:0;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:15px}.v623Menu button:active{background:var(--surface-2)}.v623Menu button.dng{color:#dc2626}
+.v623Menu{border-radius:14px!important;display:flex!important;flex-direction:column;min-width:190px;padding:6px!important;gap:2px}.v623Menu button{text-align:left;border:0;background:transparent;color:var(--text);padding:10px 12px;border-radius:8px;font-size:15px}.v623Menu button:active{background:var(--surface-2)}.v623Menu button.dng{color:#dc2626}
 .v623Quote{border-left:3px solid rgba(37,99,235,.9);background:rgba(0,0,0,.08);border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;text-align:left;overflow:hidden}.v623Quote b{display:block;font-size:12px}.v623Quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85}
 .v623Reply{display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px 10px;border-left:3px solid #2563eb;background:var(--surface-2);border-radius:8px;font-size:13px}.v623Reply div{flex:1;min-width:0}.v623Reply b{display:block}.v623Reply span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)}.v623Reply button{border:0;background:transparent;font-size:18px;color:var(--text-muted)}
 .v617Tabs{display:flex;gap:6px;padding:6px 0 8px}.v617Tab{flex:1;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 10px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.v617Tab.active{background:#2563eb;border-color:#2563eb;color:#fff}.v617Dot{font-style:normal;background:#ef4444;color:#fff;border-radius:99px;min-width:18px;height:18px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
@@ -2713,7 +2713,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="623";
+const APP_VERSION="624";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8431,6 +8431,7 @@ async function v617Members(team){
   const c=window._v617Members[team];if(c&&Date.now()-c.t<5*60000)return c.list;
   let list=[];
   try{const r=await sb.rpc('list_team_roster_v597',{p_team:team});if(!r.error)list=(r.data||[]).filter(x=>x.full_name)}catch(e){}
+  { const seen=new Set();list=list.filter(p=>{const k=String(p.user_id);if(seen.has(k))return false;seen.add(k);return true}); }
   list.forEach(p=>V583_NAMES.set(String(p.user_id),p.full_name));
   window._v617Members[team]={t:Date.now(),list};return list;
 }
@@ -8461,6 +8462,10 @@ async function v617RenderTeamChat(container,team){
   const T={empty:{es:'Aún no hay mensajes en el chat del equipo. Escribe el primero 👇',en:'No messages in the team chat yet. Write the first one 👇',nl:'Nog geen berichten in de teamchat. Schrijf het eerste 👇'},ph:{es:'Escribe al equipo…',en:'Write to the team…',nl:'Schrijf naar het team…'},send:{es:'Enviar',en:'Send',nl:'Verstuur'}};
   const COLS=()=>(window._v583NoAttT?'id,sender_id,body,created_at':V583_ATT_COLS)+(window._v623NoReply?'':',reply_to');
   const others=sid=>members.filter(m=>String(m.user_id)!==String(sid));
+  const allRows=[];
+  // quien ha escrito un mensaje DESPUÉS del tuyo, lo ha leído (aunque no tenga marca de lectura todavía)
+  const inferred=(msgId)=>{const m=allRows.find(x=>String(x.id)===String(msgId));const out=new Map();if(!m)return out;
+    allRows.forEach(x=>{if(String(x.sender_id)!==String(m.sender_id)&&new Date(x.created_at)>new Date(m.created_at)){const k=String(x.sender_id);if(!out.has(k)||x.created_at<out.get(k))out.set(k,x.created_at)}});return out};
   const ensureNames=async rows=>{
     const need=[...new Set(rows.map(m=>String(m.sender_id)))].filter(i=>!V583_NAMES.has(i));
     if(!need.length)return;
@@ -8478,13 +8483,15 @@ async function v617RenderTeamChat(container,team){
         if(q.error)return[];
         const need=others(currentUser.id).length,by=new Map();
         (q.data||[]).forEach(x=>{const k=String(x.message_id);if(!by.has(k))by.set(k,[]);by.get(k).push(x)});
-        return ids.map(id=>{const l=(by.get(String(id))||[]).filter(x=>String(x.user_id)!==String(currentUser.id));const done=need>0&&l.length>=need;
-          return{id,rc:l.length,read_at:done?l.map(x=>x.read_at).sort().pop():null}});
+        return ids.map(id=>{const got=new Map();(by.get(String(id))||[]).forEach(x=>got.set(String(x.user_id),x.read_at));inferred(id).forEach((t,k)=>{if(!got.has(k))got.set(k,t)});got.delete(String(currentUser.id));
+          const n=others(currentUser.id).filter(m=>got.has(String(m.user_id))).length,done=need>0&&n>=need;
+          return{id,rc:n,read_at:done?[...got.values()].sort().pop():null}});
       }catch(e){return[]}
     },
     info:async m=>{
       const q=await sb.from('team_chat_reads').select('user_id,read_at').eq('message_id',m.id);
       const got=new Map((q.data||[]).map(x=>[String(x.user_id),x.read_at]));
+      inferred(m.id).forEach((t,k)=>{if(!got.has(k))got.set(k,t)});
       const oth=others(m.sender_id);
       return{read:oth.filter(x=>got.has(String(x.user_id))).map(x=>({name:x.full_name,at:got.get(String(x.user_id))})).sort((a,b)=>String(a.at).localeCompare(String(b.at))),
              pending:oth.filter(x=>!got.has(String(x.user_id))).map(x=>x.full_name)};
@@ -8497,6 +8504,7 @@ async function v617RenderTeamChat(container,team){
         if(r.error&&/att_/.test(r.error.message||'')){window._v583NoAttT=true;r=await mk(COLS())}
         if(r.error)return[];
         const rows=since?(r.data||[]):(r.data||[]).reverse();
+        rows.forEach(x=>{if(!allRows.some(y=>String(y.id)===String(x.id)))allRows.push({id:x.id,sender_id:x.sender_id,created_at:x.created_at})});
         await ensureNames(rows);return rows;
       }catch(e){return[]}
     },
