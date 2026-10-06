@@ -2709,7 +2709,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="618";
+const APP_VERSION="619";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8302,14 +8302,16 @@ async function v300RefreshUnreadMsgCount(){
     if(currentMode==='athlete'&&currentUser){
       const seenKey='rowtraining_v300_chat_seen_'+currentUser.id;
       const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
-      const q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).eq('rower_id',currentUser.id).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
+      let q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).eq('rower_id',currentUser.id).neq('sender_id',currentUser.id).is('read_at',null);
+      if(q.error)q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).eq('rower_id',currentUser.id).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
       v300UnreadMsgCount=q.count||0;
     }else if(currentMode==='staff'&&hasAnyCoachTeam()){
       const seenKey='rowtraining_v300_chat_seen_staff_'+currentUser.id;
       const lastSeen=localStorage.getItem(seenKey)||'1970-01-01T00:00:00.000Z';
       const teams=staffViewTeamCodes();
       if(teams.length){
-        const q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
+        let q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).is('read_at',null);
+        if(q.error)q=await sb.from('chat_messages').select('id',{count:'exact',head:true}).in('team_code',teams).neq('sender_id',currentUser.id).gt('created_at',lastSeen);
         v300UnreadMsgCount=q.count||0;
       }else v300UnreadMsgCount=0;
     }else v300UnreadMsgCount=0;
@@ -8470,11 +8472,13 @@ async function coachMessagesView(){
     box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     const activeTeams=teamSel.value==='all'?teams:[teamSel.value];
     coachSelectedTeam=teamSel.value==='all'?coachSelectedTeam:teamSel.value;
-    const [rosterByTeam,msgsRes]=await Promise.all([Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)}))),sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400)]);
+    const [rosterByTeam,msgsRes]=await Promise.all([Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)}))),sb.from('chat_messages').select('rower_id,body,sender_id,created_at,read_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400)]);
+    let msgsData=msgsRes.data||[],hasRead=!msgsRes.error;
+    if(msgsRes.error){const m2=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400);msgsData=m2.data||[]}
     let tmsgs=[];try{const tq=await sb.from('team_chat_messages').select('team_code,body,sender_id,created_at,att_type').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(200);if(!tq.error)tmsgs=tq.data||[]}catch(e){}
     const teamHtml=activeTeams.map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px"><div style="min-width:0"><b>${unread?'🔵 ':''}👥 Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</small></button>`}).join('');
     const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
-    const lastByRower=new Map();(msgsRes.data||[]).forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
+    const lastByRower=new Map();msgsData.forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
     const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
       if(x.last&&y.last)return new Date(y.last.created_at)-new Date(x.last.created_at);
       if(x.last)return -1;if(y.last)return 1;
@@ -8483,7 +8487,7 @@ async function coachMessagesView(){
     if(!rows.length){box.innerHTML=teamHtml+'<p class="muted">No hay remeros en este equipo.</p>';box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));if(typeof v360FinishLoad==='function')v360FinishLoad();return}
     box.innerHTML=teamHtml+rows.map(({a,last})=>{
       const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
-      const unread=!!last&&last.sender_id!==currentUser.id&&new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0);
+      const unread=!!last&&last.sender_id!==currentUser.id&&(hasRead?!last.read_at:new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0));
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
       return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
