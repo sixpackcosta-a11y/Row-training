@@ -601,7 +601,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .v545SegBtn.on{background:var(--surface,#fff)!important;color:var(--text,#0f172a)!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
 .v544Actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line,rgba(0,0,0,.08))}
 .v544Actions>button{width:100%;margin:0;padding:10px 6px;font-size:.92em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.v544Actions>.v544Warn{color:#b45309}
+.v544Actions>.v544Warn{color:#e08a1a}
 .v544Actions>.v571Wide{grid-column:1/-1}
 .v544Actions>.v544Del{grid-column:1/-1;background:transparent;border-color:transparent;color:#c0392b;padding:8px 6px;font-size:.88em}
 .v544Train{margin:10px 0}.v544Train>summary{font-weight:600}.v546Sum{flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v546Sum .muted{font-weight:400}
@@ -1080,6 +1080,18 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v689FC{justify-content:flex-start}.v689FC input{width:20px;height:20px}
 .v689Set .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .v689Util{display:flex;justify-content:center;padding:10px 0 2px}.v689ResetBtn{background:transparent;border:0;color:#e0625f;font-size:17px;font-weight:600;letter-spacing:.08em;padding:8px 22px}
+.v696Box{margin:8px 0;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+.v696Head{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.v696Pill{font-weight:700;font-size:13px;padding:3px 10px;border-radius:999px}
+.v696ok{background:rgba(22,163,74,.14);color:#22a55a}.v696amber{background:rgba(217,119,6,.16);color:#e08a1a}.v696red{background:rgba(220,38,38,.14);color:#ef5350}
+.v696Line{font-size:13.5px;color:var(--text)}
+.v696Why{margin-top:5px;font-size:12.5px;color:var(--text-muted)}
+.v696Det{margin-top:6px;font-size:12.5px}.v696Det summary{cursor:pointer;color:var(--text-muted)}
+.v696Tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}.v696Tab th,.v696Tab td{padding:3px 4px;text-align:left;border-top:1px solid var(--border)}
+.v696Foot{margin-top:7px;font-size:11.5px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.v696Foot a{color:inherit;text-decoration:underline}
+.v696Gear{border:1px solid var(--border);background:transparent;color:inherit;border-radius:8px;padding:3px 9px;font:inherit;font-size:11.5px;cursor:pointer}
+.v696Cfg{margin-top:8px}.v696CfgTit{font-size:12px;font-weight:700;margin-bottom:6px}.v696Btns{display:flex;gap:8px;margin-top:8px}
+.v696Dot{margin-left:6px;font-size:12px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2911,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="695";
+const APP_VERSION="697";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5288,7 +5300,7 @@ function v503OverviewRowHtml(ev,clash){
   }
   const rightHtml=opensFuture?'':ev._hideCounts?'':`<div class="v503Counts"><span>✅ ${ev._counts.in}</span><span>❓ ${ev._counts.pending}</span><span>❌ ${ev._counts.out}</span>${ev._counts.wait?`<span>⏳ ${ev._counts.wait}</span>`:''}</div>`;
   const coverStyle=ev.cover_url?` style="background-image:linear-gradient(#0008,#0008),url('${esc(ev.cover_url)}')"`:'';
-  return `<button type="button" class="v503EventRow${ev._my==='out'?' v599Declined':''}" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamShort(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
+  return `<button type="button" class="v503EventRow${ev._my==='out'?' v599Declined':''}" data-team="${esc(ev._viewTeam)}" data-kind="${ev.kind}" data-id="${ev.id}" data-date="${esc(ev.event_date||'')}" data-time="${esc(ev.event_time||'')}" data-end="${esc(ev.end_time||'')}" data-st="${esc(ev.session_type||'')}" style="border-left:5px solid ${tc.stripe}"><div class="v503DateBlock${ev.cover_url?' v514Covered':''}"${coverStyle}><span class="v503Month">${esc(monthAbbr)}</span><span class="v503Day">${d.getUTCDate()}</span></div><div class="v503Info"><div class="v503Title">${esc(ev.event_title)}</div><div class="v503Sub">${esc(v506SpondDayTimeLabel(ev.event_date,ev.event_time))}</div><div class="v503Sub"><span class="v503Dot" style="background:${tc.stripe}"></span>${esc(teamShort(ev._viewTeam))}${extraTeams.length?` + ${esc(extraTeams.map(teamLabel).join(', '))}`:''} · ${esc(typeLabel)}${clash?' ⚠️':''}</div>${opensLine}</div>${rightHtml}</button>`;
 }
 // V506 · agrupa una lista de eventos (ya con _viewTeam/_counts, ver v503CountsForEvents) por semana
 // y los pinta como filas resumen — lo usan tanto la Vista general (varios equipos) como ahora
@@ -5576,6 +5588,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     const activeTab=reuse?body.querySelector('.v493SumRow.active')?.dataset.key:null;
     if(canEdit){try{await v649AllStaff()}catch(e){}}
     body.innerHTML=v495EventCardHtml(ev2,roster2,statusByUser,myStatus,tc,showChat,canEdit,staffList2,orgIds2);
+    try{V696.mount(body,ev2,canEdit)}catch(e){}
     if(reuse){cardEl.scrollTop=keepScroll;if(activeTab)setTimeout(()=>body.querySelector(`.v493SumRow[data-key="${activeTab}"]`)?.click(),0);if(openChats){const d=body.querySelector('.v494EventChatAccordion');if(d)d.open=true}}
     v649SkinDetail(layer,body);
     v495WireRsvpButtons(body,reopen);
@@ -5753,7 +5766,7 @@ async function coachEventsView(){
     const act=activeTeams();
     if(act.length===1)coachSelectedTeam=act[0];
     const when=V545_WHEN,snapKey='staff:'+act.join(',')+(when==='past'?':past':'');
-    const wireRows=()=>area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load));
+    const wireRows=()=>{try{V696.decorate(area,true)}catch(e){}area.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),true,load))};
     if(area.dataset.v545When!==when){area.dataset.v545When=when;area.innerHTML=''}
     if(!area.querySelector('.v503EventRow')){
       if(V538_SNAP.has(snapKey)){area.innerHTML=V538_SNAP.get(snapKey);wireRows()}
@@ -5796,7 +5809,7 @@ async function coachEventsView(){
 async function athleteEventsView(){
   const team=currentTeamCode;
   const when=V545_WHEN,snapKey='athlete:'+team+(when==='past'?':past':'');
-  const wireRowsA=()=>document.getElementById('eventsArea')?.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()));
+  const wireRowsA=()=>{const ar=document.getElementById('eventsArea');try{if(ar)V696.decorate(ar,false)}catch(e){}ar?.querySelectorAll('.v503EventRow').forEach(btn=>btn.onclick=()=>v503OpenEventDetail(btn.dataset.team,btn.dataset.kind,Number(btn.dataset.id),false,athleteEventsView,v495ChatVisibleForRower()))};
   const prevArea=document.getElementById('eventsArea');
   if(!prevArea||!document.getElementById('v545WhenBox')||prevArea.dataset.v545When!==when||!prevArea.querySelector('.v503EventRow')){
     if(!document.getElementById('v545WhenBox')||!prevArea){
@@ -14695,6 +14708,102 @@ return {open};
 
 
 
+
+</script>
+<script>
+// v696 · Semaforo de mar y viento en los eventos (Open-Meteo, sin clave). Datos de modelo, orientativos.
+window.V696=(function(){
+const ROWERS=false; // v697: poner true para abrir el semaforo a las remeras (sin umbrales)
+const KEY='rowtraining_wx696_cfg',CK='rowtraining_wx696_cache',TTL=45*60*1000;
+const DEF={lat:36.712,lon:-4.352,waveAmber:0.6,waveRed:1.0,windAmber:20,windRed:30,gustAmber:30,gustRed:40,rainAmber:60,defHour:10,defDur:2};
+const q=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=(v,d)=>v==null||isNaN(v)?'–':Number(v).toFixed(d).replace('.',',');
+const DIRS=['N','NE','E','SE','S','SO','O','NO'];
+const dirTx=d=>d==null||isNaN(d)?'':'del '+DIRS[Math.round(((d%360)+360)%360/45)%8];
+let mem=null;
+function cfg(){let s={};try{s=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}const c=Object.assign({},DEF);Object.keys(DEF).forEach(k=>{if(s[k]!=null&&!isNaN(Number(s[k])))c[k]=Number(s[k])});return c}
+function saveCfg(c){try{localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}}
+function buildMap(mj,fj){const H={};
+  const add=(j,fields)=>{const h=j&&j.hourly;if(!h||!h.time)return;h.time.forEach((t,i)=>{const o=H[t]||(H[t]={});for(const [src,dst] of fields){const arr=h[src];if(arr&&arr[i]!=null)o[dst]=arr[i]}})};
+  add(mj,[['wave_height','wave'],['wave_period','period'],['wave_direction','wdir'],['swell_wave_height','swell']]);
+  add(fj,[['wind_speed_10m','wind'],['wind_gusts_10m','gust'],['wind_direction_10m','windDir'],['temperature_2m','temp'],['precipitation_probability','pop'],['weather_code','code']]);
+  return H}
+async function fetchAll(c){
+  const k=c.lat+','+c.lon;
+  if(mem&&mem.k===k&&Date.now()-mem.ts<TTL)return mem.H;
+  try{const j=JSON.parse(localStorage.getItem(CK)||'null');if(j&&j.k===k&&Date.now()-j.ts<TTL){mem=j;return j.H}}catch(e){}
+  const tz='Europe%2FMadrid';
+  const mu=`https://marine-api.open-meteo.com/v1/marine?latitude=${c.lat}&longitude=${c.lon}&hourly=wave_height,wave_period,wave_direction,swell_wave_height&timezone=${tz}&past_days=1&forecast_days=10`;
+  const fu=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,precipitation_probability,weather_code&wind_speed_unit=kmh&timezone=${tz}&past_days=1&forecast_days=16`;
+  const get=u=>fetch(u).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
+  const [a,b]=await Promise.allSettled([get(mu),get(fu)]);
+  if(a.status!=='fulfilled'&&b.status!=='fulfilled')throw new Error('sin conexión con el servicio de previsión');
+  const H=buildMap(a.status==='fulfilled'?a.value:null,b.status==='fulfilled'?b.value:null);
+  mem={k,ts:Date.now(),H};try{localStorage.setItem(CK,JSON.stringify(mem))}catch(e){}
+  return H}
+const hh=n=>String(n).padStart(2,'0');
+function windowHours(date,time,end,c){
+  let sh=c.defHour,sm=0;if(/^\d{1,2}:\d{2}/.test(time||'')){sh=Number(time.split(':')[0]);sm=Number(time.split(':')[1])}
+  let eh=sh+c.defDur;if(/^\d{1,2}:\d{2}/.test(end||'')){const x=Number(end.split(':')[0])+(Number(end.split(':')[1])>0?1:0);if(x>sh)eh=x}
+  eh=Math.min(Math.max(eh,sh+1),sh+6,24);
+  const out=[];for(let h=sh;h<eh&&h<24;h++)out.push(`${date}T${hh(h)}:00`);return out}
+function evaluate(H,date,time,end,c){
+  c=c||cfg();const keys=windowHours(date,time,end,c),rows=[];
+  keys.forEach(k=>{if(H[k])rows.push(Object.assign({k,h:k.slice(11,16)},H[k]))});
+  if(!rows.length)return null;
+  const mx=f=>{const v=rows.map(r=>r[f]).filter(x=>x!=null);return v.length?Math.max(...v):null};
+  const m={wave:mx('wave'),period:mx('period'),wind:mx('wind'),gust:mx('gust'),pop:mx('pop'),code:mx('code'),temp:mx('temp')};
+  const wr=rows.find(r=>r.wave===m.wave&&m.wave!=null);m.wdir=wr?wr.wdir:null;
+  const wi=rows.find(r=>r.wind===m.wind&&m.wind!=null);m.windDir=wi?wi.windDir:null;
+  const red=[],amb=[],plain=[];
+  const chk=(v,a,r,lab,u,d)=>{if(v==null)return;if(v>=r){red.push(`${lab} ${num(v,d)} ${u} (límite ${num(r,d)})`);plain.push(`${lab} ${num(v,d)} ${u}`)}else if(v>=a){amb.push(`${lab} ${num(v,d)} ${u} (aviso desde ${num(a,d)})`);plain.push(`${lab} ${num(v,d)} ${u}`)}};
+  chk(m.wave,c.waveAmber,c.waveRed,'olas','m',1);chk(m.wind,c.windAmber,c.windRed,'viento','km/h',0);chk(m.gust,c.gustAmber,c.gustRed,'rachas','km/h',0);
+  if(m.code!=null&&m.code>=95){red.push('tormenta prevista');plain.push('tormenta prevista')}
+  if(m.pop!=null&&m.pop>=c.rainAmber&&m.code!=null&&m.code>=51){amb.push(`lluvia ${num(m.pop,0)} %`);plain.push(`lluvia ${num(m.pop,0)} %`)}
+  const level=red.length?'red':amb.length?'amber':'ok';
+  return {level,reasons:red.concat(amb),plain,rows,m,hasWave:m.wave!=null}}
+const LV={ok:{ic:'🟢',tx:'Buena mar'},amber:{ic:'🟡',tx:'Precaución'},red:{ic:'🔴',tx:'Mala mar'}};
+const daysFromToday=d=>{const a=new Date(d+'T12:00:00'),t=new Date();t.setHours(12,0,0,0);return Math.round((a-t)/86400000)};
+function skip(ev){if(!ev||!ev.event_date||ev.cancelled_at)return true;if(ev.kind==='session'){const t=String(ev.session_type||'').toUpperCase();if(t&&t!=='MAR')return true}return false}
+function summaryHtml(r,staff){const L=LV[r.level],m=r.m;
+  const bits=[];if(m.wave!=null)bits.push(`olas ${num(m.wave,1)} m${m.period!=null?` · ${num(m.period,0)} s`:''}${m.wdir!=null?' '+dirTx(m.wdir):''}`);
+  if(m.wind!=null)bits.push(`viento ${num(m.wind,0)} km/h${m.windDir!=null?' '+dirTx(m.windDir):''}${m.gust!=null?` · rachas ${num(m.gust,0)}`:''}`);
+  if(m.temp!=null)bits.push(`${num(m.temp,0)} °C`);
+  return `<div class="v696Head"><span class="v696Pill v696${r.level}">${L.ic} ${L.tx}</span><span class="v696Line">${q(bits.join(' · ')||'sin datos')}</span></div>${r.reasons.length?`<div class="v696Why">${q((staff?r.reasons:r.plain).join(' · '))}</div>`:''}${r.hasWave?'':'<div class="v696Why">Sin dato de oleaje para esta fecha: solo viento.</div>'}`}
+function tableHtml(r){return `<table class="v696Tab"><tr><th>Hora</th><th>Olas</th><th>Viento</th><th>Rachas</th></tr>${r.rows.map(x=>`<tr><td>${q(x.h)}</td><td>${num(x.wave,1)} m${x.period!=null?' · '+num(x.period,0)+' s':''}</td><td>${num(x.wind,0)} ${q(dirTx(x.windDir))}</td><td>${num(x.gust,0)}</td></tr>`).join('')}</table>`}
+function cfgHtml(c){const f=(id,l,v,st)=>`<label>${l}<input id="v696_${id}" type="number" step="${st||1}" value="${v}"></label>`;
+  return `<div class="v696Cfg"><div class="v696CfgTit">Umbrales (los pone el entrenador, se guardan en este dispositivo)</div><div class="plannerGrid">${f('waveAmber','Olas: precaución desde (m)',c.waveAmber,0.1)}${f('waveRed','Olas: mala mar desde (m)',c.waveRed,0.1)}${f('windAmber','Viento: precaución (km/h)',c.windAmber)}${f('windRed','Viento: mala mar (km/h)',c.windRed)}${f('gustAmber','Rachas: precaución (km/h)',c.gustAmber)}${f('gustRed','Rachas: mala mar (km/h)',c.gustRed)}${f('rainAmber','Lluvia: precaución (%)',c.rainAmber)}${f('lat','Latitud del punto de mar',c.lat,0.001)}${f('lon','Longitud del punto de mar',c.lon,0.001)}</div><div class="v696Btns"><button type="button" id="v696Save">Guardar</button><button type="button" id="v696Reset">Valores de partida</button></div></div>`}
+async function mount(body,ev,canEdit){
+  if(!body||skip(ev)||(!canEdit&&!ROWERS))return;
+  const anchor=body.querySelector('.v512DateLine')||body.querySelector('h3');if(!anchor)return;
+  const dd=daysFromToday(ev.event_date);if(dd<-1)return;
+  let box=body.querySelector('#v696Wx');if(box)box.remove();
+  box=document.createElement('div');box.id='v696Wx';box.className='v696Box';anchor.insertAdjacentElement('afterend',box);
+  if(dd>15){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 15 días.</div>';return}
+  box.innerHTML='<div class="v696Why">🌊 Cargando previsión de mar…</div>';
+  const draw=async()=>{
+    const c=cfg();let H;
+    try{H=await fetchAll(c)}catch(e){box.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
+    const r=evaluate(H,ev.event_date,ev.event_time,ev.end_time,c);
+    if(!r){box.innerHTML='<div class="v696Why">🌊 Sin previsión para esa fecha y hora.</div>';return}
+    box.innerHTML=`${summaryHtml(r,canEdit)}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div>`;
+    const g=box.querySelector('#v696Gear');
+    if(g)g.onclick=()=>{const h=box.querySelector('#v696CfgHost');if(h.innerHTML){h.innerHTML='';return}
+      h.innerHTML=cfgHtml(cfg());
+      h.querySelector('#v696Save').onclick=()=>{const n=Object.assign({},cfg());Object.keys(DEF).forEach(k=>{const el=h.querySelector('#v696_'+k);if(el&&el.value!==''&&!isNaN(Number(el.value)))n[k]=Number(el.value)});saveCfg(n);try{localStorage.removeItem(CK)}catch(e){}mem=null;draw()};
+      h.querySelector('#v696Reset').onclick=()=>{try{localStorage.removeItem(KEY);localStorage.removeItem(CK)}catch(e){}mem=null;draw()}};
+  };
+  draw()}
+async function decorate(root,canEdit){
+  if(!canEdit&&!ROWERS)return;
+  const rows=[...(root||document).querySelectorAll('.v503EventRow[data-date]')].filter(b=>{if(b.querySelector('.v696Dot'))return false;const dd=daysFromToday(b.dataset.date);if(dd<-1||dd>15)return false;if(b.classList.contains('v527RowCancelled'))return false;return !skip({event_date:b.dataset.date,kind:b.dataset.kind,session_type:b.dataset.st})});
+  if(!rows.length)return;
+  let H;try{H=await fetchAll(cfg())}catch(e){return}
+  const c=cfg();
+  rows.forEach(b=>{if(b.querySelector('.v696Dot'))return;const r=evaluate(H,b.dataset.date,b.dataset.time,b.dataset.end,c);if(!r)return;const t=b.querySelector('.v503Title');if(!t)return;
+    const s=document.createElement('span');s.className='v696Dot';s.textContent=LV[r.level].ic;s.title=LV[r.level].tx+(r.reasons.length?': '+(canEdit?r.reasons:r.plain).join(' · '):'');t.appendChild(s)})}
+return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF};
+})();
 
 </script>
 </body></html>
