@@ -1,3 +1,4 @@
+// V706 · Interruptores por tipo de aviso en la app (⚙ Ajustes → Avisos automáticos, tabla cron_settings, SQL 73) y por variables CRON_OPENS/CRON_REMINDERS/CRON_SHORT/CRON_SEA=0.
 // V705 · MODO PRUEBA por defecto: no envía ni marca nada (devuelve en 'would' lo que enviaría). Para enviar de verdad: variable CRON_LIVE=1 en Vercel.
 // V705 · Añade aviso de previsión de mar al equipo técnico (el día antes a las 20:00 y 3 h antes) usando los umbrales del club (tabla sea_thresholds, SQL 72).
 // V676 · Cron de eventos (se llama cada 15 min desde Supabase pg_cron, ver 66_cron_eventos.sql).
@@ -60,10 +61,16 @@ module.exports=async function handler(req,res){
   if(!secret||(req.headers.authorization||'')!==`Bearer ${secret}`)return res.status(401).json({error:'unauthorized'});
   if(!process.env.SUPABASE_SERVICE_ROLE_KEY)return res.status(500).json({error:'missing_service_role'});
   const LIVE=process.env.CRON_LIVE==='1';
-  const ON=k=>process.env[k]!=='0';
+  const ON=k=>process.env[k]!=='0'; // bloques: activos salvo que la variable valga 0
   const F={opens:ON('CRON_OPENS'),reminders:ON('CRON_REMINDERS'),short:ON('CRON_SHORT'),sea:ON('CRON_SEA')};
   const out={live:LIVE,blocks:F,opens:0,reminders:0,shortage:0,weather:0,would:[],errors:[]};
   try{
+    // V706 · interruptores del panel de la app (tabla cron_settings). Sin fila: aperturas y recordatorios sí, "faltan" y mar no. La variable CRON_x=0 en Vercel apaga el bloque siempre.
+    try{
+      const rr=await rest('cron_settings?id=eq.1&select=cfg');
+      const c={opens:true,reminders:true,short:false,sea:false,paused:false,...((rr&&rr[0]&&rr[0].cfg)||{})};
+      for(const k of Object.keys(F))F[k]=F[k]&&!c.paused&&c[k]===true;
+    }catch(e){for(const k of Object.keys(F))F[k]=F[k]&&(k==='opens'||k==='reminders')}
     const nowQ=(!LIVE&&req.query&&/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(String(req.query.now||'')))?String(req.query.now):null;
     const now=nowQ||madridNow(),today=now.slice(0,10),from=addDays(today,-1),to=addDays(today,60);
     const [teamsRows,prefsRows,ss,cc,ee]=await Promise.all([
