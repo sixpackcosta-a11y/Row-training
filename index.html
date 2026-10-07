@@ -1079,6 +1079,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v689F{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:14px}.v689F span{flex:1}.v689F input[type=number],.v689F select{background:#222;color:#fff;border:1px solid #444;border-radius:10px;padding:8px;font-size:15px;width:92px}.v689F select{width:auto;max-width:60%}
 .v689FC{justify-content:flex-start}.v689FC input{width:20px;height:20px}
 .v689Set .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.v689Util{display:flex;justify-content:center;padding:10px 0 2px}.v689ResetBtn{background:transparent;border:0;color:#e0625f;font-size:17px;font-weight:600;letter-spacing:.08em;padding:8px 22px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2910,7 +2911,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="693";
+const APP_VERSION="694";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14344,6 +14345,7 @@ async function weekly(){
 // v689 · Grabadora GPS + palas por minuto (motor puro, sin DOM)
 // v689 · Grabadora GPS + palas por minuto (motor puro, sin DOM)
 // v689 · Grabadora GPS + palas por minuto (motor puro, sin DOM)
+// v689 · Grabadora GPS + palas por minuto (motor puro, sin DOM)
 window.V689=(function(){
 const R=6371000,BIN=40,HZ=25;
 const rad=d=>d*Math.PI/180;
@@ -14466,6 +14468,7 @@ function makeEngine(o){
     const el=(t-run.t0)/1000,reached=el>=g.v;
     return {type:'time',v:g.v,remaining:Math.max(0,g.v-el),reached,ready:reached&&((last&&last.t>=run.t0+g.v*1000)||el>=g.v+1.5)};
   };
+  E.reset=function(){run=null;spmShown=null;spmRaw=[];rejects=0;spmConf=0;hist=[];vPrev=null};
   E.setOpt=o=>Object.assign(opt,o);
   E.running=()=>!!run;
   E.snapshot=function(t){
@@ -14504,7 +14507,7 @@ function open(cfg){
   applySet();
   const saved=load()||{series:[]};
   const plan=Array.isArray(cfg.plan)?cfg.plan:[];
-  const st={lastEnd:0,auto:false,series:saved.series||[],raw:false,rawLines:[],watch:null,wake:null,timer:null,cd:0,motionOn:false,cpT:0,sel:0,cur:null,beeped:false,ac:null,finishing:false};
+  const st={iv:null,lastEnd:0,auto:false,series:saved.series||[],raw:false,rawLines:[],watch:null,wake:null,timer:null,cd:0,motionOn:false,cpT:0,sel:0,cur:null,beeped:false,ac:null,finishing:false};
   // Permiso del sensor de movimiento: tiene que pedirse dentro del toque del usuario (este click).
   let permP=Promise.resolve('granted');
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')permP=DeviceMotionEvent.requestPermission()}catch(e){}
@@ -14525,6 +14528,7 @@ function open(cfg){
   <div class="v689Row"><span class="v689Huge" id="v689Av">0:00</span><small>media /500m</small></div>
   <div class="v689Row"><span class="v689Mid"><small>long. pala</small> <span id="v689SL">0.0</span><small>m</small></span><span class="v689Mid"><span id="v689M30">0</span><small>m/30min</small></span></div>
   <div class="v689Btns"><button type="button" id="v689Go" class="v689Play" aria-label="Empezar">▶</button></div></div>
+  <div class="v689Util"><button type="button" id="v689Reset" class="v689ResetBtn">RESET</button></div>
   <div class="v689List" id="v689List"></div>
   <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw"> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button></div></div>`;
   document.body.appendChild(ov);
@@ -14558,12 +14562,13 @@ function open(cfg){
     }
     $('v689T').textContent=st.cd>0?String(st.cd):tTxt;$('v689TL').textContent=st.cd>0?'':tl;
     $('v689D').textContent=dTxt;$('v689DL').textContent=dl;
-    $('v689P').textContent=s.pace?mmss(s.pace):'0:00';
-    $('v689Spm').textContent=s.spm!=null?String(Math.round(s.spm)).padStart(2,'0'):'00';
-    $('v689SpmAv').textContent=s.avgSpm!=null?s.avgSpm.toFixed(1).replace('.',','):'—';
-    $('v689Av').textContent=s.avgPace?mmss(s.avgPace):'0:00';
-    $('v689SL').textContent=s.strokeLen?s.strokeLen.toFixed(1):'0.0';
-    $('v689M30').textContent=s.m30?Math.round(s.m30):'0';
+    const L=run;  // sin serie en marcha, todo a cero (como Rowing Coach)
+    $('v689P').textContent=L&&s.pace?mmss(s.pace):'0:00';
+    $('v689Spm').textContent=L&&s.spm!=null?String(Math.round(s.spm)).padStart(2,'0'):'00';
+    $('v689SpmAv').textContent=L&&s.avgSpm!=null?s.avgSpm.toFixed(1).replace('.',','):'—';
+    $('v689Av').textContent=L&&s.avgPace?mmss(s.avgPace):'0:00';
+    $('v689SL').textContent=L&&s.strokeLen?s.strokeLen.toFixed(1):'0.0';
+    $('v689M30').textContent=L&&s.m30?Math.round(s.m30):'0';
     $('v689Cog').textContent=(s.cog!=null?Math.round(s.cog):'—')+'° COG';
     const g=$('v689Gps');g.textContent=!s.gpsOk?'Buscando GPS…':('GPS ±'+Math.round(s.gpsAcc||0)+' m');g.className='v689Gps'+(s.gpsOk?(s.gpsAcc<=15?' ok':' mid'):' bad');
     $('v689St').textContent=st.cd>0?'● PREPARA':(run?'● REC':'● LISTO');$('v689St').className='v689Rec1'+(run?' on':'');
@@ -14587,7 +14592,7 @@ function open(cfg){
       // Con plan: pasar a la siguiente serie pendiente
       const o=opts()[st.sel];if(o&&o.k==='plan'){const n=firstPending();if(n>=0)st.sel=n}
     }else msg('Serie demasiado corta: no se guarda.');
-    st.cur=null;st.lastEnd=Date.now();renderList();fillSel();draw();
+    eng.reset();st.cur=null;st.lastEnd=Date.now();renderList();fillSel();draw();
   }
   function onMotion(e){
     let a=e.acceleration;if(!a||a.x==null)a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
@@ -14622,7 +14627,7 @@ function open(cfg){
     const n=auto?0:Math.max(0,Math.min(10,Math.round(Number(SET.cd))||0));
     if(!n){go();return}
     st.cd=n;draw();
-    const iv=setInterval(()=>{st.cd--;if(st.cd<=0){clearInterval(iv);st.cd=0;go()}else draw()},1000);
+    st.iv=setInterval(()=>{st.cd--;if(st.cd<=0){clearInterval(st.iv);st.iv=null;st.cd=0;go()}else draw()},1000);
   }
   const numF=(k,label,min,max,step)=>`<label class="v689F"><span>${label}</span><input type="number" data-k="${k}" min="${min}" max="${max}" step="${step||1}" inputmode="decimal" value="${SET[k]}"></label>`;
   const chk=(k,label)=>`<label class="v689F v689FC"><input type="checkbox" data-k="${k}" ${SET[k]?'checked':''}><span>${label}</span></label>`;
@@ -14643,6 +14648,13 @@ function open(cfg){
   }
   function persist(){try{localStorage.setItem(CK,JSON.stringify(SET))}catch(e){}applySet();draw()}
   $('v689Gear').onclick=()=>{const p=$('v689Set');if(!p.hidden){p.hidden=true;return}if(eng.running()||st.cd>0)return msg('Los ajustes se cambian entre series.');renderSet();p.hidden=false;p.scrollIntoView({block:'start'})};
+  $('v689Reset').onclick=()=>{
+    const busy=eng.running()||st.cd>0;
+    if(busy&&!confirm('¿Descartar esta serie y poner todo a cero?'))return;
+    if(st.iv){clearInterval(st.iv);st.iv=null}
+    st.cd=0;st.cur=null;st.finishing=false;st.auto=false;st.lastEnd=Date.now();
+    eng.reset();msg(busy?'Serie descartada. Todo a cero.':'Todo a cero.');draw();
+  };
   $('v689Raw').onchange=e=>{st.raw=e.target.checked;$('v689Raw2').hidden=!st.raw};
   $('v689Raw2').onclick=async()=>{
     const csv='tipo,t_ms,a,b,c,d,e\n'+st.rawLines.join('\n'),name='rowtraining-bruto-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
@@ -14676,6 +14688,7 @@ function open(cfg){
 }
 return {open};
 })();
+
 
 
 
