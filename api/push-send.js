@@ -158,3 +158,4 @@ module.exports=async function handler(req,res){
     return res.status(200).json(result);
   }catch(e){return res.status(500).json({error:e?.message||String(e)});}
 };
+module.exports.deliverNotifications=deliverNotifications;
