@@ -2929,7 +2929,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="710";
+const APP_VERSION="711";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3735,6 +3735,14 @@ async function v705OpenCronPanel(){
     });
   };
   draw();
+}
+// V711 · remero del equipo con el resultado más reciente (entreno registrado o Concept2, sin ocultos). Si nadie tiene, devuelve ''.
+function v711LastActiveAthlete(ats,workouts,c2rows){
+  const ids=new Set((ats||[]).map(a=>String(a.user_id)));let best='',bestT=-1;
+  const upd=(uid,d)=>{uid=String(uid);if(!ids.has(uid))return;const t=Date.parse(d||'');if(!isNaN(t)&&t>bestT){bestT=t;best=uid}};
+  (workouts||[]).forEach(w=>{if(!w.hidden)upd(w.user_id,w.performed_at||w.created_at||w.session_date)});
+  (c2rows||[]).forEach(x=>{let h=false;try{h=v161Concept2EffectiveHidden(x)}catch(e){h=!!x.hidden}if(!h)upd(x.user_id,x.workout_date||x.created_at)});
+  const a=(ats||[]).find(a=>String(a.user_id)===best);return a?a.user_id:'';
 }
 async function v530OpenNotifPrefs(){
   const layer=document.createElement('div');layer.className='modalBack';
@@ -13568,7 +13576,7 @@ async function results(){
     const weekBtn=document.getElementById('analysisModeWeekV151'),monthBtn=document.getElementById('analysisModeMonthV151');
     if(weekBtn)weekBtn.classList.toggle('active',complianceMode==='week');if(monthBtn)monthBtn.classList.toggle('active',complianceMode==='month');
     weekLabel.textContent=complianceMode==='week'?`${shortDateES(weekStart)} – ${shortDateES(end)}`:monthLabelV151(monthStart);
-    if(!selectedAthlete||!ats.some(a=>a.user_id===selectedAthlete))selectedAthlete=ats[0]?.user_id||'';
+    if(!selectedAthlete||!ats.some(a=>a.user_id===selectedAthlete))selectedAthlete=v711LastActiveAthlete(ats,workouts,c2rows)||ats[0]?.user_id||'';
     const v300TitleMap=v300TitleMapFromSessions(sessions),v300ChartableAthletes=new Set(ats.filter(a=>{
       const paceRows=v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(a.user_id)&&!v161Concept2EffectiveHidden(x)),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(a.user_id))),workouts.filter(w=>String(w.user_id)===String(a.user_id)));
       const{entries}=v300GroupExercises(paceRows,v300TitleMap);
@@ -13660,7 +13668,7 @@ async function results(){
       const textEl=detail.querySelector('#v480NoteText');if(textEl)textEl.value=v480AssessmentPlainText(v480AutoData);
     };
   }
-  teamSel.onchange=()=>{team=teamSel.value;selectedAthlete='';renderClient()};athSel.onchange=()=>{selectedAthlete=athSel.value;athleteSection.open=true;renderAthlete()};document.getElementById('analysisModeWeekV151').onclick=()=>{complianceMode='week';renderClient()};document.getElementById('analysisModeMonthV151').onclick=()=>{complianceMode='month';monthStart=weekStart.slice(0,7)+'-01';renderClient()};document.getElementById('analysisPrevPeriodV151').onclick=()=>{if(complianceMode==='week')weekStart=addDaysISO(weekStart,-7);else monthStart=addMonthsV151(monthStart,-1);renderClient()};document.getElementById('analysisNextPeriodV151').onclick=()=>{if(complianceMode==='week')weekStart=addDaysISO(weekStart,7);else monthStart=addMonthsV151(monthStart,1);renderClient()};const openNotifiedAthlete=!!workoutNotificationAthleteV129;renderClient();if(openNotifiedAthlete)athleteSection.open=true;workoutNotificationAthleteV129=null;
+  teamSel.onchange=()=>{team=teamSel.value;selectedAthlete='';renderClient()};athSel.onchange=()=>{selectedAthlete=athSel.value;athleteSection.open=true;renderAthlete()};document.getElementById('analysisModeWeekV151').onclick=()=>{complianceMode='week';renderClient()};document.getElementById('analysisModeMonthV151').onclick=()=>{complianceMode='month';monthStart=weekStart.slice(0,7)+'-01';renderClient()};document.getElementById('analysisPrevPeriodV151').onclick=()=>{if(complianceMode==='week')weekStart=addDaysISO(weekStart,-7);else monthStart=addMonthsV151(monthStart,-1);renderClient()};document.getElementById('analysisNextPeriodV151').onclick=()=>{if(complianceMode==='week')weekStart=addDaysISO(weekStart,7);else monthStart=addMonthsV151(monthStart,1);renderClient()};renderClient();athleteSection.open=true;workoutNotificationAthleteV129=null;
 }
 
 GYM_SESSION_DEFAULTS.push(
