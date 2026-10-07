@@ -2923,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="702";
+const APP_VERSION="704";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14713,7 +14713,7 @@ return {open};
 <script>
 // v696 · Semaforo de mar y viento en los eventos (Open-Meteo, sin clave). Datos de modelo, orientativos.
 window.V696=(function(){
-const ROWERS=false; // v697: poner true para abrir el semaforo a las remeras (sin umbrales)
+const ROWERS=true; // v697: poner true para abrir el semaforo a las remeras (sin umbrales)
 const KEY='rowtraining_wx696_cfg',CK='rowtraining_wx696_cache',TTL=45*60*1000;
 const DEF={lat:36.712,lon:-4.352,waveAmber:0.6,waveRed:1.0,windAmber:20,windRed:30,gustAmber:30,gustRed:40,rainAmber:60,defHour:10,defDur:2};
 const q=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -14721,8 +14721,35 @@ const num=(v,d)=>v==null||isNaN(v)?'–':Number(v).toFixed(d).replace('.',',');
 const DIRS=['N','NE','E','SE','S','SO','O','NO'];
 const dirTx=d=>d==null||isNaN(d)?'':'del '+DIRS[Math.round(((d%360)+360)%360/45)%8];
 let mem=null;
-function cfg(){let s={};try{s=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}const c=Object.assign({},DEF);Object.keys(DEF).forEach(k=>{if(s[k]!=null&&!isNaN(Number(s[k])))c[k]=Number(s[k])});return c}
-function saveCfg(c){try{localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}}
+const SK='rowtraining_wx696_shared';
+let shared=null,sharedTs=0,sharedMissing=false;
+function pick(s){const c=Object.assign({},DEF);Object.keys(DEF).forEach(k=>{if(s&&s[k]!=null&&!isNaN(Number(s[k])))c[k]=Number(s[k])});return c}
+function cfg(){
+  let s=shared;
+  if(!s){try{s=JSON.parse(localStorage.getItem(SK)||'null')}catch(e){}}
+  if(!s||!Object.keys(s).length){try{const l=JSON.parse(localStorage.getItem(KEY)||'null');if(l&&!(shared&&Object.keys(shared).length))s=l}catch(e){}}
+  return pick(s)}
+async function loadShared(force){
+  if(!force&&shared&&Date.now()-sharedTs<300000)return;
+  try{
+    if(typeof sb==='undefined'||!sb)return;
+    const r=await sb.from('sea_thresholds').select('cfg').eq('id',1).maybeSingle();
+    if(r.error){sharedMissing=true;return}
+    sharedMissing=false;shared=(r.data&&r.data.cfg)||{};sharedTs=Date.now();
+    try{localStorage.setItem(SK,JSON.stringify(shared))}catch(e){}
+  }catch(e){}}
+async function saveShared(n){
+  try{localStorage.setItem(KEY,JSON.stringify(n))}catch(e){}
+  try{
+    if(typeof sb==='undefined'||!sb)throw new Error('sin conexión');
+    const row={id:1,cfg:n,updated_at:new Date().toISOString()};
+    if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id)row.updated_by=currentUser.id;
+    const r=await sb.from('sea_thresholds').upsert(row,{onConflict:'id'});
+    if(r.error)throw new Error(r.error.message||'error');
+    shared=n;sharedTs=Date.now();sharedMissing=false;
+    try{localStorage.setItem(SK,JSON.stringify(n))}catch(e){}
+    return {ok:true}
+  }catch(e){return {ok:false,msg:e.message||'error'}}}
 function buildMap(mj,fj){const H={};
   const add=(j,fields)=>{const h=j&&j.hourly;if(!h||!h.time)return;h.time.forEach((t,i)=>{const o=H[t]||(H[t]={});for(const [src,dst] of fields){const arr=h[src];if(arr&&arr[i]!=null)o[dst]=arr[i]}})};
   add(mj,[['wave_height','wave'],['wave_period','period'],['wave_direction','wdir'],['swell_wave_height','swell']]);
@@ -14787,8 +14814,8 @@ function analysisHtml(r,c){
   else P.push(`<b>Momento más duro:</b> ${q(worst.h)}${worst.inEv?' (durante el entrenamiento)':' (fuera del horario del entrenamiento)'}, ${q(mini(worst))}. <b>Mejor momento:</b> ${q(best.h)}.`);
   const r2=ext.find(x=>rowLv(x,c)===2),r1=ext.find(x=>rowLv(x,c)===1);
   if(ext.every(x=>rowLv(x,c)===2))P.push('⚠️ Mala mar en todo el tramo.');
-  else if(ext.every(x=>rowLv(x,c)>=1))P.push('Precaución en todo el tramo.');
   else if(r2)P.push(`⚠️ ${r2===ext[0]?'Ya a':'A'} las ${q(r2.h)} hay mala mar${r2.inEv?'':' (fuera del horario del entrenamiento)'}.`);
+  else if(ext.every(x=>rowLv(x,c)>=1))P.push('Precaución en todo el tramo.');
   else if(r1)P.push(`${r1===ext[0]?'Ya a':'A'} las ${q(r1.h)} hay precaución${r1.inEv?'':' (fuera del horario del entrenamiento)'}.`);
   else P.push('En todo el tramo se mantiene por debajo de los límites.');
   const dd=(r.day||[]).filter(x=>x.wave!=null&&x.wind!=null);
@@ -14812,7 +14839,7 @@ function summaryHtml(r,staff){const L=LV[r.level],m=r.m;
   return `<div class="v696Head"><span class="v696Pill v696${r.level}">${L.ic} ${L.tx}</span><span class="v696Line">${q(bits.join(' · ')||'sin datos')}</span></div>${r.reasons.length?`<div class="v696Why">${q((staff?r.reasons:r.plain).join(' · '))}</div>`:''}${r.waveNote||''}`}
 function tableHtml(r){const R=(r.ext&&r.ext.length?r.ext:r.rows);return `<table class="v696Tab"><tr><th>Hora</th><th>Olas (m · s)</th><th>Viento (km/h)</th><th>Rachas (km/h)</th></tr>${R.map(x=>`<tr class="${x.inEv===false?'':'v696In'}"><td>${q(x.h)}</td><td>${num(x.wave,1)}${x.period!=null?' · '+num(x.period,0):''}</td><td>${num(x.wind,0)} ${q(dirTx(x.windDir))}</td><td>${num(x.gust,0)}</td></tr>`).join('')}</table><div class="v696Why">Las filas resaltadas son las horas del entrenamiento; el resto, dos horas antes y dos después.</div>`}
 function cfgHtml(c){const f=(id,l,v,st)=>`<label>${l}<input id="v696_${id}" type="number" step="${st||1}" value="${v}"></label>`;
-  return `<div class="v696Cfg"><div class="v696CfgTit">Umbrales (los pone el entrenador, se guardan en este dispositivo)</div><div class="plannerGrid">${f('waveAmber','Olas: precaución desde (m)',c.waveAmber,0.1)}${f('waveRed','Olas: mala mar desde (m)',c.waveRed,0.1)}${f('windAmber','Viento: precaución (km/h)',c.windAmber)}${f('windRed','Viento: mala mar (km/h)',c.windRed)}${f('gustAmber','Rachas: precaución (km/h)',c.gustAmber)}${f('gustRed','Rachas: mala mar (km/h)',c.gustRed)}${f('rainAmber','Lluvia: precaución (%)',c.rainAmber)}${f('lat','Latitud del punto de mar',c.lat,0.001)}${f('lon','Longitud del punto de mar',c.lon,0.001)}</div><div class="v696Btns"><button type="button" id="v696Save">Guardar</button><button type="button" id="v696Reset">Valores de partida</button></div></div>`}
+  return `<div class="v696Cfg"><div class="v696CfgTit">Umbrales (los pone el equipo técnico y valen para todo el club, también para las remeras)</div><div class="plannerGrid">${f('waveAmber','Olas: precaución desde (m)',c.waveAmber,0.1)}${f('waveRed','Olas: mala mar desde (m)',c.waveRed,0.1)}${f('windAmber','Viento: precaución (km/h)',c.windAmber)}${f('windRed','Viento: mala mar (km/h)',c.windRed)}${f('gustAmber','Rachas: precaución (km/h)',c.gustAmber)}${f('gustRed','Rachas: mala mar (km/h)',c.gustRed)}${f('rainAmber','Lluvia: precaución (%)',c.rainAmber)}${f('lat','Latitud del punto de mar',c.lat,0.001)}${f('lon','Longitud del punto de mar',c.lon,0.001)}</div><div class="v696Btns"><button type="button" id="v696Save">Guardar</button><button type="button" id="v696Reset">Valores de partida</button></div></div>`}
 async function mount(body,ev,canEdit){
   if(!body||skip(ev)||(!canEdit&&!ROWERS))return;
   const anchor=body.querySelector('.v512DateLine')||body.querySelector('h3');if(!anchor)return;
@@ -14823,6 +14850,7 @@ async function mount(body,ev,canEdit){
   if(dd>9){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 10 días.</div>';return}
   box.innerHTML='<div class="v696Why">🌊 Cargando previsión de mar…</div>';
   const draw=async(force)=>{
+    await loadShared(force);
     const c=cfg();let H;
     try{H=await fetchAll(c,force)}catch(e){box.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
     const r=evaluate(H,ev.event_date,ev.event_time,ev.end_time,c);
@@ -14837,14 +14865,17 @@ async function mount(body,ev,canEdit){
     const g=box.querySelector('#v696Gear');
     if(g)g.onclick=()=>{const h=box.querySelector('#v696CfgHost');if(h.innerHTML){h.innerHTML='';return}
       h.innerHTML=cfgHtml(cfg());
-      h.querySelector('#v696Save').onclick=()=>{const n=Object.assign({},cfg());Object.keys(DEF).forEach(k=>{const el=h.querySelector('#v696_'+k);if(el&&el.value!==''&&!isNaN(Number(el.value)))n[k]=Number(el.value)});saveCfg(n);try{localStorage.removeItem(CK)}catch(e){}mem=null;draw()};
-      h.querySelector('#v696Reset').onclick=()=>{try{localStorage.removeItem(KEY);localStorage.removeItem(CK)}catch(e){}mem=null;draw()}};
+      const after=async(r)=>{try{localStorage.removeItem(CK)}catch(e){}mem=null;await draw();
+        box.insertAdjacentHTML('afterbegin',r.ok?'<div class="v696Why">✅ Umbrales guardados para todo el club.</div>':`<div class="v696Why">⚠️ No se pudo guardar en la nube (${q(r.msg)}). ${sharedMissing?'¿Has ejecutado 72_umbrales_mar.sql? ':''}Queda solo en este móvil.</div>`)};
+      h.querySelector('#v696Save').onclick=async()=>{const n=Object.assign({},cfg());Object.keys(DEF).forEach(k=>{const el=h.querySelector('#v696_'+k);if(el&&el.value!==''&&!isNaN(Number(el.value)))n[k]=Number(el.value)});h.querySelector('#v696Save').disabled=true;after(await saveShared(n))};
+      h.querySelector('#v696Reset').onclick=async()=>{h.querySelector('#v696Reset').disabled=true;after(await saveShared(Object.assign({},DEF)))}};
   };
   draw()}
 async function decorate(root,canEdit){
   if(!canEdit&&!ROWERS)return;
   const rows=[...(root||document).querySelectorAll('.v503EventRow[data-date]')].filter(b=>{if(b.querySelector('.v696Dot'))return false;const dd=daysFromToday(b.dataset.date);if(dd<-1||dd>9)return false;if(b.classList.contains('v527RowCancelled'))return false;return !skip({event_date:b.dataset.date,kind:b.dataset.kind,session_type:b.dataset.st})});
   if(!rows.length)return;
+  await loadShared();
   let H;try{H=await fetchAll(cfg())}catch(e){return}
   const c=cfg();
   rows.forEach(b=>{if(b.querySelector('.v696Dot'))return;const r=evaluate(H,b.dataset.date,b.dataset.time,b.dataset.end,c);if(!r)return;const t=b.querySelector('.v503Title');if(!t)return;
