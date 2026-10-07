@@ -39,6 +39,10 @@ async function deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,b
   return {ok:true,recipients:recipientIds.length,push_found:pushFound,push_sent:pushSent,push_failed:pushFailed,errors:errors.slice(0,10)};
 }
 
+// V648 · tipos de aviso que puede enviar una remera (no entrenadora) a gente de sus propios equipos:
+// respuestas a eventos (training) y chats de equipo / de evento.
+const ROWER_TYPES=['training','team_chat_message','event_chat_message'];
+
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'method_not_allowed'});
   const supabaseUrl=process.env.SUPABASE_URL||'https://bnvduwjisqosdjqypnvq.supabase.co';
@@ -92,20 +96,36 @@ module.exports=async function handler(req,res){
       return res.status(200).json(result);
     }
 
-    const [globalRows,staffRows]=await Promise.all([
+    const [globalRows,staffRows,rowerRows]=await Promise.all([
       rest(`${supabaseUrl}/rest/v1/user_roles?user_id=eq.${sender.id}&role=eq.coach&select=user_id`,{key:serviceKey}),
-      rest(`${supabaseUrl}/rest/v1/team_staff_roles?user_id=eq.${sender.id}&staff_role=eq.coach&select=team_code`,{key:serviceKey})
+      rest(`${supabaseUrl}/rest/v1/team_staff_roles?user_id=eq.${sender.id}&staff_role=eq.coach&select=team_code`,{key:serviceKey}),
+      rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&is_rower=eq.true&select=team_code`,{key:serviceKey})
     ]);
     const isGlobal=Array.isArray(globalRows)&&globalRows.length>0;
     const allowedTeams=uniq((staffRows||[]).map(x=>x.team_code));
-    if(!isGlobal&&!allowedTeams.length)return res.status(403).json({error:'coach_required'});
+    const isCoach=isGlobal||allowedTeams.length>0;
+    const rowerTeams=uniq((rowerRows||[]).map(x=>x.team_code));
+    if(!isCoach&&!rowerTeams.length)return res.status(403).json({error:'coach_required'});
 
     const title=cut(req.body?.title,120),body=cut(req.body?.body,500),url=cut(req.body?.url||'/',300)||'/',type=cut(req.body?.type||'coach_message',50)||'coach_message';
     if(!title||!body)return res.status(400).json({error:'title_and_body_required'});
+    // V648 · una remera (sin rol de entrenadora) solo puede avisar a gente de SUS equipos y con tipos concretos
+    if(!isCoach&&!ROWER_TYPES.includes(type))return res.status(403).json({error:'coach_required'});
     const mode=audience.mode;
     let requestedTeams=uniq(audience.team_codes).filter(x=>/^[a-z0-9_-]{2,40}$/i.test(x));
-    if(!isGlobal)requestedTeams=requestedTeams.filter(x=>allowedTeams.includes(x));
+    if(!isCoach)requestedTeams=requestedTeams.filter(x=>rowerTeams.includes(x));
+    else if(!isGlobal)requestedTeams=requestedTeams.filter(x=>allowedTeams.includes(x));
     if((mode==='teams'||mode==='users')&&!requestedTeams.length&&!isGlobal)return res.status(403).json({error:'team_not_allowed'});
+
+    // Equipo técnico de unos equipos: entrenadores/ayudantes con rol de equipo + entrenadores globales
+    const staffOf=async teams=>{
+      const teamExpr=teams.map(encodeURIComponent).join(',');
+      const [ts,gc]=await Promise.all([
+        teams.length?rest(`${supabaseUrl}/rest/v1/team_staff_roles?team_code=in.(${teamExpr})&select=user_id`,{key:serviceKey}):[],
+        rest(`${supabaseUrl}/rest/v1/user_roles?role=eq.coach&select=user_id`,{key:serviceKey})
+      ]);
+      return uniq([...(ts||[]).map(x=>x.user_id),...(gc||[]).map(x=>x.user_id)]);
+    };
 
     let recipientIds=[];
     if(mode==='teams'){
@@ -113,19 +133,22 @@ module.exports=async function handler(req,res){
       const teamExpr=requestedTeams.map(encodeURIComponent).join(',');
       const rows=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?team_code=in.(${teamExpr})&is_rower=eq.true&select=user_id,team_code`,{key:serviceKey});
       recipientIds=uniq((rows||[]).map(x=>x.user_id));
+      // Si escribe una remera, el aviso también llega al equipo técnico de ese equipo
+      if(!isCoach)recipientIds=uniq([...recipientIds,...await staffOf(requestedTeams)]);
     }else if(mode==='users'){
       const wanted=uniq(audience.user_ids).filter(validUuid);
       if(!wanted.length)return res.status(400).json({error:'no_users'});
-      // Un entrenador solo puede enviar a remeros de sus equipos. Global coach puede enviar a cualquier remero.
-      if(isGlobal){
-        const ids=wanted.map(encodeURIComponent).join(',');
-        const rows=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=in.(${ids})&is_rower=eq.true&select=user_id,team_code`,{key:serviceKey});
-        recipientIds=uniq((rows||[]).map(x=>x.user_id)).filter(x=>wanted.includes(x));
-      }else{
-        const ids=wanted.map(encodeURIComponent).join(','),teams=allowedTeams.map(encodeURIComponent).join(',');
-        const rows=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=in.(${ids})&team_code=in.(${teams})&is_rower=eq.true&select=user_id,team_code`,{key:serviceKey});
-        recipientIds=uniq((rows||[]).map(x=>x.user_id)).filter(x=>wanted.includes(x));
-      }
+      const ids=wanted.map(encodeURIComponent).join(',');
+      // Remeras: de cualquier equipo si es entrenador global; solo de los equipos permitidos en otro caso
+      const teamsLimit=isGlobal?null:(isCoach?allowedTeams:requestedTeams);
+      const rowerFilter=teamsLimit?`&team_code=in.(${teamsLimit.map(encodeURIComponent).join(',')})`:'';
+      const rows=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=in.(${ids})&is_rower=eq.true${rowerFilter}&select=user_id,team_code`,{key:serviceKey});
+      // Equipo técnico: entrenadores globales y con rol de equipo (también pueden recibir avisos de chat y respuestas)
+      const [staffRowsAll,gcRows]=await Promise.all([
+        rest(`${supabaseUrl}/rest/v1/team_staff_roles?user_id=in.(${ids})${teamsLimit?`&team_code=in.(${teamsLimit.map(encodeURIComponent).join(',')})`:''}&select=user_id`,{key:serviceKey}),
+        rest(`${supabaseUrl}/rest/v1/user_roles?user_id=in.(${ids})&role=eq.coach&select=user_id`,{key:serviceKey})
+      ]);
+      recipientIds=uniq([...(rows||[]).map(x=>x.user_id),...(staffRowsAll||[]).map(x=>x.user_id),...(gcRows||[]).map(x=>x.user_id)]).filter(x=>wanted.includes(x));
     }else return res.status(400).json({error:'bad_audience'});
 
     recipientIds=recipientIds.filter(uid=>uid!==sender.id);
@@ -135,3 +158,4 @@ module.exports=async function handler(req,res){
     return res.status(200).json(result);
   }catch(e){return res.status(500).json({error:e?.message||String(e)});}
 };
+module.exports.deliverNotifications=deliverNotifications;
