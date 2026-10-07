@@ -2923,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="704";
+const APP_VERSION="705";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3688,7 +3688,7 @@ function v300OpenSettingsMenu(){
   const isDarkNow=document.documentElement.getAttribute('data-theme')==='dark';
   const langLabel={es:'Español',en:'English',nl:'Nederlands'}[currentLocale]||'Español';
   const layer=document.createElement('div');layer.className='modalBack v300SettingsMenuBack';
-  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button><button type="button" class="v300NavItem" data-a="__notifs__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">🔔</span><span>Notificaciones</span></button><button type="button" class="v300NavItem" data-a="__help__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('ayuda')}<span>Ayuda</span></button>${currentMode==='staff'&&isGlobalCoach?`<button type="button" class="v300NavItem" data-a="__system__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('sistema')}<span>Sistema</span></button>`:''}<button type="button" class="v300NavItem" data-a="__logout__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:#c0392b;margin-top:6px">${v332Icon('salir')}<span>Cerrar sesión</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
+  layer.innerHTML=`<div class="modalCard" style="max-width:320px"><div class="modalTitle"><h2 style="margin:0">Ajustes</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><button type="button" class="v300NavItem" data-a="__theme__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon(isDarkNow?'sol':'luna')}<span>${isDarkNow?'Modo claro':'Modo oscuro'}</span></button><button type="button" class="v300NavItem" data-a="__language__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('globo')}<span>Idioma · ${langLabel}</span></button><button type="button" class="v300NavItem" data-a="__notifs__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">🔔</span><span>Notificaciones</span></button><button type="button" class="v300NavItem" data-a="__help__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('ayuda')}<span>Ayuda</span></button>${currentMode==='staff'&&isGlobalCoach?`<button type="button" class="v300NavItem" data-a="__cronavisos__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)"><span style="width:20px;text-align:center">📨</span><span>Avisos automáticos</span></button>`:''}${currentMode==='staff'&&isGlobalCoach?`<button type="button" class="v300NavItem" data-a="__system__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:var(--text)">${v332Icon('sistema')}<span>Sistema</span></button>`:''}<button type="button" class="v300NavItem" data-a="__logout__" style="display:flex;align-items:center;gap:11px;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-weight:500;color:#c0392b;margin-top:6px">${v332Icon('salir')}<span>Cerrar sesión</span></button></div><p class="muted" style="text-align:center;margin:14px 0 0;font-size:.78rem">Versión ${esc(APP_VERSION)}</p></div>`;
   document.body.appendChild(layer);
   layer.querySelectorAll('.v300CloseDetail').forEach(b=>b.onclick=()=>layer.remove());
   layer.onclick=e=>{if(e.target===layer)layer.remove()};
@@ -3697,10 +3697,38 @@ function v300OpenSettingsMenu(){
     if(v==="__theme__"){applyThemeV299(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');return}
     if(v==="__language__"){v311OpenLanguagePicker();return}
     if(v==="__notifs__"){v530OpenNotifPrefs();return}
+    if(v==="__cronavisos__"){v705OpenCronPanel();return}
     if(v==="__help__"){tab='ayuda';draw();render();return}
     if(v==="__system__"){tab='sistema';draw();render();return}
     if(v==="__logout__"){if(confirm('¿Cerrar sesión en este móvil?'))sb.auth.signOut().then(()=>location.reload());return}
   });
+}
+// V705 · Panel "Avisos automáticos": interruptores del cron de eventos (solo entrenador principal). El cron los lee en cada pasada (15 min).
+async function v705OpenCronPanel(){
+  if(!isGlobalCoach)return;
+  const layer=document.createElement('div');layer.className='modalBack';
+  layer.innerHTML=`<div class="modalCard" style="max-width:460px"><div class="modalTitle"><h2 style="margin:0">Avisos automáticos</h2><button type="button" class="v300CloseDetail">Cerrar</button></div><div id="v705Body">${v316Loading('Cargando…')}</div></div>`;
+  document.body.appendChild(layer);
+  layer.onclick=e=>{if(e.target===layer)layer.remove()};layer.querySelector('.v300CloseDetail').onclick=()=>layer.remove();
+  const body=layer.querySelector('#v705Body');
+  let cfg={opens:true,reminders:true,short:false,sea:false,paused:false};
+  try{const r=await sb.from('cron_settings').select('cfg').eq('id',1).maybeSingle();if(r.error)throw r.error;cfg={...cfg,...(r.data?.cfg||{})}}
+  catch(e){body.innerHTML='<div class="info">Falta ejecutar 73_avisos_automaticos.sql en Supabase.</div>';return}
+  const ROWS=[['opens','📅 Apertura de confirmación','"Ya puedes confirmar asistencia" a las remeras, cuando llega la hora de apertura del evento.'],['reminders','🔔 Recordatorio "¿Vas a…?"','A quien aún no ha respondido, a las horas antes del evento que hayas puesto en él.'],['short','👥 "Faltan N para salir"','Al equipo técnico, una vez, unas 26 h antes si no se llega al mínimo de la barca.'],['sea','🌊 Previsión de mar','Al equipo técnico, el día antes a las 20:00 y 3 h antes, solo si hay precaución o mala mar.']];
+  const draw=()=>{
+    body.innerHTML=`<div class="info" style="margin-bottom:10px">Los cambios se aplican en la siguiente pasada del cron (cada 15 min). Si en Vercel no está <b>CRON_LIVE=1</b>, el cron solo hace pruebas y no envía nada.</div>
+    <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:10px"><input type="checkbox" data-k="paused" ${cfg.paused?'checked':''} style="margin-top:3px"><span><b>⏸ Pausar todos los avisos</b><br><small style="color:var(--muted)">Mientras esté marcado no se envía ninguno de los de abajo.</small></span></label>
+    ${ROWS.map(([k,t,d])=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;${cfg.paused?'opacity:.5':''}"><input type="checkbox" data-k="${k}" ${cfg[k]===true?'checked':''} style="margin-top:3px"><span><b>${t}</b><br><small style="color:var(--muted)">${d}</small></span></label>`).join('')}
+    <div id="v705Msg" style="min-height:20px;margin:6px 0;font-size:13px"></div>`;
+    body.querySelectorAll('input[data-k]').forEach(inp=>inp.onchange=async()=>{
+      const k=inp.dataset.k,prev=cfg[k];cfg[k]=inp.checked;
+      const msg=body.querySelector('#v705Msg');msg.textContent='Guardando…';
+      const r=await sb.from('cron_settings').upsert({id:1,cfg,updated_at:new Date().toISOString(),updated_by:currentUser.id});
+      if(r.error){cfg[k]=prev;inp.checked=prev;msg.textContent='No se pudo guardar: '+(r.error.message||'error');return}
+      msg.textContent='Guardado ✓';if(k==='paused')draw();
+    });
+  };
+  draw();
 }
 async function v530OpenNotifPrefs(){
   const layer=document.createElement('div');layer.className='modalBack';
