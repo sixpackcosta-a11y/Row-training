@@ -2923,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="700";
+const APP_VERSION="701";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14728,10 +14728,10 @@ function buildMap(mj,fj){const H={};
   add(mj,[['wave_height','wave'],['wave_period','period'],['wave_direction','wdir'],['swell_wave_height','swell']]);
   add(fj,[['wind_speed_10m','wind'],['wind_gusts_10m','gust'],['wind_direction_10m','windDir'],['temperature_2m','temp'],['precipitation_probability','pop'],['weather_code','code']]);
   return H}
-async function fetchAll(c){
+async function fetchAll(c,force){
   const k=c.lat+','+c.lon;
-  if(mem&&mem.k===k&&Date.now()-mem.ts<TTL)return mem.H;
-  try{const j=JSON.parse(localStorage.getItem(CK)||'null');if(j&&j.k===k&&Date.now()-j.ts<TTL){mem=j;return j.H}}catch(e){}
+  if(!force&&mem&&mem.k===k&&Date.now()-mem.ts<TTL)return mem.H;
+  if(!force)try{const j=JSON.parse(localStorage.getItem(CK)||'null');if(j&&j.k===k&&Date.now()-j.ts<TTL){mem=j;return j.H}}catch(e){}
   const tz='Europe%2FMadrid';
   const mu=n=>`https://marine-api.open-meteo.com/v1/marine?latitude=${c.lat}&longitude=${c.lon}&hourly=wave_height,wave_period,wave_direction,swell_wave_height&timezone=${tz}&past_days=1&forecast_days=${n}`;
   const fu=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,precipitation_probability,weather_code&wind_speed_unit=kmh&timezone=${tz}&past_days=1&forecast_days=10`;
@@ -14799,6 +14799,7 @@ function analysisHtml(r,c){
     P.push(`<b>Resto del día:</b> mejor franja ${q(bw.a.h)}–${q(String(Number(bw.z.h.slice(0,2))+1).padStart(2,'0')+':00')} (${q(mini({wave:Math.max(bw.a.wave,bw.z.wave),wind:Math.max(bw.a.wind,bw.z.wind)}))}); peor momento ${q(pk.h)} (${q(mini(pk))}).${bw.s<evAvg*0.7&&evAvg-bw.s>0.15?' Si se pudiera mover el entrenamiento, esa franja sería mejor.':''}`)
   }
   return `<details class="v696Det" open><summary>Análisis del día</summary><div class="v696Ana">${P.map(x=>`<p>${x}</p>`).join('')}</div></details>`}
+function stampTx(){const t=mem&&mem.ts?new Date(mem.ts):new Date();return hh(t.getHours())+':'+hh(t.getMinutes())}
 function waveNote(r,H,date){
   if(r.hasWave)return '';
   const any=Object.keys(H).some(k=>H[k].wave!=null);
@@ -14820,13 +14821,15 @@ async function mount(body,ev,canEdit){
   box=document.createElement('div');box.id='v696Wx';box.className='v696Box';anchor.insertAdjacentElement('afterend',box);
   if(dd>9){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 10 días.</div>';return}
   box.innerHTML='<div class="v696Why">🌊 Cargando previsión de mar…</div>';
-  const draw=async()=>{
+  const draw=async(force)=>{
     const c=cfg();let H;
-    try{H=await fetchAll(c)}catch(e){box.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
+    try{H=await fetchAll(c,force)}catch(e){box.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
     const r=evaluate(H,ev.event_date,ev.event_time,ev.end_time,c);
     if(!r){box.innerHTML='<div class="v696Why">🌊 Sin previsión para esa fecha y hora.</div>';return}
     r.waveNote=waveNote(r,H,ev.event_date);
-    box.innerHTML=`${summaryHtml(r,canEdit)}${analysisHtml(r,cfg())}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div>`;
+    box.innerHTML=`${summaryHtml(r,canEdit)}${analysisHtml(r,cfg())}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a> <span class="v696Upd">Actualizado a las ${q(stampTx())}</span> <button type="button" id="v696Refresh" class="v696Gear">↻ Actualizar</button>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div>`;
+    const rb=box.querySelector('#v696Refresh');
+    if(rb)rb.onclick=()=>{rb.disabled=true;rb.textContent='Actualizando…';draw(true)};
     const g=box.querySelector('#v696Gear');
     if(g)g.onclick=()=>{const h=box.querySelector('#v696CfgHost');if(h.innerHTML){h.innerHTML='';return}
       h.innerHTML=cfgHtml(cfg());
