@@ -1050,6 +1050,24 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v674Boats{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 2px 10px 30px;font-size:13.5px}.v674Boats button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:5px 12px;font-size:13.5px}.v674Boats button.on{background:#0f2a4a;color:#fff;border-color:#0f2a4a}
 .v678Cat{padding:14px 16px}.v678Item{border-top:1px solid var(--border)}.v678Item:first-of-type{border-top:0}.v678Open{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:12px 2px}.v678Ic{font-size:22px;flex:0 0 auto}.v678Tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.v678Tx small{font-size:13px;overflow:hidden;text-overflow:ellipsis}.v678Adm{display:flex;gap:8px;padding:0 2px 10px 36px}.v678Adm button{padding:5px 12px;font-size:13.5px}
 .v685Chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}.v685Chips button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:6px 12px;font-size:13.5px}.v685Chips button.on{background:#0f2a4a;color:#fff;border-color:#0f2a4a}.v685Grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.v685Th{padding:0!important;border:0!important;aspect-ratio:1;overflow:hidden;border-radius:8px}.v685Th img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px}.v685Lk{padding:8px 2px;border-bottom:1px solid var(--border)}.v685Lk a{display:block;word-break:break-all;font-weight:600}.v685Lk .v631Hit{border:0;padding:2px 0}.v685List{max-height:50vh;overflow:auto}
+.v689Rec,.v689Rec button,.v689Rec input{font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.v689Rec{font-variant-numeric:tabular-nums;position:fixed;inset:0;z-index:9000;background:#000;color:#fff;display:flex;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+.v689Top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 10px}
+.v689X{background:transparent;border:0;color:#fff;font-size:26px;line-height:1;padding:6px 10px}
+.v689Gps{font-size:14px;padding:4px 10px;border-radius:99px;background:#333}.v689Gps.ok{background:#1f7a33}.v689Gps.mid{background:#9a7b00}.v689Gps.bad{background:#8a2a2a}
+.v689Top b{font-size:28px;color:#6fe08a;min-width:30px;text-align:right}
+.v689Card{background:#fff;color:#000;border:6px solid #d24d4a;border-radius:22px;padding:6px 14px 12px}
+.v689Row{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid #111;padding:4px 0;gap:8px}
+.v689Row:last-of-type{border-bottom:0}
+.v689Row small{font-size:14px;color:#111}
+.v689Rec1{font-weight:600;font-size:18px;background:#e6e6e6;border-radius:99px;padding:8px 14px;color:#d24d4a}.v689Rec1.on{background:#d24d4a;color:#fff}
+.v689Big{letter-spacing:-.02em;font-size:44px;font-weight:600}.v689Huge{letter-spacing:-.03em;font-size:clamp(52px,17vw,76px);font-weight:600;line-height:1.05;margin-left:auto}
+.v689Mid{letter-spacing:-.02em;font-size:clamp(34px,11vw,48px);font-weight:600}.v689Mid small{margin-left:4px}.v689Lbl{font-size:22px;font-weight:600}
+.v689Btns{display:flex;justify-content:flex-end;padding-top:8px}
+.v689Play{width:76px;height:76px;border-radius:50%;border:6px solid #4fbd5c;background:#fff;color:#4fbd5c;font-size:34px;line-height:1}.v689Play.stop{border-color:#2f7de1;color:#2f7de1}
+.v689List{padding:10px 2px}.v689Ser{display:flex;align-items:center;justify-content:space-between;background:#1a1a1a;border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:15px}
+.v689Del{background:transparent;border:0;font-size:18px;color:#fff}
+.v689Foot{padding:4px 2px 12px}.v689Chk{display:flex;gap:8px;align-items:center;font-size:14px;color:#bbb;margin-bottom:8px}.v689Msg{min-height:20px;color:#ffd166;font-size:14px;margin-bottom:8px}
+.v689Foot .actions{display:flex;gap:8px;flex-wrap:wrap}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2881,7 +2899,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="688";
+const APP_VERSION="690";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6216,7 +6234,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const blockHtml=blocks.map(blockHtmlV186).join('');
   const imported=Array.isArray(importedSeries)?importedSeries:[];
   let seaPhotoFilesV137=[];
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><button type="button" id="seaRecordV689">📍 Grabar con GPS</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
   v347ScrollTo(0);
   const refreshCrewV307=()=>{
     content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id,false,team);
@@ -6279,6 +6297,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
       if(!applied)return alert('Elige al menos una serie del entrenamiento como destino.');const observations=document.getElementById('v85SeaObservations');if(observations&&!observations.value.trim())observations.value=`Importado de Rowing Coach · ${applied} serie${applied===1?'':'s'} asignada${applied===1?'':'s'} por el entrenador.`;seaLogInboxV191.innerHTML=`<div class="info"><b>${applied} serie${applied===1?'':'s'} del log aplicada${applied===1?'':'s'}.</b><br>Revisa los datos y guarda cuando termines de editar la sesión realizada.</div>`;
     };
   }
+  const seaRecordV689=document.getElementById('seaRecordV689');if(seaRecordV689)seaRecordV689.onclick=()=>V689UI.open({date,onDone:log=>{showRowingCoachMapV191(log);seaLogInboxV191.scrollIntoView({behavior:'smooth',block:'center'})}});
   if(seaImportLogV191)seaImportLogV191.onclick=async()=>{seaImportLogV191.disabled=true;seaImportLogV191.textContent='Buscando…';seaLogInboxV191.innerHTML='';try{const {data:{session:authSession}}=await sb.auth.getSession();const response=await fetch('/api/rowingcoach-inbox',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authSession.access_token}}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||`Error ${response.status}`);const logs=(data.logs||[]).filter(log=>!log.date||String(log.date)===String(date));seaLogInboxV191.innerHTML=`<div class="info"><b>Correo para Rowing Coach:</b><br>${esc(data.inbox||'No disponible')}</div>${logs.length?logs.map((log,index)=>`<div class="last"><b>${log.date?shortDateES(log.date):shortDateES(date)} · ${esc(log.filename)}</b><br><span class="muted">${log.series.filter(x=>x.suggested).length} bloques probables · ${log.series.length} detectados</span><br><button type="button" class="seaUseLogV191" data-index="${index}">Asignar series del log</button></div>`).join(''):'<div class="info">No se encontraron logs para esta fecha.</div>'}`;seaLogInboxV191.querySelectorAll('.seaUseLogV191').forEach(button=>button.onclick=()=>showRowingCoachMapV191(logs[Number(button.dataset.index)]));}catch(error){const raw=error?.message||String(error),friendly=raw.includes('gmail_not_configured')?'Falta configurar el correo de Row Training en Vercel.':raw.includes('gmail_login_failed')?'Gmail ha rechazado el acceso. Revisa la contraseña de aplicación.':`No se pudieron consultar los logs. ${raw}`;seaLogInboxV191.innerHTML=`<div class="info">${esc(friendly)}</div>`}finally{seaImportLogV191.disabled=false;seaImportLogV191.textContent='Importar log recibido'}};
   const photoInput=document.getElementById('seaRowingCoachPhotosV137'),photoStatus=document.getElementById('seaPhotoStatusV137'),photoPreview=document.getElementById('seaPhotoPreviewV137');
   // v258: igual que "Importar log recibido" (seaAutoMapLogV191/showRowingCoachMapV191) — asigna
@@ -14266,6 +14285,231 @@ async function weekly(){
     const retry=document.getElementById('retryRowerWeekV226');if(retry)retry.onclick=weekly;
   }
 }
+
+</script>
+<script>
+// v689 · Grabadora GPS + palas por minuto (motor puro, sin DOM)
+window.V689=(function(){
+const R=6371000,BIN=40,HZ=25;
+const rad=d=>d*Math.PI/180;
+function hav(a,b){const dLa=rad(b.lat-a.lat),dLo=rad(b.lon-a.lon),x=Math.sin(dLa/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(x)))}
+function bearing(a,b){const y=Math.sin(rad(b.lon-a.lon))*Math.cos(rad(b.lat)),x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lon-a.lon));return (Math.atan2(y,x)*180/Math.PI+360)%360}
+function median(a){const s=a.slice().sort((x,y)=>x-y),n=s.length;return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):null}
+// Dirección dominante (primer componente principal) de las muestras 3D: el móvil va fijo al bote,
+// así que da igual cómo esté girado: el balanceo de cada palada cae casi siempre en un eje.
+function principal(xs,ys,zs,n){
+  let mx=0,my=0,mz=0;for(let i=0;i<n;i++){mx+=xs[i];my+=ys[i];mz+=zs[i]}mx/=n;my/=n;mz/=n;
+  let a=0,b=0,c=0,d=0,e=0,f=0;
+  for(let i=0;i<n;i++){const x=xs[i]-mx,y=ys[i]-my,z=zs[i]-mz;a+=x*x;b+=x*y;c+=x*z;d+=y*y;e+=y*z;f+=z*z}
+  let v=[1,1,1];
+  for(let k=0;k<25;k++){const nx=a*v[0]+b*v[1]+c*v[2],ny=b*v[0]+d*v[1]+e*v[2],nz=c*v[0]+e*v[1]+f*v[2],m=Math.hypot(nx,ny,nz)||1;v=[nx/m,ny/m,nz/m]}
+  const out=new Float64Array(n);for(let i=0;i<n;i++)out[i]=(xs[i]-mx)*v[0]+(ys[i]-my)*v[1]+(zs[i]-mz)*v[2];
+  return out;
+}
+// Periodo de la señal por autocorrelación → palas/min. Devuelve {spm,conf} o null.
+function estimateSpm(sig,opt){
+  const n=sig.length;if(n<HZ*5)return null;
+  let r0=0;for(let i=0;i<n;i++)r0+=sig[i]*sig[i];
+  const rms=Math.sqrt(r0/n);if(rms<opt.minRms)return null;
+  const lmin=Math.round(HZ*60/opt.maxSpm),lmax=Math.min(Math.round(HZ*60/opt.minSpm),n-HZ*2);
+  const r=new Float64Array(lmax+2);
+  for(let l=lmin-2;l<=lmax+1;l++){let s=0;for(let i=0;i+l<n;i++)s+=sig[i]*sig[i+l];r[l]=(s/(n-l))/(r0/n)}
+  let best=0;for(let l=lmin;l<=lmax;l++)if(r[l]>r[l-1]&&r[l]>=r[l+1]&&r[l]>best)best=r[l];
+  if(best<opt.minConf)return null;
+  for(let l=lmin;l<=lmax;l++){
+    if(r[l]>r[l-1]&&r[l]>=r[l+1]&&r[l]>=best*0.8&&r[l]>=opt.minConf){
+      const den=r[l-1]-2*r[l]+r[l+1],off=den?0.5*(r[l-1]-r[l+1])/den:0,lag=l+Math.max(-1,Math.min(1,off));
+      return {spm:60*HZ/lag,conf:r[l]};
+    }
+  }
+  return null;
+}
+function makeEngine(o){
+  const opt=Object.assign({accThr:30,paceWin:10,spmWin:8,minSpeed:0.5,minRms:0.05,minSpm:14,maxSpm:56,minConf:0.3,strokeAvg:3},o||{});
+  const E={};
+  // ---- GPS
+  let last=null,run=null,hist=[],cog=null,lastAcc=null,vPrev=null,tPrev=null;
+  function newRun(t){return {t0:t,dist:0,strokes:0,spmTime:0,moving:0,best:0}}
+  E.gps=function(fix){
+    lastAcc=fix.acc;
+    if(fix.acc==null||fix.acc>opt.accThr)return false;
+    let v=(fix.speed!=null&&fix.speed>=0)?fix.speed:null,step=0,dt=0;
+    if(last){dt=(fix.t-last.t)/1000;step=hav(last,fix);
+      if(dt>0&&dt<8&&v==null)v=step/dt;
+      if(dt>0&&step/dt>15&&dt<8)return false;} // salto imposible
+    if(v==null)v=0;
+    if(v>=opt.minSpeed&&step>3&&last)cog=bearing(last,fix);
+    if(fix.heading!=null&&fix.heading>=0&&v>=opt.minSpeed)cog=fix.heading;
+    if(run&&last&&dt>0){
+      const dtc=Math.min(dt,3),vv=v<opt.minSpeed?0:v,vp=(vPrev==null||vPrev<opt.minSpeed)?0:vPrev;
+      run.dist+=0.5*(vv+vp)*dtc;
+    }
+    hist.push({t:fix.t,v:v,d:run?run.dist:0});while(hist.length&&fix.t-hist[0].t>30000)hist.shift();
+    last=fix;vPrev=v;
+    return true;
+  };
+  // ---- Movimiento
+  let gx=0,gy=0,gz=0,gInit=false,lastT=null;
+  const N=HZ*14,bx=[],by=[],bz=[];let binIdx=null,sx=0,sy=0,sz=0,sn=0,nb=0,spmRaw=[],spmShown=null,spmConf=0,rejects=0;
+  function pushBin(x,y,z){bx.push(x);by.push(y);bz.push(z);if(bx.length>N){bx.shift();by.shift();bz.shift()}nb++;
+    if(nb%HZ===0)analyse()}
+  function analyse(){
+    const n=Math.min(bx.length,HZ*opt.spmWin);if(n<HZ*5)return;
+    const s=principal(bx.slice(-n),by.slice(-n),bz.slice(-n),n);
+    const est=estimateSpm(s,opt);
+    if(!run||!run.stroking){return}
+    if(!est){spmShown=null;spmRaw=[];return}
+    spmRaw.push(est.spm);if(spmRaw.length>opt.strokeAvg)spmRaw.shift();
+    const m=median(spmRaw);
+    if(spmShown!=null&&Math.abs(m-spmShown)/spmShown>0.25&&rejects<3){rejects++;}else{rejects=0;spmShown=spmShown==null?m:spmShown*0.5+m*0.5}
+    spmConf=est.conf;
+    run.strokes+=spmShown/60;run.spmTime+=1;
+  }
+  E.motion=function(t,ax,ay,az){
+    if(ax==null||ay==null||az==null)return;
+    if(!gInit){gx=ax;gy=ay;gz=az;gInit=true;lastT=t}
+    const dt=Math.max(0.001,Math.min(1,(t-lastT)/1000));lastT=t;const k=1-Math.exp(-dt/1.6);
+    gx+=(ax-gx)*k;gy+=(ay-gy)*k;gz+=(az-gz)*k;
+    const hx=ax-gx,hy=ay-gy,hz=az-gz,idx=Math.floor(t/BIN);
+    if(binIdx==null)binIdx=idx;
+    if(idx!==binIdx){
+      const cx=sn?sx/sn:0,cy=sn?sy/sn:0,cz=sn?sz/sn:0;
+      const gap=Math.min(idx-binIdx,HZ*3);for(let i=0;i<gap;i++)pushBin(cx,cy,cz);
+      sx=sy=sz=sn=0;binIdx=idx;
+    }
+    sx+=hx;sy+=hy;sz+=hz;sn++;
+  };
+  // ---- Control de la serie
+  E.start=function(t){run=newRun(t);run.stroking=true;spmShown=null;spmRaw=[];rejects=0;hist=[];vPrev=null;if(last)hist.push({t:last.t,v:0,d:0})};
+  E.stop=function(t){const x=E.summary(t);run=null;return x};
+  E.summary=function(t){
+    if(!run)return null;const r=run;
+    const dur=Math.max(0,(t-r.t0)/1000),dist=r.dist;
+    const avgSpm=r.spmTime>=5?r.strokes/r.spmTime*60:null;
+    return {duration_seconds:Math.round(dur),distance_m:Math.round(dist),pace_500_seconds:dist>20?Math.round(dur/dist*500):null,
+      average_spm:avgSpm!=null?Math.round(avgSpm*10)/10:null,stroke_length_m:r.strokes>3&&dist>0?Math.round(dist/r.strokes*100)/100:null,suggested:dur>=60&&dist>=150};
+  };
+  E.running=()=>!!run;
+  E.snapshot=function(t){
+    const s={gpsAcc:lastAcc,gpsOk:!!last&&t-last.t<5000,cog:cog,spm:spmShown,conf:spmConf,elapsed:run?(t-run.t0)/1000:0,distance:run?run.dist:0,pace:null,avgPace:null,strokeLen:null,m30:null};
+    const w=hist.filter(h=>t-h.t<=opt.paceWin*1000);
+    if(w.length>=2){const dt=(w[w.length-1].t-w[0].t)/1000,dd=w[w.length-1].d-w[0].d;
+      let v=null;if(run&&dt>=3)v=dd/dt;else{let sv=0;w.forEach(h=>sv+=h.v);v=sv/w.length}
+      if(v>0.5){s.pace=500/v;s.m30=v*1800;if(spmShown>0)s.strokeLen=v*60/spmShown}}
+    if(run&&run.dist>20&&s.elapsed>5)s.avgPace=s.elapsed/run.dist*500;
+    return s;
+  };
+  return E;
+}
+return {makeEngine,estimateSpm,principal,hav,bearing};
+})();
+
+window.V689UI=(function(){
+const KEY='rowtraining_rec689';
+const mmss=s=>(s==null||!isFinite(s)||s<=0||s>3599)?'0:00':Math.floor(s/60)+':'+String(Math.round(s%60)===60?59:Math.round(s%60)).padStart(2,'0');
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+function clear(){try{localStorage.removeItem(KEY)}catch(e){}}
+function open(cfg){
+  if(document.getElementById('v689Rec'))return;
+  const eng=V689.makeEngine();
+  const saved=load()||{series:[]};
+  const st={series:saved.series||[],raw:false,rawLines:[],watch:null,wake:null,timer:null,cd:0,motionOn:false,sensorMsg:'',cpT:0};
+  // Permiso del sensor de movimiento: tiene que pedirse dentro del toque del usuario (este click).
+  let permP=Promise.resolve('granted');
+  try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')permP=DeviceMotionEvent.requestPermission()}catch(e){}
+  const ov=document.createElement('div');ov.id='v689Rec';ov.className='v689Rec';
+  ov.innerHTML=`<div class="v689Top"><button type="button" class="v689X" aria-label="Cerrar">✕</button><span id="v689Gps" class="v689Gps">GPS…</span><b id="v689N">0</b></div>
+  <div class="v689Card"><div class="v689Row"><span class="v689Rec1" id="v689St">● LISTO</span><span class="v689Big s" id="v689T">:00</span></div>
+  <div class="v689Row"><span class="v689Lbl" id="v689Cog">—° COG</span><span class="v689Huge" id="v689P">0:00</span><small>/500m</small></div>
+  <div class="v689Row"><span class="v689Mid"><span id="v689D">0</span><small>m</small></span><span class="v689Mid"><span id="v689Spm">00</span><small>palas/min</small></span></div>
+  <div class="v689Row"><span class="v689Huge" id="v689Av">0:00</span><small>media /500m</small></div>
+  <div class="v689Row"><span class="v689Mid"><small>long. pala</small> <span id="v689SL">0.0</span><small>m</small></span><span class="v689Mid"><span id="v689M30">0</span><small>m/30min</small></span></div>
+  <div class="v689Btns"><button type="button" id="v689Go" class="v689Play" aria-label="Empezar">▶</button></div></div>
+  <div class="v689List" id="v689List"></div>
+  <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw"> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button></div></div>`;
+  document.body.appendChild(ov);
+  const $=id=>ov.querySelector('#'+id);
+  const msg=t=>{$('v689Msg').textContent=t||''};
+  function renderList(){
+    $('v689N').textContent=st.series.length;
+    $('v689List').innerHTML=st.series.map((x,i)=>`<div class="v689Ser"><b>Serie ${i+1}</b> · ${mmss(x.duration_seconds)} · ${x.distance_m} m · ${x.pace_500_seconds?mmss(x.pace_500_seconds)+'/500':'—'} · ${x.average_spm!=null?x.average_spm+' ppm':'sin ppm'}<button type="button" class="v689Del" data-i="${i}" aria-label="Borrar">🗑</button></div>`).join('');
+    ov.querySelectorAll('.v689Del').forEach(b=>b.onclick=()=>{if(!confirm('¿Borrar esta serie?'))return;st.series.splice(Number(b.dataset.i),1);save({series:st.series});renderList()});
+  }
+  function draw(){
+    const t=Date.now(),s=eng.snapshot(t),run=eng.running();
+    $('v689T').textContent=st.cd>0?String(st.cd):(run?mmss(s.elapsed):':00');
+    $('v689P').textContent=s.pace?mmss(s.pace):'0:00';
+    $('v689D').textContent=Math.round(s.distance);
+    $('v689Spm').textContent=s.spm!=null?String(Math.round(s.spm)).padStart(2,'0'):'00';
+    $('v689Av').textContent=s.avgPace?mmss(s.avgPace):'0:00';
+    $('v689SL').textContent=s.strokeLen?s.strokeLen.toFixed(1):'0.0';
+    $('v689M30').textContent=s.m30?Math.round(s.m30):'0';
+    $('v689Cog').textContent=(s.cog!=null?Math.round(s.cog):'—')+'° COG';
+    const g=$('v689Gps');g.textContent=!s.gpsOk?'Buscando GPS…':('GPS ±'+Math.round(s.gpsAcc||0)+' m');g.className='v689Gps'+(s.gpsOk?(s.gpsAcc<=15?' ok':' mid'):' bad');
+    $('v689St').textContent=st.cd>0?'● PREPARA':(run?'● REC':'● LISTO');$('v689St').className='v689Rec1'+(run?' on':'');
+    $('v689Go').textContent=run?'■':'▶';$('v689Go').classList.toggle('stop',run);
+    if(run&&t-st.cpT>5000){st.cpT=t;const p=eng.summary(t);if(p)save({series:st.series,partial:p})}
+  }
+  function onMotion(e){
+    let a=e.acceleration;if(!a||a.x==null)a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
+    const t=performance.now();eng.motion(t,a.x,a.y,a.z);
+    if(st.raw&&eng.running())st.rawLines.push(`M,${Date.now()},${a.x.toFixed(3)},${a.y.toFixed(3)},${a.z.toFixed(3)}`);
+    if(!st.motionOn){st.motionOn=true;msg('')}
+  }
+  permP.then(r=>{
+    if(r==='granted'||r===undefined){window.addEventListener('devicemotion',onMotion);setTimeout(()=>{if(!st.motionOn)msg('No llegan datos del acelerómetro: se medirá distancia y ritmo, pero no palas por minuto.')},4000)}
+    else msg('Sin permiso de movimiento: no habrá palas por minuto. Permítelo en Ajustes › Safari › Movimiento y orientación.');
+  }).catch(()=>msg('No se pudo activar el acelerómetro.'));
+  if(navigator.geolocation){
+    st.watch=navigator.geolocation.watchPosition(p=>{
+      const c=p.coords;eng.gps({t:p.timestamp,lat:c.latitude,lon:c.longitude,acc:c.accuracy,speed:c.speed,heading:c.heading});
+      if(st.raw&&eng.running())st.rawLines.push(`G,${p.timestamp},${c.latitude},${c.longitude},${c.accuracy},${c.speed??''},${c.heading??''}`);
+    },err=>msg('GPS: '+(err.code===1?'permiso denegado. Actívalo en Ajustes › Privacidad › Localización.':'sin señal.')),{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  }else msg('Este dispositivo no tiene GPS en el navegador.');
+  async function wake(){try{if(navigator.wakeLock&&!st.wake){st.wake=await navigator.wakeLock.request('screen');st.wake.addEventListener('release',()=>{st.wake=null})}}catch(e){}}
+  wake();
+  const onVis=()=>{if(document.visibilityState==='visible')wake()};document.addEventListener('visibilitychange',onVis);
+  st.timer=setInterval(draw,500);
+  $('v689Go').onclick=()=>{
+    if(st.cd>0)return;
+    if(eng.running()){
+      const s=eng.stop(Date.now());
+      if(s&&(s.duration_seconds>=5)){st.series.push(s);save({series:st.series});msg(`Serie ${st.series.length} guardada.`)}else msg('Serie demasiado corta: no se guarda.');
+      renderList();draw();return;
+    }
+    st.cd=3;draw();
+    const iv=setInterval(()=>{st.cd--;if(st.cd<=0){clearInterval(iv);st.cd=0;eng.start(Date.now());st.cpT=Date.now();msg('')}draw()},1000);
+  };
+  $('v689Raw').onchange=e=>{st.raw=e.target.checked;$('v689Raw2').hidden=!st.raw};
+  $('v689Raw2').onclick=async()=>{
+    const csv='tipo,t_ms,a,b,c,d,e\n'+st.rawLines.join('\n'),name='rowtraining-bruto-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
+    try{const f=new File([csv],name,{type:'text/csv'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
+    const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  };
+  function close(){
+    clearInterval(st.timer);if(st.watch!=null)navigator.geolocation.clearWatch(st.watch);
+    window.removeEventListener('devicemotion',onMotion);document.removeEventListener('visibilitychange',onVis);
+    try{st.wake&&st.wake.release()}catch(e){}ov.remove();
+  }
+  ov.querySelector('.v689X').onclick=()=>{
+    if(eng.running()&&!confirm('Hay una serie grabándose. ¿Salir? Se perderá esa serie.'))return;
+    close();
+  };
+  $('v689Use').onclick=()=>{
+    if(eng.running()){const s=eng.stop(Date.now());if(s&&s.duration_seconds>=5)st.series.push(s)}
+    if(!st.series.length)return msg('Todavía no hay ninguna serie grabada.');
+    const series=st.series.slice();clear();close();
+    cfg.onDone&&cfg.onDone({filename:'Grabación GPS de Row Training',date:cfg.date||null,series});
+  };
+  // Recuperar una grabación interrumpida
+  if(saved.partial&&saved.partial.duration_seconds>=20&&confirm(`Quedó una serie sin terminar (${mmss(saved.partial.duration_seconds)}, ${saved.partial.distance_m} m). ¿Recuperarla?`)){
+    st.series.push(Object.assign({},saved.partial,{suggested:true}));save({series:st.series});
+  }else if(saved.partial){save({series:st.series})}
+  renderList();draw();
+}
+return {open};
+})();
 
 </script>
 </body></html>
