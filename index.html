@@ -2881,7 +2881,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="687";
+const APP_VERSION="688";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8701,9 +8701,9 @@ async function v583Chat(anchor,cfg){
     if(hd.onBack)layer.querySelector('.v583Back').onclick=()=>{window._v583Cleanup&&window._v583Cleanup();hd.onBack()};
     const fit=()=>{
       if(!layer.isConnected)return;
-      const vv=window.visualViewport,vh=vv?vv.height:innerHeight,off=vv?vv.offsetTop:0;
+      const vv=window.visualViewport,ae=document.activeElement,typing=!!(ae&&(ae.tagName==='TEXTAREA'||ae.tagName==='INPUT'||ae.isContentEditable));const vh=(vv&&typing)?vv.height:innerHeight,off=(vv&&typing)?vv.offsetTop:0;
       const hdr=document.querySelector('header'),top=hdr?Math.max(0,hdr.getBoundingClientRect().bottom):0;
-      const kb=innerHeight-vh>120||(document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable));
+      const kb=typing&&(innerHeight-vh>120||ae.tagName==='TEXTAREA'||ae.isContentEditable);
       const nav=document.getElementById('nav');let bottom=0;
       if(kb){bottom=0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
       layer.style.top=(off+top)+'px';layer.style.height=Math.max(180,vh-top-bottom)+'px';
@@ -8713,9 +8713,9 @@ async function v583Chat(anchor,cfg){
     fit();window.scrollTo(0,0);
     const vv=window.visualViewport;
     ['resize','scroll'].forEach(ev=>{vv&&vv.addEventListener(ev,fit);});
-    window.addEventListener('resize',fit);document.addEventListener('focusin',onFocus);document.addEventListener('focusout',onFocus);
+    window.addEventListener('resize',fit);const onVis=()=>{fit();setTimeout(fit,150);setTimeout(fit,600)};document.addEventListener('visibilitychange',onVis);window.addEventListener('pageshow',onVis);window.addEventListener('orientationchange',onVis);document.addEventListener('focusin',onFocus);document.addEventListener('focusout',onFocus);
     const mo=new MutationObserver(()=>{if(!anchor.isConnected)cleanup()});mo.observe(document.body,{childList:true,subtree:true});
-    const cleanup=()=>{mo.disconnect();['resize','scroll'].forEach(ev=>{vv&&vv.removeEventListener(ev,fit)});window.removeEventListener('resize',fit);document.removeEventListener('focusin',onFocus);document.removeEventListener('focusout',onFocus);if(anchor._v583Timer){clearInterval(anchor._v583Timer);anchor._v583Timer=null}layer.remove();if(window._v583Cleanup===cleanup)window._v583Cleanup=null};
+    const cleanup=()=>{mo.disconnect();['resize','scroll'].forEach(ev=>{vv&&vv.removeEventListener(ev,fit)});window.removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pageshow',onVis);window.removeEventListener('orientationchange',onVis);document.removeEventListener('focusin',onFocus);document.removeEventListener('focusout',onFocus);if(anchor._v583Timer){clearInterval(anchor._v583Timer);anchor._v583Timer=null}layer.remove();if(window._v583Cleanup===cleanup)window._v583Cleanup=null};
     window._v583Cleanup=cleanup;
   }
   const cached=V583_CACHE.get(cfg.key);
