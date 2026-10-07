@@ -1083,7 +1083,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v696Box{margin:8px 0;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
 .v696Head{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .v696Pill{font-weight:700;font-size:13px;padding:3px 10px;border-radius:999px}
-.v696ok{background:rgba(22,163,74,.14);color:#22a55a}.v696amber{background:rgba(217,119,6,.16);color:#e08a1a}.v696red{background:rgba(220,38,38,.14);color:#ef5350}
+.v696unk{background:rgba(120,120,120,.18);color:var(--text-muted)}.v696ok{background:rgba(22,163,74,.14);color:#22a55a}.v696amber{background:rgba(217,119,6,.16);color:#e08a1a}.v696red{background:rgba(220,38,38,.14);color:#ef5350}
 .v696Line{font-size:13.5px;color:var(--text)}
 .v696Why{margin-top:5px;font-size:12.5px;color:var(--text-muted)}
 .v696Det{margin-top:6px;font-size:12.5px}.v696Det summary{cursor:pointer;color:var(--text-muted)}
@@ -2923,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="697";
+const APP_VERSION="699";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14733,10 +14733,10 @@ async function fetchAll(c){
   if(mem&&mem.k===k&&Date.now()-mem.ts<TTL)return mem.H;
   try{const j=JSON.parse(localStorage.getItem(CK)||'null');if(j&&j.k===k&&Date.now()-j.ts<TTL){mem=j;return j.H}}catch(e){}
   const tz='Europe%2FMadrid';
-  const mu=`https://marine-api.open-meteo.com/v1/marine?latitude=${c.lat}&longitude=${c.lon}&hourly=wave_height,wave_period,wave_direction,swell_wave_height&timezone=${tz}&past_days=1&forecast_days=10`;
-  const fu=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,precipitation_probability,weather_code&wind_speed_unit=kmh&timezone=${tz}&past_days=1&forecast_days=16`;
+  const mu=n=>`https://marine-api.open-meteo.com/v1/marine?latitude=${c.lat}&longitude=${c.lon}&hourly=wave_height,wave_period,wave_direction,swell_wave_height&timezone=${tz}&past_days=1&forecast_days=${n}`;
+  const fu=`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,precipitation_probability,weather_code&wind_speed_unit=kmh&timezone=${tz}&past_days=1&forecast_days=10`;
   const get=u=>fetch(u).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
-  const [a,b]=await Promise.allSettled([get(mu),get(fu)]);
+  const [a,b]=await Promise.allSettled([get(mu(10)),get(fu)]);
   if(a.status!=='fulfilled'&&b.status!=='fulfilled')throw new Error('sin conexión con el servicio de previsión');
   const H=buildMap(a.status==='fulfilled'?a.value:null,b.status==='fulfilled'?b.value:null);
   mem={k,ts:Date.now(),H};try{localStorage.setItem(CK,JSON.stringify(mem))}catch(e){}
@@ -14760,16 +14760,22 @@ function evaluate(H,date,time,end,c){
   chk(m.wave,c.waveAmber,c.waveRed,'olas','m',1);chk(m.wind,c.windAmber,c.windRed,'viento','km/h',0);chk(m.gust,c.gustAmber,c.gustRed,'rachas','km/h',0);
   if(m.code!=null&&m.code>=95){red.push('tormenta prevista');plain.push('tormenta prevista')}
   if(m.pop!=null&&m.pop>=c.rainAmber&&m.code!=null&&m.code>=51){amb.push(`lluvia ${num(m.pop,0)} %`);plain.push(`lluvia ${num(m.pop,0)} %`)}
-  const level=red.length?'red':amb.length?'amber':'ok';
+  const complete=m.wave!=null&&m.wind!=null;
+  const level=red.length?'red':amb.length?'amber':complete?'ok':'unk';
   return {level,reasons:red.concat(amb),plain,rows,m,hasWave:m.wave!=null}}
-const LV={ok:{ic:'🟢',tx:'Buena mar'},amber:{ic:'🟡',tx:'Precaución'},red:{ic:'🔴',tx:'Mala mar'}};
+const LV={unk:{ic:'⚪',tx:'Sin datos completos'},ok:{ic:'🟢',tx:'Buena mar'},amber:{ic:'🟡',tx:'Precaución'},red:{ic:'🔴',tx:'Mala mar'}};
 const daysFromToday=d=>{const a=new Date(d+'T12:00:00'),t=new Date();t.setHours(12,0,0,0);return Math.round((a-t)/86400000)};
 function skip(ev){if(!ev||!ev.event_date||ev.cancelled_at)return true;if(ev.kind==='session'){const t=String(ev.session_type||'').toUpperCase();if(t&&t!=='MAR')return true}return false}
+function waveNote(r,H,date){
+  if(r.hasWave)return '';
+  const any=Object.keys(H).some(k=>H[k].wave!=null);
+  if(any){const last=Object.keys(H).filter(k=>H[k].wave!=null).sort().pop().slice(0,10);return `<div class="v696Why">Aún no hay previsión de oleaje para esta fecha (llega hasta el ${q(last.slice(8,10)+'/'+last.slice(5,7))}). Mientras tanto solo viento.</div>`}
+  return '<div class="v696Why">No hay datos de oleaje para el punto de mar configurado: solo viento. Prueba a mover el punto más mar adentro en ⚙ Umbrales.</div>'}
 function summaryHtml(r,staff){const L=LV[r.level],m=r.m;
   const bits=[];if(m.wave!=null)bits.push(`olas ${num(m.wave,1)} m${m.period!=null?` · ${num(m.period,0)} s`:''}${m.wdir!=null?' '+dirTx(m.wdir):''}`);
   if(m.wind!=null)bits.push(`viento ${num(m.wind,0)} km/h${m.windDir!=null?' '+dirTx(m.windDir):''}${m.gust!=null?` · rachas ${num(m.gust,0)}`:''}`);
   if(m.temp!=null)bits.push(`${num(m.temp,0)} °C`);
-  return `<div class="v696Head"><span class="v696Pill v696${r.level}">${L.ic} ${L.tx}</span><span class="v696Line">${q(bits.join(' · ')||'sin datos')}</span></div>${r.reasons.length?`<div class="v696Why">${q((staff?r.reasons:r.plain).join(' · '))}</div>`:''}${r.hasWave?'':'<div class="v696Why">Sin dato de oleaje para esta fecha: solo viento.</div>'}`}
+  return `<div class="v696Head"><span class="v696Pill v696${r.level}">${L.ic} ${L.tx}</span><span class="v696Line">${q(bits.join(' · ')||'sin datos')}</span></div>${r.reasons.length?`<div class="v696Why">${q((staff?r.reasons:r.plain).join(' · '))}</div>`:''}${r.waveNote||''}`}
 function tableHtml(r){return `<table class="v696Tab"><tr><th>Hora</th><th>Olas</th><th>Viento</th><th>Rachas</th></tr>${r.rows.map(x=>`<tr><td>${q(x.h)}</td><td>${num(x.wave,1)} m${x.period!=null?' · '+num(x.period,0)+' s':''}</td><td>${num(x.wind,0)} ${q(dirTx(x.windDir))}</td><td>${num(x.gust,0)}</td></tr>`).join('')}</table>`}
 function cfgHtml(c){const f=(id,l,v,st)=>`<label>${l}<input id="v696_${id}" type="number" step="${st||1}" value="${v}"></label>`;
   return `<div class="v696Cfg"><div class="v696CfgTit">Umbrales (los pone el entrenador, se guardan en este dispositivo)</div><div class="plannerGrid">${f('waveAmber','Olas: precaución desde (m)',c.waveAmber,0.1)}${f('waveRed','Olas: mala mar desde (m)',c.waveRed,0.1)}${f('windAmber','Viento: precaución (km/h)',c.windAmber)}${f('windRed','Viento: mala mar (km/h)',c.windRed)}${f('gustAmber','Rachas: precaución (km/h)',c.gustAmber)}${f('gustRed','Rachas: mala mar (km/h)',c.gustRed)}${f('rainAmber','Lluvia: precaución (%)',c.rainAmber)}${f('lat','Latitud del punto de mar',c.lat,0.001)}${f('lon','Longitud del punto de mar',c.lon,0.001)}</div><div class="v696Btns"><button type="button" id="v696Save">Guardar</button><button type="button" id="v696Reset">Valores de partida</button></div></div>`}
@@ -14779,13 +14785,14 @@ async function mount(body,ev,canEdit){
   const dd=daysFromToday(ev.event_date);if(dd<-1)return;
   let box=body.querySelector('#v696Wx');if(box)box.remove();
   box=document.createElement('div');box.id='v696Wx';box.className='v696Box';anchor.insertAdjacentElement('afterend',box);
-  if(dd>15){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 15 días.</div>';return}
+  if(dd>9){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 10 días.</div>';return}
   box.innerHTML='<div class="v696Why">🌊 Cargando previsión de mar…</div>';
   const draw=async()=>{
     const c=cfg();let H;
     try{H=await fetchAll(c)}catch(e){box.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
     const r=evaluate(H,ev.event_date,ev.event_time,ev.end_time,c);
     if(!r){box.innerHTML='<div class="v696Why">🌊 Sin previsión para esa fecha y hora.</div>';return}
+    r.waveNote=waveNote(r,H,ev.event_date);
     box.innerHTML=`${summaryHtml(r,canEdit)}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div>`;
     const g=box.querySelector('#v696Gear');
     if(g)g.onclick=()=>{const h=box.querySelector('#v696CfgHost');if(h.innerHTML){h.innerHTML='';return}
@@ -14796,7 +14803,7 @@ async function mount(body,ev,canEdit){
   draw()}
 async function decorate(root,canEdit){
   if(!canEdit&&!ROWERS)return;
-  const rows=[...(root||document).querySelectorAll('.v503EventRow[data-date]')].filter(b=>{if(b.querySelector('.v696Dot'))return false;const dd=daysFromToday(b.dataset.date);if(dd<-1||dd>15)return false;if(b.classList.contains('v527RowCancelled'))return false;return !skip({event_date:b.dataset.date,kind:b.dataset.kind,session_type:b.dataset.st})});
+  const rows=[...(root||document).querySelectorAll('.v503EventRow[data-date]')].filter(b=>{if(b.querySelector('.v696Dot'))return false;const dd=daysFromToday(b.dataset.date);if(dd<-1||dd>9)return false;if(b.classList.contains('v527RowCancelled'))return false;return !skip({event_date:b.dataset.date,kind:b.dataset.kind,session_type:b.dataset.st})});
   if(!rows.length)return;
   let H;try{H=await fetchAll(cfg())}catch(e){return}
   const c=cfg();
