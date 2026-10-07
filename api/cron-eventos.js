@@ -60,7 +60,9 @@ module.exports=async function handler(req,res){
   if(!secret||(req.headers.authorization||'')!==`Bearer ${secret}`)return res.status(401).json({error:'unauthorized'});
   if(!process.env.SUPABASE_SERVICE_ROLE_KEY)return res.status(500).json({error:'missing_service_role'});
   const LIVE=process.env.CRON_LIVE==='1';
-  const out={live:LIVE,opens:0,reminders:0,shortage:0,weather:0,would:[],errors:[]};
+  const ON=k=>process.env[k]!=='0';
+  const F={opens:ON('CRON_OPENS'),reminders:ON('CRON_REMINDERS'),short:ON('CRON_SHORT'),sea:ON('CRON_SEA')};
+  const out={live:LIVE,blocks:F,opens:0,reminders:0,shortage:0,weather:0,would:[],errors:[]};
   try{
     const nowQ=(!LIVE&&req.query&&/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(String(req.query.now||'')))?String(req.query.now):null;
     const now=nowQ||madridNow(),today=now.slice(0,10),from=addDays(today,-1),to=addDays(today,60);
@@ -110,7 +112,7 @@ module.exports=async function handler(req,res){
         if(e.rsvp_open_days_before||e.rsvp_open_time){opensAt=`${addDays(e.date,-(e.rsvp_open_days_before||0))}T${hhmm(e.rsvp_open_time)||'00:00'}`}
         const isOpen=!opensAt||opensAt<=now;
         // 1) apertura
-        if(opensAt&&opensAt<=now&&!e.opens_notified_at&&liveTeams.length&&e.date>=today){
+        if(F.opens&&opensAt&&opensAt<=now&&!e.opens_notified_at&&liveTeams.length&&e.date>=today){
           if(await claim(e,'opens_notified_at')){
             let ids=[];for(const t of liveTeams)ids.push(...await audience(e,t));
             ids=uniq(ids).filter(i=>!blocks(i,'event_new'));
@@ -119,7 +121,7 @@ module.exports=async function handler(req,res){
           }
         }
         // 2) recordatorio a quien no ha respondido
-        if(e.reminder_hours_before&&!e.reminder_sent_at&&liveTeams.length&&isOpen){
+        if(F.reminders&&e.reminder_hours_before&&!e.reminder_sent_at&&liveTeams.length&&isOpen){
           const st=`${e.date}T${hhmm(e.meet_time||e.event_time)||'09:00'}`,remindAt=fromMs(toMs(st)-e.reminder_hours_before*3600000);
           if(now>=remindAt&&now<st){
             if(await claim(e,'reminder_sent_at')){
@@ -136,7 +138,7 @@ module.exports=async function handler(req,res){
         const startS=`${e.date}T${hhmm(e.event_time)||'09:00'}`;
         const hoursTo=(toMs(startS)-toMs(now))/3600000;
         const boatApplies=e.boat_type||(e.kind==='session'&&e.session_type==='MAR')||e.kind==='competition';
-        if(boatApplies&&isOpen&&hoursTo>25.75&&hoursTo<=26){
+        if(F.short&&boatApplies&&isOpen&&hoursTo>25.75&&hoursTo<=26){
           for(const t of e.teams){
             const need=e.boat_type?BOAT_MIN[e.boat_type]:BOAT_MIN.barca; // sin decidir: se avisa solo si no llega ni a barca
             const rid=new Set(await rosterOf(t));const going=(await rsvpOf(e,t)).filter(r=>r.status==='in'&&rid.has(String(r.user_id))).length; // el equipo técnico no cuenta
@@ -151,7 +153,7 @@ module.exports=async function handler(req,res){
         const seaApplies=(e.kind==='session'?e.session_type==='MAR':true)&&(e.boat_type||e.kind==='session'||e.kind==='competition');
         const dayBefore=e.date===addDays(today,1)&&now.slice(11,16)>='20:00'&&now.slice(11,16)<'20:15';
         const threeBefore=hoursTo>2.75&&hoursTo<=3;
-        if(seaApplies&&e.date>=today&&(dayBefore||threeBefore)){
+        if(F.sea&&seaApplies&&e.date>=today&&(dayBefore||threeBefore)){
           const {c,H}=await wxGet();const r=wxEval(H,e.date,e.event_time,e.end_time,c);
           if(r&&(r.level==='red'||r.level==='amber')){
             const ico=r.level==='red'?'🔴':'🟡',tx=r.level==='red'?'Mala mar':'Precaución';
