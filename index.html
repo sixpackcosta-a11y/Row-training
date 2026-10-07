@@ -2911,7 +2911,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="694";
+const APP_VERSION="695";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14386,6 +14386,9 @@ function makeEngine(o){
   const E={};
   // ---- GPS
   let last=null,run=null,hist=[],cog=null,lastAcc=null,vPrev=null,tPrev=null;
+  // v695: posiciones suavizadas (media de las ultimas 5 lecturas) para no perder metros cuando la velocidad Doppler del movil tarda en arrancar
+  let pwin=[],smPrev=null;
+  function smoothStep(fix,dt){pwin.push({lat:fix.lat,lon:fix.lon});if(pwin.length>5)pwin.shift();if(dt>8||dt<=0){smPrev=null;pwin=[{lat:fix.lat,lon:fix.lon}];return 0}let la=0,lo=0;for(const p of pwin){la+=p.lat;lo+=p.lon}const sm={lat:la/pwin.length,lon:lo/pwin.length};let inc=0;if(smPrev&&pwin.length>=5){const h=hav(smPrev,sm);if(h/dt>0.7)inc=h}smPrev=pwin.length>=5?sm:null;return inc}
   function newRun(t){return {t0:t,dist:0,strokes:0,spmTime:0,moving:0,best:0,trace:[]}}
   E.gps=function(fix){
     lastAcc=fix.acc;
@@ -14397,9 +14400,10 @@ function makeEngine(o){
     if(v==null)v=0;
     if(v>=opt.minSpeed&&step>3&&last)cog=bearing(last,fix);
     if(fix.heading!=null&&fix.heading>=0&&v>=opt.minSpeed)cog=fix.heading;
+    const smInc=smoothStep(fix,dt);
     if(run&&last&&dt>0){
       const dtc=Math.min(dt,3),vv=v<opt.minSpeed?0:v,vp=(vPrev==null||vPrev<opt.minSpeed)?0:vPrev,pd=run.dist;
-      run.dist+=0.5*(vv+vp)*dtc;
+      run.dist+=Math.max(0.5*(vv+vp)*dtc,Math.min(smInc,25*dtc));
       // Meta por distancia: instante exacto en que se cruza (interpolado entre las dos lecturas).
       if(run.goal&&run.goal.type==='dist'&&!run.hitT&&run.dist>=run.goal.v){const f=(run.goal.v-pd)/Math.max(1e-9,run.dist-pd);run.hitT=last.t+Math.max(0,Math.min(1,f))*(fix.t-last.t)}
     }
@@ -14468,7 +14472,7 @@ function makeEngine(o){
     const el=(t-run.t0)/1000,reached=el>=g.v;
     return {type:'time',v:g.v,remaining:Math.max(0,g.v-el),reached,ready:reached&&((last&&last.t>=run.t0+g.v*1000)||el>=g.v+1.5)};
   };
-  E.reset=function(){run=null;spmShown=null;spmRaw=[];rejects=0;spmConf=0;hist=[];vPrev=null};
+  E.reset=function(){pwin=[];smPrev=null;run=null;spmShown=null;spmRaw=[];rejects=0;spmConf=0;hist=[];vPrev=null};
   E.setOpt=o=>Object.assign(opt,o);
   E.running=()=>!!run;
   E.snapshot=function(t){
