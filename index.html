@@ -1091,7 +1091,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v696Foot{margin-top:7px;font-size:11.5px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.v696Foot a{color:inherit;text-decoration:underline}
 .v696Gear{border:1px solid var(--border);background:transparent;color:inherit;border-radius:8px;padding:3px 9px;font:inherit;font-size:11.5px;cursor:pointer}
 .v696Cfg{margin-top:8px}.v696CfgTit{font-size:12px;font-weight:700;margin-bottom:6px}.v696Btns{display:flex;gap:8px;margin-top:8px}
-.v696Dot{margin-left:6px;font-size:12px}.v696In td{font-weight:700}.v696In{background:rgba(120,120,120,.12)}.v696Ana p{margin:5px 0;font-size:12.8px;color:var(--text)}.v696Ana{margin-top:4px}
+.v696Dot{margin-left:6px;font-size:12px}.v696Tap{position:relative;cursor:pointer;padding-right:20px;-webkit-tap-highlight-color:transparent}.v696Chev{position:absolute;right:2px;top:4px;color:var(--text-muted);font-size:13px}.v696More{margin-top:6px}.v696More[hidden]{display:none}.v696In td{font-weight:700}.v696In{background:rgba(120,120,120,.12)}.v696Ana p{margin:5px 0;font-size:12.8px;color:var(--text)}.v696Ana{margin-top:4px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2923,7 +2923,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="701";
+const APP_VERSION="702";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -14817,6 +14817,7 @@ async function mount(body,ev,canEdit){
   if(!body||skip(ev)||(!canEdit&&!ROWERS))return;
   const anchor=body.querySelector('.v512DateLine')||body.querySelector('h3');if(!anchor)return;
   const dd=daysFromToday(ev.event_date);if(dd<-1)return;
+  let open=false;
   let box=body.querySelector('#v696Wx');if(box)box.remove();
   box=document.createElement('div');box.id='v696Wx';box.className='v696Box';anchor.insertAdjacentElement('afterend',box);
   if(dd>9){box.innerHTML='<div class="v696Why">🌊 La previsión de mar aparecerá cuando falten menos de 10 días.</div>';return}
@@ -14827,7 +14828,10 @@ async function mount(body,ev,canEdit){
     const r=evaluate(H,ev.event_date,ev.event_time,ev.end_time,c);
     if(!r){box.innerHTML='<div class="v696Why">🌊 Sin previsión para esa fecha y hora.</div>';return}
     r.waveNote=waveNote(r,H,ev.event_date);
-    box.innerHTML=`${summaryHtml(r,canEdit)}${analysisHtml(r,cfg())}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a> <span class="v696Upd">Actualizado a las ${q(stampTx())}</span> <button type="button" id="v696Refresh" class="v696Gear">↻ Actualizar</button>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div>`;
+    box.innerHTML=`<div class="v696Tap" id="v696Tap" role="button" tabindex="0" aria-expanded="${open}">${summaryHtml(r,canEdit)}<span class="v696Chev">${open?'▾':'▸'}</span></div><div class="v696More" id="v696More"${open?'':' hidden'}>${analysisHtml(r,cfg())}<details class="v696Det"><summary>Ver hora a hora</summary>${tableHtml(r)}</details><div class="v696Foot"><span>Previsión de modelo (Open-Meteo), orientativa. Decide siempre el entrenador.</span> <a href="https://www.aemet.es/es/eltiempo/prediccion/maritima" target="_blank" rel="noopener">Parte oficial AEMET</a> <span class="v696Upd">Actualizado a las ${q(stampTx())}</span> <button type="button" id="v696Refresh" class="v696Gear">↻ Actualizar</button>${canEdit?' <button type="button" id="v696Gear" class="v696Gear">⚙ Umbrales</button>':''}</div><div id="v696CfgHost"></div></div>`;
+    const tap=box.querySelector('#v696Tap'),more=box.querySelector('#v696More');
+    const flip=()=>{open=!open;more.hidden=!open;tap.setAttribute('aria-expanded',String(open));tap.querySelector('.v696Chev').textContent=open?'▾':'▸'};
+    tap.onclick=flip;tap.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}};
     const rb=box.querySelector('#v696Refresh');
     if(rb)rb.onclick=()=>{rb.disabled=true;rb.textContent='Actualizando…';draw(true)};
     const g=box.querySelector('#v696Gear');
