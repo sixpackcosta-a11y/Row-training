@@ -712,12 +712,13 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
 .v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
-.v325ReactionPill span{font-weight:700}
+.v325ReactionPill span{font-weight:600;font-size:10px;opacity:.8}.v718Cap{gap:3px;padding:1px 8px;font-size:12px}.v718Cap i{font-style:normal;font-size:15px;letter-spacing:1px}
+.v718RS{position:fixed;inset:0;z-index:10050;background:#0007;display:flex;align-items:flex-end}.v718RSBox{width:100%;max-height:70vh;overflow:auto;background:var(--surface);color:var(--text);border-radius:18px 18px 0 0;padding:8px 14px 24px;box-shadow:0 -8px 30px #0006}.v718RSGrab{width:44px;height:5px;border-radius:9px;background:var(--border);margin:4px auto 10px}.v718RSBox h4{margin:0 0 10px;text-align:center;font-size:16px}.v718RSChips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}.v718RSChips button{flex:none;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:6px 14px;font-size:15px}.v718RSChips button.on{border-color:#2563eb;background:var(--accent-tint)}.v718RSChips button small{font-size:11px;margin-left:4px;opacity:.8}.v718RSRow{display:flex;align-items:center;gap:12px;padding:8px 2px;border-radius:10px}.v718RSRow.me{cursor:pointer}.v718RSRow img,.v718RSRow .ph{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}.v718RSRow .nm{flex:1;min-width:0}.v718RSRow .nm b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.v718RSRow .nm small{color:var(--muted,#888);font-size:12px}.v718RSRow .em{font-size:22px}
 .v325AddReaction{border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325EmojiPicker{display:flex;flex-wrap:wrap;gap:2px;width:min(224px,88vw);position:absolute;bottom:100%;margin-bottom:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 6px 18px #0004;z-index:5}
 .v325EmojiPicker.hidden{display:none}
 .v583EmojiBtn{flex:none;width:42px;height:42px;padding:0;font-size:22px;line-height:1;border-radius:12px;background:var(--surface-2);border:1px solid var(--border)}
-.v583EmojiSheet{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow-y:auto;z-index:9999;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:0 -8px 28px #0005;padding:10px 12px calc(12px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.v583EmojiSheet{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow-y:auto;z-index:10100;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:0 -8px 28px #0005;padding:10px 12px calc(12px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
 .v583EmojiTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .v583EClose{border:0;background:transparent;font-size:18px;padding:4px 8px;color:var(--text-muted)}
 .v583EGroup small{display:block;margin:8px 0 2px;color:var(--text-muted);font-weight:700}
@@ -2934,7 +2935,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="718";
+const APP_VERSION="721";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8820,7 +8821,9 @@ function v583Bubble(m,meId,o){
   let react='';
   if(o.reactions){
     const groups=new Map();(o.reacts||[]).filter(r=>String(r.message_id)===String(m.id)).forEach(r=>{if(!groups.has(r.emoji))groups.set(r.emoji,[]);groups.get(r.emoji).push(r.user_id)});
-    const pills=[...groups.entries()].map(([e,u])=>`<button type="button" class="v325ReactionPill${u.includes(meId)?' mine':''}" data-emoji="${e}" data-msg="${m.id}">${e} <span>${u.length}</span></button>`).join('');
+    const total=[...groups.values()].reduce((a,u)=>a+u.length,0);
+    const ems=[...groups.entries()].sort((a,b)=>b[1].length-a[1].length).map(([e])=>e).join('');
+    const pills=total?`<button type="button" class="v325ReactionPill v718Cap" data-emoji="all" data-msg="${m.id}"><i>${ems}</i>${total>1?`<span>${total}</span>`:''}</button>`:'';
     react=(tmp||!pills)?'':`<div class="v325ReactionsRow v583Reacts" style="${mine?'justify-content:flex-end':''}">${pills}</div>`;
   }
   return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};position:relative;padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${o.actions&&!tmp?'<button type="button" class="v623Chev" aria-label="Opciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>':''}${v623Quote(m,meId,o)}${m.fwd?'<div class="v631Fwd">↪ Reenviado</div>':''}${m.poll?v631PollHtml(m,o):v583AttHtml(m)+(m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):'')}<div style="font-size:10px;margin-top:4px;text-align:right"><span style="opacity:.7">${m.pinned_at?'📌 ':''}${(o.stars&&o.stars.has(String(m.id)))?'⭐ ':''}${m.edited_at?'editado · ':''}${esc(time)}</span>${(mine&&o.receipts&&!tmp)?(m.read_at?'<span class="v583Tick rd" title="Leído">✓✓</span>':(m._rc>0?'<span class="v583Tick" title="Entregado">✓✓</span>':'<span class="v583Tick" title="Enviado">✓</span>')):''}</div></div>${react}</div>`;
@@ -9126,7 +9129,7 @@ async function v583Chat(anchor,cfg){
     const fail=ev.target.closest('.v583Fail');
     if(fail){const m=S.msgs.find(x=>String(x.id)===fail.dataset.id);if(m){m._failed=false;paint();sendText(m.body,m)}return}
     const pill=ev.target.closest('.v325ReactionPill');
-    if(pill&&cfg.fetchReactions)return toggle(pill.dataset.msg,pill.dataset.emoji);
+    if(pill&&cfg.fetchReactions)return openReactSheet(pill.dataset.msg,pill.dataset.emoji);
     const mm=ev.target.closest('.v583Msg');
     if(mm&&cfg.msgActions&&!ev.target.closest('audio,video,a,button,.v583File')&&Date.now()-lpDone>700)openQuick(mm);
   };
@@ -9188,6 +9191,35 @@ async function v583Chat(anchor,cfg){
     };
     ['pointerup','pointercancel'].forEach(ev=>box.addEventListener(ev,endSw));
   }
+  // V718 · tocar una reacción abre la lista de quién reaccionó (como WhatsApp); desde ahí se puede añadir o quitar la tuya
+  const openReactSheet=(msgId,startEmoji)=>{
+    document.querySelectorAll('.v718RS').forEach(x=>x.remove());
+    const wrap=document.createElement('div');wrap.className='v718RS';document.body.appendChild(wrap);
+    let filter=startEmoji||'all';
+    const PROF=window._v718Prof||(window._v718Prof=new Map());
+    const nameOf=id=>{id=String(id);if(id===String(meId))return'Tú';const p=PROF.get(id);return p?.full_name||(cfg.names&&cfg.names.get&&cfg.names.get(id))||V583_NAMES.get(id)||'…'};
+    const draw=()=>{
+      const rs=S.reacts.filter(r=>String(r.message_id)===String(msgId));
+      if(!rs.length){wrap.remove();return}
+      const em=[...new Set(rs.map(r=>r.emoji))];
+      if(filter!=='all'&&!em.includes(filter))filter='all';
+      const list=rs.filter(r=>filter==='all'||r.emoji===filter).sort((a,b)=>(String(a.user_id)===String(meId)?-1:0)-(String(b.user_id)===String(meId)?-1:0));
+      wrap.innerHTML=`<div class="v718RSBox"><div class="v718RSGrab"></div><h4>${rs.length} reacción${rs.length===1?'':'es'}</h4>`
+        +`<div class="v718RSChips"><button type="button" data-add="1" aria-label="Añadir reacción">😊＋</button><button type="button" data-f="all" class="${filter==='all'?'on':''}">Todas<small>${rs.length}</small></button>`
+        +em.map(e=>`<button type="button" data-f="${e}" class="${filter===e?'on':''}">${e}<small>${rs.filter(r=>r.emoji===e).length}</small></button>`).join('')+`</div>`
+        +list.map(r=>{const me=String(r.user_id)===String(meId),p=PROF.get(String(r.user_id)),nm=nameOf(r.user_id);
+          return `<div class="v718RSRow${me?' me':''}" ${me?`data-del="${r.emoji}"`:''}>${p?.avatar_url?`<img src="${esc(p.avatar_url)}" alt="">`:`<span class="ph">${esc((nm||'?').trim().charAt(0).toUpperCase())}</span>`}<div class="nm"><b>${esc(nm)}</b>${me?'<small>Toca para quitar</small>':''}</div><span class="em">${r.emoji}</span></div>`}).join('')+`</div>`;
+    };
+    draw();
+    const need=[...new Set(S.reacts.filter(r=>String(r.message_id)===String(msgId)).map(r=>String(r.user_id)))].filter(i=>i!==String(meId)&&!PROF.has(i));
+    if(need.length)sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',need).then(q=>{(q.data||[]).forEach(x=>PROF.set(String(x.user_id),x));if(wrap.isConnected)draw()}).catch(()=>{});
+    wrap.onclick=async ev=>{
+      if(!ev.target.closest('.v718RSBox')){wrap.remove();return}
+      const f=ev.target.closest('[data-f]');if(f){filter=f.dataset.f;draw();return}
+      if(ev.target.closest('[data-add]')){v583OpenEmoji(async em=>{await toggle(msgId,em);if(wrap.isConnected)draw()});return}
+      const d=ev.target.closest('[data-del]');if(d){await toggle(msgId,d.dataset.del);if(wrap.isConnected)draw()}
+    };
+  };
   const toggle=async(msgId,emoji)=>{
     const mine=S.reacts.findIndex(r=>String(r.message_id)===String(msgId)&&r.emoji===emoji&&r.user_id===meId);
     const target=S.msgs.find(m=>String(m.id)===String(msgId));
@@ -9195,6 +9227,9 @@ async function v583Chat(anchor,cfg){
       const q=await sb.from(cfg.reactTable||'chat_message_reactions').delete().eq('message_id',Number(msgId)).eq('user_id',meId).eq('emoji',emoji);
       if(q.error){v300ShowToast('No se pudo quitar la reacción');loadReacts()}
     }else{
+      // V720 · como WhatsApp: una sola reacción por persona y mensaje; si eliges otra, sustituye a la anterior
+      const prev=S.reacts.filter(r=>String(r.message_id)===String(msgId)&&r.user_id===meId&&r.emoji!==emoji);
+      if(prev.length){S.reacts=S.reacts.filter(r=>!prev.includes(r));try{await sb.from(cfg.reactTable||'chat_message_reactions').delete().eq('message_id',Number(msgId)).eq('user_id',meId).neq('emoji',emoji)}catch(e){}}
       S.reacts.push({id:'t'+Date.now(),message_id:Number(msgId),user_id:meId,emoji,_tmp:1});paint();save();
       const q=await sb.from(cfg.reactTable||'chat_message_reactions').insert({message_id:Number(msgId),user_id:meId,emoji});
       if(q.error){S.reacts=S.reacts.filter(r=>!(r._tmp&&String(r.message_id)===String(msgId)&&r.emoji===emoji));paint();
