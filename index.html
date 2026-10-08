@@ -2942,7 +2942,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="738";
+const APP_VERSION="739";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -12363,7 +12363,13 @@ async function results(){
   }
   // v276: potencia de UN remero en UNA sesión de test concreta (no necesariamente la más reciente),
   // misma lógica que v309FindLatestTestPower pero restringida a un training_session_id dado.
-  const v738X=o=>({spm:o?.spm!=null&&Number(o.spm)>0?Number(o.spm):null,avg_hr:o?.avg_hr!=null&&Number(o.avg_hr)>0?Number(o.avg_hr):null,max_hr:o?.max_hr!=null&&Number(o.max_hr)>0?Number(o.max_hr):null});
+  const v738X=o=>{const pos=v=>{v=Number(v);return Number.isFinite(v)&&v>0?v:null};
+    let avg=pos(o?.avg_hr),max=pos(o?.max_hr);
+    // V739 · si el resultado completo no trae pulso medio o máximo pero sus parciales sí, se calcula desde los parciales (media ponderada por tiempo / máximo)
+    if(!avg||!max){const raw=o?.raw_result||{},w=raw.workout||{},parts=[].concat(Array.isArray(w.intervals)?w.intervals:[],Array.isArray(w.splits)?w.splits:[]);const pp=parts.length?parts:(Array.isArray(raw.intervals)?raw.intervals:Array.isArray(raw.splits)?raw.splits:[]);
+      let sum=0,wt=0,mx=null;pp.forEach(p=>{const h=p?.heart_rate||{},a2=pos(h.average??h.avg),m2=pos(h.max)||pos(h.ending),t=Number(p?.time)||1;if(a2){sum+=a2*t;wt+=t}if(m2&&(mx==null||m2>mx))mx=m2});
+      if(!avg&&wt)avg=Math.round(sum/wt);if(!max&&mx)max=mx}
+    return {spm:pos(o?.spm),avg_hr:avg,max_hr:max}};
   function v276PowerForSpecificSession(userId,sessionId,c2rows,ergo,workouts){
     if(!sessionId)return null;
     const idStr=String(sessionId);
