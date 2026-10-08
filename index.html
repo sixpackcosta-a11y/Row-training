@@ -2939,7 +2939,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="724";
+const APP_VERSION="726";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -12350,6 +12350,22 @@ async function results(){
         return {...r,testPower,testWkg};
       }).filter(r=>r.testPower&&r.testPower.pace!=null);
     }
+    // V726 · quien hizo el test pero su resultado de ErgData no quedó enlazado a la sesión no salía en el ranking:
+    // se busca un resultado suelto de ese remero el día del test, con la distancia del test, y se incluye marcado como "sin enlazar"
+    const v726Sess=v276SelectedTestId==='latest'?testSessions[0]:testSessions.find(x=>String(x.id)===String(v276SelectedTestId));
+    const v726Day=String(v726Sess?.session_date||'').slice(0,10);
+    const v726Dist=(()=>{try{return Number(v474TestDistanceForTeam(team))||null}catch(e){return null}})();
+    const v726Have=new Set(tested.map(r=>String(r.p.user_id)));
+    if(v726Day)rows.forEach(r=>{
+      if(v726Have.has(String(r.p.user_id)))return;
+      const cands=(c2rows||[]).filter(x=>String(x.user_id)===String(r.p.user_id)&&x.pace_500_seconds&&String(x.workout_date||'').slice(0,10)===v726Day&&!(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(x))&&(!v726Dist||!x.distance_m||Math.abs(Number(x.distance_m)-v726Dist)/v726Dist<0.06));
+      if(!cands.length)return;
+      cands.sort((x,y)=>Number(x.pace_500_seconds)-Number(y.pace_500_seconds));const x=cands[0];
+      const testPower={date:v726Day,pace:Number(x.pace_500_seconds),distance:x.distance_m,source:'ErgData',splits:v280NormalizeSplits(x,'ErgData'),_unlinked:true};
+      const w=v309WattsFromPace500(testPower.pace);
+      tested.push({...r,testPower,testWkg:(w&&r.m?.weight_kg)?w/r.m.weight_kg:null});
+    });
+    const v726NoRes=v726Sess?rows.filter(r=>!tested.some(t=>String(t.p.user_id)===String(r.p.user_id))):[];
     const byResult=tested.slice().sort((a,b)=>a.testPower.pace-b.testPower.pace);
     const byWkg=tested.filter(r=>r.testWkg!=null).slice().sort((a,b)=>b.testWkg-a.testWkg);
     // V472 · igual que byWkg pero ordenado por el W/kg ajustado por edad (solo tiene sentido, y solo se
@@ -12371,11 +12387,15 @@ async function results(){
       const hcTxt=(mode!=='wkgadj'&&wkgAdj!=null)?`<br>🏁 ${v472IepTapHtml('IEP')} ${wkgAdj.toFixed(2)}`:'';
       const mainVal=mode==='wkgadj'?(wkgAdj!=null?`🏁 ${v472IepTapHtml('IEP')} ${wkgAdj.toFixed(2)}`:'—'):mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)} W/kg`:'—'):secondsToTime(r.testPower.pace)+'/500m';
       const subVal=mode==='wkgadj'&&r.testWkg!=null?`<br><small class="muted" style="font-weight:400">${r.testWkg.toFixed(2)} W/kg</small>`:'';
-      return `<div class="last" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b><br><small class="muted">${totalSec?`${secondsToTime(totalSec)} total · `:''}${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''} · ${shortDateES(r.testPower.date)}</small>${extra?`<div class="muted" style="font-size:.78rem;margin-top:3px">${extra}</div>`:''}</div><div style="text-align:right;font-weight:800;max-width:44%">${mainVal}${hcTxt}${subVal}</div></div>`;
+      return `<div class="last" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>${i+1}. ${esc(r.p.full_name||'Sin nombre')}</b>${r.testPower._unlinked?' <small class="muted">· resultado sin enlazar a la sesión</small>':''}<br><small class="muted">${totalSec?`${secondsToTime(totalSec)} total · `:''}${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''} · ${shortDateES(r.testPower.date)}</small>${extra?`<div class="muted" style="font-size:.78rem;margin-top:3px">${extra}</div>`:''}</div><div style="text-align:right;font-weight:800;max-width:44%">${mainVal}${hcTxt}${subVal}</div></div>`;
     };
+    // V725 · quien hizo el test pero no entra en el ranking por W/kg / IEP (falta peso o fecha de nacimiento) se lista aparte, en vez de desaparecer
+    const noResHtml=v726NoRes.length?`<div class="info" style="margin-top:12px"><b>Sin resultado de este test</b><br><small class="muted">${v726NoRes.map(r=>esc(r.p.full_name||'Sin nombre')).join(' · ')}</small><br><small class="muted">Si ya lo han hecho, su resultado no está enlazado a esta sesión (o el día no coincide).</small></div>`:'';
+    const missingHtml=(mode==='result'?'':(()=>{const inList=new Set(list.map(r=>String(r.p.user_id)));const miss=tested.filter(r=>!inList.has(String(r.p.user_id))).sort((x,y)=>x.testPower.pace-y.testPower.pace);if(!miss.length)return'';
+      return `<div class="info" style="margin-top:12px"><b>Hicieron el test pero no entran en este ranking</b>${miss.map(r=>{const why=[];if(!(r.m?.weight_kg))why.push('peso');if(mode==='wkgadj'&&ageFromBirthV103(r.p.birth_date)==null)why.push('fecha de nacimiento');return `<div style="margin-top:6px"><b>${esc(r.p.full_name||'Sin nombre')}</b> · ${secondsToTime(r.testPower.pace)}/500m${r.testPower.distance?' · '+r.testPower.distance+' m':''}<br><small class="muted">Falta ${why.join(' y ')||'dato'} en su ficha${currentMode==='staff'?': completarlo en su perfil':''}</small></div>`}).join('')}</div>`})())+noResHtml;
     const dateOptions=`<option value="latest" ${v276SelectedTestId==='latest'?'selected':''}>Más reciente de cada uno</option>${testSessions.map(s=>`<option value="${s.id}" ${String(v276SelectedTestId)===String(s.id)?'selected':''}>${shortDateES(s.session_date)} · ${esc(s.title||'Test')}</option>`).join('')}`;
     const goalsNote=TEAM_GOALS_V281.get(team)?.notes;
-    box.innerHTML=`${goalsNote?`<div class="info" style="margin-bottom:10px"><b>🎯 Objetivos de temporada:</b> ${esc(goalsNote).replace(/\n/g,'<br>')}</div>`:''}<label>Test<select id="v276TestPicker">${dateOptions}</select></label><div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button>${isVetTeam?`<button type="button" class="v269RankBtn ${mode==='wkgadj'?'active':''}" data-mode="wkgadj">🏁 Por IEP</button>`:''}<button type="button" id="v272ExportRanking">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene resultado para este test todavía.</div>'}</div>`;
+    box.innerHTML=`${goalsNote?`<div class="info" style="margin-bottom:10px"><b>🎯 Objetivos de temporada:</b> ${esc(goalsNote).replace(/\n/g,'<br>')}</div>`:''}<label>Test<select id="v276TestPicker">${dateOptions}</select></label><div class="v225PendingToolbar"><button type="button" class="v269RankBtn ${mode==='result'?'active':''}" data-mode="result">Por resultado</button><button type="button" class="v269RankBtn ${mode==='wkg'?'active':''}" data-mode="wkg">Por W/kg</button>${isVetTeam?`<button type="button" class="v269RankBtn ${mode==='wkgadj'?'active':''}" data-mode="wkgadj">🏁 Por IEP</button>`:''}<button type="button" id="v272ExportRanking">📤 Exportar imagen</button></div><div class="v225PendingList">${list.length?list.map(rowHtml).join(''):'<div class="info">Nadie tiene resultado para este test todavía.</div>'}</div>${missingHtml}`;
     box.querySelector('#v276TestPicker').onchange=(e)=>{v276SelectedTestId=e.target.value;renderComparison()};
     box.querySelectorAll('.v269RankBtn').forEach(b=>b.onclick=()=>{v269RankMode=b.dataset.mode;renderComparison()});
     const testLabel=v276SelectedTestId==='latest'?'Test más reciente de cada remero':(()=>{const s=testSessions.find(x=>String(x.id)===String(v276SelectedTestId));return s?`${s.title||'Test'} · ${v273FullDateES(s.session_date)}`:'Test'})();
