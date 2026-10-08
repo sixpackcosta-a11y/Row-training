@@ -2939,7 +2939,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="728";
+const APP_VERSION="730";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -12376,7 +12376,8 @@ async function results(){
       tested.push({...r,testPower,testWkg:(w&&r.m?.weight_kg)?w/r.m.weight_kg:null});
     });
     const v726NoRes=v726Sess?rows.filter(r=>!tested.some(t=>String(t.p.user_id)===String(r.p.user_id))):[];
-    const byResult=tested.slice().sort((a,b)=>a.testPower.pace-b.testPower.pace);
+    const v729P=r=>{const v=Number(r.testPower?.pace);return isFinite(v)&&v>0?v:Infinity};
+    const byResult=tested.slice().sort((a,b)=>(v729P(a)-v729P(b))||String(a.p.full_name||'').localeCompare(String(b.p.full_name||''),'es'));
     const byWkg=tested.filter(r=>r.testWkg!=null).slice().sort((a,b)=>b.testWkg-a.testWkg);
     // V472 · igual que byWkg pero ordenado por el W/kg ajustado por edad (solo tiene sentido, y solo se
     // ofrece como opción, en veteranas/veteranos).
@@ -13047,6 +13048,7 @@ async function results(){
   function v273FullDateES(ds){const [y,m,d]=String(ds||'').split('-').map(Number);if(!y||!m||!d)return '';const dt=new Date(y,m-1,d);return dt.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}
   async function v272ExportRankingImage(list,mode,testLabel){
     if(!list.length)return;
+    if(mode==='result'||!mode)list=list.slice().sort((a,b)=>(Number(a.testPower?.pace)||1e9)-(Number(b.testPower?.pace)||1e9)); // V729 · por resultado: de más rápido a más lento
     const logo=await v273LoadImage('assets/club-pedregalejo.png');
     const W=900,rowH=64,bannerH=110,subH=120,headerH=bannerH+subH,footerH=36,H=headerH+list.length*rowH+footerH;
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
@@ -13070,10 +13072,10 @@ async function results(){
     ctx.fillStyle='#0b1b35';ctx.font='700 24px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(`${String(teamLabel(team)||'').replace(/&amp;/g,'&')}`,28,bannerH+38);
     ctx.fillStyle='#475569';ctx.font='400 16px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-    ctx.fillText(mode==='wkg'?'Ordenado por W/kg':'Ordenado por resultado',28,bannerH+68);
+    ctx.fillText(mode==='wkg'?'Ordenado por W/kg':mode==='wkgadj'?'Ordenado por IEP (índice edad-potencia)':'Ordenado por resultado',28,bannerH+68);
     ctx.strokeStyle='#dbe3ec';ctx.beginPath();ctx.moveTo(28,bannerH+86);ctx.lineTo(W-28,bannerH+86);ctx.stroke();
     ctx.fillStyle='#64748b';ctx.font='700 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-    ctx.fillText('PUESTO',28,headerH-20);ctx.fillText('REMERO',110,headerH-20);ctx.fillText('DETALLE',480,headerH-20);ctx.fillText(mode==='wkg'?'W/KG':'RITMO/500',W-160,headerH-20);
+    ctx.fillText('PUESTO',28,headerH-20);ctx.fillText('REMERO',110,headerH-20);ctx.fillText('DETALLE',480,headerH-20);ctx.fillText(mode==='wkg'?'W/KG':mode==='wkgadj'?'IEP':'RITMO/500',W-160,headerH-20);
     list.forEach((r,i)=>{
       const y=headerH+i*rowH;
       if(i%2===1){ctx.fillStyle='#f6f9fc';ctx.fillRect(0,y,W,rowH)}
@@ -13085,8 +13087,10 @@ async function results(){
       ctx.fillText(`${totalSec?`${secondsToPace(totalSec)} total · `:''}${secondsToPace(r.testPower.pace)}/500m${r.testPower.distance?` · ${r.testPower.distance} m`:''}`,480,y+30);
       ctx.fillText(shortDateES(r.testPower.date),480,y+50);
       ctx.fillStyle='#07162f';ctx.font='700 22px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
-      const valueText=mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)}`:'—'):`${secondsToPace(r.testPower.pace)}`;
+      const iep=(()=>{const age=ageFromBirthV103(r.p.birth_date);return (age!=null&&r.testWkg!=null)?v470AgeAdjustedWkg(r.testWkg,age):null})();
+      const valueText=mode==='wkg'?(r.testWkg!=null?`${r.testWkg.toFixed(2)}`:'—'):mode==='wkgadj'?(iep!=null?iep.toFixed(2):'—'):`${secondsToPace(r.testPower.pace)}`;
       ctx.fillText(valueText,W-160,y+38);
+      if(mode==='wkgadj'&&r.testWkg!=null){ctx.fillStyle='#64748b';ctx.font='400 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif';ctx.fillText(`${r.testWkg.toFixed(2)} W/kg`,W-160,y+56)}
     });
     ctx.fillStyle='#94a3b8';ctx.font='400 13px -apple-system,Segoe UI,Roboto,Arial,sans-serif';
     ctx.fillText(`Generado el ${shortDateES(localISODate())} · Row Training`,28,H-16);
@@ -13102,10 +13106,27 @@ async function results(){
     if(overlay)overlay.remove();
     overlay=document.createElement('div');overlay.id='v277RankingPreview';
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px';
-    overlay.innerHTML=`<img src="${url}" style="max-width:100%;max-height:75vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);background:#fff"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${(navigator.share?'<button type="button" id="v277Share" class="primary">📤 Compartir</button>':'')}<button type="button" id="v277Download">⬇️ Descargar</button><button type="button" id="v277Close">Cerrar</button></div>`;
+    overlay.innerHTML=`<img src="${url}" style="max-width:100%;max-height:75vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);background:#fff"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${(navigator.share?'<button type="button" id="v277Share" class="primary">📤 Compartir</button>':'')}${team?'<button type="button" id="v730Chat" class="primary">💬 Enviar al chat del equipo</button>':''}<button type="button" id="v277Download">⬇️ Descargar</button><button type="button" id="v277Close">Cerrar</button></div>`;
     overlay.querySelector('#v277Close').onclick=()=>{overlay.remove();URL.revokeObjectURL(url)};
     overlay.addEventListener('click',(e)=>{if(e.target===overlay){overlay.remove();URL.revokeObjectURL(url)}});
     overlay.querySelector('#v277Download').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove()};
+    // V730 · mandar la imagen directamente al chat del equipo, sin descargarla
+    const chatBtn=overlay.querySelector('#v730Chat');
+    if(chatBtn)chatBtn.onclick=async()=>{
+      if(!confirm('¿Enviar esta imagen al chat de '+String(teamLabel(team)||'').replace(/&amp;/g,'&')+'?'))return;
+      chatBtn.disabled=true;const old=chatBtn.textContent;chatBtn.textContent='Enviando…';
+      try{
+        const path='team/'+team+'/'+Date.now()+'-ranking.png';
+        const up=await sb.storage.from('chat-files').upload(path,blob,{contentType:'image/png',cacheControl:'3600'});
+        if(up.error)throw up.error;
+        const cap=String(shareTitle||'Ranking test ERGO');
+        const ins=await sb.from('team_chat_messages').insert({team_code:team,sender_id:currentUser.id,body:cap,att_path:path,att_name:filename,att_type:'image/png',att_size:blob.size});
+        if(ins.error)throw ins.error;
+        try{v631NotifyTeam(team,'📷 '+cap)}catch(e){}
+        v300ShowToast('Enviado al chat del equipo');
+        overlay.remove();URL.revokeObjectURL(url);
+      }catch(e){chatBtn.disabled=false;chatBtn.textContent=old;alert('No se pudo enviar al chat: '+(e?.message||e))}
+    };
     const shareBtn=overlay.querySelector('#v277Share');
     if(shareBtn)shareBtn.onclick=async()=>{
       const file=new File([blob],filename,{type:'image/png'});
