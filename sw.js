@@ -76,6 +76,7 @@ self.addEventListener('push', event => {
     const items=[item,...prev].slice(0,8);
     const n=items.length;
     const one=n===1;
+    try{if(typeof data.badge==='number'&&self.navigator&&self.navigator.setAppBadge){if(data.badge>0)await self.navigator.setAppBadge(data.badge);else await self.navigator.clearAppBadge()}}catch(e){} // V731 · globo del icono
     await self.registration.showNotification(one?item.title:`Row Training · ${n} avisos nuevos`,{
       body:one?item.body:items.slice(0,6).map(i=>'• '+(i.body||i.title)).join('\n'),
       icon:'/assets/brand/icon-192.png',
