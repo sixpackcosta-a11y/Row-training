@@ -123,6 +123,25 @@ function resultSignature(result){
     workoutType:norm(result.workout_type||'')
   };
 }
+function hrOf(x){
+  // v734: el pulso puede venir a nivel de resultado, o solo dentro de cada intervalo/parcial.
+  const pos=v=>{v=Number(v);return Number.isFinite(v)&&v>0?v:null};
+  let avg=pos(x?.heart_rate?.average),max=pos(x?.heart_rate?.max)||pos(x?.heart_rate?.maximum);
+  if(avg&&max)return {avg,max};
+  const w=x?.workout||{};
+  const parts=[...(Array.isArray(w.intervals)?w.intervals:[]),...(Array.isArray(w.splits)?w.splits:[]),...(Array.isArray(x?.intervals)?x.intervals:[]),...(Array.isArray(x?.splits)?x.splits:[])];
+  let sum=0,wt=0,mx=null;
+  for(const p of parts){
+    const h=p?.heart_rate||{};
+    const a=pos(h.average),m=pos(h.max)||pos(h.maximum)||pos(h.ending);
+    const t=Number(p?.time)||1;
+    if(a){sum+=a*t;wt+=t;}
+    if(m&&(mx==null||m>mx))mx=m;
+  }
+  if(!avg&&wt)avg=Math.round(sum/wt);
+  if(!max&&mx)max=mx;
+  return {avg:avg||null,max:max||null};
+}
 function relDiff(a,b){return a&&b?Math.abs(a-b)/Math.abs(b):Infinity}
 function compatibility(result,intent){
   const ps=intent.signature||{kind:'unknown'},rs=resultSignature(result);
@@ -286,7 +305,7 @@ module.exports=async function handler(req,res){
         distance_m:x.distance==null?null:Number(x.distance),
         time_tenths:x.time==null?null:Number(x.time),time_formatted:x.time_formatted||null,
         pace_500_seconds:pace500(x.time,x.distance),spm:x.stroke_rate==null?null:Number(x.stroke_rate),
-        avg_hr:x.heart_rate?.average??null,max_hr:x.heart_rate?.max??null,
+        avg_hr:hrOf(x).avg,max_hr:hrOf(x).max,
         workout_type:x.workout_type||null,source:x.source||null,
         training_session_id:match.sessionId||null,
         matched_intent_id:match.intentId,matched_session_code:match.code,
@@ -307,7 +326,11 @@ module.exports=async function handler(req,res){
     });
     const imported=rows.filter(x=>!existing.has(String(x.concept2_result_id))).length;
     const updated=rows.length-imported;
-    return res.json({ok:true,imported,updated,total:rows.length});
+    // V731 · avisar a los entrenadores de los resultados NUEVOS (de los últimos 3 días, para no avisar de todo el histórico en la primera sincronización)
+    const teamCode=String(req.body?.team_code||'').slice(0,60);
+    const recent=new Date(Date.now()-3*864e5).toISOString().slice(0,10);
+    const notification_events=teamCode?rows.filter(x=>!existing.has(String(x.concept2_result_id))&&String(x.workout_date||'').slice(0,10)>=recent).map(x=>({source_id:String(x.concept2_result_id),team_code:teamCode})):[];
+    return res.json({ok:true,imported,updated,total:rows.length,notification_events});
   }catch(e){
     if(e.message==="AUTH")return res.status(401).json({error:"Sesión de Row Training no válida."});
     if(e?.name==="AbortError")return res.status(504).json({error:"La sincronización está tardando demasiado. Inténtalo de nuevo."});

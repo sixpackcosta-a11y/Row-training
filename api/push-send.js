@@ -31,8 +31,11 @@ async function deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,b
     const ids=pending.map(encodeURIComponent).join(',');
     const subs=await rest(`${supabaseUrl}/rest/v1/push_subscriptions?user_id=in.(${ids})&select=id,user_id,endpoint,p256dh,auth`,{key:serviceKey})||[];
     pushFound=subs.length;
+    // V731 · nº de avisos sin leer de cada persona, para el globo del icono de la app
+    const unread=new Map();
+    await Promise.all([...new Set(subs.map(x=>x.user_id))].map(async uid=>{try{const r=await rest(`${supabaseUrl}/rest/v1/app_notifications?user_id=eq.${encodeURIComponent(uid)}&is_read=eq.false&select=id&limit=99`,{key:serviceKey})||[];unread.set(uid,r.length)}catch(e){}}));
     for(const ps of subs){
-      try{await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title,body,url,tag:`rowtraining-${type}-${sourceBase}`}));pushSent++}
+      try{await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title,body,url,badge:unread.get(ps.user_id),tag:`rowtraining-${type}-${sourceBase}`}));pushSent++}
       catch(e){pushFailed++;errors.push({user_id:ps.user_id,statusCode:e?.statusCode||null,message:String(e?.body||e?.message||e).slice(0,250)});if(e?.statusCode===404||e?.statusCode===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey})}catch(_){}}}
     }
   }
