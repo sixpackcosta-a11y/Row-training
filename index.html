@@ -2934,7 +2934,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="717";
+const APP_VERSION="718";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8862,14 +8862,18 @@ async function v583Chat(anchor,cfg){
   const opt={names:cfg.names||null,locale:cfg.locale,reactions:!!cfg.fetchReactions,receipts:!!cfg.fetchReads,actions:!!cfg.msgActions};
   container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:6px;margin-top:10px;align-items:flex-end">${cfg.attach?'<button type="button" class="v583PlusBtn v583AttBtn" aria-label="Adjuntar">＋</button><input type="file" class="v583AttIn" hidden accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.gpx,.zip,.fit,.tcx">':''}<div class="v583Pill"><div id="${cfg.inputId}" class="v583In" contenteditable="plaintext-only" role="textbox" aria-multiline="true" enterkeyhint="send" autocapitalize="sentences" data-ph="${cfg.placeholder}"></div><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button></div><button type="button" id="${cfg.sendId}" class="primary v583Send" aria-label="${cfg.sendLabel}">➤</button>${cfg.attach?'<button type="button" class="v583Mic" aria-label="Audio"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg></button>':''}<div class="v583Rec"><button type="button" class="v583RecDel" aria-label="Cancelar">🗑️</button><span class="v583RecDot"></span><span class="v583RecT">0:00</span><span class="v583RecHint">${currentLocale==='en'?'Recording…':currentLocale==='nl'?'Opnemen…':'Grabando…'}</span><button type="button" class="primary v583RecSend" aria-label="Enviar audio" style="background:#2563eb!important;color:#fff!important">➤</button></div></div>`;
   const box=container.querySelector('#'+cfg.boxId),input=container.querySelector('#'+cfg.inputId),sendBtn=container.querySelector('#'+cfg.sendId);
-  let first=true,X=null;
+  let first=true,X=null,pin=true;
+  // V718 · las fotos cargan después de pintar y empujan el final hacia abajo: mientras no hayas subido tú, se vuelve a bajar al último mensaje
+  box.addEventListener('scroll',()=>{pin=box.scrollHeight-box.scrollTop-box.clientHeight<140},{passive:true});
+  box.addEventListener('load',e=>{if(pin&&/^(IMG|VIDEO)$/.test(e.target.tagName))box.scrollTop=box.scrollHeight},true);
+  box.addEventListener('loadedmetadata',e=>{if(pin&&e.target.tagName==='VIDEO')box.scrollTop=box.scrollHeight},true);
   const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
   const paint=(stick)=>{
     opt.reacts=S.reacts;opt.msgs=S.msgs;opt.stars=S.stars;opt.votes=S.votes;opt.meId=meId;
     const near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
     const st=box.scrollTop;
     box.innerHTML=S.msgs.length?(()=>{let last='',h='';S.msgs.forEach(m=>{const d=new Date(m.created_at),k=d.toDateString();if(k!==last){last=k;h+=`<div class="v583Day"><span>${esc(v583DayLabel(d))}</span></div>`}h+=v583Bubble(m,meId,opt)});return h})():`<p class="muted" style="text-align:center;padding:20px 0">${cfg.empty}</p>`;
-    if(first||stick||near)box.scrollTop=box.scrollHeight;else box.scrollTop=st;
+    if(first||stick||near){pin=true;box.scrollTop=box.scrollHeight}else box.scrollTop=st;
     first=false;
     v583Hydrate(box);
     X&&X.renderBar();
