@@ -2932,7 +2932,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="713";
+const APP_VERSION="714";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3723,7 +3723,7 @@ async function v705OpenCronPanel(){
   let cfg={opens:true,reminders:true,short:false,sea:false,paused:false};
   try{const r=await sb.from('cron_settings').select('cfg').eq('id',1).maybeSingle();if(r.error)throw r.error;cfg={...cfg,...(r.data?.cfg||{})}}
   catch(e){body.innerHTML='<div class="info">Falta ejecutar 73_avisos_automaticos.sql en Supabase.</div>';return}
-  const ROWS=[['opens','📅 Apertura de confirmación','"Ya puedes confirmar asistencia" a las remeras, cuando llega la hora de apertura del evento.'],['reminders','🔔 Recordatorio "¿Vas a…?"','A quien aún no ha respondido, a las horas antes del evento que hayas puesto en él.'],['short','👥 "Faltan N para salir"','A los entrenadores del equipo del evento y a quien lo organiza, una vez, unas 26 h antes si no se llega al mínimo de la barca.'],['sea','🌊 Previsión de mar','A los entrenadores del equipo del evento y a quien lo organiza, el día antes a las 20:00 y 3 h antes, solo si hay precaución o mala mar.']];
+  const ROWS=[['opens','📅 Apertura de confirmación','"Ya puedes confirmar asistencia" a las remeras, cuando llega la hora de apertura del evento.'],['reminders','🔔 Recordatorio "¿Vas a…?"','A quien aún no ha respondido, a las horas antes del evento que hayas puesto en él.'],['short','👥 "Faltan N para salir"','A quien organiza el evento, una vez, unas 26 h antes si no se llega al mínimo de la barca.'],['sea','🌊 Previsión de mar','A quien organiza el evento, el día antes a las 20:00 y 3 h antes, solo si hay precaución o mala mar.']];
   const draw=()=>{
     body.innerHTML=`<div class="info" style="margin-bottom:10px">Los cambios se aplican en la siguiente pasada del cron (cada 15 min). Si en Vercel no está <b>CRON_LIVE=1</b>, el cron solo hace pruebas y no envía nada.</div>
     <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:10px"><input type="checkbox" data-k="paused" ${cfg.paused?'checked':''} style="margin-top:3px"><span><b>⏸ Pausar todos los avisos</b><br><small style="color:var(--muted)">Mientras esté marcado no se envía ninguno de los de abajo.</small></span></label>
