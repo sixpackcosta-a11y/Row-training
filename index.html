@@ -2932,7 +2932,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="714";
+const APP_VERSION="715";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5441,7 +5441,13 @@ async function v527Delete(ev,team){
   return true;
 }
 async function v523AfterApproval(requestId,team){
-  try{const r=await sb.from('registration_requests').select('user_id,full_name').eq('id',requestId).maybeSingle();if(r.data?.user_id)setTimeout(()=>v523OfferInviteToEvents(r.data.user_id,team,r.data.full_name),600)}catch(e){}
+  try{
+    const r=await sb.from('registration_requests').select('user_id,full_name').eq('id',requestId).maybeSingle();
+    if(!r.data?.user_id)return;
+    // V715 · al aprobar, la persona queda ya en el equipo como remera (antes podía quedar "sin equipo ni rol" y había que asignarla a mano)
+    try{await sb.from('rower_team_memberships').upsert({user_id:r.data.user_id,team_code:team,is_rower:true,updated_at:new Date().toISOString()},{onConflict:'user_id,team_code'})}catch(e){}
+    setTimeout(()=>v523OfferInviteToEvents(r.data.user_id,team,r.data.full_name),600);
+  }catch(e){}
 }
 async function v523OfferInviteToEvents(uid,team,name){
   if(!v534EventsUI())return;
@@ -5473,7 +5479,7 @@ async function v523OfferInviteToEvents(uid,team,name){
         if(q.error)errs++;
       }
       if(errs){st.textContent=`No se pudieron guardar ${errs} eventos (¿falta ejecutar 33_eventos_excluidos.sql?).`;return}
-      if(invited&&layer.querySelector('#v523Notify')?.checked){try{await sendNotificationV110({audience:{mode:'users',user_ids:[uid],team_codes:[team]},title:'📅 Te han invitado a eventos',body:`Tienes ${invited} evento${invited===1?'':'s'} de ${teamLabel(team)} pendientes de confirmar en Row Training.`,url:'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}}
+      const v715k=uid+'|'+team;window.__v715Notified=window.__v715Notified||new Set();if(invited&&layer.querySelector('#v523Notify')?.checked&&!window.__v715Notified.has(v715k)){window.__v715Notified.add(v715k);try{await sendNotificationV110({audience:{mode:'users',user_ids:[uid],team_codes:[team]},title:'📅 Te han invitado a eventos',body:`Tienes ${invited} evento${invited===1?'':'s'} de ${teamLabel(team)} pendientes de confirmar en Row Training.`,url:'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}}
       layer.remove();
     };
     layer.querySelector('#v523Go').onclick=()=>apply(cbs.map(c=>c.checked));
@@ -6814,7 +6820,7 @@ async function teamStaffAdminView(){
     btn.disabled=true;btn.textContent='Aprobando…';
     const res=await sb.rpc('approve_registration',{p_request_id:id,p_team_code:team});
     if(res.error){alert(res.error.message);btn.disabled=false;btn.textContent='Aprobar';return}
-    v523AfterApproval(id,team);
+    await v523AfterApproval(id,team);
     try{const {data:{session}}=await sb.auth.getSession();if(session){await fetch('/api/registration-welcome',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({request_id:id})})}}catch(e){}
     await loadPendingRegistrationCount();draw();await teamStaffAdminView();
   });
@@ -6831,7 +6837,7 @@ async function teamStaffAdminView(){
     b.disabled=true;b.textContent="Aprobando…";
     const res=await sb.rpc("approve_registration",{p_request_id:id,p_team_code:team});
     if(res.error){alert(res.error.message);b.disabled=false;b.textContent="Aprobar y asignar";return}
-    v523AfterApproval(id,team);
+    await v523AfterApproval(id,team);
     let mailOk=false,mailMsg="";
     try{
       const {data:{session}}=await sb.auth.getSession();
