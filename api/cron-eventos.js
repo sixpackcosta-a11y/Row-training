@@ -1,4 +1,4 @@
-// V713 · Los avisos "Faltan N" y de mar van solo a los entrenadores/ayudantes del equipo del evento y a quien lo creó u organiza.
+// V714 · Los avisos "Faltan N" y de mar van a quien organiza el evento (creador + organizadores añadidos); sin organizador guardado, al equipo técnico del equipo.
 // V706 · Interruptores por tipo de aviso en la app (⚙ Ajustes → Avisos automáticos, tabla cron_settings, SQL 73) y por variables CRON_OPENS/CRON_REMINDERS/CRON_SHORT/CRON_SEA=0.
 // V705 · MODO PRUEBA por defecto: no envía ni marca nada (devuelve en 'would' lo que enviaría). Para enviar de verdad: variable CRON_LIVE=1 en Vercel.
 // V705 · Añade aviso de previsión de mar al equipo técnico (el día antes a las 20:00 y 3 h antes) usando los umbrales del club (tabla sea_thresholds, SQL 72).
@@ -55,6 +55,7 @@ const toMs=s=>Date.parse(s+':00Z');
 const fromMs=ms=>new Date(ms).toISOString().slice(0,16);
 const hhmm=t=>/^\d{1,2}:\d{2}/.test(t||'')?String(t).slice(0,5).padStart(5,'0'):null;
 function addDays(d,n){const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)}
+const sh=(x,n=34)=>{x=String(x||'').replace(/\s+/g,' ').trim();return x.length>n?x.slice(0,n-1).trimEnd()+'…':x};
 function dateLabel(d,t){const [y,m,dd]=d.split('-');return `${dd}/${m}${hhmm(t)?' · '+hhmm(t):''}`}
 
 module.exports=async function handler(req,res){
@@ -93,12 +94,12 @@ module.exports=async function handler(req,res){
     // staff por equipo
     const [staffRows,gcRows,orgRows]=await Promise.all([rest('team_staff_roles?select=user_id,team_code'),rest('user_roles?role=eq.coach&select=user_id'),rest('event_organizers?select=user_id,training_session_id,competition_id,club_event_id').catch(()=>[])]);
     const staffOf=teams=>uniq([...(staffRows||[]).filter(r=>teams.includes(r.team_code)).map(r=>r.user_id),...(gcRows||[]).map(r=>r.user_id)]);
-    // V713 · avisos al equipo técnico: solo entrenadores/ayudantes de los equipos del evento + quien lo creó u organiza (si es del equipo técnico). Ya no a todos los entrenadores globales.
-    const staffAll=new Set([...(staffRows||[]).map(r=>String(r.user_id)),...(gcRows||[]).map(r=>String(r.user_id))]);
+    // V714 · avisos "Faltan N" y de mar: a quien organiza el evento (quien lo creó + los organizadores añadidos). Si el evento no tiene ninguno guardado (eventos antiguos), a los entrenadores y ayudantes de su equipo.
     const techOf=(e,teams)=>{
       const col=e.kind==='session'?'training_session_id':e.kind==='competition'?'competition_id':'club_event_id';
       const org=(orgRows||[]).filter(o=>String(o[col])===String(e.id)).map(o=>o.user_id);
-      return uniq([...(staffRows||[]).filter(r=>teams.includes(r.team_code)).map(r=>r.user_id),...[e.created_by,...org].filter(Boolean).map(String).filter(i=>staffAll.has(i))]);
+      const orgs=uniq([e.created_by,...org]);
+      return orgs.length?orgs:uniq((staffRows||[]).filter(r=>teams.includes(r.team_code)).map(r=>r.user_id));
     };
     const rosterCache=new Map();
     const rosterOf=async team=>{if(!rosterCache.has(team))rosterCache.set(team,uniq((await rest(`rower_team_memberships?team_code=eq.${encodeURIComponent(team)}&is_rower=eq.true&select=user_id`)||[]).map(r=>r.user_id)));return rosterCache.get(team)};
@@ -113,6 +114,7 @@ module.exports=async function handler(req,res){
       const ex=(e.excluded_ids||[]).map(String);return ids.filter(i=>!ex.includes(i));
     };
     const url=(e,team)=>`/?tab=eventos&ek=${e.kind}&eid=${e.id}&et=${encodeURIComponent(team)}`;
+    const urlS=(e,team)=>url(e,team)+'&mode=staff'; // avisos para organizadores: la app se abre en su perfil de entrenador
     const claim=async(e,col)=>{if(!LIVE)return true;const r=await rest(`${table[e.kind]}?id=eq.${e.id}&${col}=is.null`,{method:'PATCH',body:{[col]:new Date().toISOString()},prefer:'return=representation'});return Array.isArray(r)&&r.length>0};
     const send=(recipientIds,title,body,u,type,sourceBase)=>!LIVE?(out.would.push({para:recipientIds.length+' personas',title,body,ref:sourceBase}),Promise.resolve()):deliverNotifications({supabaseUrl:SB_URL,serviceKey:process.env.SUPABASE_SERVICE_ROLE_KEY,recipientIds,title,body,url:u,type,sourceBase});
 
@@ -131,7 +133,7 @@ module.exports=async function handler(req,res){
           if(await claim(e,'opens_notified_at')){
             let ids=[];for(const t of liveTeams)ids.push(...await audience(e,t));
             ids=uniq(ids).filter(i=>!blocks(i,'event_new'));
-            if(ids.length)await send(ids,'📅 Ya puedes confirmar asistencia',`Confirma tu asistencia a "${e.title}" (${dateLabel(e.date,e.event_time)}) en Row Training.`,url(e,liveTeams[0]),'training',`cron_open:${e.kind}:${e.id}`);
+            if(ids.length)await send(ids,'📅 Ya puedes confirmar asistencia',`Confirma tu asistencia a "${sh(e.title)}" (${dateLabel(e.date,e.event_time)}) en Row Training.`,url(e,liveTeams[0]),'training',`cron_open:${e.kind}:${e.id}`);
             out.opens++;
           }
         }
@@ -143,7 +145,7 @@ module.exports=async function handler(req,res){
               for(const t of liveTeams){
                 const answered=new Set((await rsvpOf(e,t)).map(r=>String(r.user_id)));
                 const pend=(await audience(e,t)).filter(i=>!answered.has(i)&&!blocks(i,'event_reminder'));
-                if(pend.length)await send(pend,`🔔 ¿Vas a ${e.title}?`,`Aún no has respondido a "${e.title}" (${dateLabel(e.date,e.event_time)}). Confirma en Row Training.`,url(e,t),'training',`cron_rem:${e.kind}:${e.id}:${t}`);
+                if(pend.length)await send(pend,`🔔 ¿Vas a ${sh(e.title)}?`,`Aún no has respondido a "${sh(e.title)}" (${dateLabel(e.date,e.event_time)}). Confirma en Row Training.`,url(e,t),'training',`cron_rem:${e.kind}:${e.id}:${t}`);
               }
               out.reminders++;
             }
@@ -159,7 +161,7 @@ module.exports=async function handler(req,res){
             const rid=new Set(await rosterOf(t));const going=(await rsvpOf(e,t)).filter(r=>r.status==='in'&&rid.has(String(r.user_id))).length; // el equipo técnico no cuenta
             if(going<need){
               const falta=need-going,que=e.boat_type?`salir en ${e.boat_type}`:'poder salir en barca';
-              await send(techOf(e,[t]),`👥 Faltan ${falta} para ${que}`,`${t.toUpperCase().slice(0,12)} · ${e.title} (${dateLabel(e.date,e.event_time)}): van ${going} de ${need} mínimo.`,url(e,t),'training',`cron_short:${e.kind}:${e.id}:${t}`);
+              await send(techOf(e,[t]),`👥 Faltan ${falta} para ${que}`,`${t.toUpperCase().slice(0,12)} · ${sh(e.title)} (${dateLabel(e.date,e.event_time)}): van ${going} de ${need} mínimo.`,urlS(e,t),'training',`cron_short:${e.kind}:${e.id}:${t}`);
               out.shortage++;
             }
           }
@@ -172,7 +174,7 @@ module.exports=async function handler(req,res){
           const {c,H}=await wxGet();const r=wxEval(H,e.date,e.event_time,e.end_time,c);
           if(r&&(r.level==='red'||r.level==='amber')){
             const ico=r.level==='red'?'🔴':'🟡',tx=r.level==='red'?'Mala mar':'Precaución';
-            await send(techOf(e,e.teams),`${ico} Previsión de mar: ${tx}`,`${e.title} (${dateLabel(e.date,e.event_time)}): ${r.reasons.join(' · ')}. Previsión de modelo, orientativa.`,url(e,e.teams[0]),'training',`cron_sea:${e.kind}:${e.id}:${dayBefore?'d':'h'}`);
+            await send(techOf(e,e.teams),`${ico} Previsión de mar: ${tx}`,`${sh(e.title)} (${dateLabel(e.date,e.event_time)}): ${r.reasons.join(' · ')}. Previsión de modelo, orientativa.`,urlS(e,e.teams[0]),'training',`cron_sea:${e.kind}:${e.id}:${dayBefore?'d':'h'}`);
             out.weather++;
           }
         }
