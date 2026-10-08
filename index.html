@@ -2934,7 +2934,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="716";
+const APP_VERSION="717";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8416,10 +8416,10 @@ async function v300FetchChat(rowerId){
   }catch(e){return[]}
 }
 const V325_REACTION_EMOJIS=['👍','👎','❤️','🔥','💪','👏','🙌','🙏','😂','😮','😢','😅','😍','😎','🎉','🏆','💯','👌','✅','❌','🚣','⭐'];
-async function v325FetchReactions(messageIds){
+async function v325FetchReactions(messageIds,tbl){
   if(!messageIds||!messageIds.length)return [];
   try{
-    const q=await sb.from('chat_message_reactions').select('id,message_id,user_id,emoji').in('message_id',messageIds);
+    const q=await sb.from(tbl||'chat_message_reactions').select('id,message_id,user_id,emoji').in('message_id',messageIds);
     return q.error?[]:(q.data||[]);
   }catch(e){return[]}
 }
@@ -8885,7 +8885,7 @@ async function v583Chat(anchor,cfg){
     S.msgs.sort((a,b)=>(String(a.id).startsWith('tmp')?1:0)-(String(b.id).startsWith('tmp')?1:0)||new Date(a.created_at)-new Date(b.created_at));
     return added;
   };
-  const loadReacts=async()=>{if(!cfg.fetchReactions)return;const ids=S.msgs.filter(m=>!String(m.id).startsWith('tmp')).map(m=>m.id);if(!ids.length)return;const r=await cfg.fetchReactions(ids);const before=JSON.stringify(S.reacts.map(x=>[x.message_id,x.emoji,x.user_id]).sort());S.reacts=S.reacts.filter(x=>x._tmp).concat(r);if(JSON.stringify(r.map(x=>[x.message_id,x.emoji,x.user_id]).sort())!==before){save();paint()}};
+  const loadReacts=async()=>{if(!cfg.fetchReactions)return;const ids=S.msgs.filter(m=>!String(m.id).startsWith('tmp')).map(m=>m.id);if(!ids.length)return;const r=await cfg.fetchReactions(ids,cfg.reactTable);const before=JSON.stringify(S.reacts.map(x=>[x.message_id,x.emoji,x.user_id]).sort());S.reacts=S.reacts.filter(x=>x._tmp).concat(r);if(JSON.stringify(r.map(x=>[x.message_id,x.emoji,x.user_id]).sort())!==before){save();paint()}};
   if(cached&&S.msgs.length)paint();
   else box.innerHTML='<p class="muted" style="text-align:center;padding:20px 0">Cargando…</p>';
   // carga completa (en paralelo con lo que ya se ve) y luego reacciones sin bloquear el pintado
@@ -9188,13 +9188,13 @@ async function v583Chat(anchor,cfg){
     const mine=S.reacts.findIndex(r=>String(r.message_id)===String(msgId)&&r.emoji===emoji&&r.user_id===meId);
     const target=S.msgs.find(m=>String(m.id)===String(msgId));
     if(mine>=0){S.reacts.splice(mine,1);paint();save();
-      const q=await sb.from('chat_message_reactions').delete().eq('message_id',Number(msgId)).eq('user_id',meId).eq('emoji',emoji);
+      const q=await sb.from(cfg.reactTable||'chat_message_reactions').delete().eq('message_id',Number(msgId)).eq('user_id',meId).eq('emoji',emoji);
       if(q.error){v300ShowToast('No se pudo quitar la reacción');loadReacts()}
     }else{
       S.reacts.push({id:'t'+Date.now(),message_id:Number(msgId),user_id:meId,emoji,_tmp:1});paint();save();
-      const q=await sb.from('chat_message_reactions').insert({message_id:Number(msgId),user_id:meId,emoji});
+      const q=await sb.from(cfg.reactTable||'chat_message_reactions').insert({message_id:Number(msgId),user_id:meId,emoji});
       if(q.error){S.reacts=S.reacts.filter(r=>!(r._tmp&&String(r.message_id)===String(msgId)&&r.emoji===emoji));paint();
-        alert(/relation .* does not exist/i.test(q.error.message||'')?'Falta ejecutar 17_reacciones_mensajes.sql en Supabase antes de poder reaccionar.':`No se pudo guardar la reacción.\n\nDetalle: ${q.error.message||q.error}`);return}
+        alert(/relation .* does not exist/i.test(q.error.message||'')?(cfg.reactTable?'Falta ejecutar 76_reacciones_chat_equipo.sql en Supabase':'Falta ejecutar 17_reacciones_mensajes.sql en Supabase')+' antes de poder reaccionar.':`No se pudo guardar la reacción.\n\nDetalle: ${q.error.message||q.error}`);return}
       cfg.reactPush&&cfg.reactPush(emoji,target?.body);
       loadReacts();
     }
@@ -9323,7 +9323,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
   const allRows=[];
   const GR=v624GroupReads({table:'event_chat_reads',members,allRows});
   await v583Chat(container,{
-    members:()=>members,msgActions:true,fetchReads:GR.fetchReads,info:GR.info,
+    members:()=>members,msgActions:true,fetchReactions:v325FetchReactions,reactTable:'event_chat_message_reactions',fetchReads:GR.fetchReads,info:GR.info,
     canDelete:m=>String(m.sender_id)===String(currentUser.id)||currentMode==='staff',
     del:async m=>{const q=await sb.from('event_chat_messages').delete().eq('id',m.id).select('id');if(q.error)return{error:q.error};if(!(q.data||[]).length)return{error:{message:'No tienes permiso para borrarlo.'}};return{}},
     table:'event_chat_messages',mute:{key:'event:'+kind+':'+sessionId},
@@ -9528,7 +9528,7 @@ async function v617RenderTeamChat(container,team){
     key:'t:'+team,boxId:'v617TeamChatScroll',inputId:'v617TeamChatInput',sendId:'v617TeamChatSend',maxH:'50vh',locale:loc==='es'?'es-ES':loc==='nl'?'nl-NL':'en-GB',names:V583_NAMES,
     empty:T.empty[loc]||T.empty.es,placeholder:T.ph[loc]||T.ph.es,sendLabel:T.send[loc]||T.send.es,
     members:()=>members,
-    msgActions:true,
+    msgActions:true,fetchReactions:v325FetchReactions,reactTable:'team_chat_message_reactions',
     fetchReads:GR.fetchReads,info:GR.info,
     fetch:async since=>{
       try{
