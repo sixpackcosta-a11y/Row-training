@@ -712,6 +712,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v325ReactionsRow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;margin-top:2px}
 .v325ReactionPill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
 .v325ReactionPill.mine{border-color:#2563eb;background:var(--accent-tint)}
+.v721Note{display:block;color:var(--text);opacity:.85;font-style:italic;font-size:13px;white-space:normal;margin-top:1px}
 .v325ReactionPill span{font-weight:600;font-size:10px;opacity:.8}.v718Cap{gap:3px;padding:1px 8px;font-size:12px}.v718Cap i{font-style:normal;font-size:15px;letter-spacing:1px}
 .v718RS{position:fixed;inset:0;z-index:10050;background:#0007;display:flex;align-items:flex-end}.v718RSBox{width:100%;max-height:70vh;overflow:auto;background:var(--surface);color:var(--text);border-radius:18px 18px 0 0;padding:8px 14px 24px;box-shadow:0 -8px 30px #0006}.v718RSGrab{width:44px;height:5px;border-radius:9px;background:var(--border);margin:4px auto 10px}.v718RSBox h4{margin:0 0 10px;text-align:center;font-size:16px}.v718RSChips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}.v718RSChips button{flex:none;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:999px;padding:6px 14px;font-size:15px}.v718RSChips button.on{border-color:#2563eb;background:var(--accent-tint)}.v718RSChips button small{font-size:11px;margin-left:4px;opacity:.8}.v718RSRow{display:flex;align-items:center;gap:12px;padding:8px 2px;border-radius:10px}.v718RSRow.me{cursor:pointer}.v718RSRow img,.v718RSRow .ph{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}.v718RSRow .nm{flex:1;min-width:0}.v718RSRow .nm b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.v718RSRow .nm small{color:var(--muted,#888);font-size:12px}.v718RSRow .em{font-size:22px}
 .v325AddReaction{border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);border-radius:999px;padding:2px 8px;font-size:12px;line-height:1.6;cursor:pointer}
@@ -2572,10 +2573,13 @@ async function v530NotifyOrganizersRsvp(kind,eventId,team,status,reason){
     const name=kind==='session'?v524SessionEventName(ev):kind==='competition'?(ev.name||'la competición'):(ev.title||'el evento');
     const date=kind==='session'?ev.session_date:kind==='competition'?ev.competition_date:ev.event_date;
     const who=currentUserProfile?.full_name||'Alguien';
-    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:status==='waitlist'?`⏳ ${who} en lista de espera`:`❌ ${who} no va`,body:`${name} · ${v512DetailDateLabel(date,ev.event_time)}${status==='out'&&reason?` · «${reason.slice(0,200)}»`:''}`,url:v530EventUrl(kind,eventId,team),category:'rsvp',rsvpStatus:status,type:'training'});
+    await sendNotificationV110({audience:{mode:'users',user_ids:[...orgs],team_codes:[team]},title:status==='in'?`✅ ${who} va`:status==='waitlist'?`⏳ ${who} en lista de espera`:`❌ ${who} no va`,body:`${status==='out'&&reason?`«${reason.slice(0,140)}» · `:''}${v722Sh(name,30)} · ${v722Date(date,ev.event_time)}`,url:v530EventUrl(kind,eventId,team,true),category:'rsvp',rsvpStatus:status,type:'training'});
   }catch(e){}
 }
-function v530EventUrl(kind,id,team){return `/?tab=eventos&ek=${encodeURIComponent(kind||'')}&eid=${encodeURIComponent(id||'')}&et=${encodeURIComponent(team||'')}`}
+function v530EventUrl(kind,id,team,staff){return `/?tab=eventos&ek=${encodeURIComponent(kind||'')}&eid=${encodeURIComponent(id||'')}&et=${encodeURIComponent(team||'')}${staff?'&mode=staff':''}`}
+// V722 · textos de aviso cortos: nombre recortado y fecha corta
+function v722Sh(x,n=34){x=String(x||'').replace(/\s+/g,' ').trim();return x.length>n?x.slice(0,n-1).trimEnd()+'…':x}
+function v722Date(ds,time){if(!ds)return'';try{return new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(ds+'T12:00:00')).replace(/\./g,'')+(time?' '+String(time).slice(0,5):'')}catch(e){return ds}}
 async function sendNotificationV110(payload){
   payload=await v530FilterAudience(payload);
   if(!payload)return {ok:true,skipped:true};
@@ -2713,9 +2717,9 @@ async function openNotificationsV104(){
    const u=el.dataset.url||'';panel.remove();await loadNotificationsV104();
    if(u.includes('tab=altas')&&hasAnyCoachTeam()){tab='equipo';draw();render();return}
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
-   if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
+   if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;if(q2.get('rower')&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()}tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
-   if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||''};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
+   if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;if(q2.get('mode')==='staff'&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}if(q2.get('et'))coachSelectedTeam=q2.get('et');renderIdentityHeaderV73()}tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||''};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
  }));
 }
 
@@ -2935,7 +2939,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="721";
+const APP_VERSION="724";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3399,6 +3403,8 @@ async function startApp(){
       if(launchParams.get("rower"))v300PendingMessageRower=launchParams.get("rower");
     }
   }
+  if(launchParams.get("tab")==="mensajes"&&launchParams.get("rower")&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()} // V724 · mensaje de una remera: se abre en perfil de entrenador
+  if(launchParams.get("mode")==="staff"&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}if(launchParams.get("et"))coachSelectedTeam=launchParams.get("et");renderIdentityHeaderV73()}
   if(launchParams.get("tab")==="eventos"){tab="eventos";if(launchParams.get("eid"))v530PendingEvent={kind:launchParams.get("ek")||'club_event',id:Number(launchParams.get("eid")),team:launchParams.get("et")||''}}
   if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
@@ -4500,7 +4506,9 @@ function v495WireRsvpButtons(root,afterChange){
     try{
       const payload={user_id:currentUser.id,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
       const onConflict=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
-      const q=await sb.from('session_rsvp').upsert(payload,{onConflict}).select('status').maybeSingle();
+      payload.note=(status==='out'&&declineReason)?declineReason.slice(0,300):null;
+      let q=await sb.from('session_rsvp').upsert(payload,{onConflict}).select('status').maybeSingle();
+      if(q.error&&/note/.test(q.error.message||'')){delete payload.note;q=await sb.from('session_rsvp').upsert(payload,{onConflict}).select('status').maybeSingle()}
       if(q.error)throw q.error;
       const real=q.data?.status||status;
       row.querySelectorAll('.v493RsvpBtn').forEach(x=>{x.classList.toggle('active',(x.dataset.status==='in'&&(real==='in'||real==='waitlist'))||(x.dataset.status==='out'&&real==='out'));if(x.dataset.status==='in')x.textContent=real==='waitlist'?'⏳ En espera':'✅ Voy'});
@@ -4568,7 +4576,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const seenSet=(canEdit||(orgIds||[]).includes(String(currentUser?.id)))?(statusByUser._seen||null):null;
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
-    const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='waitlist'?`<small class="v588Wait">En espera${rankMap.get(String(p.user_id))?' · puesto '+rankMap.get(String(p.user_id)):''}</small>`:st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>':'');
+    const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='waitlist'?`<small class="v588Wait">En espera${rankMap.get(String(p.user_id))?' · puesto '+rankMap.get(String(p.user_id)):''}</small>`:st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>'+(V721_N.get((kind||'session')+'_'+sessionId+'|'+p.user_id)?`<small class="v721Note">«${esc(V721_N.get((kind||'session')+'_'+sessionId+'|'+p.user_id))}»</small>`:''):'');
     const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}</select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
@@ -4782,7 +4790,7 @@ async function v495FetchEvents(team,range){
   const customs=(ee2.error?[]:(ee2.data||[])).map(v516MapClubEvent);
   return [...sessions,...comps,...customs].sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
 }
-const V598_WAIT=new Map(),V598_RANK=new Map(),V657_T=new Map();
+const V598_WAIT=new Map(),V598_RANK=new Map(),V657_T=new Map(),V721_N=new Map();
 async function v495RsvpStatusMapsForEvents(events,team){
   // V502fix · "si acepto en el evento de veteranos me aparece también aceptado en el de veteranas":
   // una misma competición puede estar asignada a varios equipos a la vez (team_codes es un array:
@@ -4791,16 +4799,22 @@ async function v495RsvpStatusMapsForEvents(events,team){
   // otro equipo. Ahora se filtra siempre por el equipo que se está viendo, para que cada equipo
   // lleve su propia confirmación aunque compartan la misma competición.
   const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
-  if(sessionIds.length)qs.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at').in('training_session_id',sessionIds).eq('team_code',team));
-  if(compIds.length)qs.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at').in('competition_id',compIds).eq('team_code',team));
+  const mkQs=nt=>{const qq=[];
+  if(sessionIds.length)qq.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at'+nt).in('training_session_id',sessionIds).eq('team_code',team));
+  if(compIds.length)qq.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at'+nt).in('competition_id',compIds).eq('team_code',team));
   // V516 · un evento propio puede incluir varios grupos: sus respuestas no se filtran por equipo.
-  if(clubIds.length)qs.push(sb.from('session_rsvp').select('club_event_id,user_id,status,responded_at').in('club_event_id',clubIds));
-  const results=qs.length?await Promise.all(qs):[],byEvent=new Map();
+  if(clubIds.length)qq.push(sb.from('session_rsvp').select('club_event_id,user_id,status,responded_at'+nt).in('club_event_id',clubIds));
+  return qq};
+  let results=mkQs(',note').length?await Promise.all(mkQs(',note')):[];
+  // V721 · si aún no existe la columna "note" (77_motivo_rechazo.sql), se vuelve a la consulta de antes
+  if(results.some(r=>r.error&&/note/.test(r.error.message||'')))results=await Promise.all(mkQs(''));
+  const byEvent=new Map();
   results.forEach(r=>(r.data||[]).forEach(row=>{
     const kind=row.training_session_id!=null?'session':row.competition_id!=null?'competition':'club_event',id=row.training_session_id??row.competition_id??row.club_event_id,k=kind+'_'+id;
     if(!byEvent.has(k))byEvent.set(k,new Map());
     byEvent.get(k).set(String(row.user_id),row.status);
     V657_T.set(k+'|'+row.user_id,row.responded_at||'');
+    V721_N.set(k+'|'+row.user_id,row.note||'');
     if(row.status==='waitlist'){if(!V598_WAIT.has(k+'|tmp'))V598_WAIT.set(k+'|tmp',[]);V598_WAIT.get(k+'|tmp').push({u:String(row.user_id),t:row.responded_at||''})}
   }));
   // V598 · orden de la lista de espera (por hora de llegada) para mostrar "puesto n"
