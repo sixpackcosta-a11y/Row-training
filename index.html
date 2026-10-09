@@ -2998,7 +2998,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="760";
+const APP_VERSION="762";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10651,7 +10651,7 @@ async function profileView(){
 
   // v271: W/kg del último test ERGO del propio remero, reutilizando v309FindLatestTestPower/v309WattsFromPace500
   // (misma lógica que ya usa el entrenador en Análisis). Solo lectura aquí, no hace falta que el remero toque nada.
-  let v271TestWkg=null,v271TestPower=null;
+  let v271TestWkg=null,v271TestPower=null;let v271Diag='';
   try{
     const [sessRes,c2Res,workRes]=await Promise.all([
       sb.from('training_sessions').select('id,title').ilike('title','%test%'),
@@ -10665,11 +10665,12 @@ async function profileView(){
     const v760Sess=[...(sessRes.data||[])];const v760Seen=new Set(v760Sess.map(x=>String(x.id)));
     (c2Res.data||[]).forEach(r=>{if(r.training_session_id&&!v760Seen.has(String(r.training_session_id))&&/test/i.test(String(r.matched_session_code||''))){v760Seen.add(String(r.training_session_id));v760Sess.push({id:r.training_session_id,title:r.matched_session_code})}});
     (workRes.data||[]).forEach(w=>{if(w.training_session_id&&!v760Seen.has(String(w.training_session_id))&&/test/i.test(String(w.session_code||''))){v760Seen.add(String(w.training_session_id));v760Sess.push({id:w.training_session_id,title:w.session_code})}});
-    v271TestPower=v309FindLatestTestPower(currentUser.id,v760Sess,c2Res.data||[],ergoRes.data||[],workRes.data||[]);
+    v271TestPower=v762FindLatestTest(currentUser.id,v760Sess,c2Res.data||[],ergoRes.data||[],workRes.data||[]);
     if(!v271TestPower)console.warn('V760 sin test',{sesiones:(sessRes.data||[]).length,c2:(c2Res.data||[]).length,workouts:(workRes.data||[]).length,err:[sessRes.error,c2Res.error,workRes.error]});
+    if(!v271TestPower){const t=(c2Res.data||[]).filter(r=>/test/i.test(String(r.matched_session_code||'')));v271Diag=`sesTEST ${(sessRes.data||[]).length} · c2 ${(c2Res.data||[]).length} · c2test ${t.length}${t[0]?` (ses ${t[0].training_session_id}, ritmo ${t[0].pace_500_seconds}, oculto ${t[0].hidden})`:''} · ses ids ${v760Sess.map(x=>x.id).slice(0,6).join(',')} · err ${[sessRes.error,c2Res.error,workRes.error].filter(Boolean).map(e=>e.message).join('|')||'no'}`}
     const testWatts=v271TestPower?v309WattsFromPace500(v271TestPower.pace):null;
     v271TestWkg=(testWatts&&m.weight_kg)?(testWatts/m.weight_kg):null;
-  }catch(e){console.warn('No se pudo calcular W/kg del test',e)}
+  }catch(e){console.warn('No se pudo calcular W/kg del test',e);v271Diag='fallo: '+String(e&&e.message||e)}
 
   const savedAge=localStorage.getItem("remo_age")||"";
   const savedSex=localStorage.getItem("remo_sex")||"";
@@ -10692,7 +10693,7 @@ async function profileView(){
     <label>${v311T('peso_kg')}<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
     <label>${v311T('fc_reposo')}<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
   </div>
-  <div class="info"><b>W/kg (último test ERGO):</b> ${v271TestWkg!=null?`${v271TestWkg.toFixed(2)} W/kg${v271TestPower?` · ${shortDateES(v271TestPower.date)}`:''}`:(m.weight_kg?'Aún no tienes ningún test registrado.':'Registra tu peso para poder calcularlo.')}${v271TestWkg!=null?`<br><small>${esc(v280WkgTargetComment(v271TestWkg,currentTeamCode)||'')}</small>`:''}${v271TestPower?.splits?.length?(()=>{const pc=v280PacingComment(v271TestPower.splits);return pc?`<br><small>${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)?`<br><small>🏁 ${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)}</small>`:''}</div>
+  <div class="info"><b>W/kg (último test ERGO):</b> ${v271TestWkg!=null?`${v271TestWkg.toFixed(2)} W/kg${v271TestPower?` · ${shortDateES(v271TestPower.date)}`:''}`:(m.weight_kg?'Aún no tienes ningún test registrado.':'Registra tu peso para poder calcularlo.')}${v271Diag?`<br><small class="muted">${esc(v271Diag)}</small>`:''}${v271TestWkg!=null?`<br><small>${esc(v280WkgTargetComment(v271TestWkg,currentTeamCode)||'')}</small>`:''}${v271TestPower?.splits?.length?(()=>{const pc=v280PacingComment(v271TestPower.splits);return pc?`<br><small>${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)?`<br><small>🏁 ${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)}</small>`:''}</div>
 
   <div class="card" style="background:var(--surface-2)">
     <h3>${v311T('fc_maxima')}</h3>
@@ -11922,6 +11923,29 @@ function ergDataStatusHtmlV103(uid,statusMap,compact=false){
   const label=connected?(compact?'ErgData':'ErgData conectado'):(compact?'Sin ErgData':'ErgData sin conectar');
   const title=connected?(st?.concept2_username?`Conectado como ${st.concept2_username}`:'Concept2 / ErgData conectado'):'No ha conectado Concept2 / ErgData';
   return `<span class="ergStatusV103 ${connected?'connected':'offline'}" title="${esc(title)}"><span class="ergDotV103"></span>${label}</span>`;
+}
+// V762 · búsqueda del último test para el PERFIL del remero (la versión de Análisis vive dentro de results() y no es visible aquí).
+function v762FindLatestTest(userId,sessions,c2rows,ergo,workouts){
+  const ids=new Set((sessions||[]).filter(x=>/test/i.test(String(x.title||''))).map(x=>String(x.id)));
+  if(!ids.size)return null;
+  const cand=[];
+  (c2rows||[]).forEach(r=>{
+    if(String(r.user_id)!==String(userId))return;
+    if(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(r))return;
+    if(!r.training_session_id||!ids.has(String(r.training_session_id)))return;
+    if(r.pace_500_seconds)cand.push({date:String(r.workout_date||'').slice(0,10),pace:Number(r.pace_500_seconds),distance:r.distance_m,source:'ErgData',splits:v280NormalizeSplits(r,'ErgData')});
+  });
+  const tw=(workouts||[]).filter(w=>String(w.user_id)===String(userId)&&w.training_session_id&&ids.has(String(w.training_session_id)));
+  const twIds=new Set(tw.map(w=>String(w.id)));
+  (ergo||[]).forEach(e=>{
+    if(!twIds.has(String(e.workout_id)))return;
+    const w=tw.find(x=>String(x.id)===String(e.workout_id));
+    const secs=timeTextToSeconds(e.time_text);
+    if(secs&&e.distance_m)cand.push({date:String(w?.session_date||'').slice(0,10),pace:secs*500/e.distance_m,distance:e.distance_m,source:'Manual',splits:v280NormalizeSplits(e,'Manual')});
+  });
+  if(!cand.length)return null;
+  cand.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  return cand[0];
 }
 async function results(){
   content.innerHTML=`<div class="card"><div class="viewToggle"><button id="analysisSeaLoading">MAR · Equipo</button><button class="active">ERGO / Remeros</button></div><h2>Análisis de remeros</h2><div class="info"><b>Equipos:</b> Veteranas femenino · Absoluto masculino · Absoluto femenino · Veteranos masculino<br><small>El acceso de cada entrenador se controla por equipo.</small></div><p class="muted">${v316Loading()}</p></div>`;
