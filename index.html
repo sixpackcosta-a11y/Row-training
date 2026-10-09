@@ -1107,6 +1107,33 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
 .v696Gear{border:1px solid var(--border);background:transparent;color:inherit;border-radius:8px;padding:3px 9px;font:inherit;font-size:11.5px;cursor:pointer}
 .v696Cfg{margin-top:8px}.v696CfgTit{font-size:12px;font-weight:700;margin-bottom:6px}.v696Btns{display:flex;gap:8px;margin-top:8px}
 .v696Dot{margin-left:6px;font-size:12px}.v696Tap{position:relative;cursor:pointer;padding-right:20px;-webkit-tap-highlight-color:transparent}.v696Chev{position:absolute;right:2px;top:4px;color:var(--text-muted);font-size:13px}.v696More{margin-top:6px}.v696More[hidden]{display:none}.v696In td{font-weight:700}.v696In{background:rgba(120,120,120,.12)}.v696Ana p{margin:5px 0;font-size:12.8px;color:var(--text)}.v696Ana{margin-top:4px}
+</style><style>
+/* V740 · sistema de diseño: cabecera, barra inferior, margen lateral, sin títulos de pestaña y proporciones texto/caja iguales */
+header{padding:0 8px!important;min-height:64px;gap:8px!important}
+.v550Club{display:none!important}
+#userHead{gap:0!important}
+#notifyBellV104.notifyHeadV104{width:44px;height:44px;border:0;background:transparent;margin:0;font-size:20px}
+#notifyBellV104 .nBadge{position:absolute;top:5px;right:3px}
+.refreshHeadV159{margin-left:0}
+#v740Photo{width:44px;height:44px;border:0;background:transparent;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative;color:#fff}
+#v740Photo.hidden{display:none}
+#v740Photo .v505Avatar{border:2px solid #fff;border-radius:50%;object-fit:cover}
+#v740Photo .nBadge{position:absolute;top:5px;right:4px;width:10px;height:10px;min-width:0;padding:0;font-size:0;border-radius:50%;background:#ef4444;display:block}
+main{padding-left:8px!important;padding-right:8px!important}
+#nav.v330BottomNav{left:12px;right:12px;max-width:none;bottom:calc(16px + env(safe-area-inset-bottom));height:64px;padding:6px;gap:2px;background:#0B1B35;border:0;border-radius:32px;box-shadow:0 10px 28px rgba(7,22,47,.35)}
+.v330NavBtn{height:52px;padding:0;border-radius:26px;gap:2px;font-size:12px;font-weight:500;color:#C9D3E3}
+.v330NavBtn.active{background:#2F5BE7;color:#fff;font-weight:700}
+.v330NavBtn .nBadge{top:6px;right:calc(50% - 22px)}
+body.v330HasBottomNav main{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+body[data-v740g="trabajo"] #content>.card>h2:first-child,body[data-v740g="actividad"] #content>.card>h2:first-child,body[data-v740g="eventos"] #content>.card>h2:first-child,body[data-v740g="mensajes"] #content>.card>h2:first-child{display:none}
+.v334MsgBellBtn.v605Avisos{display:none}
+#content h2{font-size:17px;line-height:22px;font-weight:650}
+/* texto/caja: botón y campo 44 · 16; filtro 32 · 12; pestañas 36 · 16 */
+main button.primary,main .btn,main label.btn{min-height:44px;padding-left:16px;padding-right:16px;border-radius:12px;font-size:15px}
+select{height:44px;padding-top:0;padding-bottom:0;padding-left:16px;font-size:15px}
+main input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]){min-height:44px;padding-left:16px;padding-right:16px}
+.v330SubTab{height:36px;padding:0 16px;font-size:13px;display:inline-flex;align-items:center}
+.v513Chip{min-height:32px;padding-left:12px;padding-right:12px;font-size:13px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -1119,7 +1146,7 @@ html[data-theme="dark"] .v334MsgBellBtn{border-color:#5b9dff}
   setTimeout(function(){window.v547SplashFail()},35000);
   document.getElementById('v547Retry').onclick=function(){location.reload()};
 })();
-</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script><script>if(!window.supabase)window.v547SplashFail('No se ha podido conectar. Comprueba la cobertura y reintenta.')</script><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:10px;min-width:0"><img class="v551Icon" src="assets/brand/icon-cabecera.png" alt=""><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:6px;min-width:0"><span class="v551Word" aria-label="Row Training"><span class="v551Row">ROW</span><span class="v551Tr">TRAINING</span></span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" class="v551Name" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8;line-height:1.35;padding-bottom:4px;margin-bottom:-4px"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159 hidden" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" style="display:none" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button><img class="v550Club" src="assets/club-pedregalejo.png" alt="Club de Remo Pedregalejo" title="Club de Remo Pedregalejo"></div></header><main><script>
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script><script>if(!window.supabase)window.v547SplashFail('No se ha podido conectar. Comprueba la cobertura y reintenta.')</script><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:10px;min-width:0"><img class="v551Icon" src="assets/brand/icon-cabecera.png" alt=""><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:6px;min-width:0"><span class="v551Word" aria-label="Row Training"><span class="v551Row">ROW</span><span class="v551Tr">TRAINING</span></span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" class="v551Name" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8;line-height:1.35;padding-bottom:4px;margin-bottom:-4px"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159 hidden" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" style="display:none" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button><button id="v740Photo" class="hidden" type="button" aria-label="Mi perfil" title="Mi perfil"></button></div></header><main><script>
 function applyThemeV299(mode){
   var isDark=mode==='dark';
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
@@ -2372,7 +2399,7 @@ async function combinedLibraryFormV89(item){
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null,v300UnreadMsgCount=0,v334UnreadNotifCount=0;
 
 const VAPID_PUBLIC_KEY_V104='BNCE9i8ANFF6sTW5TBZdk1S-EInb7_-b2ai0iFLFjUmXXDJaiFmzYoTbNh4OZfSapQrKgtw5w-yqq1ytFQ2XaZU';
-let appNotificationsV104=[];
+let appNotificationsV104=[];const V740_CHAT=['chat_message','chat_reaction']; // V740 · los avisos de chat cuentan en Mensajes, no en la campana
 function urlBase64ToUint8ArrayV104(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerServiceWorkerV104(){if(!('serviceWorker' in navigator))return null;try{return await navigator.serviceWorker.register('/sw.js')}catch(e){console.warn('SW',e);return null}}
 async function loadNotificationsV104(){
@@ -2387,9 +2414,9 @@ async function loadNotificationsV104(){
     }
     appNotificationsV104=clean.slice(0,30);
   }}catch(e){}
-  const n=appNotificationsV104.filter(x=>!x.is_read).length;v334UnreadNotifCount=n;
-  try{if(navigator.setAppBadge){if(n>0)navigator.setAppBadge(n).catch(()=>{});else navigator.clearAppBadge().catch(()=>{})}}catch(e){} // V731 · globo con avisos sin leer en el icono de la app
-  const foldedIntoMensajes=currentMode==='athlete'&&!!currentTeamCode;
+  const n=appNotificationsV104.filter(x=>!x.is_read&&!V740_CHAT.includes(x.type)).length;v334UnreadNotifCount=n;
+  try{const nn=n+(v300UnreadMsgCount||0);if(navigator.setAppBadge){if(nn>0)navigator.setAppBadge(nn).catch(()=>{});else navigator.clearAppBadge().catch(()=>{})}}catch(e){} // V731 · globo con avisos sin leer en el icono de la app
+  const foldedIntoMensajes=false; // V740 · la campana vuelve a ser solo de avisos
   const bell=document.getElementById('notifyBellV104'),badge=document.getElementById('notifyBadgeV104');
   if(bell)bell.classList.toggle('hidden',foldedIntoMensajes);
   if(badge){badge.textContent=n>9?'9+':String(n);badge.classList.toggle('hidden',!n||foldedIntoMensajes)}
@@ -2680,7 +2707,7 @@ async function openNotificationsV104(){
  let panel=document.getElementById('notifyPanelV104');if(panel)panel.remove();panel=document.createElement('div');panel.id='notifyPanelV104';panel.className='notifyPanelV104';
  const filterKey=`rowtraining_notify_filter_v224_${currentUser?.id||'anon'}`;
  let filter=localStorage.getItem(filterKey)||'all';if(!['all','unread'].includes(filter))filter='all';
- const visible=filter==='unread'?appNotificationsV104.filter(n=>!n.is_read):appNotificationsV104;
+ const visible=(filter==='unread'?appNotificationsV104.filter(n=>!n.is_read):appNotificationsV104).filter(n=>!V740_CHAT.includes(n.type));
  const unreadCount=appNotificationsV104.filter(n=>!n.is_read).length;
  const readCount=appNotificationsV104.filter(n=>n.is_read).length;
  const listHtml=visible.length?visible.map(n=>`<div class="notifyItemV104 ${n.is_read?'':'unread'}${/^cron_(sea|short):/.test(String(n.source_key||''))?' autoV706':''}" data-id="${esc(String(n.id))}" data-url="${esc(n.url||'')}"><div class="notifyTopV104"><b>${esc(n.title)}</b><div style="display:flex;gap:8px;align-items:center"><small class="muted">${new Date(n.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small><button type="button" class="deleteNotifV225" data-id="${esc(String(n.id))}" aria-label="Eliminar notificación" title="Eliminar" style="padding:4px 8px;min-width:auto">🗑️</button></div></div>${n.body?`<div style="margin-top:5px">${esc(n.body)}</div>`:''}</div>`).join(''):`<div class="info">${filter==='unread'?'No tienes notificaciones sin leer.':'No tienes notificaciones.'}</div>`;
@@ -2942,7 +2969,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="739";
+const APP_VERSION="741";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3833,6 +3860,26 @@ function draw(){
     badge.classList.toggle('hidden',!total);
   }
   v330RenderBottomNav();
+  v740Head();
+}
+function v740Head(){
+  try{
+    const g=v330GroupForTab(tab);
+    document.body.setAttribute('data-v740g',g||'');
+    const ph=document.getElementById('v740Photo');
+    if(ph){
+      const show=!!currentUser&&((currentMode==='athlete'&&!!currentTeamCode)||currentMode==='staff');
+      ph.classList.toggle('hidden',!show);
+      if(show){
+        const p=Object.assign({user_id:currentUser.id},currentUserProfile||{});
+        const key=(p.avatar_url||'')+'|'+(p.full_name||'')+'|'+(pendingRegistrationCount||0)+'|'+(currentMode==='staff'?1:0);
+        if(ph._v740k!==key){ph._v740k=key;ph.innerHTML=v505AvatarCircleHtml(p,34)+((currentMode==='staff'&&pendingRegistrationCount)?'<span class="nBadge"></span>':'');}
+        if(!ph._v740w){ph._v740w=true;ph.onclick=()=>{tab='perfil';draw();render()}}
+      }
+    }
+    const nn=(v334UnreadNotifCount||0)+(v300UnreadMsgCount||0);
+    if(navigator.setAppBadge){if(nn>0)navigator.setAppBadge(nn).catch(()=>{});else navigator.clearAppBadge&&navigator.clearAppBadge().catch(()=>{})}
+  }catch(e){}
 }
 function v330GroupForTab(t){
   if(t==='hoy'||t==='semana'||t==='mes')return 'trabajo';
@@ -3859,13 +3906,13 @@ function v330RenderBottomNav(){
   // hamburguesa deja de hacer falta salvo para el caso mínimo de ayudante sin equipo propio.
   const show=(currentMode==='athlete'&&!!currentTeamCode)||currentMode==='staff';
   if(menuBtn)menuBtn.classList.toggle('hidden',show);
-  if(bellBtn)bellBtn.classList.toggle('hidden',show);
+  if(bellBtn)bellBtn.classList.remove('hidden'); // V740
   if(!show){navEl.innerHTML='';navEl.classList.remove('v330BottomNav');if(appEl)appEl.classList.remove('v330HasBottomNav');document.body.classList.remove('v330HasBottomNav');return}
   if(appEl)appEl.classList.add('v330HasBottomNav');
   document.body.classList.add('v330HasBottomNav');
   navEl.classList.add('v330BottomNav');
   const group=v330GroupForTab(tab);
-  const mensajesCount=(v300UnreadMsgCount||0)+(v334UnreadNotifCount||0);
+  const mensajesCount=(v300UnreadMsgCount||0); // V740 · solo mensajes de chat; los avisos van en la campana
   let items;
   if(currentMode==='staff'){
     // V379 · 4 botones: Trabajo (Hoy/Semana/Mes/Registro MAR), Actividad (Planificación/Análisis/
@@ -3875,14 +3922,12 @@ function v330RenderBottomNav(){
     if(hasAnyCoachTeam())items.push(['actividad','actividad','Actividad','planificar']);
     if(hasAnyCoachTeam()&&v534EventsUI())items.push(['eventos','eventos','Eventos','eventos']);
     if(hasAnyCoachTeam())items.push(['mensajes','mensajes','Mensajes','mensajes']);
-    items.push(['yo','ajustes','Más','perfil']);
   }else{
     items=[
       ['trabajo','trabajo',v311T('nav_trabajo'),'hoy'],
       ['actividad','actividad',v311T('nav_actividad'),'hist'],
       ...(v533RowerSeesEvents(currentTeamCode)?[['eventos','eventos','Eventos','eventos']]:[]),
-      ['mensajes','mensajes',v311T('nav_mensajes'),'mensajes'],
-      ['yo','perfil',v311T('nav_yo'),'perfil']
+      ['mensajes','mensajes',v311T('nav_mensajes'),'mensajes']
     ];
   }
   navEl.innerHTML=items.map(([g,icon,label,defaultTab])=>{
@@ -8536,7 +8581,7 @@ function v592ClearChatNotifs(rowerId,types){
   try{
     const tp=types||['chat_message','chat_reaction'];let ch=false;
     (appNotificationsV104||[]).forEach(x=>{if(!x.is_read&&tp.includes(x.type)&&!(currentMode!=='athlete'&&rowerId&&!types&&!String(x.url||'').includes(rowerId))){x.is_read=true;ch=true}});
-    if(ch){v334UnreadNotifCount=appNotificationsV104.filter(x=>!x.is_read).length;v334UpdateMensajesBellBadge();if(typeof draw==='function')draw()}
+    if(ch){v334UnreadNotifCount=appNotificationsV104.filter(x=>!x.is_read&&!V740_CHAT.includes(x.type)).length;v334UpdateMensajesBellBadge();if(typeof draw==='function')draw()}
   }catch(e){}
   _v592T=setTimeout(async()=>{
     try{
