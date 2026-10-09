@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="751";
+const APP_VERSION="752";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4706,7 +4706,13 @@ function v493WireRsvpSummaryTabs(root,afterChange){
       if(status==='pending'){
         const q=await sb.from('session_rsvp').delete().eq('user_id',uidP).eq('team_code',teamCode).eq(col,eventId);
         if(q.error)throw q.error;
-        try{const tb=kind==='competition'?'competitions':kind==='club_event'?'club_events':'training_sessions';const ds=await sb.from(tb).select('default_status').eq('id',eventId).maybeSingle();if(ds&&ds.data&&ds.data.default_status==='in')alert('Esta persona sigue contando como "Asistiré" porque el evento tiene la respuesta predeterminada "Asistiré". Para que quede sin decidir, cambia ese ajuste a "Sin respuesta" en Editar evento > Más ajustes.')}catch(_){}
+        {const tb=kind==='competition'?'competitions':kind==='club_event'?'club_events':'training_sessions';const ds=await sb.from(tb).select('default_status').eq('id',eventId).maybeSingle();if(ds&&ds.data&&ds.data.default_status==='in'){
+          // V752 · el evento cuenta como "Asistiré" a quien no responde: se guardan como "va" los demás que ahora cuentan como que van y se quita ese ajuste, para que esta persona quede de verdad sin decidir
+          const others=[...root.querySelectorAll('.v505PersonStatus')].filter(o=>o!==sel&&o.dataset.uid!==uidP&&String(o.dataset.event)===String(eventId)&&(o.dataset.kind||'session')===kind&&o.value==='in').map(o=>o.dataset.uid);
+          const now2=new Date().toISOString(),onC=kind==='competition'?'competition_id,team_code,user_id':kind==='club_event'?'club_event_id,user_id':'training_session_id,user_id';
+          if(others.length){const rows=others.map(u=>({user_id:u,team_code:teamCode,status:'in',responded_at:now2,training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null}));const up=await sb.from('session_rsvp').upsert(rows,{onConflict:onC});if(up.error)throw up.error}
+          const du=await sb.from(tb).update({default_status:null}).eq('id',eventId);if(du.error)throw du.error;
+        }}
         v598Promote(kind,eventId,teamCode);
       }else{
         const payload={user_id:uidP,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
