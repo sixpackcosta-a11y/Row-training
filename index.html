@@ -1200,6 +1200,27 @@ html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .w
 html[data-theme="dark"] #content .workoutReadable{background:var(--surface)!important}
 #content .staffDayCard h3{font-size:1.05rem!important;font-weight:800!important;margin:6px 0 4px!important}
 #content .card .card:has(input,select,textarea){background:transparent!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
+/* V769 · Semana del remero como lista plana, botones secundarios unificados */
+#content .athleteWeekDaysV123{display:block!important;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+#content .athleteWeekDayV123{grid-template-columns:48px minmax(0,1fr)!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;margin:-1px 0 0}
+#content .athleteWeekDayV123.is-today{border:0!important;border-top:1px solid var(--border)!important;box-shadow:none!important}
+#content .athleteWeekDateV123,#content .athleteWeekDayV123.is-today .athleteWeekDateV123{background:transparent!important;padding:12px 0 0!important;align-items:center;color:var(--text)!important}
+#content .athleteWeekDayV123.is-today .athleteWeekDateV123{color:var(--accent,#3d5af1)!important}
+#content .athleteWeekDateV123 b{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted)}
+#content .athleteWeekDayV123.is-today .athleteWeekDateV123 b{color:inherit}
+#content .athleteWeekDateV123 strong{font-size:1.2rem;font-weight:800}
+#content .athleteWeekDateV123 em{font-size:.62rem;font-style:normal;font-weight:800}
+#content .athleteWeekSessionV123,#content .athleteWeekSessionV123.is-done,#content .athleteWeekSessionV123.is-overdue{border:0!important;border-left:0!important;background:transparent!important;border-radius:0!important}
+#content .athleteWeekSessionV123+.athleteWeekSessionV123{border-top:1px solid var(--border)!important}
+#content .athleteWeekRestV123{min-height:0!important;padding:14px 12px!important;font-size:.85rem}
+#content .athleteWeekStatusV123{display:inline-flex;align-items:center;gap:6px;font-size:.75rem!important;font-weight:700!important;color:var(--text-muted)!important}
+#content .athleteWeekStatusV123::before{content:'';width:10px;height:10px;border-radius:50%;background:#8b95a7;display:inline-block}
+#content .athleteWeekSessionV123.is-done .athleteWeekStatusV123::before{background:#1f9d63}
+#content .athleteWeekSessionV123.is-overdue .athleteWeekStatusV123::before{background:#d64545}
+#content .athleteWeekTypeV123{font-size:.75rem;font-weight:700;padding:3px 10px;line-height:1.3}
+#content .athleteWeekSessionTitleV123{font-size:.95rem;font-weight:700}
+#content .athleteWeekProgressV123{border-radius:12px}
+:where(#content) button,:where(#content) .btn{border:0;border-radius:10px;background:var(--surface-2);font-weight:700}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3035,7 +3056,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="768";
+const APP_VERSION="769";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10740,7 +10761,7 @@ async function profileView(){
     <label>${v311T('peso_kg')}<input id="pf_weight" type="number" step=".1" value="${m.weight_kg??""}"></label>
     <label>${v311T('fc_reposo')}<input id="pf_rest" type="number" value="${m.resting_hr??""}"></label>
   </div>
-  <div class="info"><b>W/kg (último test ERGO):</b> ${v271TestWkg!=null?`${v271TestWkg.toFixed(2)} W/kg${v271TestPower?` · ${shortDateES(v271TestPower.date)}`:''}`:(m.weight_kg?'Aún no tienes ningún test registrado.':'Registra tu peso para poder calcularlo.')}${v271Diag?`<br><small class="muted">${esc(v271Diag)}</small>`:''}${v271TestWkg!=null?`<br><small>${esc(v280WkgTargetComment(v271TestWkg,currentTeamCode)||'')}</small>`:''}${v271TestPower?.splits?.length?(()=>{const pc=v280PacingComment(v271TestPower.splits);return pc?`<br><small>${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)?`<br><small>🏁 ${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)}</small>`:''}</div>
+  <div class="info"><b>W/kg (último test ERGO):</b> ${v271TestWkg!=null?`${v271TestWkg.toFixed(2)} W/kg${v271TestPower?` · ${shortDateES(v271TestPower.date)}`:''}`:(m.weight_kg?'Aún no tienes ningún test registrado.':'Registra tu peso para poder calcularlo.')}${v271TestWkg!=null?`<br><small>${esc(v280WkgTargetComment(v271TestWkg,currentTeamCode)||'')}</small>`:''}${v271TestPower?.splits?.length?(()=>{const pc=v280PacingComment(v271TestPower.splits);return pc?`<br><small>${esc(pc)}</small>`:''})():''}${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)?`<br><small>🏁 ${v465AgeHandicapLine(v271TestWkg,ageFromBirthV103(pdata?.birth_date),currentTeamCode)}</small>`:''}</div>
 
   <div class="card" style="background:var(--surface-2)">
     <h3>${v311T('fc_maxima')}</h3>
