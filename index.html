@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="749";
+const APP_VERSION="750";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4990,7 +4990,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     (existing?'':sec('Repetir',`<label>Repetir<select id="v497CeRepeat"><option value="">No se repite</option><option value="weekly">Cada semana</option><option value="biweekly">Cada 2 semanas</option><option value="monthly">Cada mes</option></select></label><label id="v497CeRepeatUntilWrap" style="display:none">Dejar de repetir el (inclusive)<input id="v497CeRepeatUntil" type="date"></label>`))+
     sec('Enviar invitación',`<div class="plannerGrid"><label>Días antes (opcional)<input id="v497CeOpenDays" type="number" min="0" value="${x.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="v497CeOpenTime" type="time" value="${x.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía nada más guardar. Si pones días/hora, se ve publicado pero no se puede confirmar hasta ese momento (y se avisa entonces).</small></p>`)+
     sec('Más ajustes',`<div class="plannerGrid"><label>Límite de participantes<input id="v514Max" type="number" min="1" placeholder="Ninguno" value="${x.max_participants??''}"></label><label>¿En qué se sale?<select id="v673Boat"><option value="">Sin decidir</option><option value="barca" ${x.boat_type=='barca'?'selected':''}>Barca (mín. ${V674_BOAT.barca})</option><option value="llaut" ${x.boat_type=='llaut'?'selected':''}>Llaut (mín. ${V674_BOAT.llaut})</option></select></label><label>Plazo límite de respuesta<input id="v497CeDeadline" type="date" value="${x.response_deadline||''}"></label><label>Recordatorio automático<select id="v514Reminder">${remOpts.map(([v,l])=>`<option value="${v}" ${String(x.reminder_hours_before??'')===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Asistencia por defecto<select id="v514Default"><option value="">Sin respuesta</option><option value="in" ${x.default_status==='in'?'selected':''}>Asistiré</option></select></label><label>Comentarios (chat del evento)<select id="v514Chat"><option value="1" ${x.chat_enabled!==false?'selected':''}>Activados</option><option value="0" ${x.chat_enabled===false?'selected':''}>Desactivados</option></select></label><label>Quién ve las respuestas<select id="v514Vis"><option value="all" ${x.responses_visibility!=='organizers'?'selected':''}>Todos los invitados</option><option value="organizers" ${x.responses_visibility==='organizers'?'selected':''}>Solo organizadores</option></select></label></div><p class="muted"><small>Recordatorio: se avisa a quien aún no ha contestado. "Asistiré" por defecto: todos cuentan como que van salvo que digan que no.</small></p>`)+
-    (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">${x.__convert?'Solo este día':'Solo este evento'}</option><option value="following">${isSess?`${x.__convert?'Periódico: este y todos los siguientes':'Este y los siguientes'} (${esc((w=>w.endsWith('s')?w:w+'s')(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00'))))} de ${esc(String(x.session_type||'').toUpperCase())}${x.__convert?' ya planificados':' que sean evento'})`:'Este y los siguientes de la serie'}</option></select></label>`:''}<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>${x.__convert?'Avisar a las remeras (si la invitación no está programada para más tarde)':'Avisar a los invitados del cambio'}</span></label>`):'')+
+    (existing?sec('Al guardar',`${existing.recurrence_group||isSess?`<label>Aplicar los cambios a<select id="v514Scope"><option value="one">${x.__convert?'Solo este día':'Solo este evento'}</option><option value="following">${isSess?`${x.__convert?'Periódico: este y todos los siguientes':'Este y los siguientes'} (${esc((w=>w.endsWith('s')?w:w+'s')(new Intl.DateTimeFormat('es-ES',{weekday:'long',timeZone:'UTC'}).format(new Date(x.event_date+'T12:00:00'))))} de ${esc(String(x.session_type||'').toUpperCase())}${x.__convert?' ya planificados':' que sean evento'})`:'Este y los siguientes de la serie'}</option></select></label>`:''}${x.__convert?`<label class="inlineCheck"><input type="checkbox" id="v514Notify" checked> <span>Avisar a las remeras (si la invitación no está programada para más tarde)</span></label>`:`<label>Qué hacer con los que ya respondieron<select id="v750After" onchange="document.getElementById('v514Notify').checked=this.value!=='none'"><option value="notify" selected>Avisar del cambio (mantienen su respuesta)</option><option value="reset">Pedir que respondan de nuevo (se borran las respuestas y se avisa)</option><option value="none">Solo cambiar (sin avisar)</option></select></label><input type="checkbox" id="v514Notify" checked hidden>`}`):'')+
     `<div class="actions"><button type="button" id="v497CeSave" class="primary">${existing?.__convert?'Convertir en evento':existing?'Guardar cambios':'Crear evento'}</button><button type="button" id="v497CeCancel">Cancelar</button></div>`;
   const $=id=>document.getElementById(id);
   // equipos (solo al crear)
@@ -5137,12 +5137,14 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const now=new Date().toISOString();
       const patch={event_name:title||null,event_time:base.event_time,meet_time:base.meet_time,end_time:base.end_time,location:base.location,cover_url:base.cover_url,rsvp_open_days_before:base.rsvp_open_days_before,rsvp_open_time:base.rsvp_open_time,max_participants:base.max_participants,...(('boat_type' in base)?{boat_type:base.boat_type}:{}),reminder_hours_before:base.reminder_hours_before,default_status:base.default_status,chat_enabled:base.chat_enabled,responses_visibility:base.responses_visibility,invitee_ids:inv&&inv.length?inv:null,updated_at:now};
       const converting=!!existing.__convert;
+      const v750Reset=($('v750After')?.value==='reset');
       const v749Moved=!!date&&!!existing.event_date&&date!==existing.event_date;
       if(v749Moved&&($('v514Scope')?.value||'one')==='following')return alert('Para cambiar de día, aplica el cambio solo a este evento.');
       if(v749Moved)patch.session_date=date;
       if(converting)patch.is_event=true;
       const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
       if(q.error)return fail(/invitee_ids/.test(q.error.message||'')?'Falta ejecutar 35_convocatorias_destinatarios.sql en Supabase.':/event_name/.test(q.error.message||'')?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':missingCols(q.error)?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);
+      if(v750Reset){const rr=await sb.from('session_rsvp').delete().eq('training_session_id',existing.id).select('user_id');if(rr.error)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
       let others=[];
       if(($('v514Scope')?.value||'one')==='following'){
         const wd=new Date(existing.event_date+'T12:00:00').getDay();
@@ -5170,8 +5172,9 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         if((base.meet_time||'')!==(existing.meet_time||''))changes.push(base.meet_time?`encuentro a las ${base.meet_time}`:'sin hora de encuentro');
         if((base.end_time||'')!==(existing.end_time||''))changes.push(base.end_time?`termina a las ${base.end_time}`:'sin hora de fin');
         if((base.location||'')!==(existing.location||''))changes.push(base.location?`lugar: ${base.location}`:'sin lugar');
+        if(v749Moved)changes.unshift(`ahora es el ${v512DetailDateLabel(date,base.event_time||existing.event_time)}`);
         const aud=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
-        try{await sendNotificationV110({audience:aud,title:'✏️ Cambios en '+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.',category:'event_change',type:'training'})}catch(e){}
+        try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
       }
       await syncOrgs({kind:'session',id:existing.id},true);
       container.classList.add('hidden');container.innerHTML='';
@@ -5189,6 +5192,8 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const now=new Date().toISOString();
       const q=await sb.from(table).update({...rowOf(base),...groupFields,[dateCol]:date,...(isComp?{}:{updated_at:now})}).eq('id',existing.id);
       if(q.error)return fail(colErr(q.error));
+      const v750Reset=($('v750After')?.value==='reset');
+      if(v750Reset){const rr=await sb.from('session_rsvp').delete().in(isComp?'competition_id':'club_event_id',[existing.id,...others.map(o=>o.id)]).select('user_id');if(rr.error)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
       if(others.length){
         const q2=await sb.from('club_events').update({...base,...groupFields,updated_at:now}).in('id',others.map(o=>o.id));
         if(q2.error)return fail(colErr(q2.error));
@@ -5207,7 +5212,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         // a los de antes (que siguen invitados): aviso de cambios
         const keepInv=oldInv?(inv?oldInv.filter(id=>inv.includes(id)):oldInv):null;
         const keepTeams=oldTeams.filter(t=>allTeamsSel.includes(t));
-        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:'✏️ Cambios en '+title,body,url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_change',type:'training'})}catch(e){}
+        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+title,body:body+(v750Reset?' Vuelve a confirmar tu asistencia.':''),url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_change',type:'training'})}catch(e){}
         // a los nuevos: invitación
         if(!opensLater){
           let newAud=null;
