@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="750";
+const APP_VERSION="751";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4706,6 +4706,7 @@ function v493WireRsvpSummaryTabs(root,afterChange){
       if(status==='pending'){
         const q=await sb.from('session_rsvp').delete().eq('user_id',uidP).eq('team_code',teamCode).eq(col,eventId);
         if(q.error)throw q.error;
+        try{const tb=kind==='competition'?'competitions':kind==='club_event'?'club_events':'training_sessions';const ds=await sb.from(tb).select('default_status').eq('id',eventId).maybeSingle();if(ds&&ds.data&&ds.data.default_status==='in')alert('Esta persona sigue contando como "Asistiré" porque el evento tiene la respuesta predeterminada "Asistiré". Para que quede sin decidir, cambia ese ajuste a "Sin respuesta" en Editar evento > Más ajustes.')}catch(_){}
         v598Promote(kind,eventId,teamCode);
       }else{
         const payload={user_id:uidP,team_code:teamCode,status,responded_at:new Date().toISOString(),training_session_id:kind==='session'?eventId:null,competition_id:kind==='competition'?eventId:null,club_event_id:kind==='club_event'?eventId:null};
@@ -5141,6 +5142,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const v749Moved=!!date&&!!existing.event_date&&date!==existing.event_date;
       if(v749Moved&&($('v514Scope')?.value||'one')==='following')return alert('Para cambiar de día, aplica el cambio solo a este evento.');
       if(v749Moved)patch.session_date=date;
+      if(v750Reset)patch.default_status=null;
       if(converting)patch.is_event=true;
       const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
       if(q.error)return fail(/invitee_ids/.test(q.error.message||'')?'Falta ejecutar 35_convocatorias_destinatarios.sql en Supabase.':/event_name/.test(q.error.message||'')?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':missingCols(q.error)?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);
@@ -5190,6 +5192,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         others=r.error?[]:(r.data||[]);
       }
       const now=new Date().toISOString();
+      if($('v750After')?.value==='reset')base.default_status=null;
       const q=await sb.from(table).update({...rowOf(base),...groupFields,[dateCol]:date,...(isComp?{}:{updated_at:now})}).eq('id',existing.id);
       if(q.error)return fail(colErr(q.error));
       const v750Reset=($('v750After')?.value==='reset');
@@ -11385,7 +11388,7 @@ function sessionEditor(x=null){
  <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Convertir en evento</b><br>Aparece en Eventos: las remeras confirman si van o no y hay un chat propio de ese día.</span></label>
  <div id="sessEventOpts" class="v517EventOpts" style="display:none">
   <div class="v514Sec"><label>Nombre del evento<input id="seName" value="${esc(x?.event_name||'')}" placeholder="${esc(v524DefaultEventName(x?.session_type||'MAR'))}"></label><p class="muted"><small>Es lo que ven las remeras en Eventos. En blanco = "${esc(v524DefaultEventName(x?.session_type||'MAR'))}". El título del entrenamiento no se muestra.</small></p></div>
-  <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid"><label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}" placeholder="Dirección o enlace de Google Maps"></label></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid">${x?`<label>Día<input id="seDate" type="date" value="${esc(x.session_date||'')}"></label>`:''}<label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}" placeholder="Dirección o enlace de Google Maps"></label></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
   <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No periódico (solo este día)</option><option value="yes" id="seRepeatYesOpt">Periódico</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted" id="seRepeatSummary"></p></div></div>
@@ -11393,6 +11396,7 @@ function sessionEditor(x=null){
  </div>
  <label id="saveMarLibraryWrap" class="inlineCheck"><input id="saveMarLibrary" type="checkbox"> Guardar también esta sesión MAR completa en la biblioteca</label>
  <label class="notifyToggleV110"><input id="notifyRowerChangeV110" type="checkbox"><span><b>Enviar notificación a los remeros</b><br>Márcalo solo si quieres avisar de este alta o cambio. Los retoques internos pueden guardarse sin avisar.</span></label>
+ ${x?.is_event?`<label>Qué hacer con los que ya respondieron<select id="v750After2" onchange="document.getElementById('notifyRowerChangeV110').checked=this.value!=='none'"><option value="none" selected>Solo cambiar (sin avisar)</option><option value="notify">Avisar del cambio (mantienen su respuesta)</option><option value="reset">Pedir que respondan de nuevo (se borran las respuestas y se avisa)</option></select></label>`:''}
  <div id="typeAdvice"></div>
  <button id="saveSess" class="primary">Guardar entrenamiento</button> <button id="cancelSess">Cancelar</button></div>`;
  sessType.value=x?.session_type||'MAR';
@@ -11522,14 +11526,14 @@ function sessionEditor(x=null){
    let eventFields={};
    if(isEventNow){
      const g=id=>document.getElementById(id)?.value||'';
-     const maxP=g('seMax')?Number(g('seMax')):null,defS=g('seDef')||null;
+     const maxP=g('seMax')?Number(g('seMax')):null,defS=(x?.is_event&&g('v750After2')==='reset')?null:(g('seDef')||null);
      const boatV=g('v673Boat')||null;const minPatch=(boatV!=null||x?.boat_type!=null)?{boat_type:boatV}:{};
      if(maxP&&defS==='in'){alert('El límite de participantes no se puede combinar con "Asistiré" por defecto: elige uno de los dos.');return}
      if(Number(g('seMeet'))&&!g('seTime')){alert('Para poner hora de encuentro, indica primero la hora de comienzo.');return}
      if(seCoverFile){try{seCoverUrl=await v514UploadEventCover(seCoverFile)}catch(e){alert('No se pudo subir la imagen (¿falta ejecutar 29_eventos_opciones.sql?): '+(e.message||e));return}}
      eventFields={event_name:g('seName').trim()||null,event_time:g('seTime')||null,meet_time:(Number(g('seMeet'))&&g('seTime'))?v514ShiftTime(g('seTime'),-Number(g('seMeet'))):null,end_time:g('seEnd')||null,location:g('seLoc').trim()||null,max_participants:maxP,...minPatch,cover_url:seCoverUrl,reminder_hours_before:g('seRem')?Number(g('seRem')):null,default_status:defS,chat_enabled:g('seChat')!=='0',responses_visibility:g('seVis')||'all'};
    }
-   const payload={team_code:team,session_date:date,session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,...eventFields,...((x?.is_event&&!isEventNow&&!['MAR','GYM'].includes(sessType.value)&&!audienceSelV249.size)?{is_event:true,response_deadline:x.response_deadline??null,rsvp_open_days_before:x.rsvp_open_days_before??null,rsvp_open_time:x.rsvp_open_time??null}:{}),updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
+   const payload={team_code:team,session_date:((x&&document.getElementById('seDate')?.value)||date),session_type:sessType.value,title:sessTitle.value.trim()||sessType.value,content:contentValue,is_event:isEventNow,response_deadline:isEventNow?(document.getElementById('sessResponseDeadline')?.value||null):null,rsvp_open_days_before:isEventNow&&openDaysVal?Number(openDaysVal):null,rsvp_open_time:isEventNow?(openTimeVal||null):null,...eventFields,...((x?.is_event&&!isEventNow&&!['MAR','GYM'].includes(sessType.value)&&!audienceSelV249.size)?{is_event:true,response_deadline:x.response_deadline??null,rsvp_open_days_before:x.rsvp_open_days_before??null,rsvp_open_time:x.rsvp_open_time??null}:{}),updated_at:new Date().toISOString(),...(!x?{created_by:currentUser.id}:{})};
    const targetsV249=['GYM','ERG'].includes(sessType.value)?[...audienceSelV249]:[];
    if(targetsV249.length||sessionTargetsV249(x).length)payload.target_user_ids=targetsV249.length?targetsV249:null;
    const isNewEventNow=isEventNow&&!x?.is_event;
@@ -11542,6 +11546,7 @@ function sessionEditor(x=null){
    }
    if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?(/event_name/.test(q.error.message)?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.'):q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
+    if(x&&x.is_event&&document.getElementById('v750After2')?.value==='reset'){const rr=await sb.from('session_rsvp').delete().eq('training_session_id',x.id).select('user_id');if(rr.error)alert('Se guardó el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
    // V536 · vínculo con evento
    try{
      const sel=document.getElementById('v536LinkSel');
@@ -11585,7 +11590,7 @@ function sessionEditor(x=null){
      try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${eventFields.event_name||v524DefaultEventName(sessType.value)}" (${shortDateES(date)}) en Row Training.`,url:savedSessionId?v530EventUrl('session',savedSessionId,team):'/?tab=eventos',category:'event_new',type:'training'})}catch(e){}
    }
    if(sessType.value==='MAR'&&saveMarLibrary.checked){const nm=(sessTitle.value.trim()||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,'');const lq=await upsertTrainingLibraryItem('MAR',null,marStoredName('session',nm),contentValue);if(lq.error)alert('La sesión se guardó en planificación, pero no en la biblioteca: '+lq.error.message)}
-   if(document.getElementById('notifyRowerChangeV110')?.checked){const action=x?'Entrenamiento actualizado':'Nuevo entrenamiento';const bodyV249=`${shortDateES(date)} · ${sessTitle.value.trim()||sessType.value}`;if(targetsV249.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:targetsV249,team_codes:[team]},title:action,body:bodyV249,url:'/',type:'training'})}catch(e){alert('El cambio se ha guardado, pero no se pudo enviar la notificación.\n\nDetalle: '+(e?.message||e))}}else await notifyTeamChangeV110(team,action,bodyV249,'/');}
+   if(document.getElementById('notifyRowerChangeV110')?.checked){const v750R=x&&x.is_event&&document.getElementById('v750After2')?.value==='reset';const action=v750R?'🔁 Confirma de nuevo':x?'Entrenamiento actualizado':'Nuevo entrenamiento';const bodyV249=`${shortDateES(payload.session_date||date)} · ${sessTitle.value.trim()||sessType.value}`;if(targetsV249.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:targetsV249,team_codes:[team]},title:action,body:bodyV249,url:'/',type:'training'})}catch(e){alert('El cambio se ha guardado, pero no se pudo enviar la notificación.\n\nDetalle: '+(e?.message||e))}}else await notifyTeamChangeV110(team,action,bodyV249,'/');}
    renderPlanDay();
  };
 }
