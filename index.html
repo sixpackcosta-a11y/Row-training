@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="754";
+const APP_VERSION="755";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3859,6 +3859,14 @@ function v537ReadState(){try{const st=JSON.parse(localStorage.getItem(V537_STATE
 setInterval(()=>{if(document.visibilityState==='visible')v537SaveState()},5000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')v537SaveState()});
 window.addEventListener('pagehide',()=>v537SaveState());
+// V754 · al editar un evento y avisar del cambio, "Visto" se pone a cero para saber quién ha visto la versión nueva
+async function v754Unsee(kind,ids){
+  try{
+    const r=await sb.from('event_views').delete().eq('kind',kind).in('event_id',ids.map(Number)).select('user_id');
+    if(r.error&&!window._v754W){window._v754W=true;alert('No se pudo poner "Visto" a cero: '+r.error.message+'. Ejecuta en Supabase el archivo 80_visto_al_editar.sql')}
+    else if(!r.error){const c=await sb.from('event_views').select('user_id',{count:'exact',head:true}).eq('kind',kind).in('event_id',ids.map(Number));if((c.count||0)>0&&!window._v754W){window._v754W=true;alert('No se pudo poner "Visto" a cero. Ejecuta en Supabase el archivo 80_visto_al_editar.sql')}}
+  }catch(e){}
+}
 // V753 · borrar respuestas y comprobar que de verdad se han borrado (si la base lo impide no da error, solo no borra)
 async function v753DelRsvp(col,ids,userId){
   try{
@@ -5197,6 +5205,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         const aud=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
         try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
       }
+      if(($('v750After')?.value||'')==='notify'||($('v750After')?.value||'')==='reset')await v754Unsee('session',[existing.id,...others.map(o=>o.id)]);
       await syncOrgs({kind:'session',id:existing.id},true);
       container.classList.add('hidden');container.innerHTML='';
       afterSave();return;
@@ -5215,6 +5224,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const q=await sb.from(table).update({...rowOf(base),...groupFields,[dateCol]:date,...(isComp?{}:{updated_at:now})}).eq('id',existing.id);
       if(q.error)return fail(colErr(q.error));
       const v750Reset=($('v750After')?.value==='reset');
+      if(['notify','reset'].includes($('v750After')?.value||''))await v754Unsee(isComp?'competition':'club_event',[existing.id]);
       if(v750Reset){const rr=await v753DelRsvp(isComp?'competition_id':'club_event_id',[existing.id,...others.map(o=>o.id)]);if(!rr.ok)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.msg)}
       if(others.length){
         const q2=await sb.from('club_events').update({...base,...groupFields,updated_at:now}).in('id',others.map(o=>o.id));
@@ -11565,6 +11575,7 @@ function sessionEditor(x=null){
    }
    if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?(/event_name/.test(q.error.message)?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.'):q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
+    if(x&&x.is_event&&['notify','reset'].includes(document.getElementById('v750After2')?.value||''))await v754Unsee('session',[x.id]);
     if(x&&x.is_event&&document.getElementById('v750After2')?.value==='reset'){const rr=await v753DelRsvp('training_session_id',[x.id]);if(!rr.ok)alert('Se guardó el evento, pero no se pudieron borrar las respuestas: '+rr.msg)}
    // V536 · vínculo con evento
    try{
