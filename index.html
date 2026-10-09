@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="752";
+const APP_VERSION="753";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3857,6 +3857,17 @@ function v537ReadState(){try{const st=JSON.parse(localStorage.getItem(V537_STATE
 setInterval(()=>{if(document.visibilityState==='visible')v537SaveState()},5000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')v537SaveState()});
 window.addEventListener('pagehide',()=>v537SaveState());
+// V753 · borrar respuestas y comprobar que de verdad se han borrado (si la base lo impide no da error, solo no borra)
+async function v753DelRsvp(col,ids,userId){
+  try{
+    let q=sb.from('session_rsvp').delete().in(col,ids);if(userId)q=q.eq('user_id',userId);
+    const d=await q.select('user_id');if(d.error)return {ok:false,msg:d.error.message};
+    let c=sb.from('session_rsvp').select('user_id',{count:'exact',head:true}).in(col,ids);if(userId)c=c.eq('user_id',userId);
+    const r=await c;
+    if((r.count||0)>0)return {ok:false,msg:'la base de datos no deja a los entrenadores borrar respuestas de otras personas. Ejecuta en Supabase el archivo 79_borrar_respuestas.sql'};
+    return {ok:true};
+  }catch(e){return {ok:false,msg:e.message||String(e)}}
+}
 function draw(){
   v537SaveState();
   const menuBtn=document.getElementById('navMenuBtnV300');
@@ -4704,8 +4715,8 @@ function v493WireRsvpSummaryTabs(root,afterChange){
     const col=kind==='competition'?'competition_id':kind==='club_event'?'club_event_id':'training_session_id';
     try{
       if(status==='pending'){
-        const q=await sb.from('session_rsvp').delete().eq('user_id',uidP).eq('team_code',teamCode).eq(col,eventId);
-        if(q.error)throw q.error;
+        const q=await v753DelRsvp(col,[eventId],uidP);
+        if(!q.ok)throw new Error(q.msg);
         {const tb=kind==='competition'?'competitions':kind==='club_event'?'club_events':'training_sessions';const ds=await sb.from(tb).select('default_status').eq('id',eventId).maybeSingle();if(ds&&ds.data&&ds.data.default_status==='in'){
           // V752 · el evento cuenta como "Asistiré" a quien no responde: se guardan como "va" los demás que ahora cuentan como que van y se quita ese ajuste, para que esta persona quede de verdad sin decidir
           const others=[...root.querySelectorAll('.v505PersonStatus')].filter(o=>o!==sel&&o.dataset.uid!==uidP&&String(o.dataset.event)===String(eventId)&&(o.dataset.kind||'session')===kind&&o.value==='in').map(o=>o.dataset.uid);
@@ -4990,7 +5001,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   container.innerHTML=
     sec('',isSess?`<label>Nombre del evento<input id="v497CeTitle" value="${esc(x.event_name||'')}" placeholder="${esc(v524DefaultEventName(x.session_type))}"></label><p class="muted"><small>Editas el evento, no el entrenamiento (${esc(x.title||'')}). Para cambiar el contenido del entrenamiento, usa "Editar entrenamiento".</small></p><textarea id="v497CeNotes" class="hidden"></textarea>`:`<label>Título del evento<input id="v497CeTitle" value="${esc(x.title||x.name||'')}" placeholder="Ej. Reunión de equipo"></label><label>Descripción (opcional)<textarea id="v497CeNotes" rows="2">${esc(x.notes||'')}</textarea></label>`)+
     sec('Imagen de portada',`<div class="v514CoverBox"><div id="v514CoverPrev">${coverUrl?`<img src="${esc(coverUrl)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="v514CoverInput">${coverUrl?'Cambiar':'Añadir'}</label><input type="file" id="v514CoverInput" accept="image/*" class="hidden"><button type="button" id="v514CoverRemove" class="${coverUrl?'':'hidden'}">Quitar</button></div>`)+
-    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}" placeholder="Dirección o enlace de Google Maps"></label>`)+
+    sec('Cuándo y dónde',`<div class="plannerGrid"><label>Fecha<input id="v497CeDate" type="date" onchange="var a=document.getElementById('v750After');if(a){a.value='reset';document.getElementById('v514Notify').checked=true}" value="${x.event_date||localISODate()}"></label><label>Comienza (opcional)<input id="v497CeTime" type="time" value="${esc(x.event_time||'')}"></label><label>Encuentro<select id="v514MeetBefore">${v514MeetOptionsHtml(v514MinutesBetween(x.meet_time,x.event_time))}</select></label><label>Termina<input id="v514End" type="time" value="${esc(x.end_time||'')}"></label></div><label>Lugar (opcional)<input id="v497CeLocation" value="${esc(x.location||'')}" placeholder="Dirección o enlace de Google Maps"></label>`)+
     (isSess?'':sec('Entrenamiento',`<div id="v567TrList" class="v567TrList"></div><div class="v567Btns"><button type="button" data-m="plan">📅 De la planificación</button><button type="button" data-m="lib">📚 De la biblioteca</button><button type="button" data-m="new">✏️ Nuevo</button></div><div id="v567TrBox" class="v567TrBox hidden"></div>`))+
     sec('Para quién',`${allTeams.length>1&&!isSess?`<div class="v514Label">Grupos <small class="muted">(un solo evento para todos los que marques)</small></div><div id="v514Teams" class="v513Chips"></div>`:`<p class="muted v514OneTeam">${esc(teamLabel(lockTeam||team))}</p>`}<div class="v514Label">Destinatarios</div><div class="v514Seg"><button type="button" data-mode="all" class="v514SegBtn">Todo el equipo</button><button type="button" data-mode="some" class="v514SegBtn">Elegir personas</button></div><div id="v514People" class="hidden"></div>`)+
     sec('Organizadores',`<div id="v518Orgs" class="v518Orgs"></div><div class="v518OrgAdd"><select id="v518OrgSel"><option value="">— Añadir organizador —</option></select><button type="button" id="v518OrgAddBtn">Añadir</button></div><p class="muted"><small>${existing?'':'Tú ya eres organizador. '}A quien añadas le llegará un aviso para que confirme si va.</small></p>`)+
@@ -5152,7 +5163,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       if(converting)patch.is_event=true;
       const q=await sb.from('training_sessions').update({...patch,response_deadline:base.response_deadline}).eq('id',existing.id);
       if(q.error)return fail(/invitee_ids/.test(q.error.message||'')?'Falta ejecutar 35_convocatorias_destinatarios.sql en Supabase.':/event_name/.test(q.error.message||'')?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':missingCols(q.error)?'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.':q.error.message);
-      if(v750Reset){const rr=await sb.from('session_rsvp').delete().eq('training_session_id',existing.id).select('user_id');if(rr.error)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
+      if(v750Reset){const rr=await v753DelRsvp('training_session_id',[existing.id]);if(!rr.ok)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.msg)}
       let others=[];
       if(($('v514Scope')?.value||'one')==='following'){
         const wd=new Date(existing.event_date+'T12:00:00').getDay();
@@ -5202,7 +5213,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const q=await sb.from(table).update({...rowOf(base),...groupFields,[dateCol]:date,...(isComp?{}:{updated_at:now})}).eq('id',existing.id);
       if(q.error)return fail(colErr(q.error));
       const v750Reset=($('v750After')?.value==='reset');
-      if(v750Reset){const rr=await sb.from('session_rsvp').delete().in(isComp?'competition_id':'club_event_id',[existing.id,...others.map(o=>o.id)]).select('user_id');if(rr.error)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
+      if(v750Reset){const rr=await v753DelRsvp(isComp?'competition_id':'club_event_id',[existing.id,...others.map(o=>o.id)]);if(!rr.ok)alert('Se ha guardado el evento, pero no se pudieron borrar las respuestas: '+rr.msg)}
       if(others.length){
         const q2=await sb.from('club_events').update({...base,...groupFields,updated_at:now}).in('id',others.map(o=>o.id));
         if(q2.error)return fail(colErr(q2.error));
@@ -11394,7 +11405,7 @@ function sessionEditor(x=null){
  <label id="sessIsEventWrap" class="inlineCheck"><input id="sessIsEvent" type="checkbox" ${x?.is_event?'checked':''}> <span><b>Convertir en evento</b><br>Aparece en Eventos: las remeras confirman si van o no y hay un chat propio de ese día.</span></label>
  <div id="sessEventOpts" class="v517EventOpts" style="display:none">
   <div class="v514Sec"><label>Nombre del evento<input id="seName" value="${esc(x?.event_name||'')}" placeholder="${esc(v524DefaultEventName(x?.session_type||'MAR'))}"></label><p class="muted"><small>Es lo que ven las remeras en Eventos. En blanco = "${esc(v524DefaultEventName(x?.session_type||'MAR'))}". El título del entrenamiento no se muestra.</small></p></div>
-  <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid">${x?`<label>Día<input id="seDate" type="date" value="${esc(x.session_date||'')}"></label>`:''}<label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}" placeholder="Dirección o enlace de Google Maps"></label></div></div>
+  <div class="v514Sec"><div class="v514SecTitle">Cuándo y dónde</div><div class="plannerGrid">${x?`<label>Día<input id="seDate" type="date" onchange="var a=document.getElementById('v750After2');if(a){a.value='reset';document.getElementById('notifyRowerChangeV110').checked=true}" value="${esc(x.session_date||'')}"></label>`:''}<label>Comienza<input id="seTime" type="time" value="${esc(x?.event_time||'')}"></label><label>Encuentro<select id="seMeet">${v514MeetOptionsHtml(v514MinutesBetween(x?.meet_time,x?.event_time))}</select></label><label>Termina<input id="seEnd" type="time" value="${esc(x?.end_time||'')}"></label><label>Lugar (opcional)<input id="seLoc" value="${esc(x?.location||'')}" placeholder="Dirección o enlace de Google Maps"></label></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Imagen de portada</div><div class="v514CoverBox"><div id="seCoverPrev">${x?.cover_url?`<img src="${esc(x.cover_url)}" alt="">`:'<span class="muted">Sin imagen</span>'}</div><label class="btn" for="seCoverInput">${x?.cover_url?'Cambiar':'Añadir'}</label><input type="file" id="seCoverInput" accept="image/*" class="hidden"><button type="button" id="seCoverRemove" class="${x?.cover_url?'':'hidden'}">Quitar</button></div></div>
   <div class="v514Sec"><div class="v514SecTitle">Enviar invitación</div><div id="sessOpensWrap" class="plannerGrid"><label>Días antes (opcional)<input id="sessOpenDays" type="number" min="0" value="${x?.rsvp_open_days_before??''}"></label><label>A las (opcional)<input id="sessOpenTime" type="time" value="${x?.rsvp_open_time||''}"></label></div><p class="muted"><small>En blanco = se envía al guardar.</small></p></div>
   <div class="v514Sec"><div class="v514SecTitle">Periódico</div><label>Repetir<select id="seRepeat"><option value="">No periódico (solo este día)</option><option value="yes" id="seRepeatYesOpt">Periódico</option></select></label><div id="seRepeatBox" style="display:none"><div class="v514Label">Días de la semana (sesiones del mismo tipo de este equipo)</div><div id="seDays" class="v513Chips"></div><label>Hasta (inclusive)<input id="seUntil" type="date" value="2027-05-31"></label><p class="muted" id="seRepeatSummary"></p></div></div>
@@ -11552,7 +11563,7 @@ function sessionEditor(x=null){
    }
    if(q.error){alert(/column .* does not exist|schema cache/i.test(q.error.message||'')&&isEventNow?(/event_name/.test(q.error.message)?'Falta ejecutar 34_nombre_evento_sesion.sql en Supabase.':'Falta ejecutar 31_convocatorias_opciones.sql en Supabase.'):q.error.message);return}
    const savedSessionId=x?.id||q.data?.id;
-    if(x&&x.is_event&&document.getElementById('v750After2')?.value==='reset'){const rr=await sb.from('session_rsvp').delete().eq('training_session_id',x.id).select('user_id');if(rr.error)alert('Se guardó el evento, pero no se pudieron borrar las respuestas: '+rr.error.message)}
+    if(x&&x.is_event&&document.getElementById('v750After2')?.value==='reset'){const rr=await v753DelRsvp('training_session_id',[x.id]);if(!rr.ok)alert('Se guardó el evento, pero no se pudieron borrar las respuestas: '+rr.msg)}
    // V536 · vínculo con evento
    try{
      const sel=document.getElementById('v536LinkSel');
