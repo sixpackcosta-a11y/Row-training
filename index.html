@@ -1177,6 +1177,29 @@ html[data-theme="dark"] #content .v225PendingItem{background:#3a1f22!important;b
 .v766Dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#8b95a7;font-style:normal}.v766Dot.ok{background:#1f9d63}.v766Dot.pe{background:#e08a1e}.v766Dot.re{background:#d64545}.v766Dot.ad{background:#8b95a7}
 #content .v766List>.v503EventRow{background:transparent!important;border-radius:0!important;border-top:1px solid var(--border)!important;border-right:0!important;border-bottom:0!important;margin:-1px 0 0!important;box-shadow:none!important;width:100%}
 #content .v225PendingItem details,#content .v225PendingItem .staffActions{margin-top:10px}
+/* V767 · normalización global (todas las pantallas): mismas tarjetas, etiquetas, títulos y botones. Cabecera y menú inferior no se tocan. */
+#content .card{border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
+#content .card .card:not(:has(input,select,textarea,textarea)){background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;padding:12px 0!important;margin:0!important}
+#content .tag{display:inline-flex;align-items:center;font-size:.75rem;font-weight:700;line-height:1.3;padding:3px 10px;border-radius:999px}
+#content h2{font-size:1.15rem;font-weight:800;line-height:1.25}
+#content h3{font-size:1rem;font-weight:700;line-height:1.3}
+#content .staffActions{display:flex;flex-wrap:wrap;gap:8px}
+#content .staffActions button{border:0!important;border-radius:10px!important;padding:10px 12px!important;font-size:.85rem!important;font-weight:700!important;box-shadow:none!important}
+#content input:not([type=checkbox]):not([type=radio]):not([type=range]),#content select,#content textarea{border-radius:10px!important}
+#content .info{border-radius:12px!important}
+/* V768 · contenido de entrenamientos (Hoy, Semana, Pendientes, Eventos) como lista plana + formularios del perfil con el mismo borde */
+#content .workoutReadable{display:block!important;border:1px solid var(--border)!important;border-radius:14px!important;overflow:hidden;background:var(--surface)!important;margin:8px 0!important;padding:0!important}
+#content .workoutReadable>.workoutRow,#content .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;margin:-1px 0 0!important}
+#content .workoutReadable>.workoutRow:first-child,#content .workoutReadable>.athGymPreviewExerciseV119:first-child{border-top:0!important;margin-top:0!important}
+#content .workoutRow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;padding:10px 12px!important;background:transparent!important;border:0!important;border-radius:0!important}
+#content .athGymPreviewExerciseV119{padding:0!important}
+#content .athGymPreviewExerciseV119>.workoutRow{padding:10px 12px!important}
+#content .workoutLabel{font-size:.72rem!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)!important}
+#content .workoutValue{font-size:.95rem!important;font-weight:600!important;line-height:1.4;color:var(--text)!important}
+html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important}
+html[data-theme="dark"] #content .workoutReadable{background:var(--surface)!important}
+#content .staffDayCard h3{font-size:1.05rem!important;font-weight:800!important;margin:6px 0 4px!important}
+#content .card .card:has(input,select,textarea){background:transparent!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3012,7 +3035,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="766";
+const APP_VERSION="768";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
