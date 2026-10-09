@@ -2998,7 +2998,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="759";
+const APP_VERSION="760";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10656,12 +10656,17 @@ async function profileView(){
     const [sessRes,c2Res,workRes]=await Promise.all([
       sb.from('training_sessions').select('id,title').ilike('title','%test%'),
       sb.from('concept2_results').select('*').eq('user_id',currentUser.id),
-      sb.from('workout_logs').select('id,training_session_id,session_date,user_id').eq('user_id',currentUser.id)
+      sb.from('workout_logs').select('id,training_session_id,session_date,user_id,session_code').eq('user_id',currentUser.id)
     ]);
     const workoutIds=(workRes.data||[]).map(w=>w.id);
     const ergoRes=workoutIds.length?await sb.from('ergo_results').select('*').in('workout_id',workoutIds):{data:[]};
     if(tab!=="perfil")return;
-    v271TestPower=v309FindLatestTestPower(currentUser.id,sessRes.data||[],c2Res.data||[],ergoRes.data||[],workRes.data||[]);
+    // V760 · si el remero no puede leer la sesión "TEST" (RLS/equipo), la reconocemos por el código guardado en sus propios resultados.
+    const v760Sess=[...(sessRes.data||[])];const v760Seen=new Set(v760Sess.map(x=>String(x.id)));
+    (c2Res.data||[]).forEach(r=>{if(r.training_session_id&&!v760Seen.has(String(r.training_session_id))&&/test/i.test(String(r.matched_session_code||''))){v760Seen.add(String(r.training_session_id));v760Sess.push({id:r.training_session_id,title:r.matched_session_code})}});
+    (workRes.data||[]).forEach(w=>{if(w.training_session_id&&!v760Seen.has(String(w.training_session_id))&&/test/i.test(String(w.session_code||''))){v760Seen.add(String(w.training_session_id));v760Sess.push({id:w.training_session_id,title:w.session_code})}});
+    v271TestPower=v309FindLatestTestPower(currentUser.id,v760Sess,c2Res.data||[],ergoRes.data||[],workRes.data||[]);
+    if(!v271TestPower)console.warn('V760 sin test',{sesiones:(sessRes.data||[]).length,c2:(c2Res.data||[]).length,workouts:(workRes.data||[]).length,err:[sessRes.error,c2Res.error,workRes.error]});
     const testWatts=v271TestPower?v309WattsFromPace500(v271TestPower.pace):null;
     v271TestWkg=(testWatts&&m.weight_kg)?(testWatts/m.weight_kg):null;
   }catch(e){console.warn('No se pudo calcular W/kg del test',e)}
