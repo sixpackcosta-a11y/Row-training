@@ -2969,7 +2969,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="741";
+const APP_VERSION="742";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3866,6 +3866,14 @@ function v740Head(){
   try{
     const g=v330GroupForTab(tab);
     document.body.setAttribute('data-v740g',g||'');
+    if(currentUser&&!window._v740ProfTried&&!(currentUserProfile&&(currentUserProfile.full_name||currentUserProfile.avatar_url))){
+      window._v740ProfTried=true;
+      sb.from('profiles').select('user_id,full_name,avatar_url').eq('user_id',currentUser.id).maybeSingle().then(r=>{
+        if(r&&r.data){currentUserProfile=Object.assign({},currentUserProfile||{},r.data);v740Head()}
+      }).catch(()=>{});
+    }
+    const roleEl=document.getElementById('role');
+    if(roleEl&&currentUserProfile&&currentUserProfile.full_name&&roleEl.textContent!==currentUserProfile.full_name)roleEl.textContent=currentUserProfile.full_name;
     const ph=document.getElementById('v740Photo');
     if(ph){
       const show=!!currentUser&&((currentMode==='athlete'&&!!currentTeamCode)||currentMode==='staff');
