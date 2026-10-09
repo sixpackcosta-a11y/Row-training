@@ -9525,9 +9525,11 @@ async function v300RefreshUnreadMsgCount(){
     }else v300UnreadMsgCount=0;
     // V620 · si ya no queda ningún mensaje sin leer pero sigue habiendo avisos de chat sin leer
     // (p. ej. de un mensaje leído desde otro dispositivo), se dan por leídos para que no quede el globo rojo.
-    if(!v300UnreadMsgCount&&v334UnreadNotifCount&&Date.now()-(window._v620Clr||0)>60000){window._v620Clr=Date.now();v592ClearChatNotifs(null,['chat_message','chat_reaction'])}
+    if(!v300UnreadMsgCount&&(appNotificationsV104||[]).some(x=>!x.is_read&&V740_CHAT.includes(x.type))&&Date.now()-(window._v620Clr||0)>60000){window._v620Clr=Date.now();v592ClearChatNotifs(null,['chat_message','chat_reaction'])}
     v300UnreadMsgCount+=await v617TeamUnreadTotal();
     if(!v300UnreadMsgCount)v621ClearOs('all');
+    if(typeof v740Head==='function')v740Head(); // V741 · actualiza el globo de Mensajes y el del icono
+    try{const b=document.querySelector('#nav .v330NavBtn[data-group="mensajes"]');if(b&&typeof v330RenderBottomNav==='function')v330RenderBottomNav()}catch(e){}
   }catch(e){}
 }
 async function v300CheckNewChatMessages(){
