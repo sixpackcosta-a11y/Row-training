@@ -2998,7 +2998,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="764";
+const APP_VERSION="765";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5102,7 +5102,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   const v567Type=t=>(V536_TYPE_LABEL[String(t||'').toUpperCase()]||t||'');
   const v567Paint=()=>{const l=$('v567TrList');if(!l)return;l.innerHTML=v567Items.length?v567Items.map((it,i)=>`<div class="v567Item"><span><b>${esc(v567Type(it.stype))}</b> · ${esc(it.title||'Sin título')}<small class="muted"> · ${it.kind==='existing'?esc(it.dateLabel||'de la planificación'):it.kind==='lib'?'de la biblioteca (se crea el día del evento)':'nuevo (se crea el día del evento)'}</small></span><button type="button" class="v567Rm" data-i="${i}" aria-label="Quitar">✕</button></div>`).join(''):'<p class="muted"><small>Sin entrenamiento asociado.</small></p>';l.querySelectorAll('.v567Rm').forEach(b=>b.onclick=()=>{v567Items.splice(Number(b.dataset.i),1);v567Paint()})};
   if(v567HadLinks&&existing){
-    (async()=>{try{const r=await sb.from('training_sessions').select('id,session_type,title,session_date').in('id',x.session_ids.map(Number));(r.data||[]).forEach(s0=>v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,dateLabel:v512DetailDateLabel(s0.session_date)}));v567Paint()}catch(e){}})();
+    (async()=>{try{const r=await sb.from('training_sessions').select('id,session_type,title,session_date').in('id',x.session_ids.map(Number));(r.data||[]).forEach(s0=>v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,date:String(s0.session_date||'').slice(0,10),dateLabel:v512DetailDateLabel(s0.session_date)}));v567Paint()}catch(e){}})();
   }
   v567Paint();
   container.querySelectorAll('.v567Btns button').forEach(btn=>btn.onclick=async()=>{
@@ -5116,7 +5116,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const load=async()=>{const lst=$('v567PList');lst.innerHTML='<p class="muted"><small>Buscando…</small></p>';const r=await sb.from('training_sessions').select('id,team_code,session_type,title,session_date,target_user_ids').eq('team_code',$('v567PTeam').value).eq('session_date',$('v567PDate').value).order('session_type');
         const opts=(r.data||[]).filter(s0=>!sessionTargetsV249(s0).length&&String(s0.session_type).toUpperCase()!=='DESC'&&!v567Items.some(it=>it.kind==='existing'&&it.id===Number(s0.id)));
         lst.innerHTML=opts.length?opts.map(s0=>`<div class="v567Opt"><span>${esc(v567Type(s0.session_type))} · ${esc(s0.title||'')}</span><button type="button" class="primary" data-id="${s0.id}">Añadir</button></div>`).join(''):'<p class="muted"><small>No hay entrenamientos planificados ese día para ese equipo.</small></p>';
-        lst.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const s0=opts.find(o=>String(o.id)===b.dataset.id);v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,dateLabel:v512DetailDateLabel(s0.session_date)});v567Paint();box.classList.add('hidden')});};
+        lst.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const s0=opts.find(o=>String(o.id)===b.dataset.id);v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,date:String(s0.session_date||'').slice(0,10),dateLabel:v512DetailDateLabel(s0.session_date)});v567Paint();box.classList.add('hidden')});};
       $('v567PTeam').onchange=load;$('v567PDate').onchange=load;load();
     }else if(btn.dataset.m==='lib'){
       box.innerHTML=`<div class="plannerGrid"><label>Tipo<select id="v567LKind"><option value="MAR">🚣 MAR</option><option value="GYM">🏋️ GYM</option><option value="MIX">🚣‍♀️ ERGO / MIX</option></select></label><label>Buscar<input id="v567LQ" placeholder="Nombre…"></label></div><div id="v567LList"></div>`;
@@ -5277,6 +5277,15 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
             if(newIds.length)newAud=audienceFor(newIds,allTeamsSel);
           }else if(newTeams.length)newAud=audienceFor(null,newTeams);
           if(newAud){try{await sendNotificationV110({audience:newAud,title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,base.event_time)}) en Row Training.`,url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_new',type:'training'})}catch(e){}}
+        }
+      }
+      // V764 · al cambiar de día un evento, ofrecer mover también sus entrenamientos vinculados (los que estaban en el día antiguo).
+      if(date!==existing[dateCol]&&!others.length){
+        const v764Mv=v567Items.filter(it=>it.kind==='existing'&&it.date&&it.date===String(existing[dateCol]||'').slice(0,10));
+        if(v764Mv.length&&confirm(`Has cambiado el día del evento.\n\n¿Mover también al ${shortDateES(date)} ${v764Mv.length===1?'el entrenamiento vinculado':'los '+v764Mv.length+' entrenamientos vinculados'}?\n${v764Mv.map(it=>'· '+(it.title||'Sin título')).join('\n')}\n\nAceptar = moverlos · Cancelar = dejarlos donde están`)){
+          const mq=await sb.from('training_sessions').update({session_date:date,updated_at:new Date().toISOString()}).in('id',v764Mv.map(it=>it.id)).select('id');
+          if(mq.error||(mq.data||[]).length!==v764Mv.length)alert('El evento se ha movido, pero no se pudieron mover todos los entrenamientos vinculados: muévelos en Planificación.');
+          else v764Mv.forEach(it=>{it.date=date});
         }
       }
       await syncOrgs({kind:isComp?'competition':'club_event',id:existing.id},true);
