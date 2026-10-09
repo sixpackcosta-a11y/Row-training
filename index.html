@@ -1147,6 +1147,22 @@ html[data-theme="dark"] #content .v147SelfHistory{background:#222d42!important;b
 /* V746 · sin aro blanco de foco al tocar o cambiar de pantalla */
 #content :focus:not(input):not(textarea):not(select):not([contenteditable]),#content :focus-visible:not(input):not(textarea):not(select):not([contenteditable]),#v347Scroll:focus,main:focus,#content:focus{outline:none!important}
 #content .card,#content details{-webkit-tap-highlight-color:transparent}
+/* V758 · Historial = misma tarjeta que Pendientes */
+#content .athleteHistoryItem,#content .v143ResultHistory,#content .v142C2History,#content .v147SelfHistory{background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:8px!important;padding:12px!important;margin:0 0 9px!important;box-shadow:none!important;color:var(--text)!important}
+#content .athleteHistoryItem .v731Hist,#content .athleteHistoryItem details.v731Hist{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important}
+#content .athleteHistoryItem .v731Hist>summary,#content .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
+#content .v731Hist[open]>summary{margin-bottom:8px!important}
+html[data-theme="dark"] #content .athleteHistoryItem,html[data-theme="dark"] #content .v143ResultHistory,html[data-theme="dark"] #content .v142C2History,html[data-theme="dark"] #content .v147SelfHistory{background:var(--surface)!important;border-color:var(--border)!important}
+/* V759 · colores por estado */
+#content .v143ResultHistory[data-state="assigned"],#content .v142C2History[data-state="assigned"]{background:#eefaf3!important;border-color:#bfe3cd!important}
+#content .v143ResultHistory[data-state="additional"],#content .v142C2History[data-state="additional"],#content .v147SelfHistory[data-additional="1"]{background:#f1f3f6!important;border-color:#d5dbe3!important}
+#content .v143ResultHistory[data-state="unassigned"],#content .v142C2History[data-state="unassigned"],#content .v147SelfHistory[data-pending="1"]{background:#fff4e5!important;border-color:#f1d2a3!important}
+#content .v143ResultHistory[data-state="hidden"],#content .v142C2History[data-state="hidden"],#content .v147SelfHistory[data-state="hidden"]{background:#f1f3f6!important;border:1px dashed #c3ccd6!important;opacity:.75}
+#content .v225PendingItem{background:#fdecec!important;border-color:#f3c3c3!important}
+html[data-theme="dark"] #content .v143ResultHistory[data-state="assigned"],html[data-theme="dark"] #content .v142C2History[data-state="assigned"]{background:#17332a!important;border-color:#2f7a55!important}
+html[data-theme="dark"] #content .v143ResultHistory[data-state="additional"],html[data-theme="dark"] #content .v142C2History[data-state="additional"],html[data-theme="dark"] #content .v147SelfHistory[data-additional="1"],html[data-theme="dark"] #content .v143ResultHistory[data-state="hidden"],html[data-theme="dark"] #content .v142C2History[data-state="hidden"],html[data-theme="dark"] #content .v147SelfHistory[data-state="hidden"]{background:#222c38!important;border-color:#3d4b5c!important}
+html[data-theme="dark"] #content .v143ResultHistory[data-state="unassigned"],html[data-theme="dark"] #content .v142C2History[data-state="unassigned"],html[data-theme="dark"] #content .v147SelfHistory[data-pending="1"]{background:#3a2f17!important;border-color:#8a6a24!important}
+html[data-theme="dark"] #content .v225PendingItem{background:#3a1f22!important;border-color:#8a3a40!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2982,7 +2998,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="757";
+const APP_VERSION="759";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
