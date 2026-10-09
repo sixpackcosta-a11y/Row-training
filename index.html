@@ -1137,8 +1137,11 @@ main input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=ran
 .v513Chip{min-height:32px;padding-left:12px;padding-right:12px;font-size:13px}
 /* V744 · modo oscuro: los bloques de entrenamiento y de historial se ven sobre el fondo igual que las tarjetas de Eventos */
 html[data-theme="dark"] #content>.card{background:#141c2b}
-html[data-theme="dark"] #content .card .card,html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .v514Sec,html[data-theme="dark"] #content .v147SelfHistory,html[data-theme="dark"] #content .athGymPreviewExerciseV119,html[data-theme="dark"] #content .ex,html[data-theme="dark"] #content details{background:#222d42!important;border:1px solid #31405a!important}
+html[data-theme="dark"] #content .card .card,html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .v514Sec,html[data-theme="dark"] #content .v147SelfHistory,html[data-theme="dark"] #content .athGymPreviewExerciseV119,html[data-theme="dark"] #content .ex,html[data-theme="dark"] #content details{background:#222d42!important}
 html[data-theme="dark"] #content .v503EventRow{background:#222d42}
+/* V746 · sin aro blanco de foco al tocar o cambiar de pantalla */
+#content :focus:not(input):not(textarea):not(select):not([contenteditable]),#content :focus-visible:not(input):not(textarea):not(select):not([contenteditable]),#v347Scroll:focus,main:focus,#content:focus{outline:none!important}
+#content .card,#content details{-webkit-tap-highlight-color:transparent}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -2974,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="745";
+const APP_VERSION="746";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
