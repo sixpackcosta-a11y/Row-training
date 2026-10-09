@@ -1139,6 +1139,11 @@ main input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=ran
 html[data-theme="dark"] #content>.card{background:#141c2b}
 html[data-theme="dark"] #content .card .card,html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .v514Sec,html[data-theme="dark"] #content .v147SelfHistory,html[data-theme="dark"] #content .athGymPreviewExerciseV119,html[data-theme="dark"] #content .ex,html[data-theme="dark"] #content details{background:#222d42!important}
 html[data-theme="dark"] #content .v503EventRow{background:#222d42}
+/* V757 · Historial del remero: sin bandas verdes, entradas compactas y con el mismo borde en claro y oscuro */
+#content #v368HistoryList{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+#content .v147SelfHistory{background:var(--surface-2)!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:none!important;outline:0!important;padding:10px 12px!important;margin:8px 0!important}
+#content .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
+html[data-theme="dark"] #content .v147SelfHistory{background:#222d42!important;border-color:#31405a!important}
 /* V746 · sin aro blanco de foco al tocar o cambiar de pantalla */
 #content :focus:not(input):not(textarea):not(select):not([contenteditable]),#content :focus-visible:not(input):not(textarea):not(select):not([contenteditable]),#v347Scroll:focus,main:focus,#content:focus{outline:none!important}
 #content .card,#content details{-webkit-tap-highlight-color:transparent}
@@ -2977,7 +2982,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="755";
+const APP_VERSION="757";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9832,10 +9837,10 @@ async function coachMessagesView(){
   // abrir el panel de notificaciones (altas pendientes, avisos, activar/desactivar push...). Se
   // añade aquí, en Mensajes, con el mismo contador de no leídas que ya usaba la barra inferior.
   const notifBtnHtml=`<button type="button" id="v401OpenNotifBtn" style="position:relative">🔔 Notificaciones${v334UnreadNotifCount?`<span class="v650NB" style="position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:99px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px">${v334UnreadNotifCount>9?'9+':v334UnreadNotifCount}</span>`:''}</button>`;
-  if(!teams.length){content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><p class="muted">No tienes ningún equipo asignado.</p></div>`;document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;return}
+  if(!teams.length){content.innerHTML=`<div class="card"><p class="muted">No tienes ningún equipo asignado.</p></div>`;{const nb=document.getElementById('v401OpenNotifBtn');if(nb)nb.onclick=openNotificationsV104}return}
   const initialFilter=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:'all';
-  content.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💬 Mensajes</h2>${notifBtnHtml}</div><div id="msgTeamChips" class="v513Chips" style="margin-top:10px"></div><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
-  document.getElementById('v401OpenNotifBtn').onclick=openNotificationsV104;
+  content.innerHTML=`<div class="card"><div id="msgTeamChips" class="v513Chips" style="margin-top:10px"></div><div id="v300MsgInbox" style="margin-top:12px"><p class="muted">${v316Loading('Cargando conversaciones…')}</p></div></div>`;
+  {const nb=document.getElementById('v401OpenNotifBtn');if(nb)nb.onclick=openNotificationsV104}
   // V644 · equipos a mostrar: por defecto los que gestionas; marca uno, varios o todos (como en Eventos)
   const box=document.getElementById('v300MsgInbox');
   const selKey='rowtraining_msg_teams_'+currentUser.id;
