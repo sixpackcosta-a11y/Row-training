@@ -2977,7 +2977,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="753";
+const APP_VERSION="754";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3349,6 +3349,8 @@ async function v570OpenTrash(after){
     const up=()=>{const t=fmt(inp);l.textContent=(inp.type==='time'?'🕒 ':'📅 ')+(t||(inp.type==='time'?'--:--':'Elegir fecha'));l.classList.toggle('v578Empty',!t);w.classList.toggle('v578Dis',!!inp.disabled)};
     try{Object.defineProperty(inp,'value',{configurable:true,get(){return proto.get.call(this)},set(v){proto.set.call(this,v);up()}})}catch(e){}
     inp.addEventListener('input',up);inp.addEventListener('change',up);
+    // V754 · en ordenador el campo real es invisible y al hacer clic no abría nada: se abre el selector a mano
+    w.addEventListener('click',()=>{try{if(window.matchMedia('(pointer:fine)').matches&&!inp.disabled&&!inp.readOnly&&inp.showPicker)inp.showPicker()}catch(_){}});
     up();
   }
   const scan=root=>{if(!root||!root.querySelectorAll)return;if(root.matches&&root.matches('input[type=date],input[type=time]'))enhance(root);root.querySelectorAll('input[type=date],input[type=time]').forEach(enhance)};
