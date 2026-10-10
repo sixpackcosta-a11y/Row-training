@@ -837,7 +837,7 @@ body.v583Kb main{padding-bottom:12px!important}
 .v325EmojiOpt:hover{background:var(--surface-2)}
 body.v330HasBottomNav main{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 #nav.v330BottomNav{position:fixed;left:14px;right:14px;max-width:460px;margin:0 auto;bottom:env(safe-area-inset-bottom);z-index:60;display:flex;justify-content:space-around;gap:2px;background:#17191ccc;border:1px solid #ffffff1a;border-radius:999px;padding:5px 6px;box-shadow:0 10px 30px #0006;-webkit-transform:translateZ(0);transform:translateZ(0);transform-origin:center bottom;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transition:transform .22s ease,opacity .22s ease}
-#nav.v330BottomNav.v339Shrink{-webkit-transform:translateZ(0) scale(.86);transform:translateZ(0) scale(.86);opacity:.88}
+#nav.v330BottomNav.v339Shrink{-webkit-transform:scale(.86);transform:scale(.86);opacity:.88}
 .v330NavBtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:transparent;color:#9aa4b2;padding:6px 4px;border-radius:999px;font-size:11px;font-weight:700;position:relative}
 .v330NavBtn.active{background:#2563eb;color:#fff}
 .v330NavIcon{line-height:1}
@@ -1221,6 +1221,19 @@ html[data-theme="dark"] #content .workoutReadable{background:var(--surface)!impo
 #content .athleteWeekSessionTitleV123{font-size:.95rem;font-weight:700}
 #content .athleteWeekProgressV123{border-radius:12px}
 :where(#content) button,:where(#content) .btn{border:0;border-radius:10px;background:var(--surface-2);font-weight:700}
+/* V771 · se recupera la tipografía ligera de antes (Manrope 300/500): los pesos gruesos de V766-V769 se quitan */
+#content h2{font-size:var(--fs-xl)!important;font-weight:500!important}
+#content h3{font-size:var(--fs-lg)!important;font-weight:500!important}
+#content .staffDayCard h3{font-size:var(--fs-lg)!important;font-weight:500!important}
+#content .tag,#content .athleteWeekTypeV123{font-weight:500!important}
+#content .v766M .a,#content .athleteWeekSessionTitleV123{font-weight:500!important}
+#content .v766M .b{font-weight:300!important}
+#content .v766D b,#content .athleteWeekDateV123 strong{font-weight:500!important}
+#content .v766D span,#content .athleteWeekDateV123 b,#content .athleteWeekDateV123 em{font-weight:400!important}
+#content .v766S,#content .athleteWeekStatusV123{font-weight:500!important}
+#content .workoutLabel{font-weight:500!important}
+#content .workoutValue{font-weight:400!important}
+#content .staffActions button,:where(#content) button,:where(#content) .btn{font-weight:500!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3056,7 +3069,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="769";
+const APP_VERSION="771";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3698,8 +3711,9 @@ setTimeout(()=>{const b=document.getElementById('refreshAppV159');if(b)b.onclick
     const navEl=document.getElementById('nav');
     if(!navEl||!navEl.classList.contains('v330BottomNav')){lastY=v347ScrollTop();return}
     const y=v347ScrollTop(),dy=y-lastY;
-    if(dy>3&&y>30&&!shrunk){navEl.classList.add('v339Shrink');shrunk=true}
-    else if((dy<-3||y<=30)&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false}
+    // V770 · al encoger/estirar, se repinta con la pestaña actual (Safari dejaba la imagen vieja con "Trabajo" marcado)
+    if(dy>3&&y>30&&!shrunk){navEl.classList.add('v339Shrink');shrunk=true;try{v330RenderBottomNav()}catch(_){}}
+    else if((dy<-3||y<=30)&&shrunk){navEl.classList.remove('v339Shrink');shrunk=false;try{v330RenderBottomNav()}catch(_){}}
     lastY=y;
   }
   const scrollEl=document.getElementById('v347Scroll')||window;
