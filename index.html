@@ -1357,6 +1357,19 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 /* V787 · color del equipo en «Qué me falta» */
 :is(#content,#v555Freeze) .v786Pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:500;line-height:1.5;vertical-align:1px}
 :is(#content,#v555Freeze) .v672Row{border-radius:0 12px 12px 0}
+
+/* V788 · «Qué me falta» ordenado: título en una línea, estado en la siguiente */
+:is(#content,#v555Freeze) .v787L1{display:block;font-size:15px;line-height:1.35;font-weight:300}
+:is(#content,#v555Freeze) .v787L1 b{font-weight:400}
+:is(#content,#v555Freeze) .v787L2{display:block;font-size:13px;line-height:1.35;color:var(--text-muted);margin-top:3px}
+:is(#content,#v555Freeze) .v787Re{color:#c03a3a}
+:is(#content,#v555Freeze) .v787Or{color:#b27300}
+:is(#content,#v555Freeze) .v787L2 b{font-weight:500}
+:is(#content,#v555Freeze) .v672Ic:empty{display:none}
+:is(#content,#v555Freeze) .v672Row{padding:10px 4px 10px 10px!important;font-size:15px}
+:is(#content,#v555Freeze) .v674Boats{padding:0 4px 10px 14px;gap:6px}
+:is(#content,#v555Freeze) .v674Boats>.muted{display:none}
+:is(#content,#v555Freeze) .v674Boats button{padding:4px 14px;font-size:13px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3192,7 +3205,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="787";
+const APP_VERSION="788";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4507,6 +4520,13 @@ function v678Form(r,cats){
 const V674_BOAT={barca:7,llaut:8}; // mínimo de remeras para salir según el barco; cámbialo aquí si cambian las cifras
 // V786 · Hoy del entrenador en dos pestañas: «Sesión» y «Qué me falta N» (opción B del lienzo).
 window.v786HoyTab=window.v786HoyTab||'sesion';
+function v787BoatMsg(e){
+  const B=V674_BOAT;
+  if(e.boat_type)return `Faltan <b>${B[e.boat_type]-e._in}</b> para ${e.boat_type}`;
+  if(e._in<B.barca)return `Faltan <b>${B.barca-e._in}</b> para barca · ${B.llaut-e._in} para llaut`;
+  return `Falta <b>${B.llaut-e._in}</b> para llaut`;
+}
+function v787Row(e,day,msg,cls,extra){return `<span class="v787L1">${v786TeamPill(e._viewTeam)} <b>${esc(e.event_title)}</b> <span class="muted">${esc(day)}</span></span><span class="v787L2"><span class="${cls}">${msg}</span>${extra?` · ${extra}`:''}</span>`}
 function v786TeamPill(code){const c=v502TeamColor(code);return `<span class="v786Pill" style="background:${c.bg};color:${c.text}">${esc(teamShort(code))}</span>`}
 function v786Seg(box,n){
   if(!box||!box.isConnected)return;
@@ -4560,12 +4580,12 @@ async function v672TodayPanel(){
     if(e.boat_type)head=`🔴 Faltan <b>${V674_BOAT[e.boat_type]-e._in}</b> para salir en ${BN[e.boat_type]}`;
     else if(e._in<V674_BOAT.barca)head=`🔴 Faltan <b>${V674_BOAT.barca-e._in}</b> para poder salir en barca (${V674_BOAT.llaut-e._in} para llaut)`;
     else head=`🟠 Se puede salir en barca · falta <b>${V674_BOAT.llaut-e._in}</b> para llaut`;
-    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'👥',boat:e,tx:`${head} · ${v786TeamPill(e._viewTeam)} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}) · van ${e._in}${cupo}${e._pend?` · ${e._pend} sin responder`:''}</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})});
+    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'',boat:e,tx:v787Row(e,dayName(e.event_date),v787BoatMsg(e),(e.boat_type||e._in<V674_BOAT.barca)?'v787Re':'v787Or',`van ${e._in}${e.max_participants?'/'+e.max_participants:''}${e._pend?` · ${e._pend} sin responder`:''}`),go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})});
   all.filter(e=>e._pend>0&&!boatEv.includes(e)).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))).forEach(e=>
-    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'❓',tx:`<b>${e._pend}</b> sin responder · ${v786TeamPill(e._viewTeam)} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())}));
+    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'',tx:v787Row(e,dayName(e.event_date),`<b>${e._pend}</b> sin responder`,'v787Or',''),go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())}));
   const clashSeen=new Set();
   all.forEach(e=>{if(clashSeen.has(e.kind+e.id+e._viewTeam))return;if(v669Overlaps(e,all)){clashSeen.add(e.kind+e.id+e._viewTeam);
-    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'⚠️',tx:`Se pisan en horario · ${v786TeamPill(e._viewTeam)} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}${e.event_time?' '+esc(e.event_time):''})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})}});
+    items.push({tc:v502TeamColor(e._viewTeam).stripe,ic:'',tx:v787Row(e,dayName(e.event_date)+(e.event_time?' '+e.event_time:''),'Se pisan en horario','v787Or',''),go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})}});
   if(!box.isConnected)return;
   if(!items.length){box.innerHTML='<h3 class="v672H">📋 Qué me falta</h3><p style="margin:6px 0 0">✅ Todo al día. Nada pendiente.</p>';v786Seg(box,0);return}
   const shown=items.slice(0,8);
