@@ -1440,6 +1440,10 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 :is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow) b{font-weight:300!important;font-size:15px!important}
 :is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow):has(.v791Un) b{font-weight:500!important}
 :is(#content,#v555Freeze) #v642Find{height:36px!important;border-radius:10px!important;font-size:14px!important;margin:8px 0 0!important;padding:0 12px!important;box-sizing:border-box}
+
+/* V799 · menos aire entre buscador y EQUIPOS */
+:is(#content,#v555Freeze) #v300MsgInbox{margin-top:0!important}
+:is(#content,#v555Freeze) #v300MsgInbox>.v797Sec:first-child{padding-top:12px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3275,7 +3279,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="798";
+const APP_VERSION="799";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
