@@ -65,16 +65,16 @@ module.exports=async function handler(req,res){
       if(!/^[a-z0-9_-]{2,40}$/i.test(teamCode)||!sourceId)return res.status(400).json({error:'bad_workout_event'});
       const membership=await rest(`${supabaseUrl}/rest/v1/rower_team_memberships?user_id=eq.${sender.id}&team_code=eq.${encodeURIComponent(teamCode)}&is_rower=eq.true&select=user_id`,{key:anonKey,authToken:token});
       if(!membership?.length)return res.status(403).json({error:'rower_team_required'});
-      let kind='',sessionName='',sessionDate='';
+      let kind='',sessionName='',sessionDate='',planId=null,origin='';
       if(sourceType==='workout'){
         // workout_logs.id puede ser bigint o UUID según la versión del esquema.
         if(!/^[a-z0-9_-]{1,120}$/i.test(sourceId))return res.status(400).json({error:'bad_source_id'});
-        const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date`,{key:anonKey,authToken:token}),row=rows?.[0];
+        const rows=await rest(`${supabaseUrl}/rest/v1/workout_logs?id=eq.${encodeURIComponent(sourceId)}&user_id=eq.${sender.id}&select=id,session_type,session_code,session_date,training_session_id`,{key:anonKey,authToken:token}),row=rows?.[0];
         kind=String(row?.session_type||'').toLowerCase();if(!row||!['gym','ergo'].includes(kind))return res.status(404).json({error:'workout_not_found'});
-        sessionName=cut(row.session_code||(kind==='gym'?'GYM':'ERGO'),120);sessionDate=String(row.session_date||'').slice(0,10);
+        sessionName=cut(row.session_code||'',120);sessionDate=String(row.session_date||'').slice(0,10);planId=row.training_session_id;origin='Manual';
       }else if(sourceType==='concept2'){
-        const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code`,{key:anonKey,authToken:token}),row=rows?.[0];
-        if(!row)return res.status(404).json({error:'concept2_result_not_found'});kind='ergo';sessionName=cut(row.matched_session_code||'ERGO · ErgData',120);sessionDate=String(row.workout_date||'').slice(0,10);
+        const rows=await rest(`${supabaseUrl}/rest/v1/concept2_results?user_id=eq.${sender.id}&concept2_result_id=eq.${encodeURIComponent(sourceId)}&select=concept2_result_id,workout_date,matched_session_code,training_session_id`,{key:anonKey,authToken:token}),row=rows?.[0];
+        if(!row)return res.status(404).json({error:'concept2_result_not_found'});kind='ergo';sessionName=cut(row.matched_session_code||'',120);sessionDate=String(row.workout_date||'').slice(0,10);planId=row.training_session_id;origin='ErgData';
       }else if(sourceType==='chat_message'){
         // Mensaje de chat del remero a sus entrenadores: no hay fila que verificar, el cuerpo viene ya listo.
         const msgBody=cut(req.body?.body,300)||'Nuevo mensaje';
@@ -93,8 +93,18 @@ module.exports=async function handler(req,res){
       ]);
       const recipientIds=uniq([...(teamStaff||[]).map(x=>x.user_id),...(globalCoaches||[]).map(x=>x.user_id)]);
       const athlete=cut(sender.user_metadata?.full_name||sender.user_metadata?.name||sender.email||'Un remero',100),label=kind==='gym'?'GYM':'ERGO',dateText=sessionDate?sessionDate.split('-').reverse().join('/'):'hoy';
-      const title=`${label} registrado`;
-      const body=`${athlete} ha registrado ${sessionName} · ${dateText}.`;
+      // Nombre legible: título de la sesión planificada si está asignada; si no, el código solo cuando no es técnico.
+      let planTitle='',planDate='';
+      if(planId!=null&&/^[0-9]{1,12}$/.test(String(planId))){
+        const pr=await rest(`${supabaseUrl}/rest/v1/training_sessions?id=eq.${planId}&select=title,session_date`,{key:serviceKey}).catch(()=>null);
+        planTitle=cut(pr?.[0]?.title||'',120);planDate=String(pr?.[0]?.session_date||'').slice(0,10);
+      }
+      const technical=/^[A-Z0-9]+(?:[-_][A-Z0-9]+)+$/.test(sessionName)||/^(ERGO|GYM)\s*·\s*ErgData$/i.test(sessionName);
+      const readable=planTitle||(sessionName&&!technical?sessionName:'');
+      const shortDate=d=>d?d.split('-').reverse().slice(0,2).join('/'):'';
+      const when=shortDate(planDate)||shortDate(sessionDate)||'hoy';
+      const title=`${label} registrado${origin?` · ${origin}`:''}`;
+      const body=readable?`${athlete}: ${readable} (${when})`:`${athlete}: ${label} del ${when}, sin asignar a una sesión`;
       const result=await deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,body,url:`/?tab=result&view=rowers&team=${encodeURIComponent(teamCode)}&athlete=${encodeURIComponent(sender.id)}`,type:'workout_registered',sourceBase:`workout_registered:${sourceType}:${sourceId}:${teamCode}`});
       return res.status(200).json(result);
     }
