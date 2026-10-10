@@ -1370,6 +1370,14 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .v674Boats{padding:0 4px 10px 14px;gap:6px}
 :is(#content,#v555Freeze) .v674Boats>.muted{display:none}
 :is(#content,#v555Freeze) .v674Boats button{padding:4px 14px;font-size:13px}
+
+/* V789 · selectores deslizantes: activo siempre azul; Mes entrenador en una línea */
+:is(#content,#v555Freeze) .v786Seg button.on,:is(#content,#v555Freeze) .v569Seg:not(.v576Seg) button.active,:is(#content,#v555Freeze) .viewToggle:not(.v576Seg):not(.v569Seg) button.active{background:#2563eb!important;color:#fff!important;box-shadow:0 1px 4px rgba(37,99,235,.35)!important}
+:is(#content,#v555Freeze) .v786Seg button.on i{background:#fff;color:#d64545}
+:is(#content,#v555Freeze) .card>.plannerGrid:has(#monthTeam){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)!important;gap:8px!important;align-items:end}
+:is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) label{min-width:0;font-size:12px;color:var(--text-muted)}
+:is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) :is(select,input){width:100%;min-width:0;max-width:100%;box-sizing:border-box;height:44px;margin:0;font-size:15px;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:12px;color:var(--text)}
+:is(#content,#v555Freeze) #loadMonth{position:absolute;opacity:0;pointer-events:none;height:0;padding:0;margin:0;border:0}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3205,7 +3213,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="788";
+const APP_VERSION="789";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -11404,7 +11412,7 @@ async function coachMonthView(){
   // V403 · se quita el título "Visión mensual" (la barra de arriba ya marca que se está en Mes)
   // y se compacta hacia arriba el selector de equipo/mes, mismo criterio que en Hoy y Semana.
   content.innerHTML=`<div class="card"><div class="plannerGrid" style="margin-bottom:10px"><label>Equipo<select id="monthTeam">${allowed.map(x=>`<option value="${x[0]}">${esc(teamShort(x[0]))}</option>`).join('')}</select></label><label>Mes<input id="monthPick" type="month" value="${now}"></label></div><button id="loadMonth" class="primary">Ver mes</button><div id="monthArea"></div></div>`;
-  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
+  if(coachSelectedTeam && allowed.some(x=>x[0]===coachSelectedTeam)) monthTeam.value=coachSelectedTeam; monthTeam.onchange=renderCoachMonth; monthPick.onchange=renderCoachMonth; loadMonth.onclick=renderCoachMonth; await renderCoachMonth();
 }
 async function renderCoachMonth(){
   // V380 · el calendario ".calendar/.calday" original no tenía CSS responsive y se salía de la
