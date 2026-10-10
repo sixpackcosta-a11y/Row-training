@@ -1126,9 +1126,9 @@ main{padding-left:8px!important;padding-right:8px!important}
 .v330NavBtn.active{background:#2F5BE7;color:#fff;font-weight:700}
 .v330NavBtn .nBadge{top:6px;right:calc(50% - 22px)}
 body.v330HasBottomNav main{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
-body[data-v740g="trabajo"] #content>.card>h2:first-child,body[data-v740g="actividad"] #content>.card>h2:first-child,body[data-v740g="eventos"] #content>.card>h2:first-child,body[data-v740g="mensajes"] #content>.card>h2:first-child{display:none}
+body[data-v740g="trabajo"] :is(#content,#v555Freeze)>.card>h2:first-child,body[data-v740g="actividad"] :is(#content,#v555Freeze)>.card>h2:first-child,body[data-v740g="eventos"] :is(#content,#v555Freeze)>.card>h2:first-child,body[data-v740g="mensajes"] :is(#content,#v555Freeze)>.card>h2:first-child{display:none}
 .v334MsgBellBtn.v605Avisos{display:none}
-#content h2{font-size:17px;line-height:22px;font-weight:650}
+:is(#content,#v555Freeze) h2{font-size:17px;line-height:22px;font-weight:650}
 /* texto/caja: botón y campo 44 · 16; filtro 32 · 12; pestañas 36 · 16 */
 main button.primary,main .btn,main label.btn{min-height:44px;padding-left:16px;padding-right:16px;border-radius:12px;font-size:15px}
 select{height:44px;padding-top:0;padding-bottom:0;padding-left:16px;font-size:15px}
@@ -1136,104 +1136,104 @@ main input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=ran
 .v330SubTab{height:36px;padding:0 16px;font-size:13px;display:inline-flex;align-items:center}
 .v513Chip{min-height:32px;padding-left:12px;padding-right:12px;font-size:13px}
 /* V744 · modo oscuro: los bloques de entrenamiento y de historial se ven sobre el fondo igual que las tarjetas de Eventos */
-html[data-theme="dark"] #content>.card{background:#141c2b}
-html[data-theme="dark"] #content .card .card,html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .v514Sec,html[data-theme="dark"] #content .v147SelfHistory,html[data-theme="dark"] #content .athGymPreviewExerciseV119,html[data-theme="dark"] #content .ex,html[data-theme="dark"] #content details{background:#222d42!important}
-html[data-theme="dark"] #content .v503EventRow{background:#222d42}
+html[data-theme="dark"] :is(#content,#v555Freeze)>.card{background:#141c2b}
+html[data-theme="dark"] :is(#content,#v555Freeze) .card .card,html[data-theme="dark"] :is(#content,#v555Freeze) .workoutRow,html[data-theme="dark"] :is(#content,#v555Freeze) .v514Sec,html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory,html[data-theme="dark"] :is(#content,#v555Freeze) .athGymPreviewExerciseV119,html[data-theme="dark"] :is(#content,#v555Freeze) .ex,html[data-theme="dark"] :is(#content,#v555Freeze) details{background:#222d42!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v503EventRow{background:#222d42}
 /* V757 · Historial del remero: sin bandas verdes, entradas compactas y con el mismo borde en claro y oscuro */
-#content #v368HistoryList{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
-#content .v147SelfHistory{background:var(--surface-2)!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:none!important;outline:0!important;padding:10px 12px!important;margin:8px 0!important}
-#content .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
-html[data-theme="dark"] #content .v147SelfHistory{background:#222d42!important;border-color:#31405a!important}
+:is(#content,#v555Freeze) #v368HistoryList{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+:is(#content,#v555Freeze) .v147SelfHistory{background:var(--surface-2)!important;border:1px solid var(--border)!important;border-radius:12px!important;box-shadow:none!important;outline:0!important;padding:10px 12px!important;margin:8px 0!important}
+:is(#content,#v555Freeze) .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory{background:#222d42!important;border-color:#31405a!important}
 /* V746 · sin aro blanco de foco al tocar o cambiar de pantalla */
-#content :focus:not(input):not(textarea):not(select):not([contenteditable]),#content :focus-visible:not(input):not(textarea):not(select):not([contenteditable]),#v347Scroll:focus,main:focus,#content:focus{outline:none!important}
-#content .card,#content details{-webkit-tap-highlight-color:transparent}
+:is(#content,#v555Freeze) :focus:not(input):not(textarea):not(select):not([contenteditable]),:is(#content,#v555Freeze) :focus-visible:not(input):not(textarea):not(select):not([contenteditable]),#v347Scroll:focus,main:focus,:is(#content,#v555Freeze):focus{outline:none!important}
+:is(#content,#v555Freeze) .card,:is(#content,#v555Freeze) details{-webkit-tap-highlight-color:transparent}
 /* V758 · Historial = misma tarjeta que Pendientes */
-#content .athleteHistoryItem,#content .v143ResultHistory,#content .v142C2History,#content .v147SelfHistory{background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:8px!important;padding:12px!important;margin:0 0 9px!important;box-shadow:none!important;color:var(--text)!important}
-#content .athleteHistoryItem .v731Hist,#content .athleteHistoryItem details.v731Hist{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important}
-#content .athleteHistoryItem .v731Hist>summary,#content .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
-#content .v731Hist[open]>summary{margin-bottom:8px!important}
-html[data-theme="dark"] #content .athleteHistoryItem,html[data-theme="dark"] #content .v143ResultHistory,html[data-theme="dark"] #content .v142C2History,html[data-theme="dark"] #content .v147SelfHistory{background:var(--surface)!important;border-color:var(--border)!important}
+:is(#content,#v555Freeze) .athleteHistoryItem,:is(#content,#v555Freeze) .v143ResultHistory,:is(#content,#v555Freeze) .v142C2History,:is(#content,#v555Freeze) .v147SelfHistory{background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:8px!important;padding:12px!important;margin:0 0 9px!important;box-shadow:none!important;color:var(--text)!important}
+:is(#content,#v555Freeze) .athleteHistoryItem .v731Hist,:is(#content,#v555Freeze) .athleteHistoryItem details.v731Hist{background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important}
+:is(#content,#v555Freeze) .athleteHistoryItem .v731Hist>summary,:is(#content,#v555Freeze) .v147SelfHistory>summary{background:transparent!important;padding:0!important;margin:0!important}
+:is(#content,#v555Freeze) .v731Hist[open]>summary{margin-bottom:8px!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .athleteHistoryItem,html[data-theme="dark"] :is(#content,#v555Freeze) .v143ResultHistory,html[data-theme="dark"] :is(#content,#v555Freeze) .v142C2History,html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory{background:var(--surface)!important;border-color:var(--border)!important}
 /* V759 · colores por estado */
-#content .v143ResultHistory[data-state="assigned"],#content .v142C2History[data-state="assigned"]{background:#eefaf3!important;border-color:#bfe3cd!important}
-#content .v143ResultHistory[data-state="additional"],#content .v142C2History[data-state="additional"],#content .v147SelfHistory[data-additional="1"]{background:#f1f3f6!important;border-color:#d5dbe3!important}
-#content .v143ResultHistory[data-state="unassigned"],#content .v142C2History[data-state="unassigned"],#content .v147SelfHistory[data-pending="1"]{background:#fff4e5!important;border-color:#f1d2a3!important}
-#content .v143ResultHistory[data-state="hidden"],#content .v142C2History[data-state="hidden"],#content .v147SelfHistory[data-state="hidden"]{background:#f1f3f6!important;border:1px dashed #c3ccd6!important;opacity:.75}
-#content .v225PendingItem{background:#fdecec!important;border-color:#f3c3c3!important}
-html[data-theme="dark"] #content .v143ResultHistory[data-state="assigned"],html[data-theme="dark"] #content .v142C2History[data-state="assigned"]{background:#17332a!important;border-color:#2f7a55!important}
-html[data-theme="dark"] #content .v143ResultHistory[data-state="additional"],html[data-theme="dark"] #content .v142C2History[data-state="additional"],html[data-theme="dark"] #content .v147SelfHistory[data-additional="1"],html[data-theme="dark"] #content .v143ResultHistory[data-state="hidden"],html[data-theme="dark"] #content .v142C2History[data-state="hidden"],html[data-theme="dark"] #content .v147SelfHistory[data-state="hidden"]{background:#222c38!important;border-color:#3d4b5c!important}
-html[data-theme="dark"] #content .v143ResultHistory[data-state="unassigned"],html[data-theme="dark"] #content .v142C2History[data-state="unassigned"],html[data-theme="dark"] #content .v147SelfHistory[data-pending="1"]{background:#3a2f17!important;border-color:#8a6a24!important}
-html[data-theme="dark"] #content .v225PendingItem{background:#3a1f22!important;border-color:#8a3a40!important}
+:is(#content,#v555Freeze) .v143ResultHistory[data-state="assigned"],:is(#content,#v555Freeze) .v142C2History[data-state="assigned"]{background:#eefaf3!important;border-color:#bfe3cd!important}
+:is(#content,#v555Freeze) .v143ResultHistory[data-state="additional"],:is(#content,#v555Freeze) .v142C2History[data-state="additional"],:is(#content,#v555Freeze) .v147SelfHistory[data-additional="1"]{background:#f1f3f6!important;border-color:#d5dbe3!important}
+:is(#content,#v555Freeze) .v143ResultHistory[data-state="unassigned"],:is(#content,#v555Freeze) .v142C2History[data-state="unassigned"],:is(#content,#v555Freeze) .v147SelfHistory[data-pending="1"]{background:#fff4e5!important;border-color:#f1d2a3!important}
+:is(#content,#v555Freeze) .v143ResultHistory[data-state="hidden"],:is(#content,#v555Freeze) .v142C2History[data-state="hidden"],:is(#content,#v555Freeze) .v147SelfHistory[data-state="hidden"]{background:#f1f3f6!important;border:1px dashed #c3ccd6!important;opacity:.75}
+:is(#content,#v555Freeze) .v225PendingItem{background:#fdecec!important;border-color:#f3c3c3!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v143ResultHistory[data-state="assigned"],html[data-theme="dark"] :is(#content,#v555Freeze) .v142C2History[data-state="assigned"]{background:#17332a!important;border-color:#2f7a55!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v143ResultHistory[data-state="additional"],html[data-theme="dark"] :is(#content,#v555Freeze) .v142C2History[data-state="additional"],html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory[data-additional="1"],html[data-theme="dark"] :is(#content,#v555Freeze) .v143ResultHistory[data-state="hidden"],html[data-theme="dark"] :is(#content,#v555Freeze) .v142C2History[data-state="hidden"],html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory[data-state="hidden"]{background:#222c38!important;border-color:#3d4b5c!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v143ResultHistory[data-state="unassigned"],html[data-theme="dark"] :is(#content,#v555Freeze) .v142C2History[data-state="unassigned"],html[data-theme="dark"] :is(#content,#v555Freeze) .v147SelfHistory[data-pending="1"]{background:#3a2f17!important;border-color:#8a6a24!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .v225PendingItem{background:#3a1f22!important;border-color:#8a3a40!important}
 /* V766 · fila única: lista plana con la misma fila en toda la app */
-#content .v766List,#content .v225PendingList,#content #v368HistoryList{display:block!important;border:1px solid var(--border)!important;border-radius:14px!important;overflow:hidden;background:var(--surface)!important;padding:0!important;margin:8px 0!important;box-shadow:none!important}
-#content .v766List .athleteHistoryItem,#content .v225PendingList .v225PendingItem,#content #v368HistoryList .v147SelfHistory{background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;margin:-1px 0 0!important;padding:12px!important;color:var(--text)!important;opacity:1}
-#content .v766List .athleteHistoryItem .v731Hist{background:transparent!important;border:0!important;padding:0!important;margin:0!important;border-radius:0!important}
-#content .athleteHistoryItem[hidden],#content .v147SelfHistory[hidden],#content .v225PendingItem[hidden]{display:none!important}
-#content .v766Head,#content .v766Sum{display:grid!important;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;list-style:none;cursor:pointer;background:transparent!important;padding:0!important;margin:0!important}
-#content .v766Sum::-webkit-details-marker{display:none}#content .v766Sum::before{content:none!important}
-#content .v731Hist[open]>.v766Sum,#content .v147SelfHistory[open]>.v766Sum{margin-bottom:10px!important}
+:is(#content,#v555Freeze) .v766List,:is(#content,#v555Freeze) .v225PendingList,:is(#content,#v555Freeze) #v368HistoryList{display:block!important;border:1px solid var(--border)!important;border-radius:14px!important;overflow:hidden;background:var(--surface)!important;padding:0!important;margin:8px 0!important;box-shadow:none!important}
+:is(#content,#v555Freeze) .v766List .athleteHistoryItem,:is(#content,#v555Freeze) .v225PendingList .v225PendingItem,:is(#content,#v555Freeze) #v368HistoryList .v147SelfHistory{background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;margin:-1px 0 0!important;padding:12px!important;color:var(--text)!important;opacity:1}
+:is(#content,#v555Freeze) .v766List .athleteHistoryItem .v731Hist{background:transparent!important;border:0!important;padding:0!important;margin:0!important;border-radius:0!important}
+:is(#content,#v555Freeze) .athleteHistoryItem[hidden],:is(#content,#v555Freeze) .v147SelfHistory[hidden],:is(#content,#v555Freeze) .v225PendingItem[hidden]{display:none!important}
+:is(#content,#v555Freeze) .v766Head,:is(#content,#v555Freeze) .v766Sum{display:grid!important;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;list-style:none;cursor:pointer;background:transparent!important;padding:0!important;margin:0!important}
+:is(#content,#v555Freeze) .v766Sum::-webkit-details-marker{display:none}:is(#content,#v555Freeze) .v766Sum::before{content:none!important}
+:is(#content,#v555Freeze) .v731Hist[open]>.v766Sum,:is(#content,#v555Freeze) .v147SelfHistory[open]>.v766Sum{margin-bottom:10px!important}
 .v766D{text-align:center;line-height:1.05}.v766D b{display:block;font-size:1.2rem;font-weight:800;color:var(--text)}.v766D span{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted)}
 .v766M{min-width:0}.v766M p{margin:0!important}.v766M .a{font-size:.95rem;font-weight:700;line-height:1.25;color:var(--text);overflow-wrap:anywhere}.v766M .b{font-size:.8rem;color:var(--text-muted);margin-top:2px!important;line-height:1.35}
 .v766S{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:var(--text-muted);white-space:nowrap}
 .v766Dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#8b95a7;font-style:normal}.v766Dot.ok{background:#1f9d63}.v766Dot.pe{background:#e08a1e}.v766Dot.re{background:#d64545}.v766Dot.ad{background:#8b95a7}
-#content .v766List>.v503EventRow{background:transparent!important;border-radius:0!important;border-top:1px solid var(--border)!important;border-right:0!important;border-bottom:0!important;margin:-1px 0 0!important;box-shadow:none!important;width:100%}
-#content .v225PendingItem details,#content .v225PendingItem .staffActions{margin-top:10px}
+:is(#content,#v555Freeze) .v766List>.v503EventRow{background:transparent!important;border-radius:0!important;border-top:1px solid var(--border)!important;border-right:0!important;border-bottom:0!important;margin:-1px 0 0!important;box-shadow:none!important;width:100%}
+:is(#content,#v555Freeze) .v225PendingItem details,:is(#content,#v555Freeze) .v225PendingItem .staffActions{margin-top:10px}
 /* V767 · normalización global (todas las pantallas): mismas tarjetas, etiquetas, títulos y botones. Cabecera y menú inferior no se tocan. */
-#content .card{border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
-#content .card .card:not(:has(input,select,textarea,textarea)){background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;padding:12px 0!important;margin:0!important}
-#content .tag{display:inline-flex;align-items:center;font-size:.75rem;font-weight:700;line-height:1.3;padding:3px 10px;border-radius:999px}
-#content h2{font-size:1.15rem;font-weight:800;line-height:1.25}
-#content h3{font-size:1rem;font-weight:700;line-height:1.3}
-#content .staffActions{display:flex;flex-wrap:wrap;gap:8px}
-#content .staffActions button{border:0!important;border-radius:10px!important;padding:10px 12px!important;font-size:.85rem!important;font-weight:700!important;box-shadow:none!important}
-#content input:not([type=checkbox]):not([type=radio]):not([type=range]),#content select,#content textarea{border-radius:10px!important}
-#content .info{border-radius:12px!important}
+:is(#content,#v555Freeze) .card{border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
+:is(#content,#v555Freeze) .card .card:not(:has(input,select,textarea,textarea)){background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;padding:12px 0!important;margin:0!important}
+:is(#content,#v555Freeze) .tag{display:inline-flex;align-items:center;font-size:.75rem;font-weight:700;line-height:1.3;padding:3px 10px;border-radius:999px}
+:is(#content,#v555Freeze) h2{font-size:1.15rem;font-weight:800;line-height:1.25}
+:is(#content,#v555Freeze) h3{font-size:1rem;font-weight:700;line-height:1.3}
+:is(#content,#v555Freeze) .staffActions{display:flex;flex-wrap:wrap;gap:8px}
+:is(#content,#v555Freeze) .staffActions button{border:0!important;border-radius:10px!important;padding:10px 12px!important;font-size:.85rem!important;font-weight:700!important;box-shadow:none!important}
+:is(#content,#v555Freeze) input:not([type=checkbox]):not([type=radio]):not([type=range]),:is(#content,#v555Freeze) select,:is(#content,#v555Freeze) textarea{border-radius:10px!important}
+:is(#content,#v555Freeze) .info{border-radius:12px!important}
 /* V768 · contenido de entrenamientos (Hoy, Semana, Pendientes, Eventos) como lista plana + formularios del perfil con el mismo borde */
-#content .workoutReadable{display:block!important;border:1px solid var(--border)!important;border-radius:14px!important;overflow:hidden;background:var(--surface)!important;margin:8px 0!important;padding:0!important}
-#content .workoutReadable>.workoutRow,#content .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;margin:-1px 0 0!important}
-#content .workoutReadable>.workoutRow:first-child,#content .workoutReadable>.athGymPreviewExerciseV119:first-child{border-top:0!important;margin-top:0!important}
-#content .workoutRow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;padding:10px 12px!important;background:transparent!important;border:0!important;border-radius:0!important}
-#content .athGymPreviewExerciseV119{padding:0!important}
-#content .athGymPreviewExerciseV119>.workoutRow{padding:10px 12px!important}
-#content .workoutLabel{font-size:.72rem!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)!important}
-#content .workoutValue{font-size:.95rem!important;font-weight:600!important;line-height:1.4;color:var(--text)!important}
-html[data-theme="dark"] #content .workoutRow,html[data-theme="dark"] #content .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important}
-html[data-theme="dark"] #content .workoutReadable{background:var(--surface)!important}
-#content .staffDayCard h3{font-size:1.05rem!important;font-weight:800!important;margin:6px 0 4px!important}
-#content .card .card:has(input,select,textarea){background:transparent!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
+:is(#content,#v555Freeze) .workoutReadable{display:block!important;border:1px solid var(--border)!important;border-radius:14px!important;overflow:hidden;background:var(--surface)!important;margin:8px 0!important;padding:0!important}
+:is(#content,#v555Freeze) .workoutReadable>.workoutRow,:is(#content,#v555Freeze) .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;margin:-1px 0 0!important}
+:is(#content,#v555Freeze) .workoutReadable>.workoutRow:first-child,:is(#content,#v555Freeze) .workoutReadable>.athGymPreviewExerciseV119:first-child{border-top:0!important;margin-top:0!important}
+:is(#content,#v555Freeze) .workoutRow{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;padding:10px 12px!important;background:transparent!important;border:0!important;border-radius:0!important}
+:is(#content,#v555Freeze) .athGymPreviewExerciseV119{padding:0!important}
+:is(#content,#v555Freeze) .athGymPreviewExerciseV119>.workoutRow{padding:10px 12px!important}
+:is(#content,#v555Freeze) .workoutLabel{font-size:.72rem!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)!important}
+:is(#content,#v555Freeze) .workoutValue{font-size:.95rem!important;font-weight:600!important;line-height:1.4;color:var(--text)!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .workoutRow,html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable>.athGymPreviewExerciseV119{background:transparent!important}
+html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:var(--surface)!important}
+:is(#content,#v555Freeze) .staffDayCard h3{font-size:1.05rem!important;font-weight:800!important;margin:6px 0 4px!important}
+:is(#content,#v555Freeze) .card .card:has(input,select,textarea){background:transparent!important;border:1px solid var(--border)!important;border-radius:14px!important;box-shadow:none!important}
 /* V769 · Semana del remero como lista plana, botones secundarios unificados */
-#content .athleteWeekDaysV123{display:block!important;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
-#content .athleteWeekDayV123{grid-template-columns:48px minmax(0,1fr)!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;margin:-1px 0 0}
-#content .athleteWeekDayV123.is-today{border:0!important;border-top:1px solid var(--border)!important;box-shadow:none!important}
-#content .athleteWeekDateV123,#content .athleteWeekDayV123.is-today .athleteWeekDateV123{background:transparent!important;padding:12px 0 0!important;align-items:center;color:var(--text)!important}
-#content .athleteWeekDayV123.is-today .athleteWeekDateV123{color:var(--accent,#3d5af1)!important}
-#content .athleteWeekDateV123 b{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted)}
-#content .athleteWeekDayV123.is-today .athleteWeekDateV123 b{color:inherit}
-#content .athleteWeekDateV123 strong{font-size:1.2rem;font-weight:800}
-#content .athleteWeekDateV123 em{font-size:.62rem;font-style:normal;font-weight:800}
-#content .athleteWeekSessionV123,#content .athleteWeekSessionV123.is-done,#content .athleteWeekSessionV123.is-overdue{border:0!important;border-left:0!important;background:transparent!important;border-radius:0!important}
-#content .athleteWeekSessionV123+.athleteWeekSessionV123{border-top:1px solid var(--border)!important}
-#content .athleteWeekRestV123{min-height:0!important;padding:14px 12px!important;font-size:.85rem}
-#content .athleteWeekStatusV123{display:inline-flex;align-items:center;gap:6px;font-size:.75rem!important;font-weight:700!important;color:var(--text-muted)!important}
-#content .athleteWeekStatusV123::before{content:'';width:10px;height:10px;border-radius:50%;background:#8b95a7;display:inline-block}
-#content .athleteWeekSessionV123.is-done .athleteWeekStatusV123::before{background:#1f9d63}
-#content .athleteWeekSessionV123.is-overdue .athleteWeekStatusV123::before{background:#d64545}
-#content .athleteWeekTypeV123{font-size:.75rem;font-weight:700;padding:3px 10px;line-height:1.3}
-#content .athleteWeekSessionTitleV123{font-size:.95rem;font-weight:700}
-#content .athleteWeekProgressV123{border-radius:12px}
-:where(#content) button,:where(#content) .btn{border:0;border-radius:10px;background:var(--surface-2);font-weight:700}
+:is(#content,#v555Freeze) .athleteWeekDaysV123{display:block!important;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface)}
+:is(#content,#v555Freeze) .athleteWeekDayV123{grid-template-columns:48px minmax(0,1fr)!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;margin:-1px 0 0}
+:is(#content,#v555Freeze) .athleteWeekDayV123.is-today{border:0!important;border-top:1px solid var(--border)!important;box-shadow:none!important}
+:is(#content,#v555Freeze) .athleteWeekDateV123,:is(#content,#v555Freeze) .athleteWeekDayV123.is-today .athleteWeekDateV123{background:transparent!important;padding:12px 0 0!important;align-items:center;color:var(--text)!important}
+:is(#content,#v555Freeze) .athleteWeekDayV123.is-today .athleteWeekDateV123{color:var(--accent,#3d5af1)!important}
+:is(#content,#v555Freeze) .athleteWeekDateV123 b{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--text-muted)}
+:is(#content,#v555Freeze) .athleteWeekDayV123.is-today .athleteWeekDateV123 b{color:inherit}
+:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1.2rem;font-weight:800}
+:is(#content,#v555Freeze) .athleteWeekDateV123 em{font-size:.62rem;font-style:normal;font-weight:800}
+:is(#content,#v555Freeze) .athleteWeekSessionV123,:is(#content,#v555Freeze) .athleteWeekSessionV123.is-done,:is(#content,#v555Freeze) .athleteWeekSessionV123.is-overdue{border:0!important;border-left:0!important;background:transparent!important;border-radius:0!important}
+:is(#content,#v555Freeze) .athleteWeekSessionV123+.athleteWeekSessionV123{border-top:1px solid var(--border)!important}
+:is(#content,#v555Freeze) .athleteWeekRestV123{min-height:0!important;padding:14px 12px!important;font-size:.85rem}
+:is(#content,#v555Freeze) .athleteWeekStatusV123{display:inline-flex;align-items:center;gap:6px;font-size:.75rem!important;font-weight:700!important;color:var(--text-muted)!important}
+:is(#content,#v555Freeze) .athleteWeekStatusV123::before{content:'';width:10px;height:10px;border-radius:50%;background:#8b95a7;display:inline-block}
+:is(#content,#v555Freeze) .athleteWeekSessionV123.is-done .athleteWeekStatusV123::before{background:#1f9d63}
+:is(#content,#v555Freeze) .athleteWeekSessionV123.is-overdue .athleteWeekStatusV123::before{background:#d64545}
+:is(#content,#v555Freeze) .athleteWeekTypeV123{font-size:.75rem;font-weight:700;padding:3px 10px;line-height:1.3}
+:is(#content,#v555Freeze) .athleteWeekSessionTitleV123{font-size:.95rem;font-weight:700}
+:is(#content,#v555Freeze) .athleteWeekProgressV123{border-radius:12px}
+:where(#content,#v555Freeze) button,:where(#content,#v555Freeze) .btn{border:0;border-radius:10px;background:var(--surface-2);font-weight:700}
 /* V771 · se recupera la tipografía ligera de antes (Manrope 300/500): los pesos gruesos de V766-V769 se quitan */
-#content h2{font-size:var(--fs-xl)!important;font-weight:500!important}
-#content h3{font-size:var(--fs-lg)!important;font-weight:500!important}
-#content .staffDayCard h3{font-size:var(--fs-lg)!important;font-weight:500!important}
-#content .tag,#content .athleteWeekTypeV123{font-weight:500!important}
-#content .v766M .a,#content .athleteWeekSessionTitleV123{font-weight:500!important}
-#content .v766M .b{font-weight:300!important}
-#content .v766D b,#content .athleteWeekDateV123 strong{font-weight:500!important}
-#content .v766D span,#content .athleteWeekDateV123 b,#content .athleteWeekDateV123 em{font-weight:400!important}
-#content .v766S,#content .athleteWeekStatusV123{font-weight:500!important}
-#content .workoutLabel{font-weight:500!important}
-#content .workoutValue{font-weight:400!important}
-#content .staffActions button,:where(#content) button,:where(#content) .btn{font-weight:500!important}
+:is(#content,#v555Freeze) h2{font-size:var(--fs-xl)!important;font-weight:500!important}
+:is(#content,#v555Freeze) h3{font-size:var(--fs-lg)!important;font-weight:500!important}
+:is(#content,#v555Freeze) .staffDayCard h3{font-size:var(--fs-lg)!important;font-weight:500!important}
+:is(#content,#v555Freeze) .tag,:is(#content,#v555Freeze) .athleteWeekTypeV123{font-weight:500!important}
+:is(#content,#v555Freeze) .v766M .a,:is(#content,#v555Freeze) .athleteWeekSessionTitleV123{font-weight:500!important}
+:is(#content,#v555Freeze) .v766M .b{font-weight:300!important}
+:is(#content,#v555Freeze) .v766D b,:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-weight:500!important}
+:is(#content,#v555Freeze) .v766D span,:is(#content,#v555Freeze) .athleteWeekDateV123 b,:is(#content,#v555Freeze) .athleteWeekDateV123 em{font-weight:400!important}
+:is(#content,#v555Freeze) .v766S,:is(#content,#v555Freeze) .athleteWeekStatusV123{font-weight:500!important}
+:is(#content,#v555Freeze) .workoutLabel{font-weight:500!important}
+:is(#content,#v555Freeze) .workoutValue{font-weight:400!important}
+:is(#content,#v555Freeze) .staffActions button,:where(#content,#v555Freeze) button,:where(#content,#v555Freeze) .btn{font-weight:500!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3069,7 +3069,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="771";
+const APP_VERSION="773";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4199,6 +4199,8 @@ function render(){
       var oa=[el].concat([].slice.call(el.querySelectorAll('*'))),ca=[fr].concat([].slice.call(fr.querySelectorAll('*')));
       for(var k=1;k<oa.length&&k<ca.length;k++){var o=oa[k];if(o.closest('[id]')===el)continue;var cs=getComputedStyle(o),st=ca[k].style;for(var q=0;q<P.length;q++)st.setProperty(P[q],cs.getPropertyValue(P[q]))}
     }catch(e){}
+    // V772 · la copia congelada vive fuera de #content, así que mostraba el título (h2) que en la pantalla real está oculto: aparecía y desaparecía al cambiar de pestaña.
+    try{var h0=el.querySelector(':scope>.card>h2:first-child'),h1=fr.querySelector(':scope>.card>h2:first-child');if(h0&&h1&&getComputedStyle(h0).display==='none')h1.style.display='none'}catch(e){}
     fr.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id')});
     v555CopyCanvases(el,fr);
     // V561 · la copia congelada perdía lo elegido en los desplegables (p.ej. el equipo en Análisis
