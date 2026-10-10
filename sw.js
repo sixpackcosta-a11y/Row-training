@@ -5,7 +5,7 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
-const CACHE='rowtraining-app-v562';
+const CACHE='rowtraining-app-v564';
 const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
 self.addEventListener('install', event => {
@@ -20,12 +20,18 @@ function isAppPage(req,url){
   return req.mode==='navigate'||(url.origin===self.location.origin&&(url.pathname==='/'||url.pathname==='/index.html'));
 }
 
-async function appPage(req,url){
+async function appPage(req,url,event){
   const cache=await caches.open(CACHE);
   const net=fetch(req,{cache:'no-store'}).then(res=>{
     if(res&&res.ok)cache.put('/index.html',res.clone()).catch(()=>{});
     return res;
   });
+  // V801 · abrir al instante: si ya hay una copia guardada se enseña esa y la nueva se baja por detrás
+  // (la app comprueba sola si hay versión más nueva y recarga). Con ?appv=… se sigue esperando a la red.
+  if(!url.searchParams.has('appv')){
+    const hit=await cache.match('/index.html')||await cache.match('/');
+    if(hit){if(event)event.waitUntil(net.catch(()=>{}));else net.catch(()=>{});return hit}
+  }
   // tras avisar de una versión nueva (?appv=…) se espera más a la red para no abrir la vieja
   const timeout=new Promise(resolve=>setTimeout(()=>resolve(null),url.searchParams.has('appv')?15000:4000));
   try{
@@ -51,13 +57,27 @@ async function staleWhileRevalidate(req){
 
 self.addEventListener('fetch', event => {
   const req=event.request;
+  // V800 · compartir desde otra app (Android): guarda el archivo y abre la app en Mensajes
+  if(req.method==='POST'&&new URL(req.url).pathname==='/share-target'){
+    event.respondWith((async()=>{
+      try{
+        const fd=await req.formData(),cache=await caches.open('rowtraining-share');
+        for(const k of await cache.keys())await cache.delete(k);
+        const f=fd.get('file');
+        if(f&&f.size)await cache.put('/__share/file',new Response(f,{headers:{'Content-Type':f.type||'application/octet-stream','X-Name':encodeURIComponent(f.name||'archivo')}}));
+        await cache.put('/__share/meta',new Response(JSON.stringify({title:fd.get('title')||'',text:fd.get('text')||'',url:fd.get('url')||''}),{headers:{'Content-Type':'application/json'}}));
+      }catch(e){}
+      return Response.redirect('/?tab=mensajes&share=1',303);
+    })());
+    return;
+  }
   if(req.method!=='GET')return;
   let url;try{url=new URL(req.url)}catch(e){return}
   if(url.protocol!=='https:'&&url.protocol!=='http:')return;
   // datos y servicios: siempre directos a internet
   if(/supabase\.co$/.test(url.hostname))return;
   if(url.origin===self.location.origin&&(url.pathname.startsWith('/api/')||url.pathname==='/version.json'||url.pathname==='/sw.js'))return;
-  if(isAppPage(req,url)){event.respondWith(appPage(req,url));return}
+  if(isAppPage(req,url)){event.respondWith(appPage(req,url,event));return}
   const cdn=/(^|\.)cdn\.jsdelivr\.net$|(^|\.)unpkg\.com$|(^|\.)fonts\.googleapis\.com$|(^|\.)fonts\.gstatic\.com$/.test(url.hostname);
   const ownStatic=url.origin===self.location.origin&&(url.pathname.startsWith('/assets/')||url.pathname==='/manifest.json'||/\.(png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(url.pathname));
   if(cdn||ownStatic){event.respondWith(staleWhileRevalidate(req));return}

@@ -1444,6 +1444,23 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 /* V799 · menos aire entre buscador y EQUIPOS */
 :is(#content,#v555Freeze) #v300MsgInbox{margin-top:0!important}
 :is(#content,#v555Freeze) #v300MsgInbox>.v797Sec:first-child{padding-top:12px}
+
+/* V800 · Pegar y Compartir en… */
+.v800Paste{align-self:flex-end;display:block;margin:0 12px 6px auto;background:var(--surface);color:#2563eb;border:1px solid var(--border);border-radius:14px;padding:8px 14px;font-size:14px;font-weight:500;box-shadow:0 2px 8px rgba(15,27,45,.18)}
+.v800Paste.hidden{display:none}
+.v800Share{position:fixed;inset:0;z-index:10200;background:var(--bg,#e9eef5);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.v800ShHd{display:flex;align-items:center;gap:12px;background:#12233f;color:#fff;padding:14px 16px;flex:none}
+.v800ShHd b{font-weight:400;font-size:17px}
+.v800ShX{border:0;background:transparent;color:#fff;font-size:20px;padding:0 6px}
+.v800ShPv{display:flex;gap:12px;align-items:center;margin:12px 16px 0;background:var(--surface);border-radius:16px;padding:10px;flex:none}
+.v800ShPv img{width:64px;height:64px;border-radius:10px;object-fit:cover}
+.v800Doc{width:64px;height:64px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:28px}
+.v800ShPv b{font-weight:400;font-size:14px;word-break:break-all}
+.v800ShFind{margin:12px 16px 0;height:36px;border-radius:10px;box-sizing:border-box;padding:0 12px;width:calc(100% - 32px);font-size:14px}
+.v800ShList{margin:12px 16px 16px;background:var(--surface);border-radius:18px;padding:4px 14px;overflow-y:auto;flex:1}
+.v800ShRow{display:flex!important;align-items:center;gap:12px;width:100%;text-align:left;border:0!important;background:transparent!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;padding:7px 0!important;min-height:56px;font-size:15px;font-weight:300;color:var(--text)!important}
+.v800ShList .v791Av{flex:0 0 40px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+.v800ShList .v791Team{border-radius:12px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3057,7 +3074,7 @@ async function openNotificationsV104(){
    const u=el.dataset.url||'';panel.remove();await loadNotificationsV104();
    if(u.includes('tab=altas')&&hasAnyCoachTeam()){tab='equipo';draw();render();return}
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
-   if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;if(q2.get('rower')&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()}tab='mensajes';if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
+   if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;if(q2.get('rower')&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()}tab='mensajes';v801ChatParam(q2);if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
    if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;if(q2.get('mode')==='staff'&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}if(q2.get('et'))coachSelectedTeam=q2.get('et');renderIdentityHeaderV73()}tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||''};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
  }));
@@ -3279,7 +3296,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="799";
+const APP_VERSION="801";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3745,6 +3762,7 @@ async function startApp(){
       if(launchParams.get("team"))coachSelectedTeam=launchParams.get("team");
       if(launchParams.get("rower"))v300PendingMessageRower=launchParams.get("rower");
     }
+    v801ChatParam(launchParams);
   }
   if(launchParams.get("tab")==="mensajes"&&launchParams.get("rower")&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()} // V724 · mensaje de una remera: se abre en perfil de entrenador
   if(launchParams.get("mode")==="staff"&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}if(launchParams.get("et"))coachSelectedTeam=launchParams.get("et");renderIdentityHeaderV73()}
@@ -3762,6 +3780,7 @@ async function startApp(){
   draw();render();
   window._v547AppShown=true;setTimeout(()=>v547HideSplash(),2500);
   if(typeof v541Warm==='function')v541Warm(1500);
+  if(launchParams.get('share')==='1')setTimeout(v800ShareOpen,900); // V800 · lo compartido desde otra app (Android)
   setTimeout(()=>{if(tab!=='eventos')v543PrefetchEvents()},900);
   if(v300ResumeScrollY!=null)setTimeout(()=>v347ScrollTo(v300ResumeScrollY),150);
   if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);
@@ -8951,7 +8970,7 @@ async function v300SendChat(rowerId,teamCode,text){
       }else{
         // Lo envía un entrenador: avisar al remero, con "entrenador"/"entrenadora" según cómo se haya identificado en su perfil.
         const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
-        pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${coachLabel}`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes',type:'chat_message'});
+        pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${coachLabel}`,body:text.length>140?text.slice(0,140)+'…':text,url:'/?tab=mensajes&chat=coach',type:'chat_message'});
       }
     }catch(e){pushError=e?.message||String(e)}
   }
@@ -9116,14 +9135,14 @@ async function v631NotifyTeam(team,pbody,who){
     const members=await v617Members(team),me=String(currentUser.id);
     const others=members.map(x=>String(x.user_id)).filter(id=>id!==me);if(!others.length)return;
     const isStaff=currentMode==='staff'||members.some(x=>String(x.user_id)===me&&x.member_role==='staff');
-    await sendNotificationV110({audience:{mode:'users',user_ids:others,team_codes:[team]},title:`👥 ${who||currentUserProfile?.full_name||'Equipo'} · ${teamShort(team)}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:isStaff?'coach':'normal',muteKey:'team:'+team});
+    await sendNotificationV110({audience:{mode:'users',user_ids:others,team_codes:[team]},title:`👥 ${who||currentUserProfile?.full_name||'Equipo'} · ${teamShort(team)}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes&chat=team&team='+encodeURIComponent(team),type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:isStaff?'coach':'normal',muteKey:'team:'+team});
   }catch(e){}
 }
 async function v631Notify1to1(rowerId,team,pbody){
   try{
     if(currentUser.id===rowerId)await sendNotificationV110({audience:{mode:'workout_coaches',team_code:team,source_type:'chat_message',source_id:String(Date.now())},body:pbody});
     else{const lbl=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
-      await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[team]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${lbl}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',type:'chat_message'})}
+      await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[team]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${lbl}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes&chat=coach',type:'chat_message'})}
   }catch(e){}
 }
 async function v631ForwardSend(dest,m){
@@ -9583,6 +9602,29 @@ async function v583Chat(anchor,cfg){
     container.querySelector('.v583RecDel').onclick=()=>stopRec(true);
     container.querySelector('.v583RecSend').onclick=()=>stopRec(false);
   }
+  // V800 · botón «Pegar» sobre el teclado (imagen o texto del portapapeles) y recepción de lo compartido desde el móvil
+  if(cfg.attach&&navigator.clipboard&&navigator.clipboard.read){
+    const pb=document.createElement('button');pb.type='button';pb.className='v800Paste hidden';pb.textContent='📋 Pegar';
+    compose.parentNode.insertBefore(pb,compose);
+    input.addEventListener('focus',()=>pb.classList.remove('hidden'));
+    input.addEventListener('blur',()=>setTimeout(()=>pb.classList.add('hidden'),300));
+    pb.addEventListener('pointerdown',e=>e.preventDefault());
+    pb.onclick=async()=>{
+      try{
+        const its=await navigator.clipboard.read();
+        for(const it of its){
+          const ty=it.types.find(t=>/^image\//.test(t));
+          if(ty){let f=new File([await it.getType(ty)],'captura-'+Date.now()+'.'+(ty.split('/')[1]||'png').replace('jpeg','jpg'),{type:ty});try{f=await v583Compress(f)}catch(_){}
+            if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+            setPend(f);return}
+        }
+        const t=await navigator.clipboard.readText();
+        if(t){let ok=false;try{ok=document.execCommand('insertText',false,t)}catch(_){}if(!ok){input.textContent+=t}input.dispatchEvent(new Event('input'))}
+        else v300ShowToast('No hay nada que pegar')
+      }catch(e){v300ShowToast('Mantén pulsado en el cuadro de texto y elige Pegar')}
+    };
+  }
+  if(cfg.attach&&window._v800Share){const sh=window._v800Share;window._v800Share=null;setTimeout(()=>{try{if(sh.file)setPend(sh.file);if(sh.text){input.textContent=sh.text;input.dispatchEvent(new Event('input'))}}catch(_){}},350)}
   input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
   container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{input.focus();let ok=false;try{ok=document.execCommand('insertText',false,em)}catch(_){}if(!ok){input.textContent+=em}});
   if(cfg.attach){
@@ -9812,7 +9854,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
         try{
           if(currentUser.id===rowerId)out.pushResult=await sendNotificationV110({audience:{mode:'workout_coaches',team_code:teamCode,source_type:'chat_message',source_id:String(Date.now())},body:pbody});
           else{const coachLabel=currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador';
-            out.pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${coachLabel}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',type:'chat_message'})}
+            out.pushResult=await sendNotificationV110({audience:{mode:'users',user_ids:[rowerId],team_codes:[teamCode]},muteKey:'c:'+rowerId,title:`💬 Mensaje de ${coachLabel}`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes&chat=coach',type:'chat_message'})}
         }catch(e){out.pushError=e?.message||String(e)}
         toasts(out);
       })();
@@ -9892,7 +9934,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
       if(res.error)return{error:res.error};
       (async()=>{try{
         const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
-        await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=mensajes',muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
+        await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=eventos&eid='+sessionId+'&ek='+kind+'&et='+encodeURIComponent(teamCode),muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+(e?.message||e))}})();
       return{row:res.data};
     },
@@ -10114,8 +10156,8 @@ async function v617RenderTeamChat(container,team){
         const who=currentUserProfile?.full_name||(isStaff()?'Entrenador':'Una remera'),short=teamShort(team);
         const prev=pbody.length>140?pbody.slice(0,140)+'…':pbody;
         const jobs=[];
-        if(others.length)jobs.push(sendNotificationV110({audience:{mode:'users',user_ids:others,team_codes:[team]},title:`👥 ${who} · ${short}`,body:prev,url:'/?tab=mensajes',type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:isStaff()?'coach':'normal'}));
-        if(mentioned.length)jobs.push(sendNotificationV110({audience:{mode:'users',user_ids:mentioned,team_codes:[team]},title:`📣 ${who} te ha mencionado · ${short}`,body:prev,url:'/?tab=mensajes',type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:'mention'}));
+        if(others.length)jobs.push(sendNotificationV110({audience:{mode:'users',user_ids:others,team_codes:[team]},title:`👥 ${who} · ${short}`,body:prev,url:'/?tab=mensajes&chat=team&team='+encodeURIComponent(team),type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:isStaff()?'coach':'normal'}));
+        if(mentioned.length)jobs.push(sendNotificationV110({audience:{mode:'users',user_ids:mentioned,team_codes:[team]},title:`📣 ${who} te ha mencionado · ${short}`,body:prev,url:'/?tab=mensajes&chat=team&team='+encodeURIComponent(team),type:'team_chat_message',muteKey:'team:'+team,category:'team_chat',rsvpStatus:'mention'}));
         await Promise.all(jobs);
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar el aviso push.')}})();
       return{row:res.data};
@@ -10162,6 +10204,69 @@ async function v642RenderMsgTabs(container,swap){
     localStorage.setItem('rowtraining_v300_chat_seen_'+currentUser.id,new Date().toISOString());
     await v300RefreshUnreadMsgCount();draw();
   }finally{window._v642Sw=false}
+}
+async function v800ShareLoad(){
+  try{
+    const c=await caches.open('rowtraining-share');
+    const fr=await c.match('/__share/file'),mr=await c.match('/__share/meta');
+    let file=null;
+    if(fr){const b=await fr.blob();if(b.size){file=new File([b],decodeURIComponent(fr.headers.get('X-Name')||'archivo'),{type:b.type||'application/octet-stream'});try{file=await v583Compress(file)}catch(_){}}}
+    const meta=mr?await mr.json():{};
+    const text=[meta.title,meta.text,meta.url].filter(Boolean).join('\n');
+    for(const k of await c.keys())await c.delete(k);
+    if(!file&&!text)return null;
+    return {file,text};
+  }catch(e){return null}
+}
+async function v800ShareOpen(){
+  if(!currentUser)return;
+  try{history.replaceState(null,'',location.pathname+'?tab=mensajes')}catch(_){}
+  const sh=await v800ShareLoad();if(!sh){v300ShowToast('No se ha podido recibir lo compartido');return}
+  try{await v617LoadPref()}catch(_){}
+  const dests=[];
+  const staff=currentMode==='staff';
+  if(!staff){
+    dests.push({k:'coach',label:'Entrenador',av:v791Av('Entrenador','')});
+    if(currentTeamCode&&window._v617Mode!=='off')dests.push({k:'team',team:currentTeamCode,label:teamLabel(currentTeamCode),av:v791Av(teamShort(currentTeamCode),currentTeamCode,'',true)});
+  }else{
+    const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
+    v638MsgTeams().filter(t=>teams.includes(t)).forEach(t=>dests.push({k:'team',team:t,label:teamLabel(t),av:v791Av(teamShort(t),t,'',true)}));
+  }
+  const layer=document.createElement('div');layer.className='v800Share';
+  const prev=sh.file&&/^image\//.test(sh.file.type)?`<img src="${URL.createObjectURL(sh.file)}" alt="">`:`<span class="v800Doc">${sh.file?'📎':'💬'}</span>`;
+  layer.innerHTML=`<div class="v800ShHd"><button type="button" class="v800ShX" aria-label="Cerrar">✕</button><b>Compartir en…</b></div><div class="v800ShPv">${prev}<div><b>${sh.file?esc(sh.file.name):'Texto'}</b><div class="muted">${esc((sh.text||'').slice(0,90))}</div></div></div>${staff?'<input type="search" class="v800ShFind" placeholder="Buscar remero/a…" autocomplete="off">':''}<div class="v800ShList"></div>`;
+  document.body.appendChild(layer);
+  const list=layer.querySelector('.v800ShList');
+  const close=()=>layer.remove();
+  layer.querySelector('.v800ShX').onclick=close;
+  const go=d=>{
+    window._v800Share=sh;
+    if(d.k==='coach')window._v617Tab='coach';
+    else if(d.k==='team'){if(staff)window._v800PendingTeam=d.team;else window._v617Tab='team'}
+    else if(d.k==='rower'){v300PendingMessageRower=d.user;coachSelectedTeam=d.team;try{localStorage.setItem('rowtraining_msg_teams_'+currentUser.id,JSON.stringify([d.team]))}catch(_){}}
+    close();tab='mensajes';draw();render();
+  };
+  const paint=(q)=>{
+    const rows=dests.filter(d=>!q&&true).map((d,i)=>`<button type="button" class="v800ShRow" data-i="${dests.indexOf(d)}">${d.av}<span>${esc(d.label)}</span></button>`);
+    const rw=(window._v800Rowers||[]).filter(x=>q&&v631Norm(x.name).includes(q)).slice(0,30).map(x=>`<button type="button" class="v800ShRow" data-r="${esc(x.user)}">${v791Av(x.name,x.team,x.avatar)}<span>${esc(x.name)} <small class="muted">· ${esc(teamShort(x.team))}</small></span></button>`);
+    list.innerHTML=(q?'':'<div class="v797Sec">CHATS</div>')+rows.join('')+rw.join('')||'<p class="muted" style="padding:12px">Sin resultados</p>';
+  };
+  list.onclick=e=>{const b=e.target.closest('.v800ShRow');if(!b)return;if(b.dataset.r){const x=(window._v800Rowers||[]).find(z=>String(z.user)===b.dataset.r);if(x)go({k:'rower',user:x.user,team:x.team})}else go(dests[Number(b.dataset.i)])};
+  paint('');
+  if(staff){
+    const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
+    Promise.all(teams.map(async t=>({t,l:await staffAthletesForTeam(t)}))).then(r=>{window._v800Rowers=r.flatMap(({t,l})=>l.map(a=>({user:a.user_id,name:a.full_name||'Sin nombre',team:t,avatar:a.avatar_url||''})))}).catch(()=>{});
+    layer.querySelector('.v800ShFind').oninput=e=>paint(v631Norm(e.target.value.trim()));
+  }
+}
+// V801 · los avisos de chat llevan al chat concreto (?chat=team&team=… o ?chat=coach)
+function v801ChatParam(q){
+  const c=q.get('chat');if(!c)return;
+  if(c==='coach'&&currentMode!=='staff')window._v617Tab='coach';
+  else if(c==='team'){
+    if(currentMode==='staff'){const t=q.get('team');if(t){coachSelectedTeam=t;window._v800PendingTeam=t}}
+    else window._v617Tab='team';
+  }
 }
 function v791Av(name,team,url,isTeam){if(isTeam){const c=v502TeamColor(team);return `<span class="v791Av v791Team" style="background:${c.stripe}">${esc(String(teamShort(team)).split('-').map(x=>x[0]).join('').toUpperCase())}</span>`}const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;if(url)return `<img class="v791Av" src="${esc(url)}" alt="" loading="lazy" style="object-fit:cover">`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
 async function coachMessagesView(){
@@ -10251,6 +10356,7 @@ async function coachMessagesView(){
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
   await loadInbox();
+  if(window._v800PendingTeam){const t800=window._v800PendingTeam;window._v800PendingTeam=null;if(teams.includes(t800))openTeamThread(t800)}
   if(v300PendingMessageRower){
     const rowerId=v300PendingMessageRower;v300PendingMessageRower=null;
     const btn=box.querySelector(`.v300InboxRow[data-user="${rowerId}"]`);
