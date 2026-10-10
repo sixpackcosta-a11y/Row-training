@@ -1324,6 +1324,14 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1.25rem}
 :is(#content,#v555Freeze) .athleteWeekRestV123{font-size:16px}
 :is(#content,#v555Freeze) .athleteWeekDetailV123{font-size:15px}
+
+/* V781 · un solo tamaño de título de fila (Hoy + Semana) */
+:root{--fs-row:1rem}
+:is(#content,#v555Freeze) .athleteWeekSessionTitleV123,:is(#content,#v555Freeze) .staffDayCard>h3{font-size:var(--fs-row)!important;line-height:1.25;font-weight:400}
+:is(#content,#v555Freeze) .athleteWeekTypeV123,:is(#content,#v555Freeze) .staffDayCard>.tag{font-size:12px!important}
+:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1.1rem}
+:is(#content,#v555Freeze) .athleteWeekRestV123{font-size:var(--fs-row)}
+:is(#content,#v555Freeze) .athleteWeekSessionV123>summary{padding:8px 6px 8px 0!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3159,7 +3167,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="781";
+const APP_VERSION="782";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
