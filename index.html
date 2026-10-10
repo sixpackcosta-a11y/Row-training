@@ -1234,6 +1234,25 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .workoutLabel{font-weight:500!important}
 :is(#content,#v555Freeze) .workoutValue{font-weight:400!important}
 :is(#content,#v555Freeze) .staffActions button,:where(#content,#v555Freeze) button,:where(#content,#v555Freeze) .btn{font-weight:500!important}
+
+/* V774 · filtros compactos y Hoy en líneas */
+:is(#content,#v555Freeze) .v774Bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin:0 0 10px}
+:is(#content,#v555Freeze) .v774Bar label{display:block;margin:0;min-width:0}
+:is(#content,#v555Freeze) .v774Bar small{display:block;font-size:11px;color:var(--text-muted);margin:0 0 2px 2px}
+:is(#content,#v555Freeze) .v774Bar select{width:100%;min-height:0;height:38px;padding:0 28px 0 10px;font-size:14px;margin:0;border-radius:10px}
+:is(#content,#v555Freeze) .v774Bar button{height:38px;min-height:0;padding:0 10px;font-size:14px;margin:0;border-radius:10px;white-space:nowrap}
+:is(#content,#v555Freeze) .v142HistoryFilters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px}
+:is(#content,#v555Freeze) .v142HistoryFilter{display:block;font-size:11px;color:var(--text-muted);margin:0}
+:is(#content,#v555Freeze) .v142HistoryFilter select{width:100%;height:38px;min-height:0;padding:0 28px 0 10px;font-size:14px;margin:2px 0 0;border-radius:10px}
+:is(#content,#v555Freeze) .v774Hero{margin:0 0 6px}
+:is(#content,#v555Freeze) .staffDayCard{display:flex;flex-wrap:wrap;align-items:center;gap:0 10px;padding-top:12px}
+:is(#content,#v555Freeze) .staffDayCard>*{flex:0 0 100%;min-width:0}
+:is(#content,#v555Freeze) .staffDayCard>.tag{flex:0 0 auto;margin:0}
+:is(#content,#v555Freeze) .staffDayCard>h3{flex:1 1 0;margin:0;font-size:var(--fs-lg,17px);line-height:1.25}
+:is(#content,#v555Freeze) .staffDayCard .workoutReadable{margin-top:8px}
+:is(#content,#v555Freeze) .staffDayCard .workoutRow{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:baseline;padding:7px 10px}
+:is(#content,#v555Freeze) .staffDayCard .workoutLabel{font-size:11px;letter-spacing:.03em;white-space:nowrap}
+:is(#content,#v555Freeze) .staffDayCard .workoutValue{font-size:14px;margin:0}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3069,7 +3088,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="773";
+const APP_VERSION="775";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4269,7 +4288,7 @@ async function staffTodayView(){
   // V403 · se quita el botón "Ver semana" (la barra Hoy/Semana/Mes/Registro MAR de arriba ya
   // permite ir a Semana, era redundante) y el selector de Equipo sube justo debajo del título,
   // en su propia fila compacta, en vez de compartir hueco con un botón.
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">HOY · ${shortDateES(date)}</span><h2>${teamLabel(team)}</h2></div></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}${x.is_event?' · convocatoria':''}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
+  content.innerHTML=`<div class="card"><div class="v774Hero"><span class="tag">HOY · ${shortDateES(date)} · ${esc(TEAM_SHORT[team]||teamLabel(team))}</span></div><label style="display:flex;align-items:center;gap:8px;max-width:280px;margin-bottom:10px"><span style="flex-shrink:0">Equipo</span><select id="staffTodayTeam" style="flex:1;margin:0">${teams.map(t=>`<option value="${t}" ${t===team?'selected':''}>${teamLabel(t)}</option>`).join('')}</select></label>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name)}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${sessions.length?sessions.map(x=>`<div class="card staffDayCard ${x.session_type==='MAR'?'mar':''}"><span class="tag">${x.session_type}${x.is_event?' · convocatoria':''}</span><h3>${esc(x.title)}</h3>${trainingContentHtml(x.content)}<div class="staffActions">${x.session_type==='MAR'?`<button class="staffSeaBtn primary" data-id="${x.id}">Registrar resultado MAR</button>`:''}${canEdit?`<button class="staffEditToday" data-date="${date}" data-id="${x.id}">Editar</button>`:''}</div></div>`).join(''):'<div class="info">No hay sesión programada hoy.</div>'}</div>`;
   try{v672TodayPanel()}catch(e){console.warn('v672',e)}
   staffTodayTeam.onchange=()=>{coachSelectedTeam=staffTodayTeam.value;staffTodayView()};document.querySelectorAll('.staffSeaBtn').forEach(b=>b.onclick=()=>staffSeaResultForm(Number(b.dataset.id),team,date,staffTodayView));document.querySelectorAll('.staffEditToday').forEach(b=>b.onclick=()=>openCoachPlanner(team,date,Number(b.dataset.id)));
 }
@@ -10405,7 +10424,7 @@ async function history(opts={}){
   const allHistEntries=[...c2Entries,...workoutEntries].sort((a,b)=>b.sortdate.localeCompare(a.sortdate));
 
   const v300ChartHtml=`<div class="card"><h3>${v311T('evolucion_ritmo')}</h3>${v300EvolutionCardHtml(v300BuildPaceRows(displayC2.filter(x=>!v161Concept2EffectiveHidden(x)),ergo,workouts),v300TitleMapFromSessions(selfPlansDisplay),selfMetric)}</div>`;
-  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2>`+pendingSelfBanner+`<label>${v311T('mostrar_label')} <select id="v147SelfHistoryFilter"><option value="active">${v311T('activos')}</option><option value="pending">${v311T('pendientes_asignar_opt')}</option><option value="additional">Adicional</option><option value="hidden">${v311T('ocultos')}</option><option value="all">${v311T('todos_opt')}</option></select></label> <label>${v311T('tipo_label')} <select id="v300TypeFilterSelf"><option value="all">${v311T('todos_opt')}</option><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label> <label>Ordenar <select id="v368SortDir"><option value="desc">Más recientes primero</option><option value="asc">Más antiguos primero</option></select></label> <button id="v290AddAdditional" type="button">+ Entrenamiento adicional</button>`+
+  content.innerHTML=`<div class="card"><h2>${v311T('historial_titulo')}</h2>`+pendingSelfBanner+`<div class="v774Bar"><label><small>${v311T('mostrar_label')}</small><select id="v147SelfHistoryFilter"><option value="active">${v311T('activos')}</option><option value="pending">${v311T('pendientes_asignar_opt')}</option><option value="additional">Adicional</option><option value="hidden">${v311T('ocultos')}</option><option value="all">${v311T('todos_opt')}</option></select></label><label><small>${v311T('tipo_label')}</small><select id="v300TypeFilterSelf"><option value="all">${v311T('todos_opt')}</option><option value="gym">GYM</option><option value="ergo">ERGO</option></select></label><label><small>Ordenar</small><select id="v368SortDir"><option value="desc">Más recientes primero</option><option value="asc">Más antiguos primero</option></select></label> <button id="v290AddAdditional" type="button">+ Adicional</button></div>`+
     v300ChartHtml+
     `<div id="v368HistoryList">${allHistEntries.length?allHistEntries.map(e=>e.html).join(""):`<p class="muted">${v311T('sin_registros')}</p>`}</div>`+
   '</div>';
@@ -14785,7 +14804,7 @@ async function todayView(){
   const pending=pendErr?null:v225PendingPlansForAthlete(currentUser.id,currentTeamCode,pendingSessions.data||[],ww.data||[],c2.data||[],date);
   const [displaySessions,displayPending,teamLabelDisplay]=await Promise.all([v311TranslateSessions(sessions),v311TranslatePending(pending),v311TranslateContent(teamLabel(currentTeamCode))]);
   if(tab!=='hoy'||currentMode!=='athlete')return;
-  content.innerHTML=`<div class="card"><div class="todayHero"><div><span class="tag">${v311T('hoy_tag')} · ${shortDateES(date)}</span><h2>${esc(teamLabelDisplay)}</h2></div></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
+  content.innerHTML=`<div class="card"><div class="v774Hero"><span class="tag">${v311T('hoy_tag')} · ${shortDateES(date)} · ${esc(TEAM_SHORT[currentTeamCode]||teamLabelDisplay)}</span></div>${comps.map(c=>`<div class="card raceCard"><b>🏁 ${esc(c.name||'Competición')}</b></div>`).join('')}${clubEvs.map(c=>`<div class="card raceCard"><b>📅 ${esc(c.title)}</b>${c.event_time?` · ${esc(c.event_time)}`:''}</div>`).join('')}${displaySessions.length?displaySessions.map(athleteDayCardV113).join(''):`<div class="info">${v311T('no_entrenamiento_hoy')}</div>`}<section class="v225PendingSection v225RowerPending"><div class="v225PendingHeading"><h3>${v311T('pendientes_titulo')}</h3><small>${v311T('pendientes_sub')}</small></div><div id="v225RowerPendingList">${displayPending===null?`<div class="muted">${v311T('pendientes_error')}</div>`:v225PendingHtml(displayPending,'rower')}</div></section></div>`;
   const pendingAsSessionsV308=(displayPending||[]).map(x=>({id:x.id,title:x.title,content:x.content,session_date:x.date,session_type:x.type==='ERGO'?'ERG':'GYM'}));
   bindAthletePlannedActionsV113(content,[...sessions,...pendingAsSessionsV308],todayView);
   sessions.filter(s=>s.session_type==='ERG').forEach(s=>v306InjectErgoHelpers(s));
