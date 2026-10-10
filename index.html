@@ -1429,6 +1429,12 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 :is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow) div>div{font-size:13px!important;margin-top:1px!important;line-height:1.25}
 :is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow)>.v791Tm{flex:0 0 auto!important;align-self:center!important;padding:0!important;font-size:11px!important;display:block!important;text-align:right;line-height:1.2;white-space:nowrap}
 :is(#content,#v555Freeze) .v791Dot{width:10px;height:10px;margin-top:3px}
+
+/* V795 · fotos en la lista y chats de equipo diferenciados */
+:is(#content,#v555Freeze) img.v791Av{display:block;background:var(--surface-2)}
+:is(#content,#v555Freeze) .v791Team{border-radius:12px!important;font-size:20px}
+:is(#content,#v555Freeze) .v617TeamRow{background:var(--surface-2)!important;border-radius:12px!important;margin:0 0 4px!important;padding:7px 8px!important;border-bottom:0!important}
+:is(#content,#v555Freeze) .v617TeamRow b{font-weight:500!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3264,7 +3270,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="794";
+const APP_VERSION="795";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10148,7 +10154,7 @@ async function v642RenderMsgTabs(container,swap){
     await v300RefreshUnreadMsgCount();draw();
   }finally{window._v642Sw=false}
 }
-function v791Av(name,team){const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
+function v791Av(name,team,url,isTeam){if(isTeam){const c=v502TeamColor(team);return `<span class="v791Av v791Team" style="background:${c.stripe}">👥</span>`}const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;if(url)return `<img class="v791Av" src="${esc(url)}" alt="" loading="lazy" style="object-fit:cover">`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
 async function coachMessagesView(){
   const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
   // V401 · desde que "Más" dejó de mostrar la campana de notificaciones para el entrenador (se
@@ -10186,8 +10192,8 @@ async function coachMessagesView(){
     let msgsData=msgsRes.data||[],hasRead=!msgsRes.error;
     if(msgsRes.error){const m2=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400);msgsData=m2.data||[]}
     let tmsgs=[];try{const tq=await sb.from('team_chat_messages').select('team_code,body,sender_id,created_at,att_type').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(200);if(!tq.error)tmsgs=tq.data||[]}catch(e){}
-    const teamHtml=activeTeams.filter(t=>v638MsgTeams().includes(t)).map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--v708TeamUn)':'var(--v708Team)'};color:var(--text);gap:10px">${v791Av(teamShort(t),t)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted v791Tm" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${unread?'<br><span class="v791Dot"></span>':''}</small></button>`}).join('');
-    const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
+    const teamHtml=activeTeams.filter(t=>v638MsgTeams().includes(t)).map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--v708TeamUn)':'var(--v708Team)'};color:var(--text);gap:10px">${v791Av(teamShort(t),t,'',true)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted v791Tm" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${unread?'<br><span class="v791Dot"></span>':''}</small></button>`}).join('');
+    const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,avatar_url:a.avatar_url||'',team})));
     const lastByRower=new Map();msgsData.forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
     const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
       if(x.last&&y.last)return new Date(y.last.created_at)-new Date(x.last.created_at);
@@ -10201,7 +10207,7 @@ async function coachMessagesView(){
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
       return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
-        ${v791Av(a.full_name,a.team)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}${esc(a.full_name||'Sin nombre')}</b>${activeTeams.length>1?` <small class="muted">· ${esc(teamShort(a.team))}</small>`:''}<div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
+        ${v791Av(a.full_name,a.team,a.avatar_url)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}${esc(a.full_name||'Sin nombre')}</b>${activeTeams.length>1?` <small class="muted">· ${esc(teamShort(a.team))}</small>`:''}<div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
         <small class="muted v791Tm" style="flex-shrink:0">${time}${unread?'<br><span class="v791Dot"></span>':''}</small>
       </button>`;
     }).join('');
