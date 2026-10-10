@@ -3174,7 +3174,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="784";
+const APP_VERSION="785";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4528,7 +4528,7 @@ async function v672TodayPanel(){
     else if(e._in<V674_BOAT.barca)head=`🔴 Faltan <b>${V674_BOAT.barca-e._in}</b> para poder salir en barca (${V674_BOAT.llaut-e._in} para llaut)`;
     else head=`🟠 Se puede salir en barca · falta <b>${V674_BOAT.llaut-e._in}</b> para llaut`;
     items.push({ic:'👥',boat:e,tx:`${head} · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}) · van ${e._in}${cupo}${e._pend?` · ${e._pend} sin responder`:''}</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})});
-  all.filter(e=>e._pend>0).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))).forEach(e=>
+  all.filter(e=>e._pend>0&&!boatEv.includes(e)).sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date))).forEach(e=>
     items.push({ic:'❓',tx:`<b>${e._pend}</b> sin responder · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())}));
   const clashSeen=new Set();
   all.forEach(e=>{if(clashSeen.has(e.kind+e.id+e._viewTeam))return;if(v669Overlaps(e,all)){clashSeen.add(e.kind+e.id+e._viewTeam);
