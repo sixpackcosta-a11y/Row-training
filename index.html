@@ -1339,6 +1339,20 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 /* V783 · opción A: título de fila ligero 300 / 16px en TODAS las pantallas */
 :is(#content,#v555Freeze) :is(.v766M .a,.athleteWeekSessionTitleV123,.staffDayCard>h3,.seaSessionHead>div:first-child .big,.v766Sum .a,.v766Head .a){font-size:var(--fs-row,1rem)!important;font-weight:300!important;line-height:1.25}
 :is(#content,#v555Freeze) .v766M .b{font-size:.82rem;font-weight:300}
+
+/* V786 · Hoy del entrenador en pestañas + Semana del remero con menos hueco lateral */
+:is(#content,#v555Freeze) .v786Seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2,#eef1f6);border-radius:12px;padding:3px;margin:0 0 10px}
+:is(#content,#v555Freeze) .v786Seg button{border:0;background:transparent;border-radius:10px;padding:8px 0;font-size:14px;font-weight:400;color:var(--text);box-shadow:none;height:auto;min-height:0}
+:is(#content,#v555Freeze) .v786Seg button.on{background:var(--surface,#fff);box-shadow:0 1px 2px rgba(15,27,45,.14)}
+:is(#content,#v555Freeze) .v786Seg i{font-style:normal;background:#d64545;color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;margin-left:6px}
+:is(#content,#v555Freeze) .v672Panel:not(.v786Ready),:is(#content,#v555Freeze) .v672Panel[hidden],:is(#content,#v555Freeze) .card[hidden]{display:none!important}
+:is(#content,#v555Freeze) .v672Panel .v672H{display:none}
+:is(#content,#v555Freeze) .athleteWeekV123{padding:12px 8px!important}
+:is(#content,#v555Freeze) .athleteWeekDayV123{grid-template-columns:34px minmax(0,1fr)!important;gap:6px}
+:is(#content,#v555Freeze) .athleteWeekSessionV123>summary{grid-template-columns:40px minmax(0,1fr) 10px 14px!important;gap:6px!important;padding-right:2px!important}
+:is(#content,#v555Freeze) .athleteWeekTypeV123{min-width:0!important;width:100%}
+:is(#content,#v555Freeze) .athleteWeekDateV123 b{font-size:.62rem}
+:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1rem}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3174,7 +3188,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="785";
+const APP_VERSION="786";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4487,6 +4501,20 @@ function v678Form(r,cats){
 // V672 · "Qué me falta" · tarjeta al inicio de Hoy (entrenador): altas, respuestas pendientes de los próximos 7 días,
 // chats sin contestar y solapes de horario entre equipos. Se pinta sin bloquear la pantalla.
 const V674_BOAT={barca:7,llaut:8}; // mínimo de remeras para salir según el barco; cámbialo aquí si cambian las cifras
+// V786 · Hoy del entrenador en dos pestañas: «Sesión» y «Qué me falta N» (opción B del lienzo).
+window.v786HoyTab=window.v786HoyTab||'sesion';
+function v786Seg(box,n){
+  if(!box||!box.isConnected)return;
+  content.querySelectorAll(':scope > .v786Seg').forEach(x=>x.remove());
+  const sess=content.querySelector(':scope > .card:not(.v672Panel)');
+  const seg=document.createElement('div');seg.className='v786Seg';
+  seg.innerHTML=`<button type="button" data-t="sesion">Sesión</button><button type="button" data-t="falta">Qué me falta${n?`<i>${n}</i>`:''}</button>`;
+  content.insertBefore(seg,box);
+  box.classList.add('v786Ready');
+  const apply=()=>{const t=window.v786HoyTab;seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));box.hidden=t!=='falta';if(sess)sess.hidden=t!=='sesion'};
+  seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{window.v786HoyTab=b.dataset.t;apply()});
+  apply();
+}
 async function v672TodayPanel(){
   const first=content.firstElementChild;if(!first||!first.classList.contains('card'))return;
   if(!hasAnyCoachTeam())return;
@@ -4534,9 +4562,10 @@ async function v672TodayPanel(){
   all.forEach(e=>{if(clashSeen.has(e.kind+e.id+e._viewTeam))return;if(v669Overlaps(e,all)){clashSeen.add(e.kind+e.id+e._viewTeam);
     items.push({ic:'⚠️',tx:`Se pisan en horario · ${esc(teamShort(e._viewTeam))} · ${esc(e.event_title)} <span class="muted">(${esc(dayName(e.event_date))}${e.event_time?' '+esc(e.event_time):''})</span>`,go:()=>v503OpenEventDetail(e._viewTeam,e.kind,e.id,true,()=>v672TodayPanelRefresh())})}});
   if(!box.isConnected)return;
-  if(!items.length){box.innerHTML='<h3 class="v672H">📋 Qué me falta</h3><p style="margin:6px 0 0">✅ Todo al día. Nada pendiente.</p>';return}
+  if(!items.length){box.innerHTML='<h3 class="v672H">📋 Qué me falta</h3><p style="margin:6px 0 0">✅ Todo al día. Nada pendiente.</p>';v786Seg(box,0);return}
   const shown=items.slice(0,8);
   box.innerHTML=`<h3 class="v672H">📋 Qué me falta <span class="v672N">${items.length}</span></h3>`+shown.map((it,i)=>`<button type="button" class="v672Row" data-i="${i}"><span class="v672Ic">${it.ic}</span><span class="v672Tx">${it.tx}</span><span class="v672Ch">›</span></button>${it.boat?`<div class="v674Boats" data-i="${i}"><span class="muted">Se sale en:</span><button type="button" data-b="barca" class="${it.boat.boat_type==='barca'?'on':''}">Barca</button><button type="button" data-b="llaut" class="${it.boat.boat_type==='llaut'?'on':''}">Llaut</button>${it.boat.boat_type?'<button type="button" data-b="">Sin decidir</button>':''}</div>`:''}`).join('')+(items.length>shown.length?`<p class="muted" style="margin:6px 0 0">… y ${items.length-shown.length} más</p>`:'');
+  v786Seg(box,items.length);
   box.querySelectorAll('.v674Boats button').forEach(b=>b.onclick=async ev=>{
     ev.stopPropagation();const e=shown[Number(b.parentNode.dataset.i)].boat,v=b.dataset.b||null;
     b.disabled=true;
