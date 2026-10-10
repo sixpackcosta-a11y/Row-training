@@ -1298,6 +1298,32 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .athleteWeekRestV123{padding:9px 0!important}
 :is(#content,#v555Freeze) :is(.v766Head,.v766Sum,.v766Row){align-items:start!important}
 :is(#content,#v555Freeze) .v766S{align-self:start!important}
+
+/* V779 · Análisis MAR (entrenador): filas planas */
+:is(#content,#v555Freeze) .seaMonthGroup{display:block;gap:0}
+:is(#content,#v555Freeze) .seaMonthGroup>h3{margin:12px 0 4px;font-size:var(--fs-lg,17px);font-weight:500}
+:is(#content,#v555Freeze) .seaSessionPick{border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;outline:0!important;padding:9px 0!important;background:transparent!important;box-shadow:none!important}
+:is(#content,#v555Freeze) .seaSessionPick.selectedSea{background:var(--surface-2)!important}
+:is(#content,#v555Freeze) .seaSessionHead{display:flex!important;justify-content:space-between;align-items:flex-start;flex-wrap:nowrap;gap:8px}
+:is(#content,#v555Freeze) .seaSessionHead>div:first-child{display:flex;gap:10px;align-items:baseline;min-width:0;flex:1}
+:is(#content,#v555Freeze) .seaSessionHead>div:first-child .big{margin:0!important;font-size:15px!important;font-weight:500}
+:is(#content,#v555Freeze) .seaSessionHead>div:first-child b{font-size:13px;font-weight:500;color:var(--text-muted);white-space:nowrap}
+:is(#content,#v555Freeze) .seaSessionHead>div:last-child{display:flex;gap:4px;flex-wrap:nowrap;flex:0 0 auto}
+:is(#content,#v555Freeze) .seaSessionHead .tag{font-size:11px;padding:2px 7px;white-space:nowrap}
+:is(#content,#v555Freeze) .seaExerciseChips{gap:2px;margin:4px 0 6px}
+:is(#content,#v555Freeze) .seaExerciseChip{background:none!important;border:0!important;border-radius:0!important;padding:0 0 0 0!important;font-size:13px;color:var(--text-muted)!important;line-height:1.35}
+:is(#content,#v555Freeze) .seaSessionActions{gap:6px;margin-top:6px}
+:is(#content,#v555Freeze) .seaSessionActions button{flex:0 0 auto!important;height:34px;min-height:0;padding:0 12px;font-size:13px;border-radius:10px}
+:is(#content,#v555Freeze) .seaSessionActions .viewSeaResults{flex-basis:auto!important}
+
+/* V780 · Semana con la misma escala tipográfica que Hoy */
+:is(#content,#v555Freeze) .athleteWeekSessionTitleV123{font-size:var(--fs-lg,17px)!important;line-height:1.25;font-weight:400}
+:is(#content,#v555Freeze) .athleteWeekTypeV123{font-size:12px!important;min-width:46px;padding:3px 8px!important}
+:is(#content,#v555Freeze) .athleteWeekSessionV123>summary{grid-template-columns:50px minmax(0,1fr) 12px 16px}
+:is(#content,#v555Freeze) .athleteWeekDateV123 b{font-size:.7rem}
+:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1.25rem}
+:is(#content,#v555Freeze) .athleteWeekRestV123{font-size:16px}
+:is(#content,#v555Freeze) .athleteWeekDetailV123{font-size:15px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3133,7 +3159,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="779";
+const APP_VERSION="781";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
