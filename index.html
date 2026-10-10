@@ -1385,6 +1385,34 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) :is(select,input){-webkit-appearance:none;appearance:none;display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;inline-size:100%!important;height:44px!important;margin:0!important;padding:0 12px!important;text-align:left!important;line-height:44px}
 :is(#content,#v555Freeze) #monthPick::-webkit-date-and-time-value{text-align:left;min-width:0;margin:0}
 :is(#content,#v555Freeze) #monthPick::-webkit-calendar-picker-indicator{display:none}
+
+/* V791 · Mensajes estilo WhatsApp (solo apariencia) */
+:root{--v791Bg:#e6ebf2;--v791Me:#d7ecff;--v791MeTx:#0f1b2d;--v791Ot:#fff;--v791Hd:#12233f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--v791Bg:#0b141a;--v791Me:#1f4a7a;--v791MeTx:#fff;--v791Ot:#1c2833}}
+:root[data-theme="dark"]{--v791Bg:#0b141a;--v791Me:#1f4a7a;--v791MeTx:#fff;--v791Ot:#1c2833}
+.v583Full{background:var(--v791Bg)!important}
+.v583Full .v583Head{background:var(--v791Hd);color:#fff;margin:-6px -4px 6px!important;padding:10px 12px!important;border:0!important}
+.v583Full .v583Head b{color:#fff;font-weight:400!important;font-size:16px!important}
+.v583Full .v583Back{color:#fff!important;font-size:20px!important;padding:0 6px 0 0!important}
+.v583Msg{font-size:15px!important;line-height:1.3;padding:7px 10px 5px!important;border-radius:14px!important;box-shadow:0 1px 1px rgba(15,27,45,.12)}
+.v583Msg[style*="background:var(--surface-2)"]{background:var(--v791Ot)!important;border-top-left-radius:4px!important;border-bottom-left-radius:14px!important}
+.v583Msg[style*="background:#2563eb"]{background:var(--v791Me)!important;color:var(--v791MeTx)!important;border-top-right-radius:4px!important;border-bottom-right-radius:14px!important}
+.v583Msg>div:last-child{font-size:10px!important;margin-top:1px!important;color:#6b778a}
+.v583Row>small.muted{color:#0f8b8d!important;font-weight:500;font-size:12px}
+.v583Row{margin:3px 0!important}
+.v583Day span{background:var(--v791Ot)!important;box-shadow:0 1px 1px rgba(15,27,45,.1)}
+.v300InboxRow,.v617TeamRow{border:0!important;border-radius:0!important;margin:0!important;background:transparent!important;padding:10px 4px!important;border-bottom:1px solid var(--border)!important;gap:12px!important}
+.v791Av{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:500}
+.v300InboxRow b,.v617TeamRow b{font-size:16px;font-weight:400}
+.v791Un{display:none}
+.v791Tm{text-align:right;font-size:12px!important;align-self:flex-start;padding-top:4px}
+.v791Dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#1f9d63;margin-top:6px}
+.v300InboxRow:has(.v791Un) .v791Tm{color:#1f9d63;font-weight:500}
+.v300InboxRow:has(.v791Un) b,.v617TeamRow:has(.v791Un) b{font-weight:500}
+
+/* V792 · enlaces .btn.primary (Biblioteca ERGO) con el mismo aspecto que los botones primarios */
+:is(#content,#v555Freeze) a.btn.primary,:is(#content,#v555Freeze) .btn.primary{background:#07162f!important;color:#fff!important;border-color:#07162f!important;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6fd1!important;border-color:#2f6fd1!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3220,7 +3248,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="790";
+const APP_VERSION="792";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10104,6 +10132,7 @@ async function v642RenderMsgTabs(container,swap){
     await v300RefreshUnreadMsgCount();draw();
   }finally{window._v642Sw=false}
 }
+function v791Av(name,team){const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
 async function coachMessagesView(){
   const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
   // V401 · desde que "Más" dejó de mostrar la campana de notificaciones para el entrenador (se
@@ -10141,7 +10170,7 @@ async function coachMessagesView(){
     let msgsData=msgsRes.data||[],hasRead=!msgsRes.error;
     if(msgsRes.error){const m2=await sb.from('chat_messages').select('rower_id,body,sender_id,created_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400);msgsData=m2.data||[]}
     let tmsgs=[];try{const tq=await sb.from('team_chat_messages').select('team_code,body,sender_id,created_at,att_type').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(200);if(!tq.error)tmsgs=tq.data||[]}catch(e){}
-    const teamHtml=activeTeams.filter(t=>v638MsgTeams().includes(t)).map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--v708TeamUn)':'var(--v708Team)'};color:var(--text);gap:10px"><div style="min-width:0"><b>${unread?'🔵 ':''}👥 Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</small></button>`}).join('');
+    const teamHtml=activeTeams.filter(t=>v638MsgTeams().includes(t)).map(t=>{const last=tmsgs.find(m=>m.team_code===t),seenK=v617SeenKey(t),sv=localStorage.getItem(seenK),unread=!!last&&last.sender_id!==currentUser.id&&!!sv&&new Date(last.created_at)>new Date(sv);const prev=last?(last.sender_id===currentUser.id?'Tú: ':'')+esc(last.body?(last.body.length>60?last.body.slice(0,60)+'…':last.body):(/^audio\//.test(last.att_type||'')?'🎤 Audio':'📎 Adjunto')):'<span class="muted">Sin mensajes todavía</span>';return `<button type="button" class="v617TeamRow" data-team="${esc(t)}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--v708TeamUn)':'var(--v708Team)'};color:var(--text);gap:10px">${v791Av(teamShort(t),t)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}Chat del equipo ${esc(teamShort(t))}</b><div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prev}</div></div><small class="muted v791Tm" style="flex-shrink:0">${last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${unread?'<br><span class="v791Dot"></span>':''}</small></button>`}).join('');
     const roster=[];rosterByTeam.forEach(({team,list})=>list.forEach(a=>roster.push({user_id:a.user_id,full_name:a.full_name,team})));
     const lastByRower=new Map();msgsData.forEach(m=>{if(!lastByRower.has(m.rower_id))lastByRower.set(m.rower_id,m)});
     const rows=roster.map(a=>({a,last:lastByRower.get(a.user_id)||null})).sort((x,y)=>{
@@ -10156,8 +10185,8 @@ async function coachMessagesView(){
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
       const time=last?new Date(last.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
       return `<button type="button" class="v300InboxRow" data-user="${a.user_id}" data-team="${esc(a.team)}" data-name="${esc(a.full_name||'Sin nombre')}" style="display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;background:${unread?'var(--accent-tint)':'var(--surface)'};color:var(--text);gap:10px">
-        <div style="min-width:0"><b>${unread?'🔵 ':''}${esc(a.full_name||'Sin nombre')}</b>${activeTeams.length>1?` <small class="muted">· ${esc(teamShort(a.team))}</small>`:''}<div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
-        <small class="muted" style="flex-shrink:0">${time}</small>
+        ${v791Av(a.full_name,a.team)}<div style="min-width:0;flex:1"><b>${unread?'<span class="v791Un">🔵 </span>':''}${esc(a.full_name||'Sin nombre')}</b>${activeTeams.length>1?` <small class="muted">· ${esc(teamShort(a.team))}</small>`:''}<div style="font-size:13px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${previewText}</div></div>
+        <small class="muted v791Tm" style="flex-shrink:0">${time}${unread?'<br><span class="v791Dot"></span>':''}</small>
       </button>`;
     }).join('');
     box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
