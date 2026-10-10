@@ -1253,6 +1253,16 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .staffDayCard .workoutRow{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:baseline;padding:7px 10px}
 :is(#content,#v555Freeze) .staffDayCard .workoutLabel{font-size:11px;letter-spacing:.03em;white-space:nowrap}
 :is(#content,#v555Freeze) .staffDayCard .workoutValue{font-size:14px;margin:0}
+
+/* V776 · detalle del día en Mes = popup con el mismo formato plano */
+.modalCard.v776Day{padding:16px!important}
+.v776Day .modalTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+.v776Day .v776T{margin:0 0 8px;font-size:var(--fs-lg,17px);font-weight:500;line-height:1.25}
+.v776Day .workoutReadable{border:0!important;background:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0}
+.v776Day .workoutRow{display:grid;grid-template-columns:104px 1fr;gap:8px;align-items:baseline;padding:8px 0!important;border:0!important;border-top:1px solid var(--border)!important;background:none!important;border-radius:0!important;box-shadow:none!important}
+.v776Day .workoutLabel{font-size:11px;letter-spacing:.03em;color:var(--text-muted)}
+.v776Day .workoutValue{font-size:14px;margin:0}
+.v776Day .staffActions{margin-top:12px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3088,7 +3098,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="775";
+const APP_VERSION="776";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -11213,6 +11223,16 @@ function athleteMonthDetailHtmlV98(x){
  const body=String(x.content||'').trim()?trainingContentHtml(x.content):`<div class="info">${v311T('sin_prescripcion')}</div>`;
  return `<div class="detailCard"><button class="athMonthClose" id="athMonthCloseV98">${v311T('cerrar')}</button><div class="tag">${esc(x.session_type||v311T('entrenamiento_generico'))}</div>${isTest?'<div class="tag" style="margin-left:6px">🧪 TEST</div>':''}<h3>${esc(x.title||x.session_type||v311T('entrenamiento_generico'))}</h3><div class="muted">${shortDateES(x.session_date)}</div>${body}<div class="staffActions">${x.session_type==='GYM'?`<button class="athleteLogGymV113 primary" data-id="${x.id}">${v311T('registrar_gym')}</button>`:''}${x.session_type==='ERG'?`<button class="athleteOpenErgoV113 primary" data-id="${x.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${x.id}">${v311T('registrar_manual')}</button>`:''}</div></div>`;
 }
+function v776OpenDay(x,orig,refresh){
+ const isTest=/test/i.test(String(x.title||'')),t=String(x.session_type||v311T('entrenamiento_generico')),
+ body=String(x.content||'').trim()?trainingContentHtml(x.content):`<div class="info">${v311T('sin_prescripcion')}</div>`;
+ const d=document.createElement('div');d.className='modalBack';
+ d.innerHTML=`<div class="modalCard v776Day"><div class="modalTitle"><div class="v774Hero" style="margin:0"><span class="tag">${isTest?'🧪 TEST':esc(t)} · ${shortDateES(x.session_date)}</span></div><button type="button" class="v776Close">${v311T('cerrar')}</button></div><h3 class="v776T">${esc(x.title||t)}</h3>${body}<div class="staffActions">${x.session_type==='GYM'?`<button class="athleteLogGymV113 primary" data-id="${x.id}">${v311T('registrar_gym')}</button>`:''}${x.session_type==='ERG'?`<button class="athleteOpenErgoV113 primary" data-id="${x.id}">${v311T('abrir_ergdata')}</button><button class="athleteManualErgoV113" data-id="${x.id}">${v311T('registrar_manual')}</button>`:''}</div></div>`;
+ document.body.appendChild(d);
+ const close=()=>d.remove();
+ d.querySelector('.v776Close').onclick=close;d.onclick=e=>{if(e.target===d)close()};
+ bindAthletePlannedActionsV113(d,[orig||x],refresh);
+}
 async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
   const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
@@ -11228,7 +11248,7 @@ async function athleteMonthViewV96(){
   const box=document.getElementById('athMonthV96'); if(!box)return;
   box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${monthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b))}</section>`}).join('')}</div>`;
   const detail=document.getElementById('athMonthDetailV98');
-  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';bindAthletePlannedActionsV113(detail,[x],athleteMonthViewV96);detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;v776OpenDay(x,null,athleteMonthViewV96);});
 }
 
 async function coachSeaResultsView(){
@@ -12451,7 +12471,7 @@ async function athleteMonthViewV96(){
   box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${v311MonthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,displaySessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
   if(typeof v360FinishLoad==='function')v360FinishLoad();
   const detail=document.getElementById('athMonthDetailV98');
-  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=displaySessions.find(s=>String(s.id)===String(el.dataset.athSession)),orig=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;detail.innerHTML=athleteMonthDetailHtmlV98(x);document.getElementById('athMonthCloseV98').onclick=()=>detail.innerHTML='';bindAthletePlannedActionsV113(detail,[orig||x],athleteMonthViewV96);detail.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=displaySessions.find(s=>String(s.id)===String(el.dataset.athSession)),orig=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;v776OpenDay(x,orig,athleteMonthViewV96);});
 }
 
 async function coachSeaResultsView(){
