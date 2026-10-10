@@ -1430,16 +1430,16 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 :is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow)>.v791Tm{flex:0 0 auto!important;align-self:center!important;padding:0!important;font-size:11px!important;display:block!important;text-align:right;line-height:1.2;white-space:nowrap}
 :is(#content,#v555Freeze) .v791Dot{width:10px;height:10px;margin-top:3px}
 
-/* V795 · fotos en la lista y chats de equipo diferenciados */
+/* V797 base */
 :is(#content,#v555Freeze) img.v791Av{display:block;background:var(--surface-2)}
-:is(#content,#v555Freeze) .v791Team{border-radius:12px!important;font-size:20px}
-:is(#content,#v555Freeze) .v617TeamRow{background:var(--surface-2)!important;border-radius:12px!important;margin:0 0 4px!important;padding:7px 8px!important;border-bottom:0!important}
-:is(#content,#v555Freeze) .v617TeamRow b{font-weight:500!important}
 
-/* V796 · chats de equipo sin icono, alineados con el resto; etiqueta de equipo sin partirse */
-:is(#content,#v555Freeze) .v617TeamRow>.v791Team{display:none!important}
-:is(#content,#v555Freeze) .v617TeamRow{margin:0!important;padding:9px 6px 9px 10px!important;border-radius:0!important;border-bottom:1px solid var(--border)!important;box-shadow:inset 4px 0 0 var(--tcol,var(--accent))}
-:is(#content,#v555Freeze) .v300InboxRow small.muted:not(.v791Tm){white-space:nowrap}
+/* V797 · lista de mensajes del entrenador: filas iguales, secciones, letra 300 */
+:is(#content,#v555Freeze) .v797Sec{font-size:11px;letter-spacing:.06em;color:var(--text-muted);padding:10px 2px 2px;font-weight:400}
+:is(#content,#v555Freeze) .v791Team{border-radius:12px!important;font-size:13px;font-weight:400}
+:is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow){padding:7px 2px!important;margin:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;border-bottom:1px solid var(--border)!important;min-height:56px!important;box-sizing:border-box}
+:is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow) b{font-weight:300!important;font-size:15px!important}
+:is(#content,#v555Freeze) :is(.v300InboxRow,.v617TeamRow):has(.v791Un) b{font-weight:500!important}
+:is(#content,#v555Freeze) #v642Find{height:36px!important;border-radius:10px!important;font-size:14px!important;margin:8px 0 0!important;padding:0 12px!important;box-sizing:border-box}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3275,7 +3275,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="796";
+const APP_VERSION="797";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10159,7 +10159,7 @@ async function v642RenderMsgTabs(container,swap){
     await v300RefreshUnreadMsgCount();draw();
   }finally{window._v642Sw=false}
 }
-function v791Av(name,team,url,isTeam){if(isTeam){const c=v502TeamColor(team);return `<span class="v791Av v791Team" style="background:${c.stripe}">👥</span>`}const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;if(url)return `<img class="v791Av" src="${esc(url)}" alt="" loading="lazy" style="object-fit:cover">`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
+function v791Av(name,team,url,isTeam){if(isTeam){const c=v502TeamColor(team);return `<span class="v791Av v791Team" style="background:${c.stripe}">${esc(String(team).split('-').map(x=>x[0]).join('').toUpperCase())}</span>`}const w=String(name||'?').trim().split(/\s+/),ini=((w[0]||'')[0]||'?')+((w.length>1?w[w.length-1][0]:'')||'');let h=0;for(const c of String(name||''))h=(h*31+c.charCodeAt(0))%360;const bg=team?v502TeamColor(team).stripe:`hsl(${h},50%,42%)`;if(url)return `<img class="v791Av" src="${esc(url)}" alt="" loading="lazy" style="object-fit:cover">`;return `<span class="v791Av" style="background:${bg}">${esc(ini.toUpperCase())}</span>`}
 async function coachMessagesView(){
   const teams=hasAnyCoachTeam()?v640AllTeams():staffViewTeamCodes();
   // V401 · desde que "Más" dejó de mostrar la campana de notificaciones para el entrenador (se
@@ -10206,7 +10206,7 @@ async function coachMessagesView(){
       return (x.a.full_name||'').localeCompare(y.a.full_name||'','es');
     });
     if(!rows.length){box.innerHTML=teamHtml+'<p class="muted">No hay remeros en este equipo.</p>';box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));if(typeof v360FinishLoad==='function')v360FinishLoad();return}
-    box.innerHTML=teamHtml+rows.map(({a,last})=>{
+    box.innerHTML=(teamHtml?'<div class="v797Sec">EQUIPOS</div>'+teamHtml:'')+'<div class="v797Sec">REMEROS</div>'+rows.map(({a,last})=>{
       const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
       const unread=!!last&&last.sender_id!==currentUser.id&&(hasRead?!last.read_at:new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0));
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
