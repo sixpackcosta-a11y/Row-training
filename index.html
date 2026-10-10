@@ -1378,6 +1378,13 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 :is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) label{min-width:0;font-size:12px;color:var(--text-muted)}
 :is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) :is(select,input){width:100%;min-width:0;max-width:100%;box-sizing:border-box;height:44px;margin:0;font-size:15px;background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:12px;color:var(--text)}
 :is(#content,#v555Freeze) #loadMonth{position:absolute;opacity:0;pointer-events:none;height:0;padding:0;margin:0;border:0}
+
+/* V790 · Mes entrenador: input month de iOS contenido en su columna */
+:is(#content,#v555Freeze) .plannerGrid:has(#monthTeam){align-items:start!important;overflow:hidden}
+:is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) label{display:flex!important;flex-direction:column;gap:4px;margin:0!important;overflow:hidden;position:relative}
+:is(#content,#v555Freeze) .plannerGrid:has(#monthTeam) :is(select,input){-webkit-appearance:none;appearance:none;display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;inline-size:100%!important;height:44px!important;margin:0!important;padding:0 12px!important;text-align:left!important;line-height:44px}
+:is(#content,#v555Freeze) #monthPick::-webkit-date-and-time-value{text-align:left;min-width:0;margin:0}
+:is(#content,#v555Freeze) #monthPick::-webkit-calendar-picker-indicator{display:none}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3213,7 +3220,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="789";
+const APP_VERSION="790";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
