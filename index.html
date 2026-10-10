@@ -1263,6 +1263,26 @@ html[data-theme="dark"] :is(#content,#v555Freeze) .workoutReadable{background:va
 .v776Day .workoutLabel{font-size:11px;letter-spacing:.03em;color:var(--text-muted)}
 .v776Day .workoutValue{font-size:14px;margin:0}
 .v776Day .staffActions{margin-top:12px}
+
+/* V777 · Semana compacta + Mes de uno en uno */
+:is(#content,#v555Freeze) .athleteOneMonth{display:block!important}
+:is(#content,#v555Freeze) .athleteOneMonth .seasonMonth{border:0;padding:0;background:none}
+:is(#content,#v555Freeze) .v777Leg{font-size:12px;margin:8px 0}
+:is(#content,#v555Freeze) .athleteWeekDateV123{padding:8px 0 0!important}
+:is(#content,#v555Freeze) .athleteWeekDateV123 b{font-size:.62rem}
+:is(#content,#v555Freeze) .athleteWeekDateV123 strong{font-size:1.05rem;font-weight:500;line-height:1.1}
+:is(#content,#v555Freeze) .athleteWeekItemsV123{padding:0}
+:is(#content,#v555Freeze) .athleteWeekRestV123{padding:12px 0 !important;font-size:13px;min-height:0}
+:is(#content,#v555Freeze) .athleteWeekSessionV123>summary{padding:8px 10px 8px 0!important;min-height:0!important;gap:8px}
+:is(#content,#v555Freeze) .athleteWeekSessionMainV123{display:flex!important;align-items:center;gap:8px;min-width:0;flex:1}
+:is(#content,#v555Freeze) .athleteWeekSessionTopV123{display:flex;align-items:center;gap:8px;flex:1;min-width:0;margin:0!important}
+:is(#content,#v555Freeze) .athleteWeekSessionTitleV123{font-size:14px!important;line-height:1.25;font-weight:400}
+:is(#content,#v555Freeze) .athleteWeekTypeV123{font-size:11px!important;padding:2px 7px!important}
+:is(#content,#v555Freeze) .athleteWeekSessionBottomV123{margin:0!important;flex:0 0 auto}
+:is(#content,#v555Freeze) .athleteWeekSessionBottomV123>span:first-child{display:none}
+:is(#content,#v555Freeze) .athleteWeekStatusV123{font-size:11px!important}
+:is(#content,#v555Freeze) .athleteWeekChevronV123{font-size:14px;align-self:center}
+:is(#content,#v555Freeze) .athleteWeekDetailV123{padding:0 10px 10px 0!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3098,7 +3118,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="776";
+const APP_VERSION="777";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -12449,9 +12469,10 @@ function autoRepeatedHtml(rows){
 }
 async function athleteMonthViewV96(){
   if(currentMode!=="athlete"||!currentTeamCode)return;
-  const now=new Date(), curr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`, next=monthShift(curr,1);
-  const [start]=monthBounds(curr), [,end]=monthBounds(next);
-  content.innerHTML=`<div class="card"><h2>${v311T('calendario_mes_titulo')}</h2><p class="muted">${v311T('calendario_mes_texto')} <span class="v228Ok">🟢 ${v311T('completada_leyenda')}</span> · <span class="v228Unassigned">🔴 ${v311T('sin_completar_leyenda')}</span></p><div id="athMonthV96"><p class="muted">${v316Loading(v311T('cargando_generico'))}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
+  const now=new Date(),cur0=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`,curr=window.v777Month||cur0;
+  const [start,end]=monthBounds(curr);
+  content.innerHTML=`<div class="card athleteWeekV123"><div class="athleteWeekNavV123"><button id="athPrevMonth" type="button" aria-label="‹">‹</button><div class="athleteWeekTitleV123"><h2>${v311MonthLabel(curr)}</h2><small>${esc(teamLabel(currentTeamCode))}</small></div><button id="athNextMonth" type="button" aria-label="›">›</button></div><p class="muted v777Leg"><span class="v228Ok">🟢 ${v311T('completada_leyenda')}</span> · <span class="v228Unassigned">🔴 ${v311T('sin_completar_leyenda')}</span></p><div id="athMonthV96"><p class="muted">${v316Loading(v311T('cargando_generico'))}</p></div><div id="athMonthDetailV98" class="athMonthDetail"></div></div>`;
+  athPrevMonth.onclick=()=>{window.v777Month=monthShift(curr,-1);athleteMonthViewV96()};athNextMonth.onclick=()=>{window.v777Month=monthShift(curr,1);athleteMonthViewV96()};
   const [ss,cc,ww,gg,c2]=await Promise.all([
     loadAthleteSessionsV139(currentTeamCode,start,end),
     sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode]),
@@ -12468,9 +12489,10 @@ async function athleteMonthViewV96(){
   const box=document.getElementById('athMonthV96'); if(!box)return;
   const displaySessions=await v311TranslateSessions(sessions);
   if(tab!=="mes")return;
-  box.innerHTML=`<div class="seasonCalendars athleteTwoMonths">${[curr,next].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth"><h4>${v311MonthLabel(ym)}</h4>${athleteMonthCalendarHtmlV98(ym,displaySessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
+  box.innerHTML=`<div class="seasonCalendars athleteOneMonth">${[curr].map(ym=>{const [a,b]=monthBounds(ym);return `<section class="seasonMonth">${athleteMonthCalendarHtmlV98(ym,displaySessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),doneMap)}</section>`}).join('')}</div>`;
   if(typeof v360FinishLoad==='function')v360FinishLoad();
   const detail=document.getElementById('athMonthDetailV98');
+  athPrevMonth.onclick=()=>{window.v777Month=monthShift(curr,-1);athleteMonthViewV96()};athNextMonth.onclick=()=>{window.v777Month=monthShift(curr,1);athleteMonthViewV96()};
   box.querySelectorAll('[data-ath-session]').forEach(el=>el.onclick=()=>{const x=displaySessions.find(s=>String(s.id)===String(el.dataset.athSession)),orig=sessions.find(s=>String(s.id)===String(el.dataset.athSession));if(!x||!detail)return;v776OpenDay(x,orig,athleteMonthViewV96);});
 }
 
