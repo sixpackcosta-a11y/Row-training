@@ -2750,7 +2750,7 @@ async function combinedLibraryFormV89(item){
 let currentUser=null,currentUserProfile=null,currentTeamCode=null,coachTeams=[],pendingRegistrationCount=0,currentRegistration=null,v300UnreadMsgCount=0,v334UnreadNotifCount=0;
 
 const VAPID_PUBLIC_KEY_V104='BNCE9i8ANFF6sTW5TBZdk1S-EInb7_-b2ai0iFLFjUmXXDJaiFmzYoTbNh4OZfSapQrKgtw5w-yqq1ytFQ2XaZU';
-let appNotificationsV104=[];const V740_CHAT=['chat_message','chat_reaction','team_chat_message','team_chat_reaction','event_chat_message','event_chat_reaction']; // V740 · los avisos de chat cuentan en Mensajes, no en la campana
+let appNotificationsV104=[];const V740_CHAT=['chat_message','chat_reaction','team_chat_message','team_chat_reaction','event_chat_reaction']; // V815 · el aviso del chat de un evento sí sale en la campana (el chat vive en Eventos). V740 · los avisos de chat cuentan en Mensajes, no en la campana
 function urlBase64ToUint8ArrayV104(base64String){const padding='='.repeat((4-base64String.length%4)%4),base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/'),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
 async function registerServiceWorkerV104(){if(!('serviceWorker' in navigator))return null;try{return await navigator.serviceWorker.register('/sw.js')}catch(e){console.warn('SW',e);return null}}
 async function loadNotificationsV104(){
@@ -2923,6 +2923,8 @@ function v530OpenPendingEvent(){
   const staff=currentMode==='staff';
   const cb=()=>{if(tab==='eventos')render()},chat=staff?true:v495ChatVisibleForRower();
   v503OpenEventDetail(team,p.kind,p.id,staff,cb,chat);
+  // V815 · aviso del chat del evento: se abre la ficha ya desplazada al chat para ver el mensaje
+  if(p.chat)[900,2300].forEach(ms=>setTimeout(()=>{const d=document.querySelector('.v503DetailBack .v494EventChatAccordion');if(d){if(!d.open)d.open=true;try{d.scrollIntoView({block:'start',behavior:'auto'})}catch(_){}}},ms));
   // V659 · al llegar desde un aviso la app acaba de despertar y a veces las respuestas llegan antes de que
   // el servidor las tenga todas: se vuelve a pedir en silencio (sin parpadeo ni perder el scroll) para que
   // la ficha enseñe lo que dice el aviso.
@@ -3100,7 +3102,7 @@ async function openNotificationsV104(){
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
    if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;if(q2.get('rower')&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()}tab='mensajes';v801ChatParam(q2);if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
-   if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;if(q2.get('mode')==='staff'&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}if(q2.get('et'))coachSelectedTeam=q2.get('et');renderIdentityHeaderV73()}tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||''};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
+   if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;if(q2.get('mode')==='staff'&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}if(q2.get('et'))coachSelectedTeam=q2.get('et');renderIdentityHeaderV73()}tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||'',chat:q2.get('echat')==='1'};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
  }));
 }
 
@@ -3320,7 +3322,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="814";
+const APP_VERSION="815";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3790,7 +3792,7 @@ async function startApp(){
   }
   if(launchParams.get("tab")==="mensajes"&&launchParams.get("rower")&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()} // V724 · mensaje de una remera: se abre en perfil de entrenador
   if(launchParams.get("mode")==="staff"&&hasStaffMode()&&currentMode!=="staff"){currentMode="staff";r="coach";try{coachTeams=staffViewTeamCodes()}catch(e){}if(launchParams.get("et"))coachSelectedTeam=launchParams.get("et");renderIdentityHeaderV73()}
-  if(launchParams.get("tab")==="eventos"){tab="eventos";if(launchParams.get("eid"))v530PendingEvent={kind:launchParams.get("ek")||'club_event',id:Number(launchParams.get("eid")),team:launchParams.get("et")||''}}
+  if(launchParams.get("tab")==="eventos"){tab="eventos";if(launchParams.get("eid"))v530PendingEvent={kind:launchParams.get("ek")||'club_event',id:Number(launchParams.get("eid")),team:launchParams.get("et")||'',chat:launchParams.get("echat")==='1'}}
   if(launchParams.get("ergoComment")==="1"&&currentMode==="athlete"){tab="hist";v300PendingCommentOpen={kind:launchParams.get("kind"),id:launchParams.get("rid")}}
   if(launchParams.get("tab")==="result"&&launchParams.get("view")==="rowers"&&hasAnyCoachTeam()){currentMode="staff";r="coach";coachTeams=staffViewTeamCodes();coachSelectedTeam=launchParams.get("team")||coachSelectedTeam;workoutNotificationAthleteV129=launchParams.get("athlete")||null;tab="result";renderIdentityHeaderV73()}
   // V542 · avisos, push y contador de mensajes ya no frenan la primera pantalla: van detrás.
@@ -10007,7 +10009,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
       if(res.error)return{error:res.error};
       (async()=>{try{
         const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
-        await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=eventos&eid='+sessionId+'&ek='+kind+'&et='+encodeURIComponent(teamCode),muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
+        await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=eventos&eid='+sessionId+'&ek='+kind+'&et='+encodeURIComponent(teamCode)+'&echat=1',muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+(e?.message||e))}})();
       return{row:res.data};
     },
