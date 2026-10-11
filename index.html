@@ -3303,7 +3303,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="806";
+const APP_VERSION="807";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9615,7 +9615,7 @@ async function v583Chat(anchor,cfg){
     container.querySelector('.v583RecSend').onclick=()=>stopRec(false);
   }
   // V800 · botón «Pegar» sobre el teclado (imagen o texto del portapapeles) y recepción de lo compartido desde el móvil
-  if(cfg.attach&&navigator.clipboard&&navigator.clipboard.read){
+  if(false&&cfg.attach&&navigator.clipboard&&navigator.clipboard.read){ // V807 · botón «Pegar» desactivado: se pega manteniendo pulsado en el cuadro de texto
     const pb=document.createElement('button');pb.type='button';pb.className='v800Paste hidden';pb.textContent='📋 Pegar';
     compose.parentNode.insertBefore(pb,compose);
     // V802 · «Pegar» solo aparece al tocar el cuadro vacío y se oculta en cuanto escribes, envías o pasan 8 s
