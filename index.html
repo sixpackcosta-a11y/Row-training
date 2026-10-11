@@ -1468,6 +1468,10 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 
 /* V805 · conversación con botón atrás (entrenador): pantalla completa, sin barra inferior, como WhatsApp */
 body:has(.v583Full.v805Back) #nav.v330BottomNav{display:none!important}
+
+/* V808 · sin la barra inferior, el cuadro de escribir deja sitio al borde de iPhone */
+.v583Full.v805Back{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important}
+body.v583Kb .v583Full.v805Back{padding-bottom:6px!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3303,7 +3307,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="807";
+const APP_VERSION="809";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -5032,7 +5036,7 @@ function v493RsvpSummaryHtml(sessionId,sessionTitle,roster,statusByUser,team,kin
   const personRow=p=>{
     const st=statusByUser.get(String(p.user_id))||'pending';
     const sub=(st==='pending'&&seenSet)?(seenSet.has(String(p.user_id))?'<small class="v588Seen">Visto</small>':'<small class="v588Unseen">Sin ver</small>'):(st==='waitlist'?`<small class="v588Wait">En espera${rankMap.get(String(p.user_id))?' · puesto '+rankMap.get(String(p.user_id)):''}</small>`:st==='in'?'<small class="v588Ok">Asistirá</small>':st==='out'?'<small class="v588No">No asiste</small>'+(V721_N.get((kind||'session')+'_'+sessionId+'|'+p.user_id)?`<small class="v721Note">«${esc(V721_N.get((kind||'session')+'_'+sessionId+'|'+p.user_id))}»</small>`:''):'');
-    const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}</select></label>`:'';
+    const menu=canEdit?`<label class="v588More" aria-label="Cambiar respuesta">•••<select class="v505PersonStatus" data-uid="${esc(p.user_id)}" data-event="${sessionId}" data-kind="${esc(kind||'session')}" data-team="${esc(team||'')}"><option value="in" ${st==='in'?'selected':''}>✅ Asiste</option><option value="out" ${st==='out'?'selected':''}>❌ No asiste</option><option value="pending" ${st==='pending'?'selected':''}>❓ Sin decidir</option>${st==='pending'?'<option value="remind">🔔 Enviar recordatorio</option>':''}<option value="rm1">🗑️ Quitar de este evento</option><option value="rmall">🗑️ Quitar de todos los eventos</option></select></label>`:'';
     return `<div class="rosterPerson v588P" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,40)}<div class="v588Nm"><b>${esc(p.full_name||'Sin nombre')}</b>${sub}</div>${menu}</div>`;
   };
   const remindBtn0=pendingList.length?`<div class="v649RemRow"><span class="v649RemTx">${pendingList.length} persona${pendingList.length>1?'s':''} sin responder</span><button type="button" class="v493RsvpRemind v588Remind" data-id="${sessionId}" data-date="${esc(evDate||'')}" data-time="${esc(evTime||'')}" data-title="${esc(sessionTitle||'la sesión de mar')}" data-pending="${esc(pendingList.map(p=>p.user_id).join(','))}" data-people="${esc(JSON.stringify(pendingList.map(p=>({id:p.user_id,n:p.full_name||'Sin nombre'}))))}">🔔 Recordar</button></div>`:'';
@@ -5074,6 +5078,7 @@ function v493WireRsvpSummaryTabs(root,afterChange){
   // borra la fila (session_rsvp solo admite 'in'/'out', no un tercer estado guardado).
   root.querySelectorAll('.v505PersonStatus').forEach(sel=>sel.onchange=async()=>{
     if(!currentUser||sel.value==='remind')return;
+    if(sel.value==='rm1'||sel.value==='rmall'){v808RemovePerson(sel,sel.value==='rmall',afterChange);return}
     const uidP=sel.dataset.uid,eventId=Number(sel.dataset.event),kind=sel.dataset.kind||'session',teamCode=sel.dataset.team,status=sel.value;
     sel.disabled=true;
     const col=kind==='competition'?'competition_id':kind==='club_event'?'club_event_id':'training_session_id';
@@ -5986,6 +5991,37 @@ async function v523OfferInviteToEvents(uid,team,name){
     layer.querySelector('#v523Go').onclick=()=>apply(cbs.map(c=>c.checked));
     layer.querySelector('#v523None').onclick=()=>apply(cbs.map(()=>false));
   }catch(e){console.warn('v523',e)}
+}
+// V808 · quitar a una persona de un evento o de todos los eventos futuros del equipo (p.ej. alguien que se ha ido del equipo)
+async function v808RemovePerson(sel,all,afterChange){
+  const uid=String(sel.dataset.uid),eventId=Number(sel.dataset.event),kind=sel.dataset.kind||'session',team=sel.dataset.team;
+  const restore=()=>{try{sel.value=sel.querySelector('option[selected]')?.value||'pending'}catch(_){}};
+  if(!confirm(all?'¿Quitar a esta persona de TODOS los eventos futuros de este equipo? Dejará de salir en sus listas y no recibirá avisos.':'¿Quitar a esta persona de este evento?')){restore();return}
+  sel.disabled=true;
+  try{
+    let targets=[];
+    if(all){
+      const today=localISODate();
+      targets=(await v495FetchEvents(team)).filter(ev=>ev.event_date>=today&&!(ev.kind==='club_event'&&ev.team_code&&ev.team_code!==team&&!(ev.extra_team_codes||[]).includes(team)));
+      if(!targets.some(t=>t.kind===kind&&Number(t.id)===eventId))targets.push({kind,id:eventId});
+    }else targets=[{kind,id:eventId}];
+    let errs=0;
+    for(const t of targets){
+      const table=V498_TABLE_BY_KIND[t.kind];if(!table)continue;
+      const cur=await sb.from(table).select('invitee_ids,excluded_ids').eq('id',t.id).maybeSingle();
+      if(cur.error){errs++;continue}
+      const inv=Array.isArray(cur.data?.invitee_ids)?cur.data.invitee_ids.map(String):[];
+      const exc=(cur.data?.excluded_ids||[]).map(String);
+      const patch={};
+      if(!exc.includes(uid))patch.excluded_ids=[...exc,uid];
+      if(inv.includes(uid)&&inv.length>1)patch.invitee_ids=inv.filter(x=>x!==uid);
+      if(Object.keys(patch).length){const q=await sb.from(table).update(patch).eq('id',t.id);if(q.error){errs++;continue}}
+      const col=t.kind==='competition'?'competition_id':t.kind==='club_event'?'club_event_id':'training_session_id';
+      try{await v753DelRsvp(col,[Number(t.id)],uid)}catch(_){}
+    }
+    if(errs){alert('No se pudo quitar en '+errs+' evento(s). ¿Falta ejecutar 33_eventos_excluidos.sql en Supabase?');sel.disabled=false;restore();return}
+    if(afterChange)afterChange();else sel.closest('.rosterPerson')?.remove();
+  }catch(e){alert('No se pudo quitar: '+(e?.message||e));sel.disabled=false;restore()}
 }
 function v514EventRoster(ev,roster){
   // V523 · personas excluidas expresamente de un evento de equipo (p.ej. alguien que entró después
