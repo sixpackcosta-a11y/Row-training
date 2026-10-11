@@ -1465,6 +1465,9 @@ html[data-theme="dark"] :is(#content,#v555Freeze) a.btn.primary{background:#2f6f
 /* V803 · chat con teclado: sin la cabecera grande */
 .v583Full.v803Kb{z-index:400;padding-top:env(safe-area-inset-top,0px)!important;background:var(--v791Bg,var(--bg))!important}
 .v583Full.v803Kb .v583Head{margin-top:0!important}
+
+/* V805 · conversación con botón atrás (entrenador): pantalla completa, sin barra inferior, como WhatsApp */
+body:has(.v583Full.v805Back) #nav.v330BottomNav{display:none!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3300,7 +3303,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="804";
+const APP_VERSION="806";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9347,7 +9350,7 @@ async function v583Chat(anchor,cfg){
   let container=anchor,layer=null;
   if(cfg.full){
     window._v583Cleanup&&window._v583Cleanup();
-    layer=document.createElement('div');layer.className='v583Full'+(window._v642Sw?' v642Sw':'');document.body.appendChild(layer);container=layer;anchor.innerHTML='';
+    layer=document.createElement('div');layer.className='v583Full'+(window._v642Sw?' v642Sw':'')+(((anchor._v583Head||{}).onBack)?' v805Back':'');document.body.appendChild(layer);container=layer;anchor.innerHTML='';
     const hd=anchor._v583Head||{};
     layer.innerHTML=`<div class="v583Head">${hd.onBack?'<button type="button" class="v583Back">← Conversaciones</button>':''}<b>${esc(hd.title||cfg.title||'')}</b>${cfg.headRight?cfg.headRight():''}</div>${anchor._v617Tabs?anchor._v617Tabs.html():''}<div class="v583Body"></div>`;
     layer.querySelectorAll('.v617Tab,.v642Tab').forEach(b=>b.onclick=()=>{if(!b.classList.contains('active'))anchor._v617Tabs.onTab(b.dataset.k)});
@@ -9363,7 +9366,10 @@ async function v583Chat(anchor,cfg){
       if(kb){bottom=0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
       const top2=0; // V804 · la conversación ocupa desde arriba desde que se abre (sin cabecera grande), así no salta al abrir el teclado
       layer.classList.add('v803Kb');
+      // V806 · si estabas al final de la conversación, al cambiar el tamaño (teclado, cabecera) sigues al final sin saltos
+      const bx0=layer.querySelector('[id$="ChatScroll"]'),atEnd=!!bx0&&bx0.scrollHeight-bx0.scrollTop-bx0.clientHeight<90;
       layer.style.top=(off+top2)+'px';layer.style.height=Math.max(180,vh-top2-bottom)+'px';
+      if(bx0&&atEnd)bx0.scrollTop=bx0.scrollHeight;
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
     const onFocus=()=>{window.scrollTo(0,0);setTimeout(fit,60);setTimeout(()=>{window.scrollTo(0,0);fit()},350)};
@@ -9886,7 +9892,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   const isText=el=>el&&(el.tagName==='TEXTAREA'||el.isContentEditable||(el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color)$/i.test(el.type||'text')));
   let t=null;
   document.addEventListener('focusin',e=>{if(!isText(e.target))return;clearTimeout(t);document.body.classList.add('v583Kb');
-    if(e.target.id&&/ChatInput/.test(e.target.id))setTimeout(()=>{try{e.target.scrollIntoView({block:'end',behavior:'smooth'})}catch(_){}},320)});
+    if(e.target.id&&/ChatInput/.test(e.target.id))setTimeout(()=>{try{e.target.scrollIntoView({block:'end',behavior:'auto'})}catch(_){}},320)});
   document.addEventListener('focusout',e=>{if(!isText(e.target))return;clearTimeout(t);t=setTimeout(()=>{if(!isText(document.activeElement))document.body.classList.remove('v583Kb')},120)});
 })();
 // V494/V495 · chat GRUPAL por evento. V583: restaurado y con adjuntos.
