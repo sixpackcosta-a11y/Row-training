@@ -1472,6 +1472,11 @@ body:has(.v583Full.v805Back) #nav.v330BottomNav{display:none!important}
 /* V808 · sin la barra inferior, el cuadro de escribir deja sitio al borde de iPhone */
 .v583Full.v805Back{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important}
 body.v583Kb .v583Full.v805Back{padding-bottom:6px!important}
+
+/* V811 · cabecera de la conversación en una sola línea */
+.v583Full .v583Head{flex-wrap:nowrap!important;gap:12px!important}
+.v583Full .v583Back{white-space:nowrap!important;flex:0 0 auto!important;font-size:16px!important;font-weight:400!important}
+.v583Full .v583Head>b{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3307,7 +3312,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="810";
+const APP_VERSION="811";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10408,7 +10413,7 @@ async function coachMessagesView(){
 
   const openTeamThread=team=>{
     box.innerHTML=`<div id="v300ChatContainer"></div>`;
-    const _c=document.getElementById('v300ChatContainer');_c._v583Head={title:'👥 Chat del equipo '+teamShort(team),onBack:loadInbox};
+    const _c=document.getElementById('v300ChatContainer');_c._v583Head={title:teamLabel(team),onBack:loadInbox};
     v617RenderTeamChat(_c,team);
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
