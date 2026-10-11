@@ -3307,7 +3307,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="809";
+const APP_VERSION="810";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6020,7 +6020,11 @@ async function v808RemovePerson(sel,all,afterChange){
       try{await v753DelRsvp(col,[Number(t.id)],uid)}catch(_){}
     }
     if(errs){alert('No se pudo quitar en '+errs+' evento(s). ¿Falta ejecutar 33_eventos_excluidos.sql en Supabase?');sel.disabled=false;restore();return}
-    if(afterChange)afterChange();else sel.closest('.rosterPerson')?.remove();
+    if(afterChange){try{afterChange()}catch(_){}}
+    // V810 · la ficha abierta se recarga al momento (sin salir y volver a entrar)
+    const d=window._v733Ev;
+    if(d&&document.querySelector('.v503DetailBack'))v503OpenEventDetail(d.tc,d.kind,d.id,d.canEdit,afterChange,true,true);
+    else sel.closest('.rosterPerson')?.remove();
   }catch(e){alert('No se pudo quitar: '+(e?.message||e));sel.disabled=false;restore()}
 }
 function v514EventRoster(ev,roster){
