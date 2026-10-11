@@ -3300,7 +3300,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="803";
+const APP_VERSION="804";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9361,8 +9361,8 @@ async function v583Chat(anchor,cfg){
       const kb=typing&&(innerHeight-vh>120||ae.tagName==='TEXTAREA'||ae.isContentEditable);
       const nav=document.getElementById('nav');let bottom=0;
       if(kb){bottom=0}else if(nav&&nav.getClientRects().length){bottom=Math.max(0,innerHeight-nav.getBoundingClientRect().top+6)}
-      const top2=kb?0:top; // V803 · con el teclado abierto el chat ocupa también el hueco de la cabecera grande
-      layer.classList.toggle('v803Kb',!!kb);
+      const top2=0; // V804 · la conversación ocupa desde arriba desde que se abre (sin cabecera grande), así no salta al abrir el teclado
+      layer.classList.add('v803Kb');
       layer.style.top=(off+top2)+'px';layer.style.height=Math.max(180,vh-top2-bottom)+'px';
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
