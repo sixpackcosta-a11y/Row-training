@@ -3323,7 +3323,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="822";
+const APP_VERSION="823";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6657,7 +6657,7 @@ function seaPrescription(value){
   return {count,fixedTimeSeconds,fixedDistanceM,series};
 }
 function seaSeriesTimeText(sec){if(sec==null)return '';const m=Math.floor(sec/60),s=sec-m*60;return `${m}:${String(s).padStart(2,'0')}`}
-function seaTimeDigitsV89(raw,finalize=false){const d=String(raw||'').replace(/\D/g,'').slice(0,5);if(!d)return '';if(d.length<=2&&!finalize)return d;let mins=0,secs=0;if(d.length<=2){secs=Number(d)}else{mins=Number(d.slice(0,-2));secs=Number(d.slice(-2))}if(secs>=60){mins+=Math.floor(secs/60);secs%=60}return `${mins}:${String(secs).padStart(2,'0')}`}
+function seaTimeDigitsV89(raw,finalize=false){const d=String(raw||'').replace(/\D/g,'').slice(0,5);if(!d)return '';if(d.length<=2&&!finalize)return d;let mins=0,secs=0;if(d.length<=2){secs=Number(d)}else{mins=Number(d.slice(0,-2));secs=Number(d.slice(-2))}if(secs>=60&&finalize){mins+=Math.floor(secs/60);secs%=60}return `${mins}:${String(secs).padStart(2,'0')}`}
 function nextSeaTimeInputV89(el){const all=[...document.querySelectorAll('.seaTimeInput:not([readonly])')];const i=all.indexOf(el);if(i>=0&&all[i+1])all[i+1].focus()}
 function updateSeaSeriesPace(blockIndex,seriesIndex){
   const timeEl=document.getElementById(`v77SeaTime_${blockIndex}_${seriesIndex}`),metersEl=document.getElementById(`v77SeaMeters_${blockIndex}_${seriesIndex}`),paceEl=document.getElementById(`v77SeaPace_${blockIndex}_${seriesIndex}`);
@@ -6674,7 +6674,7 @@ function seaSeriesRowHtmlV137(bi,series,removable=false){
 function updateSeaRowPaceV137(row){const t=row?.querySelector('.seaTimeV137'),m=row?.querySelector('.seaMetersV137'),p=row?.querySelector('.seaPaceV137');if(!t||!m||!p)return;const seconds=timeTextToSeconds(t.value),meters=Number(m.value);p.value=(seconds!=null&&seconds>0&&meters>0)?fmtMetricSeconds(seconds*500/meters):''}
 function bindSeaSeriesRowV137(row){
   if(!row||row.dataset.boundV137)return;row.dataset.boundV137='1';const t=row.querySelector('.seaTimeV137'),m=row.querySelector('.seaMetersV137'),remove=row.querySelector('.seaRemoveSeriesV137');
-  if(t&&!t.readOnly){let timer=null;t.addEventListener('input',()=>{const digits=t.value.replace(/\D/g,'');t.value=seaTimeDigitsV89(t.value,false);updateSeaRowPaceV137(row);clearTimeout(timer);if(digits.length>=3)timer=setTimeout(()=>{t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row);nextSeaTimeInputV89(t)},digits.length>=4?180:700)});t.addEventListener('blur',()=>{t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row)});t.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row);nextSeaTimeInputV89(t)}})}
+  if(t&&!t.readOnly){let timer=null;t.addEventListener('input',()=>{const digits=t.value.replace(/\D/g,'');t.value=seaTimeDigitsV89(t.value,false);updateSeaRowPaceV137(row);clearTimeout(timer);if(digits.length>=3&&!(digits.length===3&&Number(digits.slice(-2))>=60))timer=setTimeout(()=>{t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row);nextSeaTimeInputV89(t)},digits.length>=4?180:700)});t.addEventListener('blur',()=>{t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row)});t.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();t.value=seaTimeDigitsV89(t.value,true);updateSeaRowPaceV137(row);nextSeaTimeInputV89(t)}})}
   if(m&&!m.readOnly)m.addEventListener('input',()=>updateSeaRowPaceV137(row));if(remove)remove.onclick=()=>{if(!confirm('¿Eliminar esta serie del entrenamiento realizado?'))return;const id=row.dataset.existingId;if(id)seaDeletedExistingIdsV188.add(String(id));row.remove()};updateSeaRowPaceV137(row);
 }
 function addSeaSeriesRowV137(bi,values={}){
