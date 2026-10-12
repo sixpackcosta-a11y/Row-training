@@ -3323,7 +3323,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="825";
+const APP_VERSION="827";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6845,8 +6845,8 @@ async function readRowingCoachPhotosV137(files,onProgress){
 }
 async function uploadSeaPhotosV137(files,sessionId,team){const paths=[];for(let i=0;i<files.length;i++){const f=files[i],ext=(String(f.name||'').split('.').pop()||String(f.type||'image/jpeg').split('/').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg',path=`${team}/${sessionId}/${currentUser.id}/${Date.now()}-${i+1}.${ext}`,up=await sb.storage.from('sea-media').upload(path,f,{cacheControl:'3600',upsert:false});if(up.error)throw up.error;paths.push(path)}return paths}
 
-function seaSeriesNumberV186(name){const m=String(name||'').match(/(?:^|·)\s*Serie\s+(\d+)\s*$/i);return m?Number(m[1]):1}
-function seaBaseExerciseV186(name){return String(name||'').replace(/\s*·\s*Serie\s+\d+\s*$/i,'').trim()}
+function seaSeriesNumberV186(name){const m=String(name||'').match(/(?:^|·)\s*(?:Serie|Salida)\s+(\d+)\s*$/i);return m?Number(m[1]):1}
+function seaBaseExerciseV186(name){return String(name||'').replace(/\s*·\s*(?:Serie|Salida)\s+\d+\s*$/i,'').trim()}
 function seaNormV186(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
 function seaBlockMatchKeyV187(v){
   return seaNormV186(seaBaseExerciseV186(v))
@@ -6857,8 +6857,8 @@ function seaCurrentExerciseNameV187(name,content){
   const raw=String(name||'').trim(),key=seaBlockMatchKeyV187(raw),blocks=seaResultBlocksFromContent(content||'');
   const current=blocks.find(b=>seaBlockMatchKeyV187(b.line)===key);
   if(!current)return raw;
-  const m=raw.match(/(?:^|·)\s*Serie\s+(\d+)\s*$/i);
-  return m?`${current.line} · Serie ${Number(m[1])}`:current.line;
+  const m=raw.match(/(?:^|·)\s*(Serie|Salida)\s+(\d+)\s*$/i);
+  return m?`${current.line} · ${m[1][0].toUpperCase()+m[1].slice(1).toLowerCase()} ${Number(m[2])}`:current.line;
 }
 function seaSortResultsByPlanV186(rows,content){
   const blocks=seaResultBlocksFromContent(content||'');
@@ -12802,7 +12802,7 @@ async function loadRowerWeekCompliance(start,end){
 
 function v79SeaBaseName(x){
   let s=String(x?.exercise_name||x||'MAR').trim();
-  s=s.replace(/\s*·\s*Serie\s+\d+\s*$/i,'').trim();
+  s=s.replace(/\s*·\s*(?:Serie|Salida)\s+\d+\s*$/i,'').trim();
   return s;
 }
 function v79SeaIdentity(x){
@@ -15520,7 +15520,7 @@ function open(cfg){
   applySet();
   const saved=load()||{series:[]};
   const plan=Array.isArray(cfg.plan)?cfg.plan:[];
-  const st={iv:null,lastEnd:0,auto:false,series:saved.series||[],raw:false,rawLines:[],watch:null,wake:null,timer:null,cd:0,motionOn:false,cpT:0,sel:0,cur:null,beeped:false,ac:null,finishing:false};
+  const st={iv:null,lastEnd:0,auto:false,series:saved.series||[],raw:true,rawLines:[],watch:null,wake:null,timer:null,cd:0,motionOn:false,cpT:0,sel:0,cur:null,beeped:false,ac:null,finishing:false};
   // Permiso del sensor de movimiento: tiene que pedirse dentro del toque del usuario (este click).
   let permP=Promise.resolve('granted');
   try{if(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function')permP=DeviceMotionEvent.requestPermission()}catch(e){}
@@ -15543,7 +15543,7 @@ function open(cfg){
   <div class="v689Btns"><button type="button" id="v689Go" class="v689Play" aria-label="Empezar">▶</button></div></div>
   <div class="v689Util"><button type="button" id="v689Reset" class="v689ResetBtn">RESET</button></div>
   <div class="v689List" id="v689List"></div>
-  <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw"> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button></div></div>`;
+  <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw" checked> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button></div></div>`;
   document.body.appendChild(ov);
   const $=id=>ov.querySelector('#'+id);
   const msg=t=>{$('v689Msg').textContent=t||''};
@@ -15672,7 +15672,7 @@ function open(cfg){
     eng.reset();msg(busy?'Serie descartada. Todo a cero.':'Todo a cero.');draw();
   };
 
-  $('v689Raw').onchange=e=>{st.raw=e.target.checked;$('v689Raw2').hidden=!st.raw};
+  $('v689Raw').onchange=e=>{st.raw=e.target.checked;$('v689Raw2').hidden=!st.raw};$('v689Raw2').hidden=!st.raw;
   $('v689Raw2').onclick=async()=>{
     const csv='tipo,t_ms,a,b,c,d,e\n'+st.rawLines.join('\n'),name='rowtraining-bruto-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
     try{const f=new File([csv],name,{type:'text/csv'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
