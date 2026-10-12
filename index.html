@@ -1485,6 +1485,7 @@ body.v583Kb .v583Full.v805Back{padding-bottom:6px!important}
 
 /* V814 · solo la flecha para volver */
 .v583Full .v583Back{font-size:26px!important;line-height:1;padding:0 6px 0 0!important;margin-right:-2px}
+.seaLogMapRowV191 select,.seaLogTargetV191{width:100%;max-width:100%;box-sizing:border-box;white-space:normal;text-overflow:ellipsis}.seaLogMapRowV191 label{display:block;min-width:0}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3322,7 +3323,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="818";
+const APP_VERSION="820";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -6626,7 +6627,7 @@ function seaResultBlocksFromContent(content){
   return raw.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{
     const [label0,value0]=readableLabel(line);const label=(label0||'BLOQUE').trim(),value=(value0||line).trim();
     return {label,value,line:label0?`${label} · ${value}`:line};
-  }).filter(x=>!/(^|\b)(duración|duracion|tiempo total|duración objetivo|duracion objetivo|duración estimada|duracion estimada|objetivo|carga|referencia|parcial objetivo|calentamiento|recuperación|recuperacion|vuelta a la calma|observaciones?)\b/i.test(x.label));
+  }).filter(x=>!/(^|\b)(duración|duracion|tiempo total|duración objetivo|duracion objetivo|duración estimada|duracion estimada|objetivo|carga|referencia|parcial objetivo|calentamiento|recuperación|recuperacion|vuelta a la calma|observaciones?)\b/i.test(x.label)).filter(x=>!/^(registrar|registro)$/i.test(x.label)&&!(/^control$/i.test(x.label)&&!/\d/.test(x.value)));
 }
 function seaPrescription(value){
   const txt=String(value||'').replace(/×/g,'x').trim();
@@ -6944,7 +6945,8 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
         // apart from "already has a real result", so a batch of fresh photos gets suggested here.
         const timeIsReal=Boolean(time&&time.value&&time.value!==(row.dataset.defaultTime||'')),
               metersIsReal=Boolean(meters&&meters.value&&meters.value!==(row.dataset.defaultMeters||''));
-        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,existing:Boolean(row.dataset.existingId),hasData:Boolean(timeIsReal||metersIsReal||spm?.value),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
+        const v819Dm=Number(row.dataset.defaultMeters)||0,v819Vm=String(b.value||'').match(/(\d{3,5})\s*m(?:etros)?\b/i),expectedM=v819Dm||(v819Vm?Number(v819Vm[1]):null);
+        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,expectedM,existing:Boolean(row.dataset.existingId),hasData:Boolean(timeIsReal||metersIsReal||spm?.value),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
       });
     });
     return out;
@@ -6955,9 +6957,13 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
       if(s&&s._target&&!used.has(s._target)&&targets.some(t=>t.id===s._target&&!t.existing)){used.add(s._target);mapping.push(s._target);return}
       if(!s?.suggested){mapping.push('');return}
       const available=targets.filter(t=>!used.has(t.id)&&!t.existing&&!t.hasData);if(!available.length){mapping.push('');return}
-      const dur=Number(s.duration_seconds)||null;
+      const dur=Number(s.duration_seconds)||null,dm=Number(s.distance_m)||null;
       let chosen=null;
-      if(dur){const timed=available.filter(t=>Number.isFinite(t.expected));if(timed.length){timed.sort((a,b)=>Math.abs(a.expected-dur)-Math.abs(b.expected-dur)||a.order-b.order);if(Math.abs(timed[0].expected-dur)<=90)chosen=timed[0]}}
+      // v819: primero por distancia (3000 m -> bloque de 3000 m), luego salidas cortas -> bloques de salidas
+      if(dm){const byM=available.filter(t=>t.expectedM>0&&Math.abs(t.expectedM-dm)/t.expectedM<=0.12);if(byM.length){byM.sort((a,b)=>Math.abs(a.expectedM-dm)-Math.abs(b.expectedM-dm)||a.order-b.order);chosen=byM[0]}}
+      if(!chosen&&dur&&dur<90){const sal=available.filter(t=>/salida|arrancad|palad/i.test(t.name)&&!(t.expectedM>300));if(sal.length)chosen=sal[0]}
+      if(!chosen&&dur&&dur>=90){const nos=available.filter(t=>!/salida|arrancad|palad/i.test(t.name)&&!Number.isFinite(t.expected));const wm=nos.filter(t=>t.expectedM>0);if(wm.length&&dm){}else if(nos.length&&!available.some(t=>t.expectedM>0&&Math.abs(t.expectedM-(dm||0))/t.expectedM<=0.5))chosen=nos[0]}
+      if(!chosen&&dur){const timed=available.filter(t=>Number.isFinite(t.expected));if(timed.length){timed.sort((a,b)=>Math.abs(a.expected-dur)-Math.abs(b.expected-dur)||a.order-b.order);if(Math.abs(timed[0].expected-dur)<=90)chosen=timed[0]}}
       if(!chosen){const flexible=available.filter(t=>!Number.isFinite(t.expected));chosen=flexible[0]||available[0]}
       if(chosen){used.add(chosen.id);mapping.push(chosen.id)}else mapping.push('');
     });
