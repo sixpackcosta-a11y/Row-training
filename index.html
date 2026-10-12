@@ -3322,7 +3322,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="815";
+const APP_VERSION="817";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4556,7 +4556,7 @@ async function staffResourcesView(){
     +(cats.length?cats.map(c=>`<div class="card v678Cat"><h3 style="margin:0 0 4px">${esc(c)}</h3>${rows.filter(r=>(r.category||'General')===c).map(item).join('')}</div>`).join(''):`<div class="card"><p class="muted" style="margin:0">Todavía no hay recursos.${admin?' Pulsa "+ Añadir recurso" para empezar.':' El administrador los irá añadiendo.'}</p></div>`);
   const v690New=document.getElementById('v690New');
   if(v690New)v690New.onclick=()=>V689UI.open({standalone:true,onDone:async log=>{
-    const d=new Date(),title='Grabación '+d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const d=(log.date&&/^\d{4}-\d{2}-\d{2}$/.test(log.date))?new Date(log.date+'T12:00:00'):new Date(),title='Grabación '+(log.date?d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})+' (importada)':d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}));
     const series=log.series.map(x=>{const y=Object.assign({},x);delete y._target;return y});
     const ins=await sb.from('sea_recordings').insert({title,rec_date:d.toLocaleDateString('sv-SE'),series});
     if(ins.error){alert('No se pudo guardar la grabación: '+(/does not exist|relation|schema cache/i.test(ins.error.message||'')?'falta ejecutar 70_grabaciones_gps.sql en Supabase.':ins.error.message)+'\n\nLas series siguen guardadas en este móvil.');return false}
@@ -5736,7 +5736,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // convocatorias de entrenamiento y competiciones, no solo en eventos propios.
   const locLine=ev.location?`<p class="v522Loc">📍 <a href="${esc(v522MapsUrl(ev.location))}" target="_blank" rel="noopener">${esc(/^https?:\/\//i.test(ev.location)?'Ver ubicación en el mapa':ev.location)}</a></p>`:'';
   const linkedS=ev.kind!=='session'?(ev._linkedSessions||[]):[];
-  const linkedHtml=ev.kind==='session'?'':(linkedS.length||canEdit)?`<div class="v536Box"><div class="v536Head">🏋️ Entrenamiento</div>${linkedS.map(s=>{const tl=V536_TYPE_LABEL[String(s.session_type).toUpperCase()]||s.session_type;return canEdit?`<div class="v536Item"><div class="v536ItemHead"><b>${esc(tl)} · ${esc(s.title||'')}</b><button type="button" class="v536Unlink" data-sid="${s.id}">Quitar</button></div><details class="libraryAccordion v544Train"><summary>Ver entrenamiento</summary><div class="accordionBody">${trainingContentHtml(s.content)}</div></details></div>`:(String(s.session_type).toUpperCase()==='MAR'?`<p class="v536Item">${esc(tl)} · entrenamiento de mar</p>`:`<button type="button" class="v517OpenSession primary" data-date="${esc(s.session_date)}">${esc(tl)} · Abrir entrenamiento</button>`)}).join('')||'<p class="muted"><small>Sin entrenamiento asignado.</small></p>'}${canEdit?`<div class="actions"><button type="button" class="v536Assign">+ Asignar entrenamiento</button></div><div class="v536AssignBox hidden"></div>`:''}</div>`:'';
+  const linkedHtml=ev.kind==='session'?'':(linkedS.length||canEdit)?`<div class="v536Box"><div class="v536Head">🏋️ Entrenamiento</div>${linkedS.map(s=>{const tl=V536_TYPE_LABEL[String(s.session_type).toUpperCase()]||s.session_type;return canEdit?`<div class="v536Item"><div class="v536ItemHead"><b>${esc(tl)} · ${esc(s.title||'')}</b><button type="button" class="v536Unlink" data-sid="${s.id}">Quitar</button></div><details class="libraryAccordion v544Train"><summary>Ver entrenamiento</summary><div class="accordionBody">${trainingContentHtml(s.content)}</div></details>${String(s.session_type).toUpperCase()==='MAR'?`<div class="actions"><button type="button" class="primary v816Reg" data-sid="${s.id}" data-team="${esc(s.team_code||'')}" data-date="${esc(s.session_date||'')}">📍 Registrar / grabar este entrenamiento</button></div>`:''}</div>`:(String(s.session_type).toUpperCase()==='MAR'?`<p class="v536Item">${esc(tl)} · entrenamiento de mar</p>`:`<button type="button" class="v517OpenSession primary" data-date="${esc(s.session_date)}">${esc(tl)} · Abrir entrenamiento</button>`)}).join('')||'<p class="muted"><small>Sin entrenamiento asignado.</small></p>'}${canEdit?`<div class="actions"><button type="button" class="v536Assign">+ Asignar entrenamiento</button></div><div class="v536AssignBox hidden"></div>`:''}</div>`:'';
   const extra=`${locLine}${ev.kind!=='session'&&ev.notes?`<p>${esc(ev.notes)}</p>`:''}${linkedHtml}`;
   // V525 · las convocatorias de entrenamiento también tienen "Editar" (abre esa sesión en
   // Planificación, donde están sus opciones de evento) y "Quitar de eventos" (no borra el
@@ -6209,6 +6209,11 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
         if(!confirm('¿Quitar este entrenamiento del evento? El entrenamiento sigue en la planificación.'))return;
         b.disabled=true;try{await v536SetLink(ev2.kind,ev2.id,b.dataset.sid,false);reopen()}catch(e){alert(v536LinkError(e));b.disabled=false}
       });
+      body.querySelectorAll('.v816Reg').forEach(b=>b.onclick=()=>{
+        const sid=Number(b.dataset.sid),team=b.dataset.team||tc,date=b.dataset.date||ev2.event_date;
+        close();
+        staffSeaResultForm(sid,team,date,()=>{try{render()}catch(e){}setTimeout(()=>v503OpenEventDetail(tc,ev2.kind,ev2.id,canEdit,afterChange,false),250)});
+      });
       const asg=body.querySelector('.v536Assign'),abox=body.querySelector('.v536AssignBox');
       if(asg&&abox)asg.onclick=async()=>{
         abox.classList.toggle('hidden');if(abox.classList.contains('hidden'))return;
@@ -6644,7 +6649,10 @@ function seaPrescription(value){
       count=series.length;fixedTimeSeconds=null;fixedDistanceM=null;
     }
   }
-  if(!series.length)series=Array.from({length:count},(_,index)=>({label:count>1?`Serie ${index+1}`:'Resultado',fixedTimeSeconds,fixedDistanceM,targetSpm:null}));
+  // v816: "3 salidas de 15 paladas" = 3 series (antes era una sola y las otras caían en otros bloques)
+  let v816Sal=false;
+  if(!series.length&&!lead){const sl=txt.match(/^\s*(\d+)\s*(?:salidas?|arrancadas?)\b/i);if(sl&&Number(sl[1])>1&&Number(sl[1])<=12){count=Number(sl[1]);v816Sal=true}}
+  if(!series.length)series=Array.from({length:count},(_,index)=>({label:count>1?`${v816Sal?'Salida':'Serie'} ${index+1}`:'Resultado',fixedTimeSeconds,fixedDistanceM,targetSpm:null}));
   return {count,fixedTimeSeconds,fixedDistanceM,series};
 }
 function seaSeriesTimeText(sec){if(sec==null)return '';const m=Math.floor(sec/60),s=sec-m*60;return `${m}:${String(s).padStart(2,'0')}`}
@@ -6903,7 +6911,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   const blockHtml=blocks.map(blockHtmlV186).join('');
   const imported=Array.isArray(importedSeries)?importedSeries:[];
   let seaPhotoFilesV137=[];
-  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm${v693SparkHtml(v693Extra.get(String(x.id)))}</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><button type="button" id="seaRecordV689">📍 Grabar con GPS</button><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
+  content.innerHTML=`<div class="card seaCard"><button id="staffSeaBack">← Volver</button><h2>Registro MAR · ${teamLabel(team)}</h2><p class="muted">${shortDateES(date)} · ${esc(session.title||'Sesión MAR')}</p>${v307CrewBoatHtml(session.crew,session.id,false,team)}${existingResults.length?`<div class="info"><b>${existingResults.length} resultado${existingResults.length===1?'':'s'} MAR ya guardado${existingResults.length===1?'':'s'}.</b><br>Se conservan aunque hayas editado la planificación. Añade abajo solo lo que falte; guardar nuevos datos no borra los anteriores.</div><details class="libraryAccordion"><summary>Ver resultados ya guardados</summary><div class="accordionBody">${existingResults.map((x,n)=>`<div class="last"><b>${esc(seaCurrentExerciseNameV187(x.exercise_name,session.content)||`Resultado ${n+1}`)}</b><br>${esc(x.time_text||'—')} · ${x.distance_m??'—'} m · /500 ${esc(x.pace_500_text||'—')} · ${x.spm??'—'} ppm${v693SparkHtml(v693Extra.get(String(x.id)))}</div>`).join('')}</div></details>`:''}${imported.length?`<div class="info"><b>Datos importados de Rowing Coach.</b><br>Se han rellenado ${imported.length} serie${imported.length===1?'':'s'}. Revísalas antes de guardar; todavía no se ha registrado nada.</div>`:''}<div class="info"><b>Añade solo resultados nuevos o que falten.</b><br>Los resultados ya guardados se conservan salvo que tú los elimines. Tiempo rápido: 523 → 5:23 y 1058 → 10:58.</div><section class="card"><h3>Importar datos de Rowing Coach</h3><p class="muted">Elige cómo quieres traer los datos antes de completar o corregir manualmente las series.</p><div class="actions"><button type="button" id="seaImportLogV191" class="primary">Importar log recibido</button><button type="button" id="seaRecordV689">📍 Grabar con GPS</button><button type="button" id="v818RawBtn">Importar log de Row Training (.csv)</button><input id="v818RawFile" type="file" accept=".csv,text/csv,text/plain,.txt" hidden><label class="btn">Elegir capturas<input id="seaRowingCoachPhotosV137" type="file" accept="image/*" multiple hidden></label></div><div id="seaLogInboxV191"></div><div id="seaPhotoStatusV137" class="muted" style="margin-top:10px"></div><div id="seaPhotoPreviewV137" class="ergoPhotoGalleryV124"></div></section><div class="info"><b>Sesión realizada editable.</b><br>Añade o elimina series y bloques directamente aquí. También puedes editar un bloque sin tocar la planificación original.</div><div id="v77SeaBlocks">${blockHtml}</div><button type="button" id="addSeaBlockV186">+ Añadir bloque realizado</button><label>Observaciones de la sesión<textarea id="v85SeaObservations" rows="4" placeholder="Técnica, viento, estado del mar, incidencias, sensaciones del equipo…"></textarea></label><button id="v77SaveSeaAll" class="primary">Guardar resultados MAR</button></div>`;
   v347ScrollTo(0);
   const refreshCrewV307=()=>{
     content.querySelector('.v307CrewSection').outerHTML=v307CrewBoatHtml(session.crew,session.id,false,team);
@@ -6965,6 +6973,24 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
       const rows=[...seaLogInboxV191.querySelectorAll('.seaLogMapRowV191')],chosen=rows.map(r=>r.querySelector('.seaLogTargetV191')?.value||'').filter(Boolean);if(new Set(chosen).size!==chosen.length)return alert('Hay dos bloques del log asignados a la misma serie. Elige destinos distintos.');let applied=0;
       rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaLogTargetV191')?.value;if(!targetId)return;const target=seaVisibleTargetsV191().find(t=>t.id===targetId);if(!target)return;fillSeaSeriesRowV137(target.row,series[i]);applied++});
       if(!applied)return alert('Elige al menos una serie del entrenamiento como destino.');const observations=document.getElementById('v85SeaObservations');if(observations&&!observations.value.trim())observations.value=`Importado de Rowing Coach · ${applied} serie${applied===1?'':'s'} asignada${applied===1?'':'s'} por el entrenador.`;seaLogInboxV191.innerHTML=`<div class="info"><b>${applied} serie${applied===1?'':'s'} del log aplicada${applied===1?'':'s'}.</b><br>Revisa los datos y guarda cuando termines de editar la sesión realizada.</div>`;
+    };
+  }
+  const v818Btn=document.getElementById('v818RawBtn'),v818File=document.getElementById('v818RawFile');
+  if(v818Btn&&v818File){
+    v818Btn.onclick=()=>{v818File.value='';v818File.click()};
+    v818File.onchange=async e=>{
+      const f=e.target.files&&e.target.files[0];if(!f)return;
+      let text='';try{text=await f.text()}catch(err){seaLogInboxV191.innerHTML='<div class="info">No se pudo leer el archivo.</div>';return}
+      let pause=12;
+      const go=()=>{
+        let r;try{r=V689UI.replayRaw(text,pause)}catch(err){r={series:[],err:'No se pudo interpretar el archivo.'}}
+        const other=r.date&&date&&r.date!==date;
+        seaLogInboxV191.innerHTML=`<div class="info"><b>${esc(f.name)}</b>${r.date?' · grabado el '+esc(r.date):''}<br>${r.err?esc(r.err):`${r.series.length} serie${r.series.length===1?'':'s'} detectada${r.series.length===1?'':'s'}.`}${other?`<br><b>Ojo:</b> el archivo es de otro día que este entrenamiento.`:''}<label>Separar series si hay una pausa de más de (segundos)<input type="number" id="v818P" min="4" max="120" value="${pause}"></label><div class="actions"><button type="button" id="v818Cancel">Cancelar</button><button type="button" class="primary" id="v818Ok" ${r.series.length?'':'disabled'}>Continuar</button></div></div>`;
+        document.getElementById('v818P').onchange=ev=>{pause=Math.max(4,Math.min(120,Number(ev.target.value)||12));go()};
+        document.getElementById('v818Cancel').onclick=()=>{seaLogInboxV191.innerHTML=''};
+        document.getElementById('v818Ok').onclick=()=>showRowingCoachMapV191({filename:f.name,date:r.date,series:r.series});
+      };
+      go();
     };
   }
   const seaRecordV689=document.getElementById('seaRecordV689');if(seaRecordV689)seaRecordV689.onclick=()=>{
@@ -15428,6 +15454,52 @@ function parseGoal(type,txt){
   if(txt.includes(':')){const p=txt.split(':').map(Number);if(p.some(x=>!isFinite(x)))return null;const sec=p.length===2?p[0]*60+p[1]:null;return sec>0?sec:null}
   const m=Number(txt);return m>0?Math.round(m*60):null;
 }
+  function applyRaw(e){let S=Object.assign({},{strokeAvg:3,paceWin:10,accThr:30,sens:'med',minSpm:14,maxSpm:56});try{Object.assign(S,JSON.parse(localStorage.getItem('rowtraining_rec689_cfg')||'{}'))}catch(x){}
+    const SN={alta:0.03,med:0.05,baja:0.1};e.setOpt({strokeAvg:Math.max(1,Math.min(10,Math.round(S.strokeAvg)||3)),paceWin:Math.max(3,Math.min(30,Number(S.paceWin)||10)),accThr:Math.max(5,Math.min(100,Number(S.accThr)||30)),minRms:SN[S.sens]||0.05,minSpm:Math.max(8,Math.min(30,Number(S.minSpm)||14)),maxSpm:Math.max(30,Math.min(70,Number(S.maxSpm)||56))})}
+  // v816 · Importar un CSV "en bruto" guardado antes: se repasa el GPS y el acelerómetro, se separan las
+  // series por pausas y se añaden a la lista para asignarlas como cualquier otra grabación.
+  function replayRaw(text,pauseS){
+    const G=[],M=[],num=x=>{if(x==null||x==='')return null;const n=Number(x);return isFinite(n)?n:null};
+    String(text).split(/\r?\n/).forEach(l=>{const p=l.trim().split(',');
+      if(p[0]==='G'&&p.length>=5){const t=num(p[1]),la=num(p[2]),lo=num(p[3]);if(t!=null&&la!=null&&lo!=null)G.push({t,lat:la,lon:lo,acc:num(p[4]),speed:num(p[5]),heading:num(p[6])})}
+      else if(p[0]==='M'&&p.length>=5){const t=num(p[1]),x=num(p[2]),y=num(p[3]),z=num(p[4]);if(t!=null&&x!=null&&y!=null&&z!=null)M.push({t,x,y,z})}});
+    if(G.length<5)return {series:[],err:'Ese archivo no tiene datos de GPS. Tiene que ser un CSV de "Descargar datos en bruto".'};
+    G.sort((a,b)=>a.t-b.t);M.sort((a,b)=>a.t-b.t);
+    const H=V689.hav;
+    // velocidad de cada lectura (la del GPS o, si falta, por posición) y suavizado de 3
+    const V=G.map((g,i)=>{if(g.speed!=null&&g.speed>=0)return g.speed;if(i>0){const dt=(g.t-G[i-1].t)/1000;if(dt>0&&dt<8)return H(G[i-1],g)/dt}return 0});
+    const Vs=V.map((v,i)=>{const a=[V[Math.max(0,i-1)],v,V[Math.min(V.length-1,i+1)]].sort((x,y)=>x-y);return a[1]});
+    const segs=[];let a=0;
+    const cut=(i0,i1)=>{ // desde i0 hasta i1 (incl.): recorta lo parado de los extremos
+      while(i0<=i1&&Vs[i0]<1)i0++;while(i1>=i0&&Vs[i1]<1)i1--;
+      if(i1<=i0)return;const dur=(G[i1].t-G[i0].t)/1000;if(dur<8)return;
+      let d=0;for(let k=i0+1;k<=i1;k++){const st=H(G[k-1],G[k]);if(G[k].t-G[k-1].t<8000&&st<40)d+=st}
+      if(d<30)return;segs.push({i0,i1,ts:G[i0].t,te:G[i1].t})};
+    let slow=-1;
+    for(let i=1;i<=G.length;i++){
+      const end=i===G.length,gap=!end&&G[i].t-G[i-1].t>8000;
+      if(end||gap){if(slow>=0&&!end){}cut(a,i-1);a=i;slow=-1;continue}
+      if(Vs[i]<1){if(slow<0)slow=i}
+      else{if(slow>=0&&(G[i].t-G[slow].t)/1000>=pauseS){cut(a,slow-1);a=i}slow=-1}
+    }
+    const out=[];
+    segs.forEach(sg=>{
+      const e=V689.makeEngine();applyRaw(e);
+      const t0=sg.ts-9000,t1=sg.te;let gi=0,mi=0,started=false;
+      while(gi<G.length&&G[gi].t<t0)gi++;while(mi<M.length&&M[mi].t<t0)mi++;
+      const feedG=()=>{const g=G[gi++];if(g.acc!=null)e.gps({t:g.t,lat:g.lat,lon:g.lon,acc:g.acc,speed:g.speed,heading:g.heading})};
+      const feedM=()=>{const m=M[mi++];e.motion(m.t,m.x,m.y,m.z)};
+      while((gi<G.length&&G[gi].t<=t1)||(mi<M.length&&M[mi].t<=t1)){
+        const tg=gi<G.length&&G[gi].t<=t1?G[gi].t:Infinity,tm=mi<M.length&&M[mi].t<=t1?M[mi].t:Infinity,tn=Math.min(tg,tm);
+        if(!started&&tn>=sg.ts){e.start(sg.ts,null);started=true}
+        if(tg<=tm)feedG();else feedM();
+      }
+      if(!started)e.start(sg.ts,null);
+      const r=e.stop(t1);
+      if(r&&r.duration_seconds>=5&&r.distance_m>=20){r.suggested=true;r.started_at=new Date(sg.ts).toISOString();out.push(r)}
+    });
+    return {series:out,date:new Date(G[0].t).toLocaleDateString('sv-SE'),first:G[0].t};
+  }
 function open(cfg){
   if(document.getElementById('v689Rec'))return;
   const KEY='rowtraining_rec689'+(cfg.standalone?'_s':'_m');
@@ -15438,7 +15510,7 @@ function open(cfg){
   const SENS={alta:0.03,med:0.05,baja:0.1};
   let SET=Object.assign({},DEF);try{Object.assign(SET,JSON.parse(localStorage.getItem(CK)||'{}'))}catch(e){}
   const eng=V689.makeEngine();
-  const applySet=()=>{eng.setOpt({strokeAvg:Math.max(1,Math.min(10,Math.round(SET.strokeAvg)||3)),paceWin:Math.max(3,Math.min(30,Number(SET.paceWin)||10)),accThr:Math.max(5,Math.min(100,Number(SET.accThr)||30)),minRms:SENS[SET.sens]||0.05,minSpm:Math.max(8,Math.min(30,Number(SET.minSpm)||14)),maxSpm:Math.max(30,Math.min(70,Number(SET.maxSpm)||56))})};
+  const applySet=(en)=>{(en||eng).setOpt({strokeAvg:Math.max(1,Math.min(10,Math.round(SET.strokeAvg)||3)),paceWin:Math.max(3,Math.min(30,Number(SET.paceWin)||10)),accThr:Math.max(5,Math.min(100,Number(SET.accThr)||30)),minRms:SENS[SET.sens]||0.05,minSpm:Math.max(8,Math.min(30,Number(SET.minSpm)||14)),maxSpm:Math.max(30,Math.min(70,Number(SET.maxSpm)||56))})};
   applySet();
   const saved=load()||{series:[]};
   const plan=Array.isArray(cfg.plan)?cfg.plan:[];
@@ -15590,6 +15662,7 @@ function open(cfg){
     st.cd=0;st.cur=null;st.finishing=false;st.auto=false;st.lastEnd=Date.now();
     eng.reset();msg(busy?'Serie descartada. Todo a cero.':'Todo a cero.');draw();
   };
+
   $('v689Raw').onchange=e=>{st.raw=e.target.checked;$('v689Raw2').hidden=!st.raw};
   $('v689Raw2').onclick=async()=>{
     const csv='tipo,t_ms,a,b,c,d,e\n'+st.rawLines.join('\n'),name='rowtraining-bruto-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
@@ -15621,7 +15694,7 @@ function open(cfg){
   }else if(saved.partial){save({series:st.series})}
   renderList();fillSel();draw();
 }
-return {open};
+return {open,replayRaw};
 })();
 
 
