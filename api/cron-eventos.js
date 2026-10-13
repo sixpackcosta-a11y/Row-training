@@ -87,7 +87,7 @@ module.exports=async function handler(req,res){
     const blocks=(uid,cat)=>(prefs.get(String(uid))||{})[cat]===false;
     const table={session:'training_sessions',competition:'competitions',club_event:'club_events'};
     const events=[
-      ...(ss||[]).map(x=>({...x,kind:'session',date:x.session_date,title:x.event_name||x.title||'Entrenamiento',teams:[x.team_code]})),
+      ...(ss||[]).map(x=>({...x,kind:'session',date:x.session_date,title:(x.event_name&&String(x.event_name).trim())||(String(x.session_type||'').toUpperCase()==='MAR'?'Entrenamiento MAR':'Entrenamiento GIM+ERGO'),teams:[x.team_code]})),
       ...(cc||[]).map(x=>({...x,kind:'competition',date:x.competition_date,title:x.name||'Competición',teams:x.team_codes||[]})),
       ...(ee||[]).map(x=>({...x,kind:'club_event',date:x.event_date,title:x.title||'Evento',teams:uniq([x.team_code,...(x.extra_team_codes||[])])}))
     ].filter(e=>e.teams.length);
