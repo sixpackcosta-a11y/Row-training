@@ -1538,12 +1538,12 @@ html[data-theme="dark"]{--tc-erg:#b79cf0;--tc-gym:#f0b45c;--tc-mar:#6bb3f0;--tc-
 
 :is(#content,#v555Freeze) .seaSessionActions{align-items:center}
 .v839Menu{position:relative;display:inline-block}
-:is(#content,#v555Freeze) .seaSessionActions .v839More{width:34px;padding:0;font-size:18px;line-height:1;letter-spacing:1px;background:var(--surface-2,#eef1f6)!important;color:var(--text)!important;border:0!important}
-.v839Pop{position:absolute;left:0;top:calc(100% + 4px);z-index:60;min-width:190px;display:flex;flex-direction:column;background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
+:is(#content,#v555Freeze) .v839Menu .v839More{width:34px;padding:0;font-size:18px;line-height:1;letter-spacing:1px;background:var(--surface-2,#eef1f6)!important;color:var(--text)!important;border:0!important}
+.v839Pop{position:absolute;right:0;left:auto;top:calc(100% + 4px);z-index:60;min-width:190px;display:flex;flex-direction:column;background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
 .v839Pop[hidden]{display:none}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop button{height:40px;width:100%;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:14px;color:var(--text)!important}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop button:hover{background:var(--surface-2,#eef1f6)!important}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
+:is(#content,#v555Freeze) .v839Pop button{height:40px;width:100%;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:14px;color:var(--text)!important}
+:is(#content,#v555Freeze) .v839Pop button:hover{background:var(--surface-2,#eef1f6)!important}
+:is(#content,#v555Freeze) .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
 
 :is(#content,#v555Freeze) .seaSessionPick.v840{border:0!important;border-left:5px solid var(--sea-bar,#1f6fb2)!important;border-top:1px solid var(--border)!important;border-radius:0!important;padding:0!important;background:transparent!important}
 :is(#content,#v555Freeze) .seaSessionPick.v840.noRes{border-left-color:#a9b3c1!important}
@@ -3396,7 +3396,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="841";
+const APP_VERSION="842";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
