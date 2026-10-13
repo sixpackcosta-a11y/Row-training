@@ -3401,7 +3401,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="846";
+const APP_VERSION="847";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16063,6 +16063,7 @@ return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF};
  const own=new WeakSet();
  function fix(el){
   if(!el||el.nodeType!==1||SKIP.test(el.tagName))return;
+  if(el.closest&&el.closest('header'))return;
   const cs=getComputedStyle(el); if(cs.display==='none')return;
   const fs=parseFloat(cs.fontSize),fw=parseInt(cs.fontWeight,10)||400;
   const tf=snap(fs),tw=fw<=450?300:500;
