@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="851";
+const APP_VERSION="852";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16273,18 +16273,49 @@ function makePdf(r){
   return new Blob(parts,{type:'application/pdf'});
 }
 
-function showResult(blob,previewUrl,name,title){
+function showResult(blob,previewUrl,name,title,team){
   document.getElementById('v851Modal')?.remove();
   const url=URL.createObjectURL(blob),file=new File([blob],name,{type:blob.type});
   const can=!!(navigator.canShare&&navigator.canShare({files:[file]}));
   const d=document.createElement('div');d.id='v851Modal';d.className='modalBack';
-  d.innerHTML=`<div class="modalCard" style="max-width:420px"><h3 style="margin-top:0">${blob.type==='application/pdf'?'PDF':'Imagen'} lista</h3><img src="${previewUrl}" alt="" style="width:100%;max-height:52vh;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#fff"><div class="actions" style="margin-top:14px">${can?'<button id="v851Share" class="primary">Compartir</button>':''}<button id="v851Dl" ${can?'':'class="primary"'}>Descargar</button><button id="v851Close">Cerrar</button></div></div>`;
+  d.innerHTML=`<div class="modalCard" style="max-width:420px"><h3 style="margin-top:0">${blob.type==='application/pdf'?'PDF':'Imagen'} lista</h3><img src="${previewUrl}" alt="" style="width:100%;max-height:52vh;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#fff"><div class="actions" style="margin-top:14px">${can?'<button id="v851Share" class="primary">Compartir</button>':''}<button id="v851Chat" ${can?'':'class="primary"'}>Enviar al chat</button><button id="v851Dl">Descargar</button><button id="v851Close">Cerrar</button></div></div>`;
   document.body.appendChild(d);
   const close=()=>{d.remove();URL.revokeObjectURL(url)};
   d.onclick=e=>{if(e.target===d)close()};
   d.querySelector('#v851Close').onclick=close;
   d.querySelector('#v851Dl').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()};
+  d.querySelector('#v851Chat').onclick=()=>pickChat(blob,name,title,team,close);
   const sh=d.querySelector('#v851Share');if(sh)sh.onclick=async()=>{try{await navigator.share({files:[file],title})}catch(e){if(e&&e.name!=='AbortError')toast('No se pudo compartir; usa Descargar',3000)}};
+}
+
+
+async function sendToChat(dest,blob,name,caption){
+  if(blob.size>12*1048576)return{error:{message:'El archivo pesa más de 12 MB.'}};
+  const me=currentUser.id,safe=String(name).replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
+  const np=(dest.kind==='team'?'team/'+dest.team:'chat/'+dest.rower)+'/'+Date.now()+'-'+safe;
+  const up=await sb.storage.from('chat-files').upload(np,blob,{contentType:blob.type,cacheControl:'3600'});
+  if(up.error)return{error:up.error};
+  const row=dest.kind==='team'?{team_code:dest.team,sender_id:me,body:caption,att_path:np,att_name:name,att_type:blob.type,att_size:blob.size}:{rower_id:dest.rower,team_code:dest.team,sender_id:me,body:caption,att_path:np,att_name:name,att_type:blob.type,att_size:blob.size};
+  const r=await sb.from(dest.kind==='team'?'team_chat_messages':'chat_messages').insert(row).select('id').single();
+  if(r.error)return{error:r.error};
+  const pb=caption||(blob.type==='application/pdf'?'📎 '+name:'📷 Foto');
+  try{if(dest.kind==='team')v631NotifyTeam(dest.team,pb);else v631Notify1to1(dest.rower,dest.team,pb)}catch(e){}
+  return{ok:true};
+}
+async function pickChat(blob,name,title,team,closeMain){
+  const lay=v631Modal('Enviar a…','<input class="v631Find" placeholder="Buscar…" style="width:100%;margin:8px 0"><div class="v631List"><p class="muted">Cargando…</p></div>');
+  let teams=staffViewTeamCodes();if(team&&teams.includes(team))teams=[team,...teams.filter(t=>t!==team)];
+  const dests=[];teams.forEach(t=>dests.push({kind:'team',team:t,label:'👥 Chat del equipo '+teamShort(t)}));
+  const list=lay.querySelector('.v631List'),find=lay.querySelector('.v631Find');
+  const draw=()=>{const f=v631Norm(find.value),ds=dests.filter(x=>!f||v631Norm(x.label).includes(f));list.innerHTML=ds.length?ds.map(x=>`<button type="button" class="v631Dest" data-i="${dests.indexOf(x)}">${esc(x.label)}</button>`).join(''):'<p class="muted">Sin resultados</p>'};
+  draw();find.oninput=draw;
+  list.onclick=async e=>{const b=e.target.closest('.v631Dest');if(!b)return;const x=dests[Number(b.dataset.i)];b.disabled=true;b.textContent='Enviando…';
+    const r=await sendToChat(x,blob,name,'📊 '+title);
+    if(r.error){alert('No se pudo enviar: '+(r.error.message||r.error));b.disabled=false;b.textContent=x.label;return}
+    lay.remove();closeMain&&closeMain();try{v300ShowToast('Enviado a '+x.label.replace(/^[^\s]+\s/,''))}catch(_){}
+    if(window._v583Refresh)window._v583Refresh();
+  };
+  try{for(const t of teams){(await staffAthletesForTeam(t)).forEach(a=>dests.push({kind:'c',rower:a.user_id,team:t,label:'💬 '+(a.full_name||'Remero')+' ('+teamShort(t)+')'}));if(lay.isConnected)draw()}}catch(e){}
 }
 
 async function run(id,mode){
@@ -16295,8 +16326,8 @@ async function run(id,mode){
     const png=await new Promise(res=>r.cv.toBlob(res,'image/png'));
     const prev=URL.createObjectURL(png);
     toast('',1);document.getElementById('v851Toast').style.display='none';
-    if(mode==='pdf')showResult(makePdf(r),prev,base+'.pdf',`MAR ${d.s.session_date}`);
-    else showResult(png,prev,base+'.png',`MAR ${d.s.session_date}`);
+    if(mode==='pdf')showResult(makePdf(r),prev,base+'.pdf',`MAR · ${(d.s.title||'').replace(/^MAR\s*[·:\-]?\s*/i,'')} · ${d.s.session_date.split('-').reverse().slice(0,2).join('/')}`,d.s.team_code);
+    else showResult(png,prev,base+'.png',`MAR · ${(d.s.title||'').replace(/^MAR\s*[·:\-]?\s*/i,'')} · ${d.s.session_date.split('-').reverse().slice(0,2).join('/')}`,d.s.team_code);
   }catch(e){console.error('v851',e);toast('No se pudo generar: '+(e&&e.message||e),4000)}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('.shareSeaImg,.shareSeaPdf');if(!b)return;e.preventDefault();run(b.dataset.session,b.classList.contains('shareSeaPdf')?'pdf':'png')},true);
