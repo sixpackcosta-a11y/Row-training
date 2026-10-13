@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="854";
+const APP_VERSION="855";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16228,13 +16228,13 @@ function build(ctx,draw,d){
       for(let k=0;k<=3;k++){const v=ymn+(ymx-ymn)*k/3;p.t(fmtMetricSeconds(v),gx-6,gy+gh*k/3+4,{size:10.5,color:C.mut,align:'right'})}
       p.t(num(xmn+1.5,0)+' ppm',gx,gy+gh+18,{size:10.5,color:C.mut});p.t(num(xmx-1.5,0)+' ppm',gx+gw,gy+gh+18,{size:10.5,color:C.mut,align:'right'});
       if(draw){ctx.beginPath();sp.forEach((o,i)=>{const px=X(o.spm),py=Y(o.pace);i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.strokeStyle='#b6c3da';ctx.lineWidth=2;ctx.stroke()}
-      sp.forEach((o,ii)=>{if(draw){ctx.beginPath();ctx.arc(X(o.spm),Y(o.pace),6,0,7);ctx.fillStyle=C.blue;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}p.t(o.lab,X(o.spm)+(ii%2?-9:9),Y(o.pace)+(ii%2?20:-8),{size:11.5,weight:800,align:ii%2?'right':'left'})});
+      sp.forEach((o,ii)=>{if(draw){ctx.beginPath();ctx.arc(X(o.spm),Y(o.pace),6,0,7);ctx.fillStyle=C.blue;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}{const px=X(o.spm),py=Y(o.pace);const clash=sp.slice(0,ii).some(q=>Math.abs(X(q.spm)-px)<34&&Math.abs(Y(q.pace)-py)<26);p.t(o.lab,px,clash?py+22:py-12,{size:11.5,weight:800,align:'center'})}});
     }
-    const sl=pts.filter(o=>o.sl);
+    const slAll=pts.filter(o=>o.sl),slS=slAll.filter(o=>/^S\d+$/.test(o.lab)),sl=slS.length>=2?slS:slAll;
     if(sl.length>=2){
-      const x0=PAD+hw+12;frame(x0,y,hw,hh,'Metros por pala','Más alto = más eficiencia');
+      const x0=PAD+hw+12;frame(x0,y,hw,hh,'Recorrido por pala','Baja al subir la frecuencia (m por pala)');
       const mx=Math.max(...sl.map(o=>o.sl)),mn=Math.min(...sl.map(o=>o.sl)),lo=Math.max(0,mn-(mx-mn)*1.2-0.3),bx=x0+16,bw=hw-32,by=y+66,bh=hh-66-34,gap=10,cw=Math.min(52,(bw-gap*(sl.length-1))/sl.length),tot=cw*sl.length+gap*(sl.length-1),sx=bx+(bw-tot)/2;
-      sl.forEach((o,i)=>{const frac=(o.sl-lo)/(mx*1.05-lo),h2=Math.max(6,frac*bh),xx=sx+i*(cw+gap);p.rr(xx,by+bh-h2,cw,h2,7,o.sl===mx?C.teal:'#a8d8d6');p.t(num(o.sl,2),xx+cw/2,by+bh-h2-6,{size:12,weight:800,align:'center'});p.t(o.lab,xx+cw/2,by+bh+17,{size:12,weight:700,color:C.mut,align:'center'})});
+      sl.forEach((o,i)=>{const frac=(o.sl-lo)/(mx*1.05-lo),h2=Math.max(6,frac*bh),xx=sx+i*(cw+gap);p.rr(xx,by+bh-h2,cw,h2,7,'#7cc7c3');p.t(num(o.sl,2),xx+cw/2,by+bh-h2-6,{size:12,weight:800,align:'center'});p.t(o.lab,xx+cw/2,by+bh+17,{size:12,weight:700,color:C.mut,align:'center'})});
     }
     y+=(sp.length>=2||sl.length>=2?hh+26:14);br.push(y);
   }
