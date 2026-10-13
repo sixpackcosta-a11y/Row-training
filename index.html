@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="855";
+const APP_VERSION="859";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -15515,7 +15515,7 @@ function makeEngine(o){
     const m=median(spmRaw);
     if(spmShown!=null&&Math.abs(m-spmShown)/spmShown>0.25&&rejects<3){rejects++;}else{rejects=0;spmShown=spmShown==null?m:spmShown*0.5+m*0.5}
     spmConf=est.conf;
-    run.strokes+=spmShown/60;run.spmTime+=1;if(run.spmTime%2===0&&run.trace.length<2000)run.trace.push([run.spmTime,Math.round(spmShown*10)/10]);
+    run.strokes+=spmShown/60;run.spmTime+=1;if(run.spmTime%2===0&&run.trace.length<2000)run.trace.push([run.spmTime,Math.round(spmShown*10)/10,Math.round(run.dist),last?Math.max(0,Math.round((last.t-run.t0)/1000)):null]);
   }
   E.motion=function(t,ax,ay,az){
     if(ax==null||ay==null||az==null)return;
@@ -16154,6 +16154,21 @@ async function gather(id){
   return {s,rows,seats,nSeats:crew.seats,estribor:band(false),babor:band(true),handicap,vet,summary:seaSummary(rows)};
 }
 
+
+function tramos(tr){
+  if(!Array.isArray(tr)||tr.length<6||tr[0].length<4)return [];
+  const pts=tr.filter(q=>q[3]!=null&&q[2]!=null).map(q=>({spm:Number(q[1]),dist:Number(q[2]),t:Number(q[3])}));
+  if(pts.length<6)return [];
+  const out=[],tmax=pts[pts.length-1].t;let prev={t:0,dist:0};
+  for(let k=0;(k+1)*60<=tmax+5;k++){
+    const a=k*60,b=(k+1)*60,inb=pts.filter(q=>q.t>=a&&q.t<b);if(!inb.length)continue;
+    const end=inb[inb.length-1],dt=end.t-prev.t,dd=end.dist-prev.dist;
+    const sp=inb.map(q=>q.spm).filter(v=>v>0);
+    if(dt>=40&&dd>20&&sp.length)out.push({min:k+1,spm:sp.reduce((p,q)=>p+q,0)/sp.length,pace:dt/dd*500});
+    prev={t:end.t,dist:end.dist};
+  }
+  return out;
+}
 function P(ctx,draw){return{
   font(sz,w){ctx.font=`${w||400} ${sz}px ${FONT}`},
   t(s,x,y,o={}){this.font(o.size||16,o.weight);const w=ctx.measureText(s).width;if(draw){ctx.fillStyle=o.color||C.text;ctx.textAlign=o.align||'left';ctx.textBaseline='alphabetic';ctx.fillText(s,x,y)}return w},
@@ -16206,20 +16221,21 @@ function build(ctx,draw,d){
 
   // gráficas de rendimiento (v853)
   const pts=d.rows.map((x,i)=>{const pace=metricSeconds(x.pace_500_text),tm=metricSeconds(x.time_text),dist=Number(x.distance_m),spm=Number(x.spm);const lab0=String(x.exercise_name||'');const mm=lab0.match(/Serie\s*(\d+)/i);const base=lab0.replace(/\s*·\s*Serie\s*\d+\s*$/i,'');const lab=mm?'S'+mm[1]:(base.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g,'').slice(0,3).toUpperCase()||String(i+1));const sl=Number(x.stroke_length_m)||((dist>0&&spm>0&&tm>0)?dist/(spm*tm/60):null);return {lab,pace,spm:spm>0?spm:null,sl,dist}}).filter(o=>o.pace>0);
+  const wk=pts.filter(o=>/^S\d+$/.test(o.lab)),wpts=wk.length>=2?wk:pts,isW=o=>wpts.includes(o);
   if(pts.length>=2){
     p.t('Rendimiento',PAD,y+20,{size:20,weight:800});y+=34;
     const frame=(x,yy,w,h,title,sub)=>{p.rr(x,yy,w,h,14,C.card);p.t(title,x+16,yy+26,{size:14,weight:800});if(sub)p.t(sub,x+16,yy+43,{size:11.5,color:C.mut})};
     // 1) ritmo /500 por serie (más alto = más rápido)
-    {const h=210,x0=PAD,w=IW;frame(x0,y,w,h,'Ritmo /500 por serie','Más alta = más rápida');
+    {const h=210,x0=PAD,w=IW;frame(x0,y,w,h,'Ritmo /500 por serie','Más alta = más rápida'+(wpts.length<pts.length?' · gris: no comparable':''));
      const pc=pts.map(o=>o.pace),mn=Math.min(...pc),mx=Math.max(...pc),span=Math.max(2,mx-mn),lo=mn-span*0.6,hi=mx+span*1.2;
      const bx=x0+16,bw=w-32,by=y+60,bh=h-60-34,gap=14,cw=Math.min(90,(bw-gap*(pts.length-1))/pts.length),tot=cw*pts.length+gap*(pts.length-1),sx=bx+(bw-tot)/2;
-     pts.forEach((o,i)=>{const frac=(hi-o.pace)/(hi-lo),bh2=Math.max(6,frac*bh),xx=sx+i*(cw+gap),isBest=o.pace===mn;
-       p.rr(xx,by+bh-bh2,cw,bh2,8,isBest?C.blue:'#9db4e8');
+     pts.forEach((o,i)=>{const frac=(hi-o.pace)/(hi-lo),bh2=Math.max(6,frac*bh),xx=sx+i*(cw+gap),isBest=isW(o)&&o.pace===Math.min(...wpts.map(q=>q.pace));
+       p.rr(xx,by+bh-bh2,cw,bh2,8,isBest?C.blue:(isW(o)?'#9db4e8':'#d3dbe8'));
        p.t(fmtMetricSeconds(o.pace),xx+cw/2,by+bh-bh2-7,{size:13,weight:800,align:'center'});
        p.t(o.lab,xx+cw/2,by+bh+18,{size:12.5,weight:700,color:C.mut,align:'center'})});
      y+=h+12}
     // 2) ritmo vs PPM  y  3) m por pala
-    const hw=(IW-12)/2,hh=250,sp=pts.filter(o=>o.spm);
+    const hw=IW,hh=250,sp=wpts.filter(o=>o.spm);
     if(sp.length>=2){
       frame(PAD,y,hw,hh,'Ritmo frente a PPM','Arriba = más rápido');
       const gx=PAD+44,gy=y+58,gw=hw-44-18,gh=hh-58-40,xs=sp.map(o=>o.spm),ys=sp.map(o=>o.pace),xmn=Math.min(...xs)-1.5,xmx=Math.max(...xs)+1.5,ymn=Math.min(...ys)-1.5,ymx=Math.max(...ys)+1.5;
@@ -16230,13 +16246,7 @@ function build(ctx,draw,d){
       if(draw){ctx.beginPath();sp.forEach((o,i)=>{const px=X(o.spm),py=Y(o.pace);i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.strokeStyle='#b6c3da';ctx.lineWidth=2;ctx.stroke()}
       sp.forEach((o,ii)=>{if(draw){ctx.beginPath();ctx.arc(X(o.spm),Y(o.pace),6,0,7);ctx.fillStyle=C.blue;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}{const px=X(o.spm),py=Y(o.pace);const clash=sp.slice(0,ii).some(q=>Math.abs(X(q.spm)-px)<34&&Math.abs(Y(q.pace)-py)<26);p.t(o.lab,px,clash?py+22:py-12,{size:11.5,weight:800,align:'center'})}});
     }
-    const slAll=pts.filter(o=>o.sl),slS=slAll.filter(o=>/^S\d+$/.test(o.lab)),sl=slS.length>=2?slS:slAll;
-    if(sl.length>=2){
-      const x0=PAD+hw+12;frame(x0,y,hw,hh,'Recorrido por pala','Baja al subir la frecuencia (m por pala)');
-      const mx=Math.max(...sl.map(o=>o.sl)),mn=Math.min(...sl.map(o=>o.sl)),lo=Math.max(0,mn-(mx-mn)*1.2-0.3),bx=x0+16,bw=hw-32,by=y+66,bh=hh-66-34,gap=10,cw=Math.min(52,(bw-gap*(sl.length-1))/sl.length),tot=cw*sl.length+gap*(sl.length-1),sx=bx+(bw-tot)/2;
-      sl.forEach((o,i)=>{const frac=(o.sl-lo)/(mx*1.05-lo),h2=Math.max(6,frac*bh),xx=sx+i*(cw+gap);p.rr(xx,by+bh-h2,cw,h2,7,'#7cc7c3');p.t(num(o.sl,2),xx+cw/2,by+bh-h2-6,{size:12,weight:800,align:'center'});p.t(o.lab,xx+cw/2,by+bh+17,{size:12,weight:700,color:C.mut,align:'center'})});
-    }
-    y+=(sp.length>=2||sl.length>=2?hh+26:14);br.push(y);
+    y+=(sp.length>=2?hh+26:14);br.push(y);
   }
   // resultados
   const rows=d.rows;
@@ -16251,15 +16261,20 @@ function build(ctx,draw,d){
       if(g.notes){y+=p.wrap('Nota del bloque: '+g.notes,PAD,y+13,IW,{size:13,color:C.mut});y+=4}
       g.items.forEach((x,n)=>{
         const lab=String(x.exercise_name||'').replace(k,'').replace(/^\s*·\s*/,'')||`Resultado ${n+1}`;
-        const tr=Array.isArray(x.spm_trace)&&x.spm_trace.length>=3?x.spm_trace:null;
+        const tr=Array.isArray(x.spm_trace)&&x.spm_trace.length>=3?x.spm_trace:null;const tm=tramos(x.spm_trace),useTm=tm.length>=3;
         const note=(x.notes&&!(tr&&/^GPS\s*·/.test(String(x.notes).trim())))?x.notes:'';const nh=note?pm.wrap('Nota: '+note,0,0,IW-32,{size:13},false):0;
-        const h=16+16+16+44+(tr?14+48+22:0)+(nh?10+nh:0)+14;
+        const h=16+16+16+44+(useTm?14+162+22:tr?14+48+22:0)+(nh?10+nh:0)+14;
         p.rr(PAD,y,IW,h,14,C.card);
         let cy=y+16;p.t(lab,PAD+16,cy+13,{size:14,weight:800,color:C.blue});cy+=16+16;
         const mets=[['Tiempo',x.time_text||'—'],['Metros',x.distance_m??'—'],['/500',x.pace_500_text||'—'],['PPM',x.spm??'—'],['RPE',x.rpe??'—']],mw=(IW-32)/5;
         mets.forEach((m,i)=>{const mx=PAD+16+i*mw;p.t(String(m[0]).toUpperCase(),mx,cy+8,{size:10.5,weight:700,color:C.mut});p.t(String(m[1]),mx,cy+34,{size:20,weight:800})});
         cy+=44;
-        if(tr){cy+=14;p.spark(tr,PAD+16,cy,IW-32,48);cy+=48+16;p.t(`Palas/min en la serie: máx ${x.spm_max??'—'} · mín ${x.spm_min??'—'}${x.stroke_length_m?` · pala ${String(x.stroke_length_m).replace('.',',')} m`:''}`,PAD+16,cy,{size:12,color:C.mut});cy+=6}
+        if(useTm){cy+=14;
+          p.t('POR MINUTO · barras = ritmo /500 · verde = PPM · gris = metros por pala',PAD+16,cy+8,{size:10.5,weight:700,color:C.mut});
+          const pc=tm.map(o=>o.pace),mn=Math.min(...pc),mx=Math.max(...pc),span=Math.max(2,mx-mn),lo=mn-span*0.6,hi=mx+span*1.2,bw=IW-32,cwd=bw/tm.length,bwid=Math.min(46,cwd-8),bt=cy+40,bhh=58;
+          tm.forEach((o,i)=>{const cx=PAD+16+cwd*i+cwd/2,fr=(hi-o.pace)/(hi-lo),hb=Math.max(6,fr*bhh);p.rr(cx-bwid/2,bt+bhh-hb,bwid,hb,6,o.pace===mn?C.blue:'#9db4e8');p.t(fmtMetricSeconds(o.pace).replace(/\.\d$/,''),cx,bt+bhh-hb-6,{size:12,weight:800,align:'center'});p.t(String(o.min)+"'",cx,bt+bhh+16,{size:11,color:C.mut,align:'center'});p.t(num(o.spm,0),cx,bt+bhh+38,{size:15,weight:800,color:'#0f766e',align:'center'});p.t(num(30000/o.pace/o.spm,1)+' m',cx,bt+bhh+58,{size:12,color:C.mut,align:'center'})});
+          cy+=162;cy+=16;p.t(`Palas/min en la serie: máx ${x.spm_max??'—'} · mín ${x.spm_min??'—'}${x.stroke_length_m?` · pala ${String(x.stroke_length_m).replace('.',',')} m`:''}`,PAD+16,cy,{size:12,color:C.mut});cy+=6}
+        else if(tr){cy+=14;p.spark(tr,PAD+16,cy,IW-32,48);cy+=48+16;p.t(`Palas/min en la serie: máx ${x.spm_max??'—'} · mín ${x.spm_min??'—'}${x.stroke_length_m?` · pala ${String(x.stroke_length_m).replace('.',',')} m`:''}`,PAD+16,cy,{size:12,color:C.mut});cy+=6}
         if(nh){cy+=10;p.wrap('Nota: '+note,PAD+16,cy+13,IW-32,{size:13,color:C.text})}
         y+=h+10;br.push(y);
       });
