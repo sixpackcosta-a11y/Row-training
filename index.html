@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="850";
+const APP_VERSION="851";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -12975,7 +12975,7 @@ function v79SeaSessionListHtml(sessions,results,selectedIds,monthFilter='all'){
   const ss=(sessions||[]).filter(s=>monthFilter==='all'||s.session_date.startsWith(monthFilter));
   if(!ss.length)return '<div class="info">No hay sesiones MAR planificadas en este periodo.</div>';
   const monthGroups={}; ss.forEach(s=>{const ym=s.session_date.slice(0,7);(monthGroups[ym]||(monthGroups[ym]=[])).push(s)});
-  return `<div class="seaSessionList">${Object.entries(monthGroups).sort().map(([ym,list])=>`<section class="seaMonthGroup"><h3 class="v503WeekHead">${monthLabel(ym)}</h3><div class="v766List">${list.map(s=>{const rr=seaSortResultsByPlanV186(results.filter(r=>String(r.training_session_id)===String(s.id)),s.content).map(x=>({...x,exercise_name:seaCurrentExerciseNameV187(x.exercise_name,s.content)})),selected=selectedIds.includes(String(s.id)),hasCrew=v307NormalizeCrew(s.crew).assignments.length>0,hasDetail=rr.length>0||hasCrew;return `<article class="seaSessionPick v840 ${selected?'selectedSea':''} ${rr.length?'hasRes':'noRes'}"><div class="v503EventRow v840Line" role="button" tabindex="0" aria-expanded="false" style="border-left:5px solid ${rr.length?'#1f6fb2':'#a9b3c1'}"><div class="v503DateBlock"><span class="v503Month">${esc(v840Mon(s.session_date))}</span><span class="v503Day">${esc(v840Day(s.session_date))}</span></div><div class="v503Info"><div class="v503Title">${esc((s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</div><div class="v503Sub">${hasCrew?'Tripulación · ':''}${rr.length?`<span class="v840Ok">${rr.length===1?'1 resultado':rr.length+' resultados'}</span>`:'Sin resultados'}${selected?' · ✓ Seleccionada':''}</div></div><div class="v840Right">${rr.length?`<span class="v839Menu"><button type="button" class="v839More" aria-haspopup="true" aria-expanded="false" aria-label="Más acciones">⋯</button><span class="v839Pop" hidden><button class="editSeaResults" data-session="${s.id}" data-date="${s.session_date}">Editar resultados</button><button class="selectSeaSession ${selected?'active':''}" data-session="${s.id}">${selected?'✓ Seleccionada':'Comparar'}</button><button class="deleteSeaResults dangerBtn" data-session="${s.id}" data-date="${s.session_date}">Eliminar resultados</button></span></span>`:`<button class="editSeaResults primary" data-session="${s.id}" data-date="${s.session_date}">Registrar</button>`}</div></div><div class="v840Body"><div class="seaExerciseChips">${v79SeaExerciseChips(s)}</div>${hasDetail?`<div class="seaSessionActions v840Hidden"><button class="viewSeaResults primary" data-session="${s.id}" aria-expanded="false">${rr.length?'Ver resultados':'Ver tripulación'}</button></div>`:''}${hasDetail?v112SeaResultsDetailHtml(rr,s.crew,s.id):''}</div></article>`}).join('')}</div></section>`).join('')}</div>`;
+  return `<div class="seaSessionList">${Object.entries(monthGroups).sort().map(([ym,list])=>`<section class="seaMonthGroup"><h3 class="v503WeekHead">${monthLabel(ym)}</h3><div class="v766List">${list.map(s=>{const rr=seaSortResultsByPlanV186(results.filter(r=>String(r.training_session_id)===String(s.id)),s.content).map(x=>({...x,exercise_name:seaCurrentExerciseNameV187(x.exercise_name,s.content)})),selected=selectedIds.includes(String(s.id)),hasCrew=v307NormalizeCrew(s.crew).assignments.length>0,hasDetail=rr.length>0||hasCrew;return `<article class="seaSessionPick v840 ${selected?'selectedSea':''} ${rr.length?'hasRes':'noRes'}"><div class="v503EventRow v840Line" role="button" tabindex="0" aria-expanded="false" style="border-left:5px solid ${rr.length?'#1f6fb2':'#a9b3c1'}"><div class="v503DateBlock"><span class="v503Month">${esc(v840Mon(s.session_date))}</span><span class="v503Day">${esc(v840Day(s.session_date))}</span></div><div class="v503Info"><div class="v503Title">${esc((s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</div><div class="v503Sub">${hasCrew?'Tripulación · ':''}${rr.length?`<span class="v840Ok">${rr.length===1?'1 resultado':rr.length+' resultados'}</span>`:'Sin resultados'}${selected?' · ✓ Seleccionada':''}</div></div><div class="v840Right">${rr.length?`<span class="v839Menu"><button type="button" class="v839More" aria-haspopup="true" aria-expanded="false" aria-label="Más acciones">⋯</button><span class="v839Pop" hidden><button class="editSeaResults" data-session="${s.id}" data-date="${s.session_date}">Editar resultados</button><button class="selectSeaSession ${selected?'active':''}" data-session="${s.id}">${selected?'✓ Seleccionada':'Comparar'}</button><button type="button" class="shareSeaImg" data-session="${s.id}">Compartir imagen</button><button type="button" class="shareSeaPdf" data-session="${s.id}">Descargar PDF</button><button class="deleteSeaResults dangerBtn" data-session="${s.id}" data-date="${s.session_date}">Eliminar resultados</button></span></span>`:`<button class="editSeaResults primary" data-session="${s.id}" data-date="${s.session_date}">Registrar</button>`}</div></div><div class="v840Body"><div class="seaExerciseChips">${v79SeaExerciseChips(s)}</div>${hasDetail?`<div class="seaSessionActions v840Hidden"><button class="viewSeaResults primary" data-session="${s.id}" aria-expanded="false">${rr.length?'Ver resultados':'Ver tripulación'}</button></div>`:''}${hasDetail?v112SeaResultsDetailHtml(rr,s.crew,s.id):''}</div></article>`}).join('')}</div></section>`).join('')}</div>`;
 }
 function compareSeaHtml(rows){
   const occ=v79SeaOccurrences(rows); if(!occ.length)return '<p class="muted">Selecciona dos o más sesiones MAR con resultados para comparar ejercicios.</p>';
@@ -16124,7 +16124,185 @@ return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF};
 </script>
 <script>/*v839*/(function(){function closeAll(e){document.querySelectorAll('.v839Pop:not([hidden])').forEach(p=>{if(e&&p.parentNode.contains(e.target)&&!e.target.closest('.v839Pop button'))return;p.hidden=true;const b=p.parentNode.querySelector('.v839More');if(b)b.setAttribute('aria-expanded','false')})}
 document.addEventListener('click',function(e){const b=e.target.closest&&e.target.closest('.v839More');if(b){e.stopPropagation();const p=b.parentNode.querySelector('.v839Pop');const open=p.hidden;closeAll();p.hidden=!open;b.setAttribute('aria-expanded',String(open));if(open){p.style.left='';p.style.right='0';const r=p.getBoundingClientRect();if(r.left<8){p.style.right='auto';p.style.left='0'}}return}closeAll(e)},true)})();</script>
-<script>/*v840*/(function(){function tog(l){const art=l.closest('.v840');if(!art)return;const exp=!art.classList.contains('v840Exp');art.classList.toggle('v840Exp',exp);l.setAttribute('aria-expanded',String(exp));const d=art.querySelector('.seaResultsDetail'),vb=art.querySelector('.viewSeaResults');if(d&&vb&&(d.hidden===exp))vb.click()}
+<script>/*v851*/(function(){
+const FONT='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+const W=820,PAD=28;
+const C={navy:'#0B1B35',teal:'#3bb3b0',blue:'#2f5fe3',text:'#0f1b2d',mut:'#64748b',line:'#e2e8f0',card:'#f1f5f9',sub:'#9fb3d1'};
+const num=(v,d)=>v==null||!isFinite(v)?'—':(d==null?String(v):Number(v).toFixed(d)).replace('.',',');
+function fmtDate(ds){const [y,m,d]=String(ds).split('-').map(Number);const t=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(y,m-1,d)));return t.charAt(0).toUpperCase()+t.slice(1)}
+function toast(t,ms){let d=document.getElementById('v851Toast');if(!d){d=document.createElement('div');d.id='v851Toast';d.style.cssText='position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#0B1B35;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;z-index:99999;box-shadow:0 8px 24px #0005';document.body.appendChild(d)}d.textContent=t;d.style.display='block';clearTimeout(d._t);if(ms)d._t=setTimeout(()=>{d.style.display='none'},ms)}
+
+async function gather(id){
+  const sq=await sb.from('training_sessions').select('id,session_date,title,content,team_code').eq('id',id).single();
+  if(sq.error||!sq.data)throw new Error(sq.error?.message||'Sesión no encontrada');
+  const s=sq.data;
+  const cm=await v307FetchCrewMap([s.id]);s.crew=cm.get(String(s.id))||null;
+  const rq=await sb.from('sea_results').select('*').eq('training_session_id',s.id).order('created_at');
+  if(rq.error)throw new Error(rq.error.message);
+  const rows=seaSortResultsByPlanV186(rq.data||[],s.content).map(x=>({...x,exercise_name:seaCurrentExerciseNameV187(x.exercise_name,s.content)}));
+  const crew=v307NormalizeCrew(s.crew,s.team_code);
+  const uids=[...new Set(crew.assignments.filter(c=>c.user_id).map(c=>String(c.user_id)))];
+  let stats=new Map();const ages=new Map();
+  try{if(uids.length){const [st,aq]=await Promise.all([v310CrewPhysicalStats(uids,s.team_code),sb.from('profiles').select('user_id,birth_date').in('user_id',uids)]);stats=st;(aq.data||[]).forEach(p=>ages.set(String(p.user_id),ageFromBirthV103(p.birth_date)))}}catch(e){console.warn('v851 físicos',e)}
+  const vet=v465IsVeteranTeam(s.team_code);
+  const seat=n=>{const c=crew.assignments.find(a=>Number(a.position)===n);if(!c)return null;const st=c.user_id?stats.get(String(c.user_id)):null,age=c.user_id?ages.get(String(c.user_id)):null;const iep=(vet&&st&&st.wkg!=null&&age!=null)?v470AgeAdjustedWkg(st.wkg,age):null;return {name:c.full_name||c.guest_name||'—',weight:st?st.weight:null,wkg:st?st.wkg:null,iep,age}};
+  const seats=[];for(let n=1;n<=crew.seats;n++)seats.push(seat(n));
+  const band=odd=>{const l=seats.map((x,i)=>({x,n:i+1})).filter(o=>o.x&&((o.n%2===1)===odd)).map(o=>o.x);const w=l.map(o=>o.weight).filter(v=>v!=null),k=l.map(o=>o.wkg).filter(v=>v!=null),ie=l.map(o=>o.iep).filter(v=>v!=null);const av=a=>a.length?a.reduce((p,q)=>p+q,0)/a.length:null;return {n:l.length,kg:w.length?w.reduce((p,q)=>p+q,0):null,wkg:av(k),iep:av(ie)}};
+  const agl=seats.filter(x=>x&&x.age!=null).map(x=>x.age);
+  let handicap=null;
+  if(agl.length){const avg=Math.round(agl.reduce((a,b)=>a+b,0)/agl.length*10)/10;const f=d=>{const sc=v464HandicapSeconds('far',avg,d);return sc>0?`+${num(sc)}"`:sc<0?`${num(sc)}" (bono)`:'0"'};handicap=`Hándicap FAR · edad media ${num(avg)} años → ${f(700)} a 700 m · ${f(3000)} a 3000 m`}
+  return {s,rows,seats,nSeats:crew.seats,estribor:band(false),babor:band(true),handicap,vet,summary:seaSummary(rows)};
+}
+
+function P(ctx,draw){return{
+  font(sz,w){ctx.font=`${w||400} ${sz}px ${FONT}`},
+  t(s,x,y,o={}){this.font(o.size||16,o.weight);const w=ctx.measureText(s).width;if(draw){ctx.fillStyle=o.color||C.text;ctx.textAlign=o.align||'left';ctx.textBaseline='alphabetic';ctx.fillText(s,x,y)}return w},
+  wrap(s,x,y,maxW,o={},dr=draw){const sz=o.size||16,lh=o.lh||Math.round(sz*1.35);this.font(sz,o.weight);const out=[];let line='';for(const w of String(s).split(/\s+/)){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){out.push(line);line=w}else line=t}if(line)out.push(line);if(dr){ctx.fillStyle=o.color||C.text;ctx.textAlign='left';ctx.textBaseline='alphabetic';out.forEach((l,i)=>ctx.fillText(l,x,y+i*lh))}return out.length*lh},
+  rr(x,y,w,h,r,fill,stroke){if(!draw)return;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}},
+  spark(tr,x,y,w,h){if(!draw)return;const xs=tr.map(p=>Number(p[0])),ys=tr.map(p=>Number(p[1])),x0=xs[0],x1=xs[xs.length-1]||1,lo=Math.min(...ys)-1,hi=Math.max(...ys)+1;ctx.beginPath();tr.forEach((p,i)=>{const px=x+(xs[i]-x0)/Math.max(1,x1-x0)*w,py=y+h-(ys[i]-lo)/Math.max(1,hi-lo)*h;i?ctx.lineTo(px,py):ctx.moveTo(px,py)});ctx.strokeStyle=C.navy;ctx.lineWidth=2;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke()}
+}}
+
+function build(ctx,draw,d){
+  const p=P(ctx,draw),pm=P(ctx,false),br=[];let y=0;const IW=W-2*PAD;
+  const s=d.s,title=(s.title||'MAR').replace(/^MAR\s*[·:\-]?\s*/i,'')||'Sesión MAR';
+  // cabecera
+  pm.font(30,800);const th=pm.wrap(title,PAD,0,IW,{size:30,weight:800,lh:38},false);
+  const HH=118-38+th+30;
+  if(draw){ctx.fillStyle=C.navy;ctx.fillRect(0,0,W,HH)}
+  const w1=p.t('ROW',PAD,46,{size:22,weight:800,color:'#fff'});p.t('TRAINING',PAD+w1,46,{size:22,weight:800,color:C.teal});
+  p.t(`${teamLabel(s.team_code)} · ${fmtDate(s.session_date)}`,PAD,78,{size:15,color:C.sub});
+  p.wrap(title,PAD,118,IW,{size:30,weight:800,lh:38,color:'#fff'});
+  y=HH+22;
+  // resumen
+  const nn=k=>d.rows.map(x=>Number(x[k])).filter(v=>Number.isFinite(v)&&v>0),sm=a=>a.reduce((p,q)=>p+q,0),z={n:d.rows.length,meters:sm(nn('distance_m')),pace:d.summary.pace,spm:nn('spm').length?sm(nn('spm'))/nn('spm').length:null},tiles=[['Series',String(z.n)],['Metros',z.meters?Math.round(z.meters).toLocaleString('es-ES'):'—'],['/500 medio',z.pace!=null?fmtMetricSeconds(z.pace):'—'],['PPM medio',z.spm!=null?num(z.spm,1):'—']];
+  const tw=(IW-36)/4;
+  tiles.forEach((t,i)=>{const x=PAD+i*(tw+12);p.rr(x,y,tw,76,14,C.card);p.t(t[1],x+14,y+40,{size:25,weight:800});p.t(t[0].toUpperCase(),x+14,y+62,{size:11,weight:700,color:C.mut})});
+  y+=76+26;br.push(y);
+  // tripulación
+  if(d.seats.some(Boolean)){
+    p.t('🚣 Tripulación',PAD,y+20,{size:20,weight:800});y+=34;
+    p.t('▲ POPA',W/2,y+12,{size:11,weight:700,color:C.mut,align:'center'});y+=22;
+    const cw=(IW-12)/2;
+    p.t('ESTRIBOR',PAD+2,y+10,{size:11,weight:700,color:C.mut});p.t('BABOR',PAD+cw+14,y+10,{size:11,weight:700,color:C.mut});y+=20;
+    let last=0;d.seats.forEach((m,i)=>{if(m)last=i+1});const rowsN=Math.max(1,Math.ceil(last/2));
+    for(let r=1;r<=rowsN;r++){
+      [[2*r,0],[2*r-1,1]].forEach(([n,col])=>{
+        if(n>d.nSeats)return;const x=PAD+col*(cw+12),m=d.seats[n-1];
+        p.rr(x,y,cw,62,12,m?C.card:'#f8fafc');
+        p.rr(x+10,y+14,26,26,13,m?C.navy:'#cbd5e1');p.t(String(n),x+23,y+32,{size:13,weight:800,color:'#fff',align:'center'});
+        if(m){
+          pm.font(16,700);let nm=m.name;while(nm.length>3&&ctx.measureText(nm).width>cw-56){nm=nm.slice(0,-1)}if(nm!==m.name)nm=nm.trim()+'…';
+          p.t(nm,x+46,y+27,{size:16,weight:700});
+          const ph=[m.weight!=null?`${num(m.weight)} kg`:null,m.wkg!=null?`${num(m.wkg,2)} W/kg`:null,m.iep!=null?`IEP ${num(m.iep,2)}`:null].filter(Boolean).join(' · ');
+          p.t(ph||'sin datos físicos',x+46,y+48,{size:12.5,color:C.mut});
+        }else p.t('Libre',x+46,y+37,{size:14,color:'#94a3b8'});
+      });
+      y+=70;
+    }
+    const line=(l,b)=>b.n?`${l} · ${b.n} remero${b.n===1?'':'s'}${b.kg!=null?` · ${num(b.kg,1)} kg total`:''}${b.wkg!=null?` · ${num(b.wkg,2)} W/kg medio`:''}${b.iep!=null?` · IEP medio ${num(b.iep,2)}`:''}`:null;
+    [line('Estribor',d.estribor),line('Babor',d.babor),d.handicap?'🏁 '+d.handicap:null].filter(Boolean).forEach(t=>{y+=4;y+=p.wrap(t,PAD,y+14,IW,{size:14,color:C.text})});
+    y+=22;br.push(y);
+  }
+  // resultados
+  const rows=d.rows;
+  if(rows.length){
+    p.t('Resultados',PAD,y+20,{size:20,weight:800});y+=36;
+    const sn=rows.find(x=>x.session_notes)?.session_notes;
+    if(sn){y+=p.wrap('Nota de la sesión: '+sn,PAD,y+14,IW,{size:14,color:C.mut});y+=10}
+    const groups=new Map();
+    rows.forEach(x=>{const k=String(x.exercise_name||'').replace(/\s*·\s*Serie\s*\d+\s*$/i,'')||'Resultado';if(!groups.has(k))groups.set(k,{notes:x.block_notes||null,items:[]});groups.get(k).items.push(x)});
+    groups.forEach((g,k)=>{
+      y+=p.wrap(k,PAD,y+18,IW,{size:17,weight:800,lh:23});y+=4;
+      if(g.notes){y+=p.wrap('Nota del bloque: '+g.notes,PAD,y+13,IW,{size:13,color:C.mut});y+=4}
+      g.items.forEach((x,n)=>{
+        const lab=String(x.exercise_name||'').replace(k,'').replace(/^\s*·\s*/,'')||`Resultado ${n+1}`;
+        const tr=Array.isArray(x.spm_trace)&&x.spm_trace.length>=3?x.spm_trace:null;
+        const nh=x.notes?pm.wrap('Nota: '+x.notes,0,0,IW-32,{size:13},false):0;
+        const h=16+16+16+44+(tr?14+48+22:0)+(nh?10+nh:0)+14;
+        p.rr(PAD,y,IW,h,14,C.card);
+        let cy=y+16;p.t(lab,PAD+16,cy+13,{size:14,weight:800,color:C.blue});cy+=16+16;
+        const mets=[['Tiempo',x.time_text||'—'],['Metros',x.distance_m??'—'],['/500',x.pace_500_text||'—'],['PPM',x.spm??'—'],['RPE',x.rpe??'—']],mw=(IW-32)/5;
+        mets.forEach((m,i)=>{const mx=PAD+16+i*mw;p.t(String(m[0]).toUpperCase(),mx,cy+8,{size:10.5,weight:700,color:C.mut});p.t(String(m[1]),mx,cy+34,{size:20,weight:800})});
+        cy+=44;
+        if(tr){cy+=14;p.spark(tr,PAD+16,cy,IW-32,48);cy+=48+16;p.t(`Palas/min en la serie: máx ${x.spm_max??'—'} · mín ${x.spm_min??'—'}${x.stroke_length_m?` · pala ${String(x.stroke_length_m).replace('.',',')} m`:''}`,PAD+16,cy,{size:12,color:C.mut});cy+=6}
+        if(nh){cy+=10;p.wrap('Nota: '+x.notes,PAD+16,cy+13,IW-32,{size:13,color:C.text})}
+        y+=h+10;br.push(y);
+      });
+      y+=8;
+    });
+  }else{y+=p.wrap('No hay resultados registrados todavía.',PAD,y+16,IW,{size:15,color:C.mut})+10}
+  p.t(`Row Training · generado el ${new Date().toLocaleDateString('es-ES')}`,W/2,y+22,{size:12,color:'#94a3b8',align:'center'});
+  y+=44;br.push(y);
+  return {h:Math.ceil(y),br};
+}
+
+function render(d){
+  const m=document.createElement('canvas').getContext('2d');
+  const {h,br}=build(m,false,d);
+  const S=Math.max(1,Math.min(2,Math.sqrt(14e6/(W*h))));
+  const cv=document.createElement('canvas');cv.width=Math.round(W*S);cv.height=Math.round(h*S);
+  const ctx=cv.getContext('2d');ctx.scale(S,S);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,h);
+  build(ctx,true,d);
+  return {cv,h,br,S};
+}
+
+function pdfPages(h,br){
+  const ph=W*1.4142,pages=[];let st=0;
+  while(st<h-1){let end=Math.min(h,st+ph);if(h-st>ph){const c=br.filter(b=>b>st+40&&b<=st+ph);if(c.length)end=c[c.length-1]}pages.push([st,end]);st=end}
+  return pages;
+}
+function makePdf(r){
+  const {cv,h,br,S}=r,pages=pdfPages(h,br),single=pages.length===1,PW=595.28,PH=841.89;
+  const imgs=pages.map(([a,b])=>{const t=document.createElement('canvas');t.width=cv.width;t.height=Math.max(1,Math.round((b-a)*S));const c=t.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,t.width,t.height);c.drawImage(cv,0,Math.round(a*S),cv.width,t.height,0,0,t.width,t.height);const u=atob(t.toDataURL('image/jpeg',0.92).split(',')[1]);const by=new Uint8Array(u.length);for(let i=0;i<u.length;i++)by[i]=u.charCodeAt(i);return {by,w:t.width,h:t.height}});
+  const enc=new TextEncoder(),parts=[],offs=[];let off=0;
+  const push=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);off+=b.length};
+  const obj=(n,body)=>{offs[n]=off;push(`${n} 0 obj\n${body}\nendobj\n`)};
+  push('%PDF-1.4\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,`<< /Type /Pages /Count ${imgs.length} /Kids [${imgs.map((_,i)=>`${3+3*i} 0 R`).join(' ')}] >>`);
+  imgs.forEach((im,i)=>{
+    const ih=PW*im.h/im.w,mh=single?ih:PH,pn=3+3*i;
+    obj(pn,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${mh.toFixed(2)}] /Contents ${pn+1} 0 R /Resources << /XObject << /Im0 ${pn+2} 0 R >> >> >>`);
+    const cs=`q ${PW} 0 0 ${ih.toFixed(2)} 0 ${(mh-ih).toFixed(2)} cm /Im0 Do Q`;
+    obj(pn+1,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+    offs[pn+2]=off;push(`${pn+2} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.by.length} >>\nstream\n`);push(im.by);push('\nendstream\nendobj\n');
+  });
+  const n=3+3*imgs.length,xr=off;
+  let x=`xref\n0 ${n}\n0000000000 65535 f \n`;for(let i=1;i<n;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  push(x+`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
+  return new Blob(parts,{type:'application/pdf'});
+}
+
+function showResult(blob,previewUrl,name,title){
+  document.getElementById('v851Modal')?.remove();
+  const url=URL.createObjectURL(blob),file=new File([blob],name,{type:blob.type});
+  const can=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+  const d=document.createElement('div');d.id='v851Modal';d.className='modalBack';
+  d.innerHTML=`<div class="modalCard" style="max-width:420px"><h3 style="margin-top:0">${blob.type==='application/pdf'?'PDF':'Imagen'} lista</h3><img src="${previewUrl}" alt="" style="width:100%;max-height:52vh;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#fff"><div class="actions" style="margin-top:14px">${can?'<button id="v851Share" class="primary">Compartir</button>':''}<button id="v851Dl" ${can?'':'class="primary"'}>Descargar</button><button id="v851Close">Cerrar</button></div></div>`;
+  document.body.appendChild(d);
+  const close=()=>{d.remove();URL.revokeObjectURL(url)};
+  d.onclick=e=>{if(e.target===d)close()};
+  d.querySelector('#v851Close').onclick=close;
+  d.querySelector('#v851Dl').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()};
+  const sh=d.querySelector('#v851Share');if(sh)sh.onclick=async()=>{try{await navigator.share({files:[file],title})}catch(e){if(e&&e.name!=='AbortError')toast('No se pudo compartir; usa Descargar',3000)}};
+}
+
+async function run(id,mode){
+  toast('Generando…');
+  try{
+    const d=await gather(id),r=render(d);
+    const base=`MAR_${d.s.team_code||'equipo'}_${d.s.session_date}`;
+    const png=await new Promise(res=>r.cv.toBlob(res,'image/png'));
+    const prev=URL.createObjectURL(png);
+    toast('',1);document.getElementById('v851Toast').style.display='none';
+    if(mode==='pdf')showResult(makePdf(r),prev,base+'.pdf',`MAR ${d.s.session_date}`);
+    else showResult(png,prev,base+'.png',`MAR ${d.s.session_date}`);
+  }catch(e){console.error('v851',e);toast('No se pudo generar: '+(e&&e.message||e),4000)}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.shareSeaImg,.shareSeaPdf');if(!b)return;e.preventDefault();run(b.dataset.session,b.classList.contains('shareSeaPdf')?'pdf':'png')},true);
+window.__v851={gather,render,makePdf,build};
+})();
+</script><script>/*v840*/(function(){function tog(l){const art=l.closest('.v840');if(!art)return;const exp=!art.classList.contains('v840Exp');art.classList.toggle('v840Exp',exp);l.setAttribute('aria-expanded',String(exp));const d=art.querySelector('.seaResultsDetail'),vb=art.querySelector('.viewSeaResults');if(d&&vb&&(d.hidden===exp))vb.click()}
 document.addEventListener('click',function(e){const l=e.target.closest&&e.target.closest('.v840Line');if(!l)return;if(e.target.closest('button,a,.v839Menu'))return;tog(l)});
 document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('v840Line')){e.preventDefault();tog(e.target)}})})();</script>
 </body></html>
