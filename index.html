@@ -3334,7 +3334,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="831";
+const APP_VERSION="832";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4689,14 +4689,12 @@ async function v672TodayPanel(){
       const up=evs.filter(e=>e.event_date>=today&&e.event_date<=end&&!e.cancelled_at&&!(e.kind==='club_event'&&e.team_code&&e.team_code!==t&&!(e.extra_team_codes||[]).includes(t))).map(e=>({...e,_viewTeam:t}));
       if(!up.length)return [];
       const maps=await v495RsvpStatusMapsForEvents(up,t);
-      const rowers=(roster||[]).filter(r=>r.user_id);
-      return up.map(e=>{
+      // v832 · mismo cálculo que la ficha del evento (excluidos, invitados, equipo técnico, organizador y "Asistiré por defecto")
+      const cnts=await v516CountsForEvents(up,maps,t,new Map());
+      return cnts.map(e=>{
         let opens=null;try{opens=v498ComputeOpensAt(e)}catch(_){}
         const closed=opens&&new Date(opens)>new Date();
-        const m=maps.get(e.kind+'_'+e.id)||new Map();
-        const pend=closed?0:rowers.filter(r=>!m.has(String(r.user_id))).length;
-        let inn=0;const rid=new Set(rowers.map(r=>String(r.user_id)));m.forEach((st,uid)=>{if(st==='in'&&rid.has(String(uid)))inn++});
-        return {...e,_pend:pend,_tot:rowers.length,_in:inn,_closed:!!closed};
+        return {...e,_viewTeam:t,_pend:closed?0:e._counts.pending,_tot:e._counts.total,_in:e._counts.in,_closed:!!closed};
       });
     }));
     per.forEach(l=>all.push(...l));
