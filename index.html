@@ -3334,7 +3334,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="830";
+const APP_VERSION="831";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9931,7 +9931,7 @@ async function v300RenderChatThread(container,rowerId,teamCode){
   const toasts=r=>{
     if(r.pushError)v300ShowToast((isRower?v311T('push_error_msg'):'⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: ')+r.pushError);
     else if(r.pushResult&&!r.pushResult.recipients)v300ShowToast(isRower?v311T('push_sin_destinatario'):'⚠️ Mensaje guardado, pero no hay ningún destinatario con notificaciones push activadas.');
-    else if(r.pushResult&&r.pushResult.recipients&&!r.pushResult.push_sent)v300ShowToast(isRower?v311T('push_no_entregado'):'⚠️ Mensaje guardado y hay destinatario, pero no se pudo entregar el push (revisa si tiene las notificaciones activadas en su móvil).');
+    else if(r.pushResult&&r.pushResult.recipients&&!r.pushResult.push_sent&&!r.pushResult.duplicate){const pr=r.pushResult,e0=(pr.errors&&pr.errors[0])||null,det=pr.push_found?` Hay ${pr.push_found} móvil${pr.push_found===1?'':'es'} registrado${pr.push_found===1?'':'s'} pero falló el envío${e0?` (código ${e0.statusCode||'?'}: ${String(e0.message||'').replace(/\s+/g,' ').slice(0,100)})`:''}.`:' No tiene ningún móvil registrado en el servidor: que abra la app instalada y active las notificaciones.';v300ShowToast(isRower?v311T('push_no_entregado'):'⚠️ Mensaje guardado, pero no se pudo entregar el push.'+det)}
   };
   let lastPush=null;
   await v583Chat(container,{
