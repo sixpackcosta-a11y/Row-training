@@ -1533,6 +1533,32 @@ html[data-theme="dark"]{--tc-erg:#b79cf0;--tc-gym:#f0b45c;--tc-mar:#6bb3f0;--tc-
 @media(max-width:700px){.coachCalendar .miniSess .mx{display:none}}
 @media(max-width:700px){.coachMonthBar:has(#coachWeekPrev){flex-wrap:nowrap}.coachMonthBar:has(#coachWeekPrev) .monthTitle{min-width:0;flex:1;font-size:16px}.coachMonthBar:has(#coachWeekPrev)>button{flex:none;padding-left:12px;padding-right:12px}}
 @media(max-width:480px){.coachMonthBar .wk{display:none}}
+
+.v836Hide{display:none!important}
+
+:is(#content,#v555Freeze) .seaSessionActions{align-items:center}
+.v839Menu{position:relative;display:inline-block}
+:is(#content,#v555Freeze) .seaSessionActions .v839More{width:34px;padding:0;font-size:18px;line-height:1;letter-spacing:1px;background:var(--surface-2,#eef1f6)!important;color:var(--text)!important;border:0!important}
+.v839Pop{position:absolute;left:0;top:calc(100% + 4px);z-index:60;min-width:190px;display:flex;flex-direction:column;background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
+.v839Pop[hidden]{display:none}
+:is(#content,#v555Freeze) .seaSessionActions .v839Pop button{height:40px;width:100%;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:14px;color:var(--text)!important}
+:is(#content,#v555Freeze) .seaSessionActions .v839Pop button:hover{background:var(--surface-2,#eef1f6)!important}
+:is(#content,#v555Freeze) .seaSessionActions .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
+
+:is(#content,#v555Freeze) .seaSessionPick.v840{border:0!important;border-left:5px solid var(--sea-bar,#1f6fb2)!important;border-top:1px solid var(--border)!important;border-radius:0!important;padding:0!important;background:transparent!important}
+:is(#content,#v555Freeze) .seaSessionPick.v840.noRes{border-left-color:#a9b3c1!important}
+:is(#content,#v555Freeze) .seaSessionPick.v840.selectedSea{background:var(--surface-2)!important}
+:is(#content,#v555Freeze) .seaMonthGroup{gap:0!important}
+.v840Line{display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:10px;padding:12px 10px 12px 8px;cursor:pointer}
+.v840Date{text-align:center;line-height:1.05}.v840Date small{display:block;font-size:12px;color:var(--text-muted);font-weight:500;letter-spacing:.05em}.v840Date b{font-size:22px;font-weight:500}
+.v840Title{font-size:16px;font-weight:500;line-height:1.3}.v840Sub{font-size:12px;color:var(--text-muted);margin-top:3px}.v840Sub .ok{color:var(--sea-bar,#1f6fb2);font-weight:500}
+.v840Right{display:flex;align-items:center}
+:is(#content,#v555Freeze) .v840Right .editSeaResults{height:34px;min-height:0;padding:0 12px;font-size:14px;border-radius:10px}
+.v840Body{padding:0 12px 12px 64px}
+.v840:not(.v840Exp) .v840Body{display:none}
+.v840Hidden{display:none!important}
+.v840Body .seaResultsDetail{margin-top:8px}
+html[data-theme="dark"] .v840{--sea-bar:#5aa7e0}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3370,7 +3396,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="840";
+const APP_VERSION="841";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -11845,31 +11871,6 @@ async function exportSeasonExcelV170(){
 function printableSeasonHtmlV170(d){
   const sections=d.codes.map(code=>{const rows=d.sessions.filter(x=>x.team_code===code);return `<h2>${esc(teamLabel(code))}</h2><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Sesión</th><th>Contenido</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.session_date||'')}</td><td>${esc(x.session_type||'')}</td><td>${esc(x.title||'')}</td><td>${esc(x.content||'').replace(/\n/g,'<br>')}</td></tr>`).join('')}</tbody></table>`}).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><title>Planificación Row Training 2026-27</title><style>body{font-family:Arial,sans-serif;color:#111;margin:24px}h1{font-size:22px}h2{margin-top:28px;font-size:18px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin:8px 0 24px;font-size:10px}th,td{border:1px solid #bbb;padding:5px;vertical-align:top}th{background:#eee}@page{size:A4 landscape;margin:10mm}tr{page-break-inside:avoid}/* V632 · aprovechar el ancho en móvil: menos aire lateral en tarjetas anidadas */
-.v836Hide{display:none!important}
-
-:is(#content,#v555Freeze) .seaSessionActions{align-items:center}
-.v839Menu{position:relative;display:inline-block}
-:is(#content,#v555Freeze) .seaSessionActions .v839More{width:34px;padding:0;font-size:18px;line-height:1;letter-spacing:1px;background:var(--surface-2,#eef1f6)!important;color:var(--text)!important;border:0!important}
-.v839Pop{position:absolute;left:0;top:calc(100% + 4px);z-index:60;min-width:190px;display:flex;flex-direction:column;background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
-.v839Pop[hidden]{display:none}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop button{height:40px;width:100%;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:14px;color:var(--text)!important}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop button:hover{background:var(--surface-2,#eef1f6)!important}
-:is(#content,#v555Freeze) .seaSessionActions .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
-
-:is(#content,#v555Freeze) .seaSessionPick.v840{border:0!important;border-left:5px solid var(--sea-bar,#1f6fb2)!important;border-top:1px solid var(--border)!important;border-radius:0!important;padding:0!important;background:transparent!important}
-:is(#content,#v555Freeze) .seaSessionPick.v840.noRes{border-left-color:#a9b3c1!important}
-:is(#content,#v555Freeze) .seaSessionPick.v840.selectedSea{background:var(--surface-2)!important}
-:is(#content,#v555Freeze) .seaMonthGroup{gap:0!important}
-.v840Line{display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:10px;padding:12px 10px 12px 8px;cursor:pointer}
-.v840Date{text-align:center;line-height:1.05}.v840Date small{display:block;font-size:12px;color:var(--text-muted);font-weight:500;letter-spacing:.05em}.v840Date b{font-size:22px;font-weight:500}
-.v840Title{font-size:16px;font-weight:500;line-height:1.3}.v840Sub{font-size:12px;color:var(--text-muted);margin-top:3px}.v840Sub .ok{color:var(--sea-bar,#1f6fb2);font-weight:500}
-.v840Right{display:flex;align-items:center}
-:is(#content,#v555Freeze) .v840Right .editSeaResults{height:34px;min-height:0;padding:0 12px;font-size:14px;border-radius:10px}
-.v840Body{padding:0 12px 12px 64px}
-.v840:not(.v840Exp) .v840Body{display:none}
-.v840Hidden{display:none!important}
-.v840Body .seaResultsDetail{margin-top:8px}
-html[data-theme="dark"] .v840{--sea-bar:#5aa7e0}
 </style></head><body><h1>Row Training · Planificación 2026–27</h1><p>Veteranas femenino + Absoluto masculino · 1/9/2026 a 31/5/2027</p>${sections}</body></html>`;
 }
 async function exportSeasonPdfV170(){
