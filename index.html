@@ -1487,6 +1487,16 @@ body.v583Kb .v583Full.v805Back{padding-bottom:6px!important}
 .v583Full .v583Back{font-size:26px!important;line-height:1;padding:0 6px 0 0!important;margin-right:-2px}
 #seaLogInboxV191,#seaLogMapRowsV191,.seaLogMapRowV191{max-width:100%;box-sizing:border-box;overflow:hidden}.seaLogMapRowV191 select,select.seaLogTargetV191{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;text-overflow:ellipsis}.seaLogMapRowV191 label{display:block!important;min-width:0!important;max-width:100%!important}
 .v829RegBox{margin:6px 0 0!important}.v829Reg{width:auto!important;font-size:14px!important;font-weight:600!important;padding:8px 14px!important;min-height:0!important;height:auto!important;background:var(--surface-2)!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:10px!important}
+
+.v830Back{position:fixed;inset:0;z-index:99990;background:rgba(10,20,40,.55);display:flex;align-items:flex-end;justify-content:center;padding:14px 14px max(14px,env(safe-area-inset-bottom))}
+.v830Card{background:var(--surface,#fff);color:var(--text,#111);border-radius:20px;max-width:440px;width:100%;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35);max-height:88vh;overflow:auto}
+.v830Card h2{margin:0 0 4px;font-size:20px}.v830Card p{margin:4px 0 10px;color:var(--text-muted,#667)}
+.v830Step{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--border,#e3e8f0)}
+.v830Num{flex:0 0 28px;height:28px;border-radius:50%;background:#0b1730;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+.v830Step span{flex:1;font-size:15px;line-height:1.35}.v830Step svg{flex:0 0 30px;height:30px}
+.v830Btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.v830Btns button{flex:1;min-width:120px}
+.v830Arrow{position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:34px;color:#fff;z-index:99991;animation:v830Bounce 1s infinite;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+@keyframes v830Bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3324,7 +3334,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="829";
+const APP_VERSION="830";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -15887,5 +15897,54 @@ async function decorate(root,canEdit){
 return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF};
 })();
 
+</script>
+<script>
+// v830 · Guía de instalación: sale sola si la app se abre desde el navegador (no desde el icono instalado).
+// Android/Chrome: botón "Instalar" de un toque. iPhone: pasos dibujados. Con ?instalar=1 se fuerza.
+(function(){
+  const UA=navigator.userAgent||'',IOS=/iPhone|iPad|iPod/i.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),AND=/Android/i.test(UA);
+  const standalone=()=>{try{return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true}catch(e){return false}};
+  const force=/[?&]instalar=1/.test(location.search);
+  const K1='rt_inst_never',K2='rt_inst_until';
+  const get=k=>{try{return localStorage.getItem(k)}catch(e){return null}},set=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  let deferred=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+  window.addEventListener('appinstalled',()=>{set(K1,'1');document.getElementById('v830Back')?.remove()});
+  const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  const PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+  const DOTS='<svg viewBox="0 0 24 24" fill="#2563eb"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+  const step=(n,t,ic)=>`<div class="v830Step"><div class="v830Num">${n}</div><span>${t}</span>${ic||''}</div>`;
+  function close(){document.getElementById('v830Back')?.remove();document.getElementById('v830Arrow')?.remove()}
+  function show(){
+    if(document.getElementById('v830Back'))return;
+    const safari=IOS&&/Safari/i.test(UA)&&!/CriOS|FxiOS|EdgiOS|Instagram|FBAN|FBAV|Line|WhatsApp/i.test(UA);
+    let body='',arrow=false,primary='';
+    if(IOS&&!safari){
+      body=`<h2>Instala Row Training</h2><p>Para instalarla en el iPhone hay que abrir este enlace en <b>Safari</b>.</p>${step(1,'Pulsa <b>Copiar enlace</b>')}${step(2,'Abre <b>Safari</b>, pega el enlace y entra')}${step(3,'Sigue los pasos que te saldrán')}`;
+      primary='<button type="button" class="primary" id="v830Copy">Copiar enlace</button>';
+    }else if(IOS){
+      body=`<h2>Instala Row Training</h2><p>Así la tendrás como una app y recibirás los avisos.</p>${step(1,'Pulsa <b>Compartir</b> en la barra de abajo de Safari',SHARE)}${step(2,'Desliza y pulsa <b>Añadir a pantalla de inicio</b>',PLUS)}${step(3,'Pulsa <b>Añadir</b> arriba a la derecha')}`;
+      arrow=true;
+    }else if(AND){
+      if(deferred){body=`<h2>Instala Row Training</h2><p>Un toque y queda en tu pantalla de inicio, como una app.</p>`;primary='<button type="button" class="primary" id="v830Inst">Instalar</button>'}
+      else{body=`<h2>Instala Row Training</h2><p>Así la tendrás como una app y recibirás los avisos.</p>${step(1,'Pulsa el menú <b>⋮</b> del navegador (arriba a la derecha)',DOTS)}${step(2,'Pulsa <b>Instalar aplicación</b> o <b>Añadir a pantalla de inicio</b>',PLUS)}${step(3,'Confirma con <b>Instalar</b> o <b>Añadir</b>')}`}
+    }else return;
+    const back=document.createElement('div');back.id='v830Back';back.className='v830Back';
+    back.innerHTML=`<div class="v830Card">${body}<div class="v830Btns">${primary}<button type="button" id="v830Later">Ahora no</button><button type="button" id="v830Done">Ya la tengo instalada</button></div></div>`;
+    document.body.appendChild(back);
+    if(arrow){back.style.paddingBottom='84px';const a=document.createElement('div');a.id='v830Arrow';a.className='v830Arrow';a.textContent='⬇';document.body.appendChild(a)}
+    back.querySelector('#v830Later').onclick=()=>{set(K2,String(Date.now()+3*864e5));close()};
+    back.querySelector('#v830Done').onclick=()=>{set(K1,'1');close()};
+    const inst=back.querySelector('#v830Inst');if(inst)inst.onclick=async()=>{try{deferred.prompt();await deferred.userChoice}catch(e){}close()};
+    const cp=back.querySelector('#v830Copy');if(cp)cp.onclick=async()=>{const u=location.origin+location.pathname;try{await navigator.clipboard.writeText(u);cp.textContent='Enlace copiado ✓'}catch(e){prompt('Copia este enlace:',u)}};
+  }
+  function maybe(){
+    if(standalone())return;
+    if(!force){if(get(K1)==='1')return;if(Number(get(K2)||0)>Date.now())return}
+    show();
+  }
+  window.v830Install=show;
+  setTimeout(maybe,force?800:4500);
+})();
 </script>
 </body></html>
