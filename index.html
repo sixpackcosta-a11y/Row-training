@@ -1587,9 +1587,10 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 .v864Row:first-child{border-top:0!important}.v864Row.best{background:var(--surface-2)!important}
 .v864Ic{font-size:18px}.v864Tx{flex:1;display:flex;flex-direction:column}.v864Tx small{font-weight:300;color:var(--text-muted);font-size:12px}
 .v864Lnk{border:0!important;background:transparent!important;box-shadow:none!important;color:var(--text);text-decoration:underline;padding:0!important;font-size:12px;display:inline!important;width:auto!important}
-/* V866 · hora y checks legibles en mis mensajes (heredan el color del texto de la burbuja) */
-.v583Msg[style*="background:#2563eb"]>div:last-child{color:inherit!important;opacity:.85}
-.v583Msg[style*="background:#2563eb"] .v583Tick:not(.rd){color:inherit!important;opacity:.95!important}
+/* V866 · hora y checks legibles en mis mensajes */
+.v583Msg.v866Me>div:last-child{color:rgba(255,255,255,.88)!important}
+.v583Msg.v866Me .v583Tick:not(.rd){color:#fff!important;opacity:.95!important}
+.v583Msg.v866Me .v583Tick.rd{color:#7dd3fc!important;opacity:1!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3427,7 +3428,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="866";
+const APP_VERSION="867";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9534,7 +9535,7 @@ function v583Bubble(m,meId,o){
     const pills=total?`<button type="button" class="v325ReactionPill v718Cap" data-emoji="all" data-msg="${m.id}"><i>${ems}</i>${total>1?`<span>${total}</span>`:''}</button>`:'';
     react=(tmp||!pills)?'':`<div class="v325ReactionsRow v583Reacts" style="${mine?'justify-content:flex-end':''}">${pills}</div>`;
   }
-  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};position:relative;padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${o.actions&&!tmp?'<button type="button" class="v623Chev" aria-label="Opciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>':''}${v623Quote(m,meId,o)}${m.fwd?'<div class="v631Fwd">↪ Reenviado</div>':''}${m.poll?v631PollHtml(m,o):v583AttHtml(m)+(m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):'')}<div style="font-size:10px;margin-top:4px;text-align:right"><span style="opacity:.7">${m.pinned_at?'📌 ':''}${(o.stars&&o.stars.has(String(m.id)))?'⭐ ':''}${m.edited_at?'editado · ':''}${esc(time)}</span>${(mine&&o.receipts&&!tmp)?(m.read_at?'<span class="v583Tick rd" title="Leído">✓✓</span>':(m._rc>0?'<span class="v583Tick" title="Entregado">✓✓</span>':'<span class="v583Tick" title="Enviado">✓</span>')):''}</div></div>${react}</div>`;
+  return `<div class="v583Row" data-id="${m.id}" style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:6px 0">${name?`<small class="muted" style="margin:0 0 2px 2px">${esc(name)}</small>`:''}<div class="v583Msg${mine?' v866Me':''}${tmp?' v583Tmp':''}${m._failed?' v583Fail':''}" data-id="${m.id}" style="max-width:78%;background:${mine?'#2563eb':'var(--surface-2)'};color:${mine?'#fff':'var(--text)'};position:relative;padding:8px 12px;border-radius:16px;${mine?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'};font-size:14px;white-space:pre-wrap;word-break:break-word;${tmp&&!m._failed?'opacity:.65':''}">${o.actions&&!tmp?'<button type="button" class="v623Chev" aria-label="Opciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>':''}${v623Quote(m,meId,o)}${m.fwd?'<div class="v631Fwd">↪ Reenviado</div>':''}${m.poll?v631PollHtml(m,o):v583AttHtml(m)+(m.body?(m.att_path||m._file?'<div style="margin-top:6px">'+esc(m.body)+'</div>':esc(m.body)):'')}<div style="font-size:10px;margin-top:4px;text-align:right"><span style="opacity:.7">${m.pinned_at?'📌 ':''}${(o.stars&&o.stars.has(String(m.id)))?'⭐ ':''}${m.edited_at?'editado · ':''}${esc(time)}</span>${(mine&&o.receipts&&!tmp)?(m.read_at?'<span class="v583Tick rd" title="Leído">✓✓</span>':(m._rc>0?'<span class="v583Tick" title="Entregado">✓✓</span>':'<span class="v583Tick" title="Enviado">✓</span>')):''}</div></div>${react}</div>`;
 }
 async function v583Chat(anchor,cfg){
   const meId=currentUser.id;
