@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="860";
+const APP_VERSION="861";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16220,9 +16220,9 @@ function build(ctx,draw,d){
   }
 
   // gráficas de rendimiento (v853)
-  const pts=d.rows.map((x,i)=>{const pace=metricSeconds(x.pace_500_text),tm=metricSeconds(x.time_text),dist=Number(x.distance_m),spm=Number(x.spm);const lab0=String(x.exercise_name||'');const mm=lab0.match(/Serie\s*(\d+)/i);const base=lab0.replace(/\s*·\s*Serie\s*\d+\s*$/i,'');const lab=mm?'S'+mm[1]:(base.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g,'').slice(0,3).toUpperCase()||String(i+1));const sl=Number(x.stroke_length_m)||((dist>0&&spm>0&&tm>0)?dist/(spm*tm/60):null);return {lab,pace,spm:spm>0?spm:null,sl,dist}}).filter(o=>o.pace>0);
-  const wk=pts.filter(o=>/^S\d+$/.test(o.lab)),wpts=wk.length>=2?wk:pts,isW=o=>wpts.includes(o);
-  if(pts.length>=2){
+  const pts=d.rows.map((x,i)=>{const pace=metricSeconds(x.pace_500_text),tm=metricSeconds(x.time_text),dist=Number(x.distance_m),spm=Number(x.spm);const lab0=String(x.exercise_name||'');const mm=lab0.match(/Serie\s*(\d+)/i);const base=lab0.replace(/\s*·\s*Serie\s*\d+\s*$/i,'');const lab=mm?'S'+mm[1]:(base.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g,'').slice(0,3).toUpperCase()||String(i+1));const sl=Number(x.stroke_length_m)||((dist>0&&spm>0&&tm>0)?dist/(spm*tm/60):null);return {lab,pace,spm:spm>0?spm:null,sl,dist,secs:tm}}).filter(o=>o.pace>0);
+  const wk=pts.filter(o=>/^S\d+$/.test(o.lab)),lg=pts.filter(o=>o.secs>=120),wpts=wk.length>=2?wk:lg,isW=o=>wpts.includes(o);
+  if(wpts.length>=2){
     p.t('Rendimiento',PAD,y+20,{size:20,weight:800});y+=34;
     const frame=(x,yy,w,h,title,sub)=>{p.rr(x,yy,w,h,14,C.card);p.t(title,x+16,yy+26,{size:14,weight:800});if(sub)p.t(sub,x+16,yy+43,{size:11.5,color:C.mut})};
     // 1) ritmo /500 por serie (más alto = más rápido)
