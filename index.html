@@ -1604,6 +1604,11 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 .v583Day{margin:10px 0 6px!important}
 .v583Day span{font-size:12.5px!important;padding:4px 11px!important}
 .v583Compose textarea,.v583Compose input[type=text]{font-size:17px!important}
+/* V869 · compartir resultados MAR */
+.v869ShareBar{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 8px 0 0}
+.v869ShareBar>span{font-size:13px;color:var(--text-muted,#64748b)}
+.v869ShareBar button{height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--border,#d6dde8);background:var(--surface-2,#eef1f6);color:var(--text,#0f1b2d);font-weight:600}
+div.v869ShareBar{display:flex;margin:10px 0 0}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3441,7 +3446,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="868";
+const APP_VERSION="869";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4851,7 +4856,7 @@ async function staffRegisterView(){
     localStorage.setItem('rowtraining_staff_register_date',d);
     const [q,near]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',t).eq('session_date',d).eq('session_type','MAR').order('created_at'),sb.from('training_sessions').select('id,session_date,title').eq('team_code',t).eq('session_type','MAR').gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date')]);
     const xs=q.data||[],today=localISODate(),nearAll=near.data||[],nearSorted=nearAll.slice().sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(today+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(today+'T12:00:00'))).slice(0,8).sort((a,b)=>a.session_date.localeCompare(b.session_date)),ids=nearSorted.map(x=>x.id);let doneIds=new Set();if(ids.length){const rr=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);doneIds=new Set((rr.data||[]).map(x=>String(x.training_session_id)))}
-    const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
+    const dayBox=document.getElementById('staffRegSeaDaysV138');if(dayBox)dayBox.innerHTML=nearSorted.length?`<div class="seaDayPickerV138">${nearSorted.map(x=>{const selected=x.session_date===d,done=doneIds.has(String(x.id));return `<button type="button" class="seaDayQuickV138 ${selected?'selected':''}" data-date="${x.session_date}"><strong>${new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(x.session_date+'T12:00:00')).replace(/^./,c=>c.toUpperCase())}</strong><small>${esc((x.title||'Sesión MAR').replace(/^MAR\s*[·:\-]?\s*/i,''))}</small><span class="${done?'done':'pending'}">${done?'✓ Con resultados':'Pendiente'}</span></button>`}).join('')}</div>${(()=>{const sel=nearSorted.find(x=>x.session_date===d&&doneIds.has(String(x.id)));return sel?`<div class="v869ShareBar"><span>Resultados de este día:</span><button type="button" class="shareSeaImg" data-session="${sel.id}">📷 Compartir imagen</button><button type="button" class="shareSeaPdf" data-session="${sel.id}">PDF</button></div>`:''})()}`:'<div class="info">No hay días MAR planificados para este equipo.</div>';
     dayBox?.querySelectorAll('.seaDayQuickV138').forEach(b=>b.onclick=()=>{staffRegDate.value=b.dataset.date;load()});
     const [crewMapV309,roster,rsvpRowsAll]=await Promise.all([v307FetchCrewMap(xs.map(x=>x.id)),staffAthletesForTeam(t),xs.length?sb.from('session_rsvp').select('training_session_id,user_id,status').in('training_session_id',xs.map(x=>x.id)):Promise.resolve({data:[]})]);
     xs.forEach(x=>{x.crew=crewMapV309.get(String(x.id))||null});
@@ -12066,6 +12071,16 @@ function v528FocusPlanDay(){
   area.scrollIntoView({behavior:'smooth',block:'start'});
   area.classList.remove('v528Flash');void area.offsetWidth;area.classList.add('v528Flash');
 }
+// V869 · Compartir imagen / PDF de resultados MAR también desde Planificación (día) y Registro MAR
+async function v869AddShare(){
+  const btns=[...document.querySelectorAll('#planArea .seaResult[data-id]')];if(!btns.length)return;
+  const ids=btns.map(b=>b.dataset.id);
+  const q=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);
+  const have=new Set((q.data||[]).map(r=>String(r.training_session_id)));
+  btns.forEach(b=>{if(!have.has(String(b.dataset.id))||b.parentNode.querySelector('.shareSeaImg[data-session="'+b.dataset.id+'"]'))return;
+    const w=document.createElement('span');w.className='v869ShareBar';w.innerHTML=`<button type="button" class="shareSeaImg" data-session="${b.dataset.id}">📷 Compartir imagen</button><button type="button" class="shareSeaPdf" data-session="${b.dataset.id}">PDF</button>`;
+    b.insertAdjacentElement('afterend',w)});
+}
 async function renderPlanDay(){
  const team=planTeam.value,date=planDate.value; const data=await loadCoachCalendar(team,date);
  const audIdsV249=[...new Set(data.sessions.flatMap(sessionTargetsV249))],audNamesV249=new Map();
@@ -12079,6 +12094,7 @@ async function renderPlanDay(){
  document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
  if(v534EventsUI())v531DayEventBar(data.sessions||[],team,date);
+ try{v869AddShare()}catch(e){}
 }
 // V531 · "¿cómo convierto en evento un día de GIM+ERGO? me debería dejar editar el día en sí": barra
 // arriba del día con el evento de ESE DÍA (no de cada sesión). El evento se guarda en una de las
