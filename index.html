@@ -1576,6 +1576,17 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 .v863S span{color:var(--c,var(--text-muted));font-weight:500;margin-right:8px}
 .v863Ch{color:var(--text-muted);font-size:18px}
 .v863Acc .v833Mes{padding-bottom:8px}
+/* V864 · Previsión para entrenar */
+.v864Seg{display:flex;gap:4px;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:10px}
+.v864Seg button{flex:1;border:0!important;background:transparent!important;box-shadow:none!important;padding:8px 6px!important;border-radius:9px!important;font-size:14px;color:var(--text-muted)}
+.v864Seg button.on{background:var(--surface)!important;color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.v864In{margin-bottom:8px}.v864Day{font-size:15px;margin:6px 0}
+.v864Best{border:1px solid var(--border);border-left:5px solid #16a34a;border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--surface-2)}
+.v864List{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.v864Row{display:flex!important;width:100%;align-items:center;gap:10px;text-align:left;background:transparent!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;padding:10px 12px!important;margin:0;color:var(--text)}
+.v864Row:first-child{border-top:0!important}.v864Row.best{background:var(--surface-2)!important}
+.v864Ic{font-size:18px}.v864Tx{flex:1;display:flex;flex-direction:column}.v864Tx small{font-weight:300;color:var(--text-muted);font-size:12px}
+.v864Lnk{border:0!important;background:transparent!important;box-shadow:none!important;color:var(--text);text-decoration:underline;padding:0!important;font-size:12px;display:inline!important;width:auto!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3413,7 +3424,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="863";
+const APP_VERSION="864";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4643,8 +4654,9 @@ async function staffResourcesView(){
   const cats=[...new Set(rows.map(r=>r.category||'General'))];
   const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
   const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
-  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📁 Recursos</h2>${admin?'<button type="button" class="primary" id="v678Add">+ Añadir recurso</button>':''}</div><p class="muted" style="margin:6px 0 0">Enlaces y archivos para el equipo técnico: cámaras del mar, formación, documentos…</p></div>`+v690Card
+  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📁 Recursos</h2>${admin?'<button type="button" class="primary" id="v678Add">+ Añadir recurso</button>':''}</div><p class="muted" style="margin:6px 0 0">Enlaces y archivos para el equipo técnico: cámaras del mar, formación, documentos…</p></div>`+'<div class="card" id="v864Card"><h3 style="margin:0 0 4px">🌊 Previsión para entrenar</h3><p class="muted" style="margin:0 0 8px">Mira cómo estará el mar a una hora, o qué día de la semana sale mejor.</p><div id="v864Box"></div></div>'+v690Card
     +(cats.length?cats.map(c=>`<div class="card v678Cat"><h3 style="margin:0 0 4px">${esc(c)}</h3>${rows.filter(r=>(r.category||'General')===c).map(item).join('')}</div>`).join(''):`<div class="card"><p class="muted" style="margin:0">Todavía no hay recursos.${admin?' Pulsa "+ Añadir recurso" para empezar.':' El administrador los irá añadiendo.'}</p></div>`);
+  try{V696.planner(document.getElementById('v864Box'))}catch(e){}
   const v690New=document.getElementById('v690New');
   if(v690New)v690New.onclick=()=>V689UI.open({standalone:true,onDone:async log=>{
     const d=(log.date&&/^\d{4}-\d{2}-\d{2}$/.test(log.date))?new Date(log.date+'T12:00:00'):new Date(),title='Grabación '+(log.date?d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})+' (importada)':d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}));
@@ -16030,7 +16042,53 @@ async function decorate(root,canEdit){
   const c=cfg();
   rows.forEach(b=>{if(b.querySelector('.v696Dot'))return;const r=evaluate(H,b.dataset.date,b.dataset.time,b.dataset.end,c);if(!r)return;const t=b.querySelector('.v503Title');if(!t)return;
     const s=document.createElement('span');s.className='v696Dot';s.textContent=LV[r.level].ic;s.title=LV[r.level].tx+(r.reasons.length?': '+(canEdit?r.reasons:r.plain).join(' · '):'');t.appendChild(s)})}
-return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF};
+
+// v864 · Previsión para entrenar (Recursos): un día y hora concretos, o el mejor día de la semana a una hora.
+const iso864=d=>`${d.getFullYear()}-${hh(d.getMonth()+1)}-${hh(d.getDate())}`;
+const wd864=ds=>{const d=new Date(ds+'T12:00:00');const t=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'short'}).format(d);return t.charAt(0).toUpperCase()+t.slice(1)};
+const lvRank={red:3,amber:2,unk:1,ok:0};
+const score864=(r,c)=>lvRank[r.level]*10+r.rows.reduce((a,x)=>a+rowSc(x,c),0)/Math.max(1,r.rows.length);
+function planner(box){
+  if(!box)return;
+  const now=new Date(),c0=cfg();
+  const st={mode:'day',date:iso864(new Date(now.getTime()+86400000)),time:hh(c0.defHour)+':00',dur:c0.defDur};
+  const endOf=()=>{const e=Number(st.time.split(':')[0])+st.dur;return e>=24?'23:59':hh(e)+':00'};
+  const maxDate=iso864(new Date(now.getTime()+9*86400000));
+  const draw=async force=>{
+    box.innerHTML=`<div class="v864Seg"><button type="button" data-m="day" class="${st.mode==='day'?'on':''}">Un día concreto</button><button type="button" data-m="week" class="${st.mode==='week'?'on':''}">Mejor día de la semana</button></div>
+    <div class="plannerGrid v864In">${st.mode==='day'?`<label>Día<input id="v864D" type="date" min="${iso864(now)}" max="${maxDate}" value="${st.date}"></label>`:''}<label>Hora de inicio<input id="v864T" type="time" step="3600" value="${st.time}"></label><label>Duración<select id="v864L">${[1,2,3,4].map(n=>`<option value="${n}"${n===st.dur?' selected':''}>${n} h</option>`).join('')}</select></label></div>
+    <div id="v864Out"><div class="v696Why">🌊 Cargando previsión…</div></div>
+    <p class="muted" style="margin:8px 0 0;font-size:12px">Previsión de modelo (Open-Meteo) a 10 días, con los umbrales del club. Orientativa: mírala de nuevo el día antes. <button type="button" id="v864R" class="v864Lnk">Actualizar</button></p>`;
+    box.querySelectorAll('.v864Seg button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;draw()});
+    const d=box.querySelector('#v864D');if(d)d.onchange=()=>{if(d.value){st.date=d.value;draw()}};
+    box.querySelector('#v864T').onchange=e=>{if(e.target.value){st.time=e.target.value;draw()}};
+    box.querySelector('#v864L').onchange=e=>{st.dur=Number(e.target.value);draw()};
+    box.querySelector('#v864R').onclick=()=>draw(true);
+    const out=box.querySelector('#v864Out');
+    await loadShared(force);const c=cfg();let H;
+    try{H=await fetchAll(c,force)}catch(e){out.innerHTML=`<div class="v696Why">🌊 No se pudo cargar la previsión (${q(e.message||'error')}).</div>`;return}
+    if(st.mode==='day'){
+      const r=evaluate(H,st.date,st.time,endOf(),c);
+      if(!r){out.innerHTML='<div class="v696Why">🌊 Todavía no hay previsión para ese día y hora (el modelo llega a unos 10 días).</div>';return}
+      r.waveNote=waveNote(r,H,st.date);
+      out.innerHTML=`<div class="v864Day"><b>${q(wd864(st.date))} · ${q(st.time)}–${q(endOf())}</b></div>${summaryHtml(r,true)}${analysisHtml(r,c)}<details class="v696Det"><summary>Horas detalladas</summary>${tableHtml(r)}</details>`;
+      return}
+    const res=[];
+    for(let i=0;i<10;i++){const ds=iso864(new Date(now.getTime()+i*86400000));
+      if(i===0&&Number(st.time.slice(0,2))<=now.getHours())continue;
+      const r=evaluate(H,ds,st.time,endOf(),c);res.push({ds,r})}
+    const ok=res.filter(x=>x.r&&x.r.level!=='unk'),best=ok.length?ok.reduce((a,x)=>score864(x.r,c)<score864(a.r,c)?x:a):null;
+    const line=x=>x.r?[x.r.m.wave!=null?`olas ${num(x.r.m.wave,1)} m`:'',x.r.m.wind!=null?`viento ${num(x.r.m.wind,0)} km/h`:'',x.r.m.gust!=null?`rachas ${num(x.r.m.gust,0)}`:''].filter(Boolean).join(' · '):'sin previsión todavía';
+    let head='';
+    if(best){const greens=ok.filter(x=>x.r.level==='ok');
+      head=`<div class="v864Best"><b>⭐ Mejor día a las ${q(st.time)}: ${q(wd864(best.ds))}</b><div>${LV[best.r.level].ic} ${q(LV[best.r.level].tx)} · ${q(line(best))}</div>${greens.length>1?`<div class="muted">Hay ${greens.length} días en verde.</div>`:greens.length===0?'<div class="muted">Ningún día sale en verde a esa hora; prueba con otra hora.</div>':''}</div>`}
+    else head='<div class="v696Why">Sin previsión suficiente para esa hora.</div>';
+    out.innerHTML=head+`<div class="v864List">${res.map(x=>`<button type="button" class="v864Row${best&&best.ds===x.ds?' best':''}" data-d="${x.ds}"><span class="v864Ic">${x.r?LV[x.r.level].ic:'⚪'}</span><span class="v864Tx"><b>${q(wd864(x.ds))}</b><small>${q(line(x))}</small></span><span class="v672Ch">›</span></button>`).join('')}</div><p class="muted" style="margin:6px 0 0;font-size:12px">Toca un día para ver el detalle hora a hora.</p>`;
+    out.querySelectorAll('.v864Row').forEach(b=>b.onclick=()=>{st.mode='day';st.date=b.dataset.d;draw()});
+  };
+  draw();
+}
+return {mount,decorate,evaluate,fetchAll,cfg,buildMap,DEF,planner};
 })();
 
 </script>
