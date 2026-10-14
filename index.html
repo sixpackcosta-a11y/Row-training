@@ -3424,7 +3424,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="864";
+const APP_VERSION="865";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16056,7 +16056,7 @@ function planner(box){
   const maxDate=iso864(new Date(now.getTime()+9*86400000));
   const draw=async force=>{
     box.innerHTML=`<div class="v864Seg"><button type="button" data-m="day" class="${st.mode==='day'?'on':''}">Un día concreto</button><button type="button" data-m="week" class="${st.mode==='week'?'on':''}">Mejor día de la semana</button></div>
-    <div class="plannerGrid v864In">${st.mode==='day'?`<label>Día<input id="v864D" type="date" min="${iso864(now)}" max="${maxDate}" value="${st.date}"></label>`:''}<label>Hora de inicio<input id="v864T" type="time" step="3600" value="${st.time}"></label><label>Duración<select id="v864L">${[1,2,3,4].map(n=>`<option value="${n}"${n===st.dur?' selected':''}>${n} h</option>`).join('')}</select></label></div>
+    <div class="plannerGrid v864In">${st.mode==='day'?`<label>Día<input id="v864D" type="date" min="${iso864(now)}" max="${maxDate}" value="${st.date}"></label>`:''}<label>Hora de inicio<select id="v864T">${Array.from({length:18},(_,i)=>hh(i+5)+':00').map(t=>`<option value="${t}"${t===st.time?' selected':''}>${t}</option>`).join('')}</select></label><label>Duración<select id="v864L">${[1,2,3,4].map(n=>`<option value="${n}"${n===st.dur?' selected':''}>${n} h</option>`).join('')}</select></label></div>
     <div id="v864Out"><div class="v696Why">🌊 Cargando previsión…</div></div>
     <p class="muted" style="margin:8px 0 0;font-size:12px">Previsión de modelo (Open-Meteo) a 10 días, con los umbrales del club. Orientativa: mírala de nuevo el día antes. <button type="button" id="v864R" class="v864Lnk">Actualizar</button></p>`;
     box.querySelectorAll('.v864Seg button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;draw()});
