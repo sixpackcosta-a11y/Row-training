@@ -816,7 +816,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Compose .v583EmojiBtn{border:0;background:transparent;width:36px;height:40px;font-size:22px}
 .v583Compose .v583Send{width:42px;height:42px;border-radius:50%!important;padding:0;font-size:17px;background:#2563eb!important;color:#fff!important;flex:none}
 
-.v583Img{display:block;max-width:100%;max-height:260px;border-radius:8px;cursor:zoom-in;background:#0002;min-width:120px;min-height:80px;object-fit:cover}
+.v583Img{display:block;max-width:100%;max-height:260px;border-radius:8px;cursor:zoom-in;background:#0002;object-fit:cover}
 .v583File{display:flex;gap:8px;align-items:center;color:inherit;text-decoration:none;background:#0000001a;border-radius:8px;padding:8px 10px}
 .v583FileIc{font-size:22px}.v583FileTx{display:flex;flex-direction:column;min-width:0}.v583FileTx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;font-size:13px}.v583FileTx small{opacity:.75}
 .v583Light{position:fixed;inset:0;z-index:10000;background:#000e;display:flex;align-items:center;justify-content:center}
@@ -3449,7 +3449,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="876";
+const APP_VERSION="877";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9266,7 +9266,9 @@ function v583AttHtml(m){
   if(!m.att_path&&!m._file)return '';
   const path=m.att_path||'',signed=V583_SIGNED.get(path),local=m._local||V583_LOCAL.get(path),name=m.att_name||m._file?.name||'archivo',type=m.att_type||m._file?.type||'';
   if(/^audio\//.test(type))return `<audio class="v583Aud" controls preload="metadata" data-path="${esc(path)}" src="${esc(signed?.u||local||'')}"></audio>`;
-  if(v583IsImg(type))return `<img class="v583Img" data-path="${esc(path)}" src="${esc(signed?.u||local||'data:image/gif;base64,R0lGODlhAQABAAAAACw=')}" alt="${esc(name)}" loading="lazy">`;
+  if(v583IsImg(type)){let r=0;try{r=parseFloat(localStorage.getItem('v877d:'+path))||0}catch(e){}
+    const st=!r?'width:220px;height:165px':r>=1?`width:220px;aspect-ratio:${r};height:auto`:`height:260px;width:auto;aspect-ratio:${r}`;
+    return `<img class="v583Img" style="${st}" data-path="${esc(path)}" src="${esc(signed?.u||local||'data:image/gif;base64,R0lGODlhAQABAAAAACw=')}" alt="${esc(name)}" loading="lazy">`}
   return `<a class="v583File" data-path="${esc(path)}" ${signed?`href="${esc(signed.u)}" target="_blank" rel="noopener"`:''}><span class="v583FileIc">📎</span><span class="v583FileTx"><b>${esc(name)}</b><small>${m.att_size||m._file?.size?v583Size(m.att_size||m._file.size):''}</small></span></a>`;
 }
 async function v583Hydrate(root){
@@ -9606,11 +9608,11 @@ async function v583Chat(anchor,cfg){
   let first=true,X=null,pin=true;
   // V870 · sin saltos al abrir: la lista de mensajes no se ve hasta que la tipografía está lista y se ha pintado (como WhatsApp)
   let v870Shown=!cfg.full;const v870Show=()=>{if(v870Shown)return;v870Shown=true;box.style.opacity='1';box.style.visibility='visible'};
-  /* v872: fuente del sistema en el chat, no hace falta ocultar */
-  const v870Ready=()=>{if(v870Shown||!cfg.full)return;let f;try{f=Promise.all(['300','400','500','600'].map(w=>document.fonts.load(w+' 17px Manrope')))}catch(e){f=Promise.resolve()}Promise.race([f,new Promise(r=>setTimeout(r,450))]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{box.scrollTop=box.scrollHeight;v870Show()})))};
+  if(cfg.full){box.style.opacity='0';box.style.visibility='hidden';setTimeout(v870Show,900)}
+  const v870Ready=()=>{if(v870Shown||!cfg.full)return;const imgs=[...box.querySelectorAll('img.v583Img')].slice(-6).filter(i=>!i.complete);const w=imgs.length?Promise.race([Promise.all(imgs.map(i=>new Promise(r=>{i.addEventListener('load',r,{once:true});i.addEventListener('error',r,{once:true})}))),new Promise(r=>setTimeout(r,350))]):Promise.resolve();w.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{box.scrollTop=box.scrollHeight;v870Show()})))};
   // V718 · las fotos cargan después de pintar y empujan el final hacia abajo: mientras no hayas subido tú, se vuelve a bajar al último mensaje
   box.addEventListener('scroll',()=>{pin=box.scrollHeight-box.scrollTop-box.clientHeight<140},{passive:true});
-  box.addEventListener('load',e=>{if(pin&&/^(IMG|VIDEO)$/.test(e.target.tagName))box.scrollTop=box.scrollHeight},true);
+  box.addEventListener('load',e=>{try{const t=e.target;if(t.classList&&t.classList.contains('v583Img')&&t.naturalWidth>2&&t.dataset.path)localStorage.setItem('v877d:'+t.dataset.path,String(t.naturalWidth/t.naturalHeight))}catch(_){}if(pin&&/^(IMG|VIDEO)$/.test(e.target.tagName))box.scrollTop=box.scrollHeight},true);
   box.addEventListener('loadedmetadata',e=>{if(pin&&e.target.tagName==='VIDEO')box.scrollTop=box.scrollHeight},true);
   const save=()=>V583_CACHE.set(cfg.key,{msgs:S.msgs.filter(m=>!String(m.id).startsWith('tmp')),reacts:S.reacts});
   const paint=(stick)=>{
