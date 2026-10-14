@@ -3406,7 +3406,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="861";
+const APP_VERSION="862";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -11698,6 +11698,14 @@ function calendarCellsHtml(ym,sessions=[],comps=[],results=[],mode='edit',select
  }
  return `<div class="coachCalendar">${['L','M','X','J','V','S','D'].map(x=>`<div class="coachDow">${x}</div>`).join('')}${html}</div>`;
 }
+function v862PlanMonthHtml(ym,sessions,comps,selDate){
+ const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),first=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7,today=v833Today();
+ let cells='';for(let i=0;i<first;i++)cells+='<span></span>';
+ for(let d=1;d<=days;d++){const ds=`${ym}-${String(d).padStart(2,'0')}`,xs=sessions.filter(x=>x.session_date===ds),cs=comps.filter(x=>x.competition_date===ds);
+  cells+=`<button type="button" class="v833D v862D${ds===today?' today':''}${ds===selDate?' sel':''}" data-date="${ds}"><b>${d}</b><span class="v833Dots">${v833Dots(xs,cs,null)}</span></button>`}
+ const leg='<div class="v833Leg"><span class="erg"><i></i>ERGO</span><span class="gym"><i></i>GYM</span><span class="mar"><i></i>MAR</span><span class="race"><i></i>Competición</span></div>';
+ return `<div class="v833Mes"><div class="v833Cal">${['L','M','X','J','V','S','D'].map(x=>`<div class="v833Dow">${x}</div>`).join('')}${cells}</div>${leg}</div>`;
+}
 function compareSeaHtml(rows){
  if(!rows.length)return '<p class="muted">Selecciona en el calendario dos o más resultados MAR para compararlos.</p>';
  const sorted=[...rows].sort((a,b)=>String(a.session?.session_date).localeCompare(String(b.session?.session_date))),base=sorted[0];
@@ -11951,11 +11959,11 @@ async function coachPlanner(){
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
  async function drawCalendar(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
-  if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=calendarCellsHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),[],'edit',[])}
+  if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=v862PlanMonthHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),planDate.value)}
   // V528 · "cuando pincho en una fecha del calendario debería hacer scroll hacia arriba para ver el
   // entrenamiento, que se note que has pinchado un día": tras cargar el día, sube suavemente hasta
   // él, con una cabecera con la fecha y un destello breve.
-  planCalendar.querySelectorAll('.coachDay:not(:disabled)').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay').forEach(x=>x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date));await renderPlanDay();v528FocusPlanDay()});
+  planCalendar.querySelectorAll('.coachDay:not(:disabled),.v862D').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay,.v862D').forEach(x=>{x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date);if(x.classList.contains('v862D'))x.classList.toggle('sel',x.dataset.date===b.dataset.date)});await renderPlanDay();v528FocusPlanDay()});
   let draggedSessionId=null;
   planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
     item.addEventListener('click',e=>{e.stopPropagation();item.closest('.coachDay')?.click()});
