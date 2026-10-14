@@ -1569,6 +1569,13 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 :is(#content,#v555Freeze) .card.v849{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
 :is(#content,#v555Freeze) .card.v849 .seaMonthGroup{padding-left:0!important;padding-right:0!important}
 @media(min-width:700px){#nav.v330BottomNav{max-width:520px!important;margin-left:auto!important;margin-right:auto!important}}
+/* V863 · Planificación › Temporada: meses plegables */
+.v863Acc{border:1px solid var(--border);border-radius:14px;padding:0 12px;margin-bottom:8px;background:var(--surface)}
+.v863H{display:flex!important;width:100%;justify-content:space-between;align-items:center;text-align:left;background:transparent!important;border:0!important;box-shadow:none!important;padding:10px 0!important;margin:0;color:var(--text);cursor:pointer}
+.v863H b{font-size:16px;font-weight:600}.v863S{font-size:12px;margin-top:2px;font-weight:300}
+.v863S span{color:var(--c,var(--text-muted));font-weight:500;margin-right:8px}
+.v863Ch{color:var(--text-muted);font-size:18px}
+.v863Acc .v833Mes{padding-bottom:8px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3406,7 +3413,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="862";
+const APP_VERSION="863";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -11706,6 +11713,13 @@ function v862PlanMonthHtml(ym,sessions,comps,selDate){
  const leg='<div class="v833Leg"><span class="erg"><i></i>ERGO</span><span class="gym"><i></i>GYM</span><span class="mar"><i></i>MAR</span><span class="race"><i></i>Competición</span></div>';
  return `<div class="v833Mes"><div class="v833Cal">${['L','M','X','J','V','S','D'].map(x=>`<div class="v833Dow">${x}</div>`).join('')}${cells}</div>${leg}</div>`;
 }
+function v863SeasonHtml(sessions,comps,openYm,selDate){
+ const leg='<div class="v833Leg"><span class="erg"><i></i>ERGO</span><span class="gym"><i></i>GYM</span><span class="mar"><i></i>MAR</span><span class="race"><i></i>Competición</span></div>';
+ const acc=SEASON_MONTHS.map(ym=>{const [a,b]=monthBounds(ym),ss=sessions.filter(x=>x.session_date>=a&&x.session_date<=b),cc=comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),n=t=>ss.filter(x=>String(x.session_type||'').toUpperCase()===t).length,op=ym===openYm;
+  const sum=`<span class="erg">${n('ERG')} ERG</span> <span class="gym">${n('GYM')} GYM</span> <span class="mar">${n('MAR')} MAR</span>${cc.length?` <span class="race">🏁 ${cc.length}</span>`:''}`;
+  return `<div class="v863Acc${op?' open':''}"><button type="button" class="v863H" data-ym="${ym}" aria-expanded="${op}"><div><b>${monthLabel(ym)}</b><div class="v863S">${sum}</div></div><span class="v863Ch">${op?'▾':'▸'}</span></button>${op?v862PlanMonthHtml(ym,ss,cc,selDate).replace(/<div class="v833Leg">.*?<\/div>/,''):''}</div>`}).join('');
+ return acc+leg;
+}
 function compareSeaHtml(rows){
  if(!rows.length)return '<p class="muted">Selecciona en el calendario dos o más resultados MAR para compararlos.</p>';
  const sorted=[...rows].sort((a,b)=>String(a.session?.session_date).localeCompare(String(b.session?.session_date))),base=sorted[0];
@@ -11952,18 +11966,19 @@ async function loadCoachCalendar(team,date){
 }
 async function coachPlanner(){
  if(r!=="coach") return;
- const nowPlan=new Date(); const todayPlan=`${nowPlan.getFullYear()}-${String(nowPlan.getMonth()+1).padStart(2,'0')}-${String(nowPlan.getDate()).padStart(2,'0')}`; const date=plannerJumpDate||todayPlan; let ym=date.slice(0,7),view='month';
+ const nowPlan=new Date(); const todayPlan=`${nowPlan.getFullYear()}-${String(nowPlan.getMonth()+1).padStart(2,'0')}-${String(nowPlan.getDate()).padStart(2,'0')}`; const date=plannerJumpDate||todayPlan; let ym=date.slice(0,7),view='month',v863Open=ym;
  content.innerHTML=`<div class="card"><div class="v573Top"><label><span class="v833Sr">Equipo</span><select id="planTeam">${TEAM_OPTIONS.filter(x=>!coachTeams.length||coachTeams.includes(x[0])).map(x=>`<option value="${x[0]}">${esc(teamShort(x[0]))}</option>`).join("")}</select></label><label><span class="v833Sr">Día</span><input id="planDate" type="date" value="${date}"></label><button id="loadPlan" type="button" style="display:none" aria-hidden="true"></button></div><div class="v568Tools"><button id="newSession" type="button"><span>＋</span>Entreno</button><button id="newRace" type="button"><span>🏁</span>Competición</button><button id="newIndividualPlanV249" type="button"><span>👤</span>Individual</button><button id="planBBtn" type="button"><span>☁️</span>Plan B</button></div><div id="planArea"></div><div class="v569Cal"><div class="v569Nav" id="planNav"><button id="planPrev" type="button" aria-label="Mes anterior">‹</button><select id="planMonthPick" class="monthSelect" aria-label="Mes">${monthOptions(ym)}</select><button id="planNext" type="button" aria-label="Mes siguiente">›</button><div id="planMonthTitle" hidden></div></div><div class="v569Seg viewToggle"><button id="planViewMonth" type="button" class="active">Mes</button><button id="planViewSeason" type="button">Temporada</button></div></div><div id="planCalendar"></div><details class="libraryAccordion seasonInlineV180" style="margin-top:16px"><summary><span>Resumen de temporada 2026–27</span></summary><div class="accordionBody"><div class="info seasonInfoV180"><b>Excel bidireccional:</b> exporta la planificación real (todos los equipos si eres administrador, o los tuyos si eres entrenador de equipo), edítala y vuelve a importarla. Para eliminar una sesión escribe <b>ELIMINAR</b> en la columna Acción. Las filas nuevas sin ID se crean como sesiones nuevas.</div><select id="seasonTeam" hidden></select><div id="seasonArea"></div></div></details><details class="libraryAccordion v575More" style="margin-top:10px"><summary><span>⚙️ Excel, PDF y papelera</span></summary><div class="accordionBody v568MoreBody"><button id="v570TrashBtn" type="button">🗑️ Papelera</button><button id="exportSeasonExcelV170" type="button">Exportar Excel</button><button id="exportSeasonPdfV170" type="button">Exportar PDF</button><label class="btn" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:0">Importar Excel<input id="importSeasonExcelV170" type="file" accept=".xlsx,.xls" hidden></label></div></details></div>`;
  if(plannerJumpTeam) planTeam.value=plannerJumpTeam; else if(coachSelectedTeam && [...planTeam.options].some(o=>o.value===coachSelectedTeam)) planTeam.value=coachSelectedTeam;
  coachSelectedTeam=planTeam.value;
  async function allSeason(){return Promise.all([sb.from('training_sessions').select('*').eq('team_code',planTeam.value).gte('session_date','2026-09-01').lte('session_date','2027-05-31').order('session_date'),sb.from('competitions').select('*').gte('competition_date','2026-09-01').lte('competition_date','2027-05-31').contains('team_codes',[planTeam.value])])}
  async function drawCalendar(){
   const [ss,cc]=await allSeason(),sessions=ss.data||[],comps=cc.data||[]; planViewSeason.classList.toggle('active',view==='season');planViewMonth.classList.toggle('active',view==='month');planNav.style.display=view==='month'?'flex':'none';planMonthPick.value=ym;
-  if(view==='season')planCalendar.innerHTML=seasonCalendarsHtml(sessions,comps,[],'edit',[]); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=v862PlanMonthHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),planDate.value)}
+  if(view==='season')planCalendar.innerHTML=v863SeasonHtml(sessions,comps,v863Open,planDate.value); else {const [a,b]=monthBounds(ym);planMonthTitle.textContent=monthLabel(ym);planCalendar.innerHTML=v862PlanMonthHtml(ym,sessions.filter(x=>x.session_date>=a&&x.session_date<=b),comps.filter(x=>x.competition_date>=a&&x.competition_date<=b),planDate.value)}
   // V528 · "cuando pincho en una fecha del calendario debería hacer scroll hacia arriba para ver el
   // entrenamiento, que se note que has pinchado un día": tras cargar el día, sube suavemente hasta
   // él, con una cabecera con la fecha y un destello breve.
-  planCalendar.querySelectorAll('.coachDay:not(:disabled),.v862D').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;planCalendar.querySelectorAll('.coachDay,.v862D').forEach(x=>{x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date);if(x.classList.contains('v862D'))x.classList.toggle('sel',x.dataset.date===b.dataset.date)});await renderPlanDay();v528FocusPlanDay()});
+  planCalendar.querySelectorAll('.v863H').forEach(b=>b.onclick=()=>{v863Open=v863Open===b.dataset.ym?'':b.dataset.ym;drawCalendar()});
+  planCalendar.querySelectorAll('.coachDay:not(:disabled),.v862D').forEach(b=>b.onclick=async()=>{planDate.value=b.dataset.date;v863Open=b.dataset.date.slice(0,7);planCalendar.querySelectorAll('.coachDay,.v862D').forEach(x=>{x.classList.toggle('selectedEdit',x.dataset.date===b.dataset.date);if(x.classList.contains('v862D'))x.classList.toggle('sel',x.dataset.date===b.dataset.date)});await renderPlanDay();v528FocusPlanDay()});
   let draggedSessionId=null;
   planCalendar.querySelectorAll('.miniSess[draggable="true"]').forEach(item=>{
     item.addEventListener('click',e=>{e.stopPropagation();item.closest('.coachDay')?.click()});
@@ -11976,7 +11991,7 @@ async function coachPlanner(){
     day.addEventListener('drop',async e=>{if(!draggedSessionId)return;e.preventDefault();e.stopPropagation();day.classList.remove('dragOver');const targetDate=day.dataset.date;const before=(sessions||[]).find(x=>String(x.id)===String(draggedSessionId));const q=await sb.from('training_sessions').update({session_date:targetDate,updated_at:new Date().toISOString()}).eq('id',draggedSessionId);if(q.error)alert('No se pudo mover: '+q.error.message);else{if(before&&confirm('Entrenamiento movido. ¿Quieres avisar a los remeros del cambio de día?'))await notifyTeamChangeV110(planTeam.value,'Entrenamiento cambiado de día',`${v829PubName(before)} · ${shortDateES(before.session_date)} → ${shortDateES(targetDate)}`,'/');planDate.value=targetDate;ym=targetDate.slice(0,7);await drawCalendar();await renderPlanDay();}});
   });
  }
- loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newIndividualPlanV249.onclick=()=>individualPlanEditorV249(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
+ loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);v863Open=ym;drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newIndividualPlanV249.onclick=()=>individualPlanEditorV249(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
  { const tb=document.getElementById('v570TrashBtn');if(tb)tb.onclick=()=>v570OpenTrash(()=>{try{render()}catch(e){}}); }
