@@ -1587,6 +1587,9 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 .v864Row:first-child{border-top:0!important}.v864Row.best{background:var(--surface-2)!important}
 .v864Ic{font-size:18px}.v864Tx{flex:1;display:flex;flex-direction:column}.v864Tx small{font-weight:300;color:var(--text-muted);font-size:12px}
 .v864Lnk{border:0!important;background:transparent!important;box-shadow:none!important;color:var(--text);text-decoration:underline;padding:0!important;font-size:12px;display:inline!important;width:auto!important}
+/* V866 · hora y checks legibles en mis mensajes (heredan el color del texto de la burbuja) */
+.v583Msg[style*="background:#2563eb"]>div:last-child{color:inherit!important;opacity:.85}
+.v583Msg[style*="background:#2563eb"] .v583Tick:not(.rd){color:inherit!important;opacity:.95!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3424,7 +3427,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="865";
+const APP_VERSION="866";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
