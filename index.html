@@ -1609,6 +1609,9 @@ header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px +
 .v869ShareBar>span{font-size:13px;color:var(--text-muted,#64748b)}
 .v869ShareBar button{height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--border,#d6dde8);background:var(--surface-2,#eef1f6);color:var(--text,#0f1b2d);font-weight:600}
 div.v869ShareBar{display:flex;margin:10px 0 0}
+/* V872 · chat con la fuente del sistema (como WhatsApp): sin cambio de tipografía al cargar */
+.v583Full,.v583Full *{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif!important}
+.v583Tick{display:inline-block;min-width:1.6em;text-align:right}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3446,7 +3449,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="871";
+const APP_VERSION="873";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -9603,8 +9606,8 @@ async function v583Chat(anchor,cfg){
   let first=true,X=null,pin=true;
   // V870 · sin saltos al abrir: la lista de mensajes no se ve hasta que la tipografía está lista y se ha pintado (como WhatsApp)
   let v870Shown=!cfg.full;const v870Show=()=>{if(v870Shown)return;v870Shown=true;box.style.opacity='1';box.style.visibility='visible'};
-  if(cfg.full){box.style.opacity='0';box.style.visibility='hidden';setTimeout(v870Show,900)}
-  const v870Ready=()=>{if(v870Shown)return;let f;try{f=Promise.all(['300','400','500','600'].map(w=>document.fonts.load(w+' 17px Manrope')))}catch(e){f=Promise.resolve()}Promise.race([f,new Promise(r=>setTimeout(r,450))]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{box.scrollTop=box.scrollHeight;v870Show()})))};
+  /* v872: fuente del sistema en el chat, no hace falta ocultar */
+  const v870Ready=()=>{if(v870Shown||!cfg.full)return;let f;try{f=Promise.all(['300','400','500','600'].map(w=>document.fonts.load(w+' 17px Manrope')))}catch(e){f=Promise.resolve()}Promise.race([f,new Promise(r=>setTimeout(r,450))]).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{box.scrollTop=box.scrollHeight;v870Show()})))};
   // V718 · las fotos cargan después de pintar y empujan el final hacia abajo: mientras no hayas subido tú, se vuelve a bajar al último mensaje
   box.addEventListener('scroll',()=>{pin=box.scrollHeight-box.scrollTop-box.clientHeight<140},{passive:true});
   box.addEventListener('load',e=>{if(pin&&/^(IMG|VIDEO)$/.test(e.target.tagName))box.scrollTop=box.scrollHeight},true);
@@ -10547,8 +10550,11 @@ async function coachMessagesView(){
     box.querySelectorAll('.v617TeamRow').forEach(b=>{b.style.display=q?'none':''})};
   findIn.oninput=applyFind;
   const loadInbox=async()=>{
-    box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     const activeTeams=teams.filter(t=>selTeams.has(t));
+    const v872Key=activeTeams.join(',');window._v872Inbox=window._v872Inbox||{};
+    const v872Bind=()=>{box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));applyFind()};
+    if(window._v872Inbox[v872Key]){box.innerHTML=window._v872Inbox[v872Key];v872Bind()}
+    else box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     if(activeTeams.length===1)coachSelectedTeam=activeTeams[0];
     const [rosterByTeam,msgsRes]=await Promise.all([Promise.all(activeTeams.map(async t=>({team:t,list:await staffAthletesForTeam(t)}))),sb.from('chat_messages').select('rower_id,body,sender_id,created_at,read_at').in('team_code',activeTeams).order('created_at',{ascending:false}).limit(400)]);
     let msgsData=msgsRes.data||[],hasRead=!msgsRes.error;
@@ -10563,7 +10569,7 @@ async function coachMessagesView(){
       return (x.a.full_name||'').localeCompare(y.a.full_name||'','es');
     });
     if(!rows.length){box.innerHTML=teamHtml+'<p class="muted">No hay remeros en este equipo.</p>';box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));if(typeof v360FinishLoad==='function')v360FinishLoad();return}
-    box.innerHTML=(teamHtml?'<div class="v797Sec">EQUIPOS</div>'+teamHtml:'')+'<div class="v797Sec">REMEROS</div>'+rows.map(({a,last})=>{
+    const v872Html=(teamHtml?'<div class="v797Sec">EQUIPOS</div>'+teamHtml:'')+'<div class="v797Sec">REMEROS</div>'+rows.map(({a,last})=>{
       const threadSeenKey='rowtraining_v300_chat_thread_seen_'+a.user_id;
       const unread=!!last&&last.sender_id!==currentUser.id&&(hasRead?!last.read_at:new Date(last.created_at)>new Date(localStorage.getItem(threadSeenKey)||0));
       const previewText=last?`${last.sender_id===currentUser.id?'Tú: ':''}${esc(!last.body?'📎 Adjunto':last.body.length>60?last.body.slice(0,60)+'…':last.body)}`:'<span class="muted">Sin mensajes todavía</span>';
@@ -10573,9 +10579,8 @@ async function coachMessagesView(){
         <small class="muted v791Tm" style="flex-shrink:0">${time}${unread?'<br><span class="v791Dot"></span>':''}</small>
       </button>`;
     }).join('');
-    box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));
-    box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));
-    applyFind();
+    if(window._v872Inbox[v872Key]!==v872Html||!box.querySelector('.v300InboxRow')){box.innerHTML=v872Html;v872Bind()}
+    window._v872Inbox[v872Key]=v872Html;
     // V682 · la lista manda: si no enseña ninguna conversación en azul, lo que haya hasta ahora cuenta como visto
     // y el globo de Mensajes se pone a cero (no puede quedar un número que la lista no justifica).
     try{
@@ -14086,7 +14091,7 @@ async function results(){
     if(overlay)overlay.remove();
     overlay=document.createElement('div');overlay.id='v277RankingPreview';
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px';
-    overlay.innerHTML=`<img src="${url}" style="max-width:100%;max-height:75vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);background:#fff"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${(navigator.share?'<button type="button" id="v277Share" class="primary">📤 Compartir</button>':'')}${team?'<button type="button" id="v730Chat" class="primary">💬 Enviar al chat del equipo</button>':''}<button type="button" id="v277Download">⬇️ Descargar</button><button type="button" id="v277Close">Cerrar</button></div>`;
+    overlay.innerHTML=`<img src="${url}" style="max-width:100%;max-height:75vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.5);background:#fff"><textarea id="v872Cm2" rows="2" maxlength="500" placeholder="Añadir un comentario (opcional)" style="width:min(100%,420px);box-sizing:border-box;font-size:16px;border-radius:10px;padding:8px 10px;resize:none"></textarea><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${(navigator.share?'<button type="button" id="v277Share" class="primary">📤 Compartir</button>':'')}${team?'<button type="button" id="v730Chat" class="primary">💬 Enviar al chat del equipo</button>':''}<button type="button" id="v277Download">⬇️ Descargar</button><button type="button" id="v277Close">Cerrar</button></div>`;
     overlay.querySelector('#v277Close').onclick=()=>{overlay.remove();URL.revokeObjectURL(url)};
     overlay.addEventListener('click',(e)=>{if(e.target===overlay){overlay.remove();URL.revokeObjectURL(url)}});
     overlay.querySelector('#v277Download').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove()};
@@ -14099,7 +14104,7 @@ async function results(){
         const path='team/'+team+'/'+Date.now()+'-ranking.png';
         const up=await sb.storage.from('chat-files').upload(path,blob,{contentType:'image/png',cacheControl:'3600'});
         if(up.error)throw up.error;
-        const cap=String(shareTitle||'Ranking test ERGO');
+        const cap=String(shareTitle||'Ranking test ERGO')+(((overlay.querySelector('#v872Cm2').value||'').trim())?'\n'+overlay.querySelector('#v872Cm2').value.trim():'');
         const ins=await sb.from('team_chat_messages').insert({team_code:team,sender_id:currentUser.id,body:cap,att_path:path,att_name:filename,att_type:'image/png',att_size:blob.size});
         if(ins.error)throw ins.error;
         try{v631NotifyTeam(team,'📷 '+cap)}catch(e){}
@@ -14111,7 +14116,7 @@ async function results(){
     if(shareBtn)shareBtn.onclick=async()=>{
       const file=new File([blob],filename,{type:'image/png'});
       try{
-        if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:shareTitle});
+        if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:shareTitle,text:(overlay.querySelector('#v872Cm2').value||'').trim()||shareTitle});
         else await navigator.share({title:shareTitle});
       }catch(e){if(e?.name!=='AbortError')alert('No se pudo compartir: '+(e?.message||e))}
     };
@@ -16488,14 +16493,15 @@ function showResult(blob,previewUrl,name,title,team){
   const url=URL.createObjectURL(blob),file=new File([blob],name,{type:blob.type});
   const can=!!(navigator.canShare&&navigator.canShare({files:[file]}));
   const d=document.createElement('div');d.id='v851Modal';d.className='modalBack';
-  d.innerHTML=`<div class="modalCard" style="max-width:420px"><h3 style="margin-top:0">${blob.type==='application/pdf'?'PDF':'Imagen'} lista</h3><img src="${previewUrl}" alt="" style="width:100%;max-height:52vh;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#fff"><div class="actions" style="margin-top:14px">${can?'<button id="v851Share" class="primary">Compartir</button>':''}<button id="v851Chat" ${can?'':'class="primary"'}>Enviar al chat</button><button id="v851Dl">Descargar</button><button id="v851Close">Cerrar</button></div></div>`;
+  d.innerHTML=`<div class="modalCard" style="max-width:420px"><h3 style="margin-top:0">${blob.type==='application/pdf'?'PDF':'Imagen'} lista</h3><img src="${previewUrl}" alt="" style="width:100%;max-height:52vh;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#fff"><textarea id="v872Cm" rows="2" maxlength="500" placeholder="Añadir un comentario (opcional)" style="width:100%;box-sizing:border-box;margin-top:10px;font-size:16px;border-radius:10px;padding:8px 10px;resize:none"></textarea><div class="actions" style="margin-top:14px">${can?'<button id="v851Share" class="primary">Compartir</button>':''}<button id="v851Chat" ${can?'':'class="primary"'}>Enviar al chat</button><button id="v851Dl">Descargar</button><button id="v851Close">Cerrar</button></div></div>`;
   document.body.appendChild(d);
   const close=()=>{d.remove();URL.revokeObjectURL(url)};
   d.onclick=e=>{if(e.target===d)close()};
   d.querySelector('#v851Close').onclick=close;
   d.querySelector('#v851Dl').onclick=()=>{const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()};
-  d.querySelector('#v851Chat').onclick=()=>pickChat(blob,name,title,team,close);
-  const sh=d.querySelector('#v851Share');if(sh)sh.onclick=async()=>{try{await navigator.share({files:[file],title})}catch(e){if(e&&e.name!=='AbortError')toast('No se pudo compartir; usa Descargar',3000)}};
+  const cm=()=>(d.querySelector('#v872Cm').value||'').trim();
+  d.querySelector('#v851Chat').onclick=()=>pickChat(blob,name,title,team,close,cm);
+  const sh=d.querySelector('#v851Share');if(sh)sh.onclick=async()=>{try{await navigator.share({files:[file],title,text:cm()||title})}catch(e){if(e&&e.name!=='AbortError')toast('No se pudo compartir; usa Descargar',3000)}};
 }
 
 
@@ -16512,7 +16518,7 @@ async function sendToChat(dest,blob,name,caption){
   try{if(dest.kind==='team')v631NotifyTeam(dest.team,pb);else v631Notify1to1(dest.rower,dest.team,pb)}catch(e){}
   return{ok:true};
 }
-async function pickChat(blob,name,title,team,closeMain){
+async function pickChat(blob,name,title,team,closeMain,getCm){
   const lay=v631Modal('Enviar a…','<input class="v631Find" placeholder="Buscar…" style="width:100%;margin:8px 0"><div class="v631List"><p class="muted">Cargando…</p></div>');
   let teams=staffViewTeamCodes();if(team&&teams.includes(team))teams=[team,...teams.filter(t=>t!==team)];
   const dests=[];teams.forEach(t=>dests.push({kind:'team',team:t,label:'👥 Chat del equipo '+teamShort(t)}));
@@ -16520,7 +16526,7 @@ async function pickChat(blob,name,title,team,closeMain){
   const draw=()=>{const f=v631Norm(find.value),ds=dests.filter(x=>!f||v631Norm(x.label).includes(f));list.innerHTML=ds.length?ds.map(x=>`<button type="button" class="v631Dest" data-i="${dests.indexOf(x)}">${esc(x.label)}</button>`).join(''):'<p class="muted">Sin resultados</p>'};
   draw();find.oninput=draw;
   list.onclick=async e=>{const b=e.target.closest('.v631Dest');if(!b)return;const x=dests[Number(b.dataset.i)];b.disabled=true;b.textContent='Enviando…';
-    const r=await sendToChat(x,blob,name,'📊 '+title);
+    const r=await sendToChat(x,blob,name,'📊 '+title+((getCm&&getCm())?'\n'+getCm():''));
     if(r.error){alert('No se pudo enviar: '+(r.error.message||r.error));b.disabled=false;b.textContent=x.label;return}
     lay.remove();closeMain&&closeMain();try{v300ShowToast('Enviado a '+x.label.replace(/^[^\s]+\s/,''))}catch(_){}
     if(window._v583Refresh)window._v583Refresh();
