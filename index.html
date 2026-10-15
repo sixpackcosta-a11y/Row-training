@@ -1654,6 +1654,7 @@ div.v869ShareBar{display:flex;margin:10px 0 0}
 .v882Head{padding:8px 14px!important}.v882Row h2{font-size:17px!important}.v882Plus{padding:0 14px!important;height:34px;min-width:34px;font-size:20px;line-height:1}.v882Grid{gap:8px!important;grid-auto-rows:1fr}.v882Fold{flex-direction:row!important;align-items:center!important;gap:10px!important;padding:10px 12px!important;min-height:58px!important}.v882Fi{font-size:22px!important}.v882Ft{display:flex;flex-direction:column;gap:1px;min-width:0}.v882Fn{font-size:14.5px!important}.v882Fold small{font-size:12.5px!important}
 .v885Sec{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#64748b);margin:12px 6px 6px;font-weight:700}.v885Grp{padding:0!important;overflow:hidden}.v885Li{display:flex!important;flex-direction:row!important;align-items:center!important;gap:12px!important;width:100%;min-height:0!important;padding:11px 14px!important;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;background:transparent!important;text-align:left}.v885Li:first-child{border-top:0!important}.v885I{font-size:19px;width:24px;text-align:center;flex:0 0 auto}.v885N{flex:1;min-width:0;font-size:15px;font-weight:600;color:var(--text)}.v885C{font-size:13px;color:var(--muted,#64748b)}.v885Ch{color:#94a3b8;font-size:18px}
 html,body{touch-action:pan-x pan-y;max-width:100%;overflow-x:hidden}
+.v887Re{padding:5px 12px;font-size:13px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3491,7 +3492,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="886";
+const APP_VERSION="888";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4709,6 +4710,35 @@ function v693SparkHtml(e){
   return `<div style="margin-top:6px"><svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="Palas por minuto durante la serie"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><small class="muted">Palas/min en la serie: máx ${e.spm_max??'—'} · mín ${e.spm_min??'—'}${e.stroke_length_m?` · pala ${String(e.stroke_length_m).replace('.',',')} m`:''}</small></div>`;
 }
 function mmssV690(s){return (s==null||!isFinite(s)||s<=0)?'0:00':Math.floor(s/60)+':'+String(Math.round(s%60)===60?59:Math.round(s%60)).padStart(2,'0')}
+// V887 · lectura del texto de los PDF al subirlos a Recursos (la librería se carga solo cuando hace falta)
+async function v887Lib(){
+  if(window._v887L)return window._v887L;
+  const u=n=>new URL(n,location.href).href;
+  const m=await import(u('pdf.min.mjs'));
+  m.GlobalWorkerOptions.workerSrc=u('pdf.worker.min.mjs');
+  return window._v887L=m;
+}
+async function v887Extract(file){
+  const lib=await v887Lib();
+  const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const parts=[];let chars=0;
+  for(let n=1;n<=doc.numPages;n++){
+    const pg=await doc.getPage(n),tc=await pg.getTextContent(),rows=[];
+    tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]),x=it.transform[4];let r=rows.find(q=>Math.abs(q.y-y)<=3);if(!r){r={y,c:[]};rows.push(r)}r.c.push({x,w:it.width||0,t:it.str})});
+    rows.sort((a,b)=>b.y-a.y);
+    const txt=rows.map(r=>{r.c.sort((a,b)=>a.x-b.x);let o='',end=null;r.c.forEach(c=>{if(end!==null)o+=(c.x-end>10?'\t':(c.x-end>1?' ':''));o+=c.t;end=c.x+c.w});return o.replace(/[ ]+$/,'')}).join('\n');
+    parts.push('--- Página '+n+' ---\n'+txt);chars+=txt.length;
+  }
+  return {text:parts.join('\n\n').slice(0,400000),pages:doc.numPages,chars};
+}
+async function v887Save(id,file){
+  let st='ok',text=null,pages=null;
+  try{const x=await v887Extract(file);pages=x.pages;if(x.chars<20)st='vacio';else text=x.text}catch(e){console.warn('v887',e);st='error'}
+  const up=await sb.from('staff_resources').update({content_text:text,content_status:st,content_pages:pages}).eq('id',id);
+  if(up.error&&!/content_/.test(up.error.message||''))console.warn('v887 update',up.error.message);
+  return st;
+}
+const v887Tag=r=>r.content_status==='ok'?' · 📖 texto leído':r.content_status==='vacio'?' · ⚠️ sin texto (escaneado)':r.content_status==='error'?' · ⚠️ no se pudo leer':'';
 async function staffResourcesView(){
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading('Cargando recursos…')}</p></div>`;
   const q=await sb.from('staff_resources').select('*').order('category').order('title');
@@ -4722,7 +4752,7 @@ async function staffResourcesView(){
   const v690Card=`<div class="card" id="v690Card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span></span><button type="button" class="primary" id="v690New">Nueva grabación</button></div><p class="muted" style="margin:6px 0 8px">Graba series con GPS y palas por minuto. Después decides si las asignas a un entrenamiento.</p>${recMissing?'<div class="warn">Falta ejecutar 70_grabaciones_gps.sql en Supabase para guardar las grabaciones.</div>':(recs.length?recs.map(r=>`<details class="libraryAccordion" style="margin-bottom:6px"><summary>${esc(r.title)} · ${(r.series||[]).length} serie${(r.series||[]).length===1?'':'s'}</summary><div class="accordionBody">${(r.series||[]).map((x,i)=>`<div class="last"><b>${esc(x.label||'Serie '+(i+1))}</b><br><span class="muted">${esc(rsum(x))}</span></div>`).join('')}<div class="actions" style="margin-top:8px"><button type="button" class="primary v690Assign" data-id="${r.id}">Asignar a un entrenamiento</button><button type="button" class="dangerBtn v690Del" data-id="${r.id}">Borrar</button></div></div></details>`).join(''):'<p class="muted" style="margin:0">Todavía no hay grabaciones guardadas.</p>')}</div>`;
   const cats=[...new Set(rows.map(r=>r.category||'General'))];
   const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
-  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
+  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}${/pdf/i.test(r.file_type||r.file_name||'')?v887Tag(r):''}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin&&r.kind==='file'&&r.content_status!=='ok'&&/pdf/i.test(r.file_type||r.file_name||'')?`<button type="button" class="v887Re" data-id="${r.id}">Releer</button>`:''}${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
   const F=window._v882F,allC=[...new Set([...V678_CATS,...cats])];
   const yr=r=>{const m=(r.title+' '+(r.file_name||'')).match(/20\d\d/);return m?m[0]:''};
   const folderBtn=(key,ic,name,n)=>`<button type="button" class="v882Fold" data-f="${esc(key)}"><span class="v882Fi">${ic}</span><span class="v882Ft"><span class="v882Fn">${esc(name)}</span><small>${n}</small></span></button>`;
@@ -4769,8 +4799,9 @@ async function staffResourcesView(){
           const up=await sb.storage.from('staff-resources').upload(path,f,{contentType:f.type||'application/octet-stream',cacheControl:'3600'});
           if(up.error)throw new Error(up.error.message);
           const title=f.name.replace(/\.[^.]+$/,'').replace(/[_]+/g,' ').trim()||f.name;
-          const ins=await sb.from('staff_resources').insert({title,category:F,kind:'file',file_path:path,file_name:f.name,file_type:f.type||null,file_size:f.size,updated_at:new Date().toISOString()});
+          const ins=await sb.from('staff_resources').insert({title,category:F,kind:'file',file_path:path,file_name:f.name,file_type:f.type||null,file_size:f.size,updated_at:new Date().toISOString()}).select('id').single();
           if(ins.error)throw new Error(ins.error.message);
+          if(/pdf/i.test(f.type||f.name)&&ins.data){bar.textContent=`Leyendo ${i+1} de ${files.length}…`;await v887Save(ins.data.id,f)}
           ok++;
         }catch(err){bad.push(f.name+' ('+(err.message||err)+')')}
       }
@@ -4823,6 +4854,14 @@ async function staffResourcesView(){
     if(r.kind==='link'){const u=/^https?:\/\//i.test(r.url||'')?r.url:'https://'+(r.url||'');v631ForwardPicker({body:`📁 ${r.title}${r.description?'\n'+r.description:''}\n${u}`})}
     else v631ForwardPicker({body:`📁 ${r.title}`,att_path:r.file_path,att_name:r.file_name,att_type:r.file_type,att_size:r.file_size,_srcBucket:'staff-resources'});
   });
+  content.querySelectorAll('.v887Re').forEach(b=>b.onclick=async()=>{
+    const r=byId(b.dataset.id);if(!r)return;b.disabled=true;b.textContent='Leyendo…';
+    try{const sg=await sb.storage.from('staff-resources').createSignedUrl(r.file_path,600);const u=sg.data?.signedUrl||sg.data?.signedURL;if(!u)throw new Error('sin enlace');
+      const blob=await (await fetch(u)).blob();const st=await v887Save(r.id,blob);
+      alert(st==='ok'?'Texto leído y guardado.':st==='vacio'?'El PDF no tiene texto (parece escaneado).':'No se pudo leer el PDF.')}
+    catch(e){alert('No se pudo leer: '+(e.message||e))}
+    staffResourcesView();
+  });
   content.querySelectorAll('.v678Edit').forEach(b=>b.onclick=()=>v678Form(byId(b.dataset.id),cats));
   const add=document.getElementById('v678Add');if(add)add.onclick=()=>v678Form(null,cats,(F&&F[0]!=='_')?F:null);
 }
@@ -4856,8 +4895,9 @@ function v678Form(r,cats,defCat){
       if(up.error)return fail(/bucket not found|not found/i.test(up.error.message||'')?'Falta ejecutar 67_recursos_entrenadores.sql en Supabase.':'No se pudo subir: '+up.error.message);
       fields={...fields,kind:'file',file_path:path,file_name:f.name,file_type:f.type||null,file_size:f.size};
     }
-    const res=r?await sb.from('staff_resources').update(fields).eq('id',r.id):await sb.from('staff_resources').insert(fields);
+    const res=r?await sb.from('staff_resources').update(fields).eq('id',r.id):await sb.from('staff_resources').insert(fields).select('id').single();
     if(res.error)return fail('No se pudo guardar: '+res.error.message);
+    if(!r&&k==='file'&&res.data){const ff=$('v678F').files[0];if(ff&&/pdf/i.test(ff.type||ff.name)){btn.textContent='Leyendo PDF…';await v887Save(res.data.id,ff)}}
     lay.remove();staffResourcesView();
   };
 }
