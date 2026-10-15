@@ -1650,6 +1650,7 @@ div.v869ShareBar{display:flex;margin:10px 0 0}
 .v583Full .v583Row>small{font-size:11.5px!important}
 .v583Day span{font-size:11px!important}
 .v882Head{padding:14px 16px}.v882Row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.v882Row h2{margin:0;font-size:18px;flex:1;min-width:0}.v882Head .muted{margin:6px 0 0;font-size:13px}.v882BackB{flex:0 0 100%;text-align:left;border:0;background:transparent;color:var(--accent,inherit);padding:4px 0;font-size:15px}.v882Grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.v882Fold{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--card,transparent);color:var(--text);min-height:92px}.v882Fi{font-size:24px;line-height:1}.v882Fn{font-size:15px;font-weight:700;line-height:1.2}.v882Fold small{font-size:13px;opacity:.7}.v678Cat h3{font-size:15px;margin:0 0 4px}.v678Ic{font-size:20px}.v678Adm button{font-size:13px}
+.v882Drop{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);pointer-events:none}.v882Drop div{background:var(--card,#fff);color:var(--text,#111);border:2px dashed var(--accent,#2563eb);border-radius:18px;padding:28px 36px;text-align:center;font-size:18px;font-weight:700}.v882Drop small{font-size:13px;font-weight:500;opacity:.7}.v882Toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#0f172a;color:#fff;padding:10px 18px;border-radius:12px;font-size:15px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3487,7 +3488,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="882";
+const APP_VERSION="883";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4739,6 +4740,40 @@ async function staffResourcesView(){
   }
   content.querySelectorAll('.v882Fold').forEach(b=>b.onclick=()=>{window._v882F=b.dataset.f;staffResourcesView()});
   const bk=document.getElementById('v882Back');if(bk)bk.onclick=()=>{window._v882F=null;staffResourcesView()};
+  // V883 · arrastrar y soltar PDF (varios) sobre una carpeta real
+  content.ondragenter=content.ondragover=content.ondragleave=content.ondrop=null;
+  if(admin&&F&&F[0]!=='_'){
+    let dep=0;const drop=document.createElement('div');drop.className='v882Drop';drop.innerHTML='<div>⬇️ Suelta aquí los archivos<br><small>en '+esc(F)+'</small></div>';
+    const hasF=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
+    const hide=()=>{dep=0;drop.remove()};
+    content.ondragenter=e=>{if(!hasF(e)||tab!=='recursos')return;e.preventDefault();dep++;if(!drop.isConnected)content.appendChild(drop)};
+    content.ondragover=e=>{if(hasF(e)&&tab==='recursos')e.preventDefault()};
+    content.ondragleave=e=>{if(!hasF(e))return;dep=Math.max(0,dep-1);if(!dep)drop.remove()};
+    content.ondrop=async e=>{
+      if(!hasF(e)||tab!=='recursos')return;e.preventDefault();hide();
+      if(document.querySelector('#v678Save'))return;
+      const files=[...e.dataTransfer.files];if(!files.length)return;
+      let ok=0;const bad=[];
+      const bar=document.createElement('div');bar.className='v882Toast';document.body.appendChild(bar);
+      for(let i=0;i<files.length;i++){
+        const f=files[i];bar.textContent=`Subiendo ${i+1} de ${files.length}…`;
+        try{
+          if(f.size>30*1048576)throw new Error('pesa más de 30 MB');
+          const safe=String(f.name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
+          const path=`recursos/${Date.now()}-${i}-${safe}`;
+          const up=await sb.storage.from('staff-resources').upload(path,f,{contentType:f.type||'application/octet-stream',cacheControl:'3600'});
+          if(up.error)throw new Error(up.error.message);
+          const title=f.name.replace(/\.[^.]+$/,'').replace(/[_]+/g,' ').trim()||f.name;
+          const ins=await sb.from('staff_resources').insert({title,category:F,kind:'file',file_path:path,file_name:f.name,file_type:f.type||null,file_size:f.size,updated_at:new Date().toISOString()});
+          if(ins.error)throw new Error(ins.error.message);
+          ok++;
+        }catch(err){bad.push(f.name+' ('+(err.message||err)+')')}
+      }
+      bar.remove();
+      alert(`Subidos ${ok} de ${files.length} a "${F}".`+(bad.length?'\n\nNo se pudieron subir:\n'+bad.join('\n'):''));
+      staffResourcesView();
+    };
+  }
   try{V696.planner(document.getElementById('v864Box'))}catch(e){}
   const v690New=document.getElementById('v690New');
   if(v690New)v690New.onclick=()=>V689UI.open({standalone:true,onDone:async log=>{
@@ -4799,6 +4834,7 @@ function v678Form(r,cats,defCat){
   const $=id=>lay.querySelector('#'+id),kind=()=>r?r.kind:$('v678K').value;
   const sync=()=>{const k=kind();$('v678UrlBox').classList.toggle('hidden',k!=='link');$('v678FileBox').classList.toggle('hidden',k!=='file'||!!r)};
   if(!r)$('v678K').onchange=sync;sync();
+  lay.addEventListener('dragover',e=>e.preventDefault());lay.addEventListener('drop',e=>{const fl=e.dataTransfer&&e.dataTransfer.files;if(!fl||!fl.length||r)return;e.preventDefault();e.stopPropagation();if($('v678K')){$('v678K').value='file';sync()}try{$('v678F').files=fl;if(!$('v678T').value.trim())$('v678T').value=fl[0].name.replace(/\.[^.]+$/,'').replace(/_+/g,' ')}catch(_){}})
   $('v678Save').onclick=async()=>{
     const title=$('v678T').value.trim(),category=$('v678C').value.trim()||'General',description=$('v678D').value.trim()||null,k=kind();
     if(!title)return alert('Pon un título.');
