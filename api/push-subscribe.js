@@ -1,3 +1,4 @@
+const webpush=require("web-push");
 const SUPABASE_URL=process.env.SUPABASE_URL||"https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_ANON=process.env.SUPABASE_ANON_KEY||"sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
 const TABLE="push_subscriptions";
@@ -60,6 +61,27 @@ async function statusForCoach(user){
   return {status:200,body:{ok:true,users:[...counts].map(([user_id,devices])=>({user_id,devices}))}};
 }
 
+// V892 · prueba de envío (antes en api/push-test.js; se junta aquí para no pasar el límite de 12 funciones de Vercel Hobby)
+async function sendTest(user){
+  const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY;
+  if(!pub||!priv)return {error:"push_not_configured"};
+  const q=await rest(`${TABLE}?user_id=eq.${encodeURIComponent(user.id)}&select=id,endpoint,p256dh,auth`);
+  if(!q.ok)throw new Error("supabase_"+q.status);
+  const subs=await q.json();
+  webpush.setVapidDetails("https://rowtraining.vercel.app",pub,priv);
+  let sent=0;const errors=[];
+  await Promise.all(subs.map(async ps=>{
+    try{
+      await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title:"🔔 Prueba de Row Training",body:"Si ves este aviso, las notificaciones funcionan en este dispositivo.",url:"/",tag:"rowtraining-test"}),{TTL:600,urgency:"high",timeout:8000});
+      sent++;
+    }catch(e){
+      errors.push({statusCode:e?.statusCode||null,message:String(e?.body||e?.message||e).slice(0,200)});
+      if(e?.statusCode===404||e?.statusCode===410){try{await rest(`${TABLE}?id=eq.${ps.id}`,{method:"DELETE",headers:{Prefer:"return=minimal"}})}catch(_){}}
+    }
+  }));
+  return {ok:true,found:subs.length,sent,errors};
+}
+
 module.exports=async(req,res)=>{
   if(req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
   try{
@@ -68,6 +90,9 @@ module.exports=async(req,res)=>{
     if(body.action==="status"){
       const out=await statusForCoach(user);
       return res.status(out.status).json(out.body);
+    }
+    if(body.action==="test"){
+      return res.status(200).json(await sendTest(user));
     }
     if(body.action==="unsubscribe"){
       await removeSubscription(user,body.endpoint);
