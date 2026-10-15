@@ -1649,6 +1649,7 @@ div.v869ShareBar{display:flex;margin:10px 0 0}
 .v583Full .v583Head b{font-size:15px!important}
 .v583Full .v583Row>small{font-size:11.5px!important}
 .v583Day span{font-size:11px!important}
+.v882Head{padding:14px 16px}.v882Row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.v882Row h2{margin:0;font-size:18px;flex:1;min-width:0}.v882Head .muted{margin:6px 0 0;font-size:13px}.v882BackB{flex:0 0 100%;text-align:left;border:0;background:transparent;color:var(--accent,inherit);padding:4px 0;font-size:15px}.v882Grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.v882Fold{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--card,transparent);color:var(--text);min-height:92px}.v882Fi{font-size:24px;line-height:1}.v882Fn{font-size:15px;font-weight:700;line-height:1.2}.v882Fold small{font-size:13px;opacity:.7}.v678Cat h3{font-size:15px;margin:0 0 4px}.v678Ic{font-size:20px}.v678Adm button{font-size:13px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3486,7 +3487,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="881";
+const APP_VERSION="882";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -4694,7 +4695,9 @@ async function staffTodayView(){
 }
 // V678 · Recursos para entrenadores: enlaces (cámaras del mar, webs, vídeos) y archivos de formación.
 // Los ve todo el equipo técnico; solo el administrador añade/edita/borra (SQL 67_recursos_entrenadores.sql).
-const V678_CATS=['Cámaras y mar','Formación','Documentos','Enlaces útiles'];
+const V678_CATS=['Cámaras y mar','Formación','Regatas FAR','Regatas ART · Liga de Jábegas','Tablas de hándicap','Documentos','Enlaces útiles'];
+const V882_ICONS={'Cámaras y mar':'🎥','Formación':'🎓','Regatas FAR':'🏁','Regatas ART · Liga de Jábegas':'🛶','Tablas de hándicap':'📊','Documentos':'📄','Enlaces útiles':'🔗'};
+window._v882F=window._v882F||null;
 function v693SparkHtml(e){
   const tr=e&&Array.isArray(e.spm_trace)?e.spm_trace:null;if(!tr||tr.length<3)return '';
   const xs=tr.map(p=>Number(p[0])),ys=tr.map(p=>Number(p[1])),x0=xs[0],x1=xs[xs.length-1]||1,lo=Math.min(...ys)-1,hi=Math.max(...ys)+1,W=300,H=44;
@@ -4712,12 +4715,30 @@ async function staffResourcesView(){
   if(tab!=='recursos')return;
   const recs=rq.error?[]:(rq.data||[]),recMissing=!!rq.error&&/does not exist|relation|schema cache/i.test(rq.error.message||'');
   const rsum=x=>`${mmssV690(x.duration_seconds)} · ${x.distance_m} m${x.pace_500_seconds?' · '+mmssV690(x.pace_500_seconds)+'/500':''}${x.average_spm!=null?' · '+x.average_spm+' ppm':''}`;
-  const v690Card=`<div class="card" id="v690Card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 style="margin:0">📍 Grabadora GPS</h3><button type="button" class="primary" id="v690New">Nueva grabación</button></div><p class="muted" style="margin:6px 0 8px">Graba series con GPS y palas por minuto. Después decides si las asignas a un entrenamiento.</p>${recMissing?'<div class="warn">Falta ejecutar 70_grabaciones_gps.sql en Supabase para guardar las grabaciones.</div>':(recs.length?recs.map(r=>`<details class="libraryAccordion" style="margin-bottom:6px"><summary>${esc(r.title)} · ${(r.series||[]).length} serie${(r.series||[]).length===1?'':'s'}</summary><div class="accordionBody">${(r.series||[]).map((x,i)=>`<div class="last"><b>${esc(x.label||'Serie '+(i+1))}</b><br><span class="muted">${esc(rsum(x))}</span></div>`).join('')}<div class="actions" style="margin-top:8px"><button type="button" class="primary v690Assign" data-id="${r.id}">Asignar a un entrenamiento</button><button type="button" class="dangerBtn v690Del" data-id="${r.id}">Borrar</button></div></div></details>`).join(''):'<p class="muted" style="margin:0">Todavía no hay grabaciones guardadas.</p>')}</div>`;
+  const v690Card=`<div class="card" id="v690Card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span></span><button type="button" class="primary" id="v690New">Nueva grabación</button></div><p class="muted" style="margin:6px 0 8px">Graba series con GPS y palas por minuto. Después decides si las asignas a un entrenamiento.</p>${recMissing?'<div class="warn">Falta ejecutar 70_grabaciones_gps.sql en Supabase para guardar las grabaciones.</div>':(recs.length?recs.map(r=>`<details class="libraryAccordion" style="margin-bottom:6px"><summary>${esc(r.title)} · ${(r.series||[]).length} serie${(r.series||[]).length===1?'':'s'}</summary><div class="accordionBody">${(r.series||[]).map((x,i)=>`<div class="last"><b>${esc(x.label||'Serie '+(i+1))}</b><br><span class="muted">${esc(rsum(x))}</span></div>`).join('')}<div class="actions" style="margin-top:8px"><button type="button" class="primary v690Assign" data-id="${r.id}">Asignar a un entrenamiento</button><button type="button" class="dangerBtn v690Del" data-id="${r.id}">Borrar</button></div></div></details>`).join(''):'<p class="muted" style="margin:0">Todavía no hay grabaciones guardadas.</p>')}</div>`;
   const cats=[...new Set(rows.map(r=>r.category||'General'))];
   const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
   const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
-  content.innerHTML=`<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📁 Recursos</h2>${admin?'<button type="button" class="primary" id="v678Add">+ Añadir recurso</button>':''}</div><p class="muted" style="margin:6px 0 0">Enlaces y archivos para el equipo técnico: cámaras del mar, formación, documentos…</p></div>`+'<div class="card" id="v864Card"><h3 style="margin:0 0 4px">🌊 Previsión para entrenar</h3><p class="muted" style="margin:0 0 8px">Mira cómo estará el mar a una hora, o qué día de la semana sale mejor.</p><div id="v864Box"></div></div>'+v690Card
-    +(cats.length?cats.map(c=>`<div class="card v678Cat"><h3 style="margin:0 0 4px">${esc(c)}</h3>${rows.filter(r=>(r.category||'General')===c).map(item).join('')}</div>`).join(''):`<div class="card"><p class="muted" style="margin:0">Todavía no hay recursos.${admin?' Pulsa "+ Añadir recurso" para empezar.':' El administrador los irá añadiendo.'}</p></div>`);
+  const F=window._v882F,allC=[...new Set([...V678_CATS,...cats])];
+  const yr=r=>{const m=(r.title+' '+(r.file_name||'')).match(/20\d\d/);return m?m[0]:''};
+  const folderBtn=(key,ic,name,n)=>`<button type="button" class="v882Fold" data-f="${esc(key)}"><span class="v882Fi">${ic}</span><span class="v882Fn">${esc(name)}</span><small>${n}</small></button>`;
+  const topBar=(title,addCat)=>`<div class="card v882Head"><div class="v882Row">${F?'<button type="button" id="v882Back" class="v882BackB">← Recursos</button>':''}<h2>${F?esc(title):'📁 Recursos'}</h2>${admin&&addCat!==false?'<button type="button" class="primary" id="v678Add">+ Añadir</button>':''}</div>${F?'':'<p class="muted">Cámaras, formación, regatas y tablas de hándicap del equipo técnico.</p>'}</div>`;
+  if(!F){
+    content.innerHTML=topBar('',true)+'<div class="v882Grid">'+folderBtn('__prev','🌊','Previsión para entrenar','mar y viento')+folderBtn('__gps','📍','Grabadora GPS',recMissing?'—':recs.length+' grabaciones')+allC.map(c=>folderBtn(c,V882_ICONS[c]||'📁',c,rows.filter(r=>(r.category||'General')===c).length+' archivos')).join('')+'</div>';
+  }else if(F==='__prev'){
+    content.innerHTML=topBar('🌊 Previsión para entrenar',false)+'<div class="card" id="v864Card"><p class="muted">Mira cómo estará el mar a una hora, o qué día de la semana sale mejor.</p><div id="v864Box"></div></div>';
+  }else if(F==='__gps'){
+    content.innerHTML=topBar('📍 Grabadora GPS',false)+v690Card;
+  }else{
+    const list=rows.filter(r=>(r.category||'General')===F);
+    let body;
+    if(!list.length)body='<div class="card"><p class="muted" style="margin:0">Carpeta vacía.'+(admin?' Pulsa "+ Añadir" para subir el primero.':'')+'</p></div>';
+    else if(list.some(yr)){const ys=[...new Set(list.map(r=>yr(r)||'Otros'))].sort().reverse();body=ys.map(y=>`<div class="card v678Cat"><h3>${y==='Otros'?'Otros':'Temporada '+y}</h3>${list.filter(r=>(yr(r)||'Otros')===y).map(item).join('')}</div>`).join('')}
+    else body=`<div class="card v678Cat">${list.map(item).join('')}</div>`;
+    content.innerHTML=topBar((V882_ICONS[F]||'📁')+' '+F,true)+body;
+  }
+  content.querySelectorAll('.v882Fold').forEach(b=>b.onclick=()=>{window._v882F=b.dataset.f;staffResourcesView()});
+  const bk=document.getElementById('v882Back');if(bk)bk.onclick=()=>{window._v882F=null;staffResourcesView()};
   try{V696.planner(document.getElementById('v864Box'))}catch(e){}
   const v690New=document.getElementById('v690New');
   if(v690New)v690New.onclick=()=>V689UI.open({standalone:true,onDone:async log=>{
@@ -4763,13 +4784,13 @@ async function staffResourcesView(){
     else v631ForwardPicker({body:`📁 ${r.title}`,att_path:r.file_path,att_name:r.file_name,att_type:r.file_type,att_size:r.file_size,_srcBucket:'staff-resources'});
   });
   content.querySelectorAll('.v678Edit').forEach(b=>b.onclick=()=>v678Form(byId(b.dataset.id),cats));
-  const add=document.getElementById('v678Add');if(add)add.onclick=()=>v678Form(null,cats);
+  const add=document.getElementById('v678Add');if(add)add.onclick=()=>v678Form(null,cats,(F&&F[0]!=='_')?F:null);
 }
-function v678Form(r,cats){
+function v678Form(r,cats,defCat){
   const allCats=[...new Set([...V678_CATS,...cats])];
   const lay=v631Modal(r?'Editar recurso':'Nuevo recurso',`<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
     <label>Título<input id="v678T" value="${esc(r?.title||'')}" placeholder="Cámara playa del Pedregal"></label>
-    <label>Categoría<input id="v678C" list="v678CL" value="${esc(r?.category||allCats[0])}"><datalist id="v678CL">${allCats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
+    <label>Categoría<input id="v678C" list="v678CL" value="${esc(r?.category||defCat||allCats[0])}"><datalist id="v678CL">${allCats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
     <label>Descripción (opcional)<input id="v678D" value="${esc(r?.description||'')}" placeholder="Se ve el estado del mar en directo"></label>
     ${r?'':`<label>Tipo<select id="v678K"><option value="link">🔗 Enlace</option><option value="file">📄 Archivo</option></select></label>`}
     <label id="v678UrlBox" ${r&&r.kind==='file'?'class="hidden"':''}>Enlace<input id="v678U" type="url" value="${esc(r?.url||'')}" placeholder="https://…"></label>
