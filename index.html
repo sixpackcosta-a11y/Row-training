@@ -3492,7 +3492,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="888";
+const APP_VERSION="889";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -10686,9 +10686,12 @@ async function coachMessagesView(){
   // V642 · buscador por nombre entre todos los equipos
   box.insertAdjacentHTML('beforebegin','<input id="v642Find" type="search" placeholder="🔍 Buscar remero/a por nombre…" autocomplete="off" style="width:100%;margin-top:10px">');
   const findIn=document.getElementById('v642Find');
+  // V889 · el CSS de las filas lleva display:flex!important y ganaba al display:none normal, así que el
+  // buscador no escondía nada. Se oculta con setProperty(...,'important') para que mande.
+  const v889Show=(b,on)=>{if(on)b.style.removeProperty('display');else b.style.setProperty('display','none','important')};
   const applyFind=()=>{const q=v631Norm(findIn.value.trim());
-    box.querySelectorAll('.v300InboxRow').forEach(b=>{b.style.display=(!q||v631Norm(b.dataset.name).includes(q))?'':'none'});
-    box.querySelectorAll('.v617TeamRow').forEach(b=>{b.style.display=q?'none':''})};
+    box.querySelectorAll('.v300InboxRow').forEach(b=>v889Show(b,!q||v631Norm(b.dataset.name).includes(q)));
+    box.querySelectorAll('.v617TeamRow').forEach(b=>v889Show(b,!q))};
   findIn.oninput=applyFind;
   const loadInbox=async()=>{
     const activeTeams=teams.filter(t=>selTeams.has(t));
