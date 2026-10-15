@@ -3058,7 +3058,7 @@ async function testPushV104(){
     if(sub){const sr=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({subscription:sub.toJSON()})});const sj=await sr.json().catch(()=>({}));if(!sr.ok)return alert('El dispositivo tiene permiso, pero no se pudo registrar en el servidor.\n\nDetalle: '+(sj.error||sr.status));}
     const r=await fetch('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});const j=await r.json().catch(()=>({}));
     if(j.error==='push_not_configured')return alert('Falta terminar la configuración de Web Push en Vercel.');
-    if(!r.ok)return alert('No se pudo hacer la prueba.\n\nDetalle: '+(j.error||r.status));
+    if(r.status===404)return alert('Dispositivo registrado correctamente ✅\n\nLa prueba de envío todavía no está instalada en el servidor (falta api/push-test.js).');if(!r.ok)return alert('No se pudo hacer la prueba.\n\nDetalle: '+(j.error||r.status));
     if(j.sent){const fallos=(j.errors||[]).length;const detalle=fallos?'\n\nFallos: '+(j.errors||[]).map(e=>`${e.statusCode||''} ${e.message||''}`).join(' | '):'';return alert(`Dispositivos encontrados: ${j.found||0}\nEnviados: ${j.sent}\nFallidos: ${fallos}${detalle}`);}
     if((j.found||0)===0)return alert('El iPhone tiene el permiso activado, pero todavía no figura registrado en el servidor. Vuelve a pulsar Activar notificaciones.');
     const d=j.errors?.[0];return alert('El dispositivo está registrado, pero el envío push fue rechazado.\n\nDetalle: '+(d?.statusCode?d.statusCode+' · ':'')+(d?.message||'sin detalle'));
