@@ -5,7 +5,7 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
-const CACHE='rowtraining-app-v564';
+const CACHE='rowtraining-app-v565';
 const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
 self.addEventListener('install', event => {
@@ -83,6 +83,10 @@ self.addEventListener('fetch', event => {
   if(cdn||ownStatic){event.respondWith(staleWhileRevalidate(req));return}
 });
 
+// V890 · si el sistema cambia o caduca la suscripción push, se avisa a la app para que se registre de nuevo
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{list.forEach(c=>c.postMessage({type:'push-resubscribe'}))}).catch(()=>{}));
+});
 self.addEventListener('push', event => {
   let data={};
   try{ data=event.data?event.data.json():{}; }catch(e){ data={title:'Row Training',body:event.data?.text?.()||''}; }
@@ -107,7 +111,10 @@ self.addEventListener('push', event => {
     });
     // iOS no reemplaza por etiqueta: se cierran las agrupaciones anteriores para que no se apilen
     try{old.forEach(n=>n.close())}catch(e){}
-  })());
+  })().catch(async()=>{
+    // V890 · pase lo que pase, SIEMPRE se muestra un aviso (si no, iOS acaba cancelando las notificaciones de ese móvil)
+    try{await self.registration.showNotification(data.title||'Row Training',{body:data.body||'',icon:'/assets/brand/icon-192.png',data:{url:data.url||'/'}})}catch(e){}
+  }));
 });
 self.addEventListener('notificationclick', event => {
   event.notification.close();

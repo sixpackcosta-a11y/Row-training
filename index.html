@@ -2974,15 +2974,55 @@ async function disablePushV104(){
   localStorage.removeItem('rowtraining_push_enabled_v104');
   return true;
 }
-async function syncExistingPushV109(){
-  if(!currentUser||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator))return false;
+// V890 · push más robusto: cada vez que se abre la app (y al volver a ella) se comprueba que el
+// dispositivo sigue suscrito. Si el permiso está dado pero la suscripción desapareció (iOS/Android la
+// caducan o la rotan sin avisar) se vuelve a crear sola y se registra en el servidor, con reintentos.
+function v890KeyMatches(sub){try{const k=sub.options&&sub.options.applicationServerKey;if(!k)return true;const a=new Uint8Array(k),b=urlBase64ToUint8ArrayV104(VAPID_PUBLIC_KEY_V104);return a.length===b.length&&a.every((v,i)=>v===b[i])}catch(e){return true}}
+async function v890GetReg(){try{let reg=await navigator.serviceWorker.getRegistration();if(!reg)reg=await registerServiceWorkerV104();if(!reg)return null;if(!reg.active){await Promise.race([navigator.serviceWorker.ready,new Promise(r=>setTimeout(r,6000))])}return reg}catch(e){return null}}
+async function v890Post(body,token){let last=null;for(let i=0;i<3;i++){try{const r=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});if(r.ok)return {ok:true};last={ok:false,status:r.status,text:await r.text().catch(()=>'')};if(r.status>=400&&r.status<500&&r.status!==429)break}catch(e){last={ok:false,status:0,text:String(e&&e.message||e)}}await new Promise(r=>setTimeout(r,800*(i+1)))}return last||{ok:false}}
+let v890Busy=null;
+function syncExistingPushV109(opts){
+  if(v890Busy)return v890Busy;
+  v890Busy=(async()=>{
+    if(!currentUser||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+    try{
+      const reg=await v890GetReg();if(!reg)return false;
+      let sub=await reg.pushManager.getSubscription();
+      if(sub&&!v890KeyMatches(sub)){try{await sub.unsubscribe()}catch(e){}sub=null}
+      if(!sub||(opts&&opts.force)){
+        if(sub&&opts&&opts.force){try{await sub.unsubscribe()}catch(e){}sub=null}
+        sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8ArrayV104(VAPID_PUBLIC_KEY_V104)});
+      }
+      const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return false;
+      const res=await v890Post({subscription:sub.toJSON()},session.access_token);
+      if(!res.ok){console.warn('Push sync failed',res);try{localStorage.setItem('rowtraining_push_err_v890',(res.status||'')+' '+(res.text||'').slice(0,120))}catch(e){}return false}
+      try{localStorage.setItem('rowtraining_push_enabled_v104','1');localStorage.setItem('rowtraining_push_sync_v890',String(Date.now()));localStorage.removeItem('rowtraining_push_err_v890')}catch(e){}
+      return true;
+    }catch(e){console.warn('Push ownership sync',e);try{localStorage.setItem('rowtraining_push_err_v890',String(e&&e.message||e).slice(0,120))}catch(_){}return false}
+  })().finally(()=>{v890Busy=null});
+  return v890Busy;
+}
+// se repite al volver a la app (máx. cada 20 min), al recuperar la conexión y cuando el service worker avisa
+// de que el sistema cambió la suscripción
+function v890Resync(force){try{const last=Number(localStorage.getItem('rowtraining_push_sync_v890')||0);if(force||Date.now()-last>20*60*1000)syncExistingPushV109()}catch(e){}}
+try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')v890Resync(false)});window.addEventListener('online',()=>v890Resync(true));
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e&&e.data&&e.data.type==='push-resubscribe')v890Resync(true)})}catch(e){}
+// botón "Reparar": borra la suscripción de este dispositivo, crea una nueva, la registra y manda una prueba
+async function repairPushV890(){
   try{
-    const reg=await navigator.serviceWorker.getRegistration();const sub=reg?await reg.pushManager.getSubscription():null;if(!sub)return false;
-    const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return false;
-    const r=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({subscription:sub.toJSON()})});
-    if(!r.ok){console.warn('Push ownership sync failed',await r.text());return false}
-    localStorage.setItem('rowtraining_push_enabled_v104','1');return true;
-  }catch(e){console.warn('Push ownership sync',e);return false}
+    if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))return alert('Este dispositivo o navegador no admite notificaciones push.');
+    if(Notification.permission==='denied')return alert('Las notificaciones están bloqueadas para Row Training en este dispositivo.\n\nActívalas en los ajustes del teléfono (Ajustes → Notificaciones → Row Training) y vuelve a pulsar Reparar.');
+    if(Notification.permission!=='granted'){const ok=await enablePushV104();if(!ok)return}
+    const ok=await syncExistingPushV109({force:true});
+    if(!ok)return alert('No se pudo reparar.\n\nDetalle: '+(localStorage.getItem('rowtraining_push_err_v890')||'sin detalle')+'\n\nCierra sesión, vuelve a entrar y prueba otra vez.');
+    await testPushV104();
+  }catch(e){alert('No se pudo reparar: '+(e&&e.message||e))}
+}
+async function v890PushInfo(){
+  const perm=('Notification' in window)?Notification.permission:'no-soportado';let sub=false,key=true;
+  try{const reg=await navigator.serviceWorker.getRegistration();const s=reg&&await reg.pushManager.getSubscription();sub=!!s;if(s)key=v890KeyMatches(s)}catch(e){}
+  const last=Number(localStorage.getItem('rowtraining_push_sync_v890')||0),err=localStorage.getItem('rowtraining_push_err_v890')||'';
+  return {perm,sub,key,last,err};
 }
 
 function isIOSV106(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(/Macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
@@ -3235,9 +3275,11 @@ async function openNotificationsV104(){
  const readCount=appNotificationsV104.filter(n=>n.is_read&&!V740_CHAT.includes(n.type)).length;
  const listHtml=visible.length?visible.map(n=>`<div class="notifyItemV104 ${n.is_read?'':'unread'}${/^cron_(sea|short):/.test(String(n.source_key||''))?' autoV706':''}" data-id="${esc(String(n.id))}" data-url="${esc(n.url||'')}"><div class="notifyTopV104"><b>${esc(n.title)}</b><div style="display:flex;gap:8px;align-items:center"><small class="muted">${new Date(n.created_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small><button type="button" class="deleteNotifV225" data-id="${esc(String(n.id))}" aria-label="Eliminar notificación" title="Eliminar" style="padding:4px 8px;min-width:auto">🗑️</button></div></div>${n.body?`<div style="margin-top:5px">${esc(n.body)}</div>`:''}</div>`).join(''):`<div class="info">${filter==='unread'?'No tienes notificaciones sin leer.':'No tienes notificaciones.'}</div>`;
  const comp=notifyComposerHtmlV110();
- panel.innerHTML=`<div class="notifyCardV104 v650Notif"><div class="notifyTopV104"><h2 style="margin:0">🔔 Notificaciones</h2><button id="closeNotifV104">✕</button></div><label class="v650PushRow"><span class="v650PushTx">Push en este dispositivo</span><input type="checkbox" id="v650PushTgl" class="v650Tgl" ${on?'checked':''}></label><div class="v650Bar"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button><span style="flex:1"></span><button id="markAllV104" class="v650Ic" title="Marcar todo leído" ${unreadCount?'':'disabled'}>✓ Leídas</button>${readCount?'<button id="deleteReadV225" class="v650Ic" title="Eliminar leídas">🗑️</button>':''}</div>${listHtml}${comp?`<details class="v650Comp"><summary>✉️ Enviar aviso</summary>${comp}</details>`:''}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
+ panel.innerHTML=`<div class="notifyCardV104 v650Notif"><div class="notifyTopV104"><h2 style="margin:0">🔔 Notificaciones</h2><button id="closeNotifV104">✕</button></div><label class="v650PushRow"><span class="v650PushTx">Push en este dispositivo</span><input type="checkbox" id="v650PushTgl" class="v650Tgl" ${on?'checked':''}></label><div id="v890PushSt" class="muted" style="font-size:.78rem;margin:-2px 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span id="v890PushTx">Comprobando…</span><button type="button" id="v890Repair" class="v650Ic" style="padding:4px 10px">🔧 Reparar</button></div><div class="v650Bar"><button id="filterAllV225" class="${filter==='all'?'primary':''}">Todas (${appNotificationsV104.length})</button><button id="filterUnreadV225" class="${filter==='unread'?'primary':''}">No leídas (${unreadCount})</button><span style="flex:1"></span><button id="markAllV104" class="v650Ic" title="Marcar todo leído" ${unreadCount?'':'disabled'}>✓ Leídas</button>${readCount?'<button id="deleteReadV225" class="v650Ic" title="Eliminar leídas">🗑️</button>':''}</div>${listHtml}${comp?`<details class="v650Comp"><summary>✉️ Enviar aviso</summary>${comp}</details>`:''}</div>`;document.body.appendChild(panel);await bindNotifyComposerV110(panel);
  panel.onclick=e=>{if(e.target===panel)panel.remove()};
  panel.querySelector('#closeNotifV104')?.addEventListener('click',()=>panel.remove());
+ panel.querySelector('#v890Repair')?.addEventListener('click',async e=>{const b=e.target;b.disabled=true;b.textContent='Reparando…';await repairPushV890();b.disabled=false;b.textContent='🔧 Reparar';openNotificationsV104()});
+ v890PushInfo().then(i=>{const el=panel.querySelector('#v890PushTx');if(!el)return;const ok=i.perm==='granted'&&i.sub&&i.key;el.textContent=ok?('✅ Este dispositivo recibe avisos'+(i.last?' · sincronizado '+new Date(i.last).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'')):i.perm==='denied'?'⛔ Bloqueadas en los ajustes del teléfono':i.perm==='granted'?'⚠️ Permiso dado pero sin registrar: pulsa Reparar':'⚪ No activadas en este dispositivo'+(i.err?' · '+i.err:'')});
  panel.querySelector('#v650PushTgl')?.addEventListener('change',async e=>{const t=e.target;t.disabled=true;
    if(t.checked){if(await enablePushV104())openNotificationsV104();else{t.checked=false;t.disabled=false}}
    else{if(!confirm('¿Desactivar las notificaciones push en este dispositivo?\n\nSolo afecta a este dispositivo.')){t.checked=true;t.disabled=false;return}await disablePushV104();openNotificationsV104()}});
@@ -3492,7 +3534,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="889";
+const APP_VERSION="890";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
