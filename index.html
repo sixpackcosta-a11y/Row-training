@@ -4340,17 +4340,26 @@ async function v893OpenC2All(){
   try{athletes=(await call({action:'list_connected'})).athletes||[]}catch(e){msg.textContent='No se pudo cargar la lista: '+(e.message||e);return}
   if(!athletes.length){msg.textContent='Ningún remero tiene Concept2 conectado.';return}
   const ago=ts=>{if(!ts)return 'nunca';const m=Math.round((Date.now()-new Date(ts))/60000);return m<60?`hace ${m} min`:m<1440?`hace ${Math.round(m/60)} h`:`hace ${Math.round(m/1440)} d`};
-  list.innerHTML=athletes.map(a=>`<div data-u="${esc(a.user_id)}" style="display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.88rem"><span>${esc(a.name)}</span><span class="v893St muted">última: ${ago(a.last_sync_at)}</span></div>`).join('');
-  msg.textContent=`${athletes.length} remeros con Concept2 conectado.`;go.disabled=false;
+  const selKey='rowtraining_c2all_sel_v893';let saved=null;try{saved=JSON.parse(localStorage.getItem(selKey)||'null')}catch(e){}
+  const isOn=a=>Array.isArray(saved)?saved.includes(a.user_id):true;
+  list.innerHTML=`<div style="display:flex;gap:8px"><button type="button" id="v893All" class="v650Ic" style="padding:4px 10px">Todos</button><button type="button" id="v893None" class="v650Ic" style="padding:4px 10px">Ninguno</button><button type="button" id="v893Old" class="v650Ic" style="padding:4px 10px" title="Marca a quienes llevan más de 1 día sin sincronizar">Atrasados</button></div>`+athletes.map(a=>`<label data-u="${esc(a.user_id)}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;cursor:pointer"><input type="checkbox" class="v893Ck" value="${esc(a.user_id)}" ${isOn(a)?'checked':''} style="width:18px;height:18px;flex:none"><span style="flex:1">${esc(a.name)}</span><span class="v893St muted">última: ${ago(a.last_sync_at)}</span></label>`).join('');
+  const checks=()=>[...list.querySelectorAll('.v893Ck')];
+  const chosen=()=>athletes.filter(a=>checks().some(c=>c.value===a.user_id&&c.checked));
+  const refresh=()=>{const n=chosen().length;go.disabled=running||!n;go.textContent=running?'Sincronizando…':(n?`Sincronizar ${n} remero${n===1?'':'s'}`:'Marca al menos uno');msg.textContent=`${athletes.length} remeros con Concept2 conectado · ${n} marcados.`;try{localStorage.setItem(selKey,JSON.stringify(chosen().map(a=>a.user_id)))}catch(e){}};
+  list.addEventListener('change',e=>{if(e.target.classList.contains('v893Ck'))refresh()});
+  list.querySelector('#v893All').onclick=()=>{checks().forEach(c=>c.checked=true);refresh()};
+  list.querySelector('#v893None').onclick=()=>{checks().forEach(c=>c.checked=false);refresh()};
+  list.querySelector('#v893Old').onclick=()=>{checks().forEach(c=>{const a=athletes.find(x=>x.user_id===c.value);c.checked=!a.last_sync_at||(Date.now()-new Date(a.last_sync_at))>864e5});refresh()};
+  refresh();
   go.onclick=async()=>{
-    running=true;go.disabled=true;go.textContent='Sincronizando…';let nuevos=0,act=0,fallos=0,i=0;
-    for(const a of athletes){
-      i++;const row=list.querySelector(`[data-u="${CSS.escape(a.user_id)}"] .v893St`);msg.textContent=`Sincronizando ${i} de ${athletes.length}…`;if(row)row.textContent='⏳';
+    const todo=chosen();if(!todo.length)return;running=true;go.disabled=true;go.textContent='Sincronizando…';checks().forEach(c=>c.disabled=true);let nuevos=0,act=0,fallos=0,i=0;
+    for(const a of todo){
+      i++;const row=list.querySelector(`[data-u="${CSS.escape(a.user_id)}"] .v893St`);msg.textContent=`Sincronizando ${i} de ${todo.length}…`;if(row)row.textContent='⏳';
       let done=false,lastErr='';
       for(let t=0;t<2&&!done;t++){try{const r=await call({action:'sync_user',athlete_user_id:a.user_id});nuevos+=r.imported||0;act+=r.updated||0;if(row)row.innerHTML=`✅ ${r.imported||0} nuevos`;done=true}catch(e){lastErr=e?.name==='AbortError'?'tardó demasiado':(e.message||String(e))}}
       if(!done){fallos++;if(row)row.innerHTML='⚠️ '+esc(lastErr).slice(0,60)}
     }
-    running=false;go.disabled=false;go.textContent='Volver a sincronizar';msg.textContent=`Terminado: ${nuevos} entrenamientos nuevos, ${act} ya existentes, ${fallos} con fallo.`;
+    running=false;checks().forEach(c=>c.disabled=false);go.disabled=false;go.textContent='Volver a sincronizar';msg.textContent=`Terminado: ${nuevos} entrenamientos nuevos, ${act} ya existentes, ${fallos} con fallo.`;
     try{if(nuevos>0&&typeof draw==='function'){draw()}}catch(e){}
   };
 }
