@@ -3534,7 +3534,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="890";
+const APP_VERSION="891";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8866,7 +8866,7 @@ function gym(k,x=null){
 }
 
 async function v140AssignResult(kind,sourceId,type,actualDate,athleteUserId=currentUser?.id,teamCode=currentTeamCode,onDone=null,currentTrainingSessionId=''){
-  const plannedType=String(type||'').toUpperCase().replace('ERGO','ERG'),actual=String(actualDate||localISODate()).slice(0,10),start=addDaysISO(actual,-42),end=addDaysISO(actual,42);
+  const plannedType=String(type||'').toUpperCase().replace('ERGO','ERG'),actual=String(actualDate||localISODate()).slice(0,10),start=addDaysISO(actual,-120),end=addDaysISO(actual,60); /* V891 · antes ±42 días: una sesión 43 días antes (p. ej. 1/9 para un resultado del 14/10) ni aparecía */
   const q=await sb.from('training_sessions').select('id,session_date,session_type,title,content,target_user_ids').eq('team_code',teamCode).eq('session_type',plannedType).gte('session_date',start).lte('session_date',end).order('session_date');
   if(q.error)return alert('No se pudieron cargar las sesiones planificadas: '+q.error.message);
   const dayDiff=(a,b)=>Math.round((Date.parse(a+'T00:00:00Z')-Date.parse(b+'T00:00:00Z'))/86400000);
