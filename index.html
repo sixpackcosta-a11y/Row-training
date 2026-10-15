@@ -3056,7 +3056,7 @@ async function testPushV104(){
   try{
     const reg=await navigator.serviceWorker.getRegistration();const sub=reg?await reg.pushManager.getSubscription():null;
     if(sub){const sr=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({subscription:sub.toJSON()})});const sj=await sr.json().catch(()=>({}));if(!sr.ok)return alert('El dispositivo tiene permiso, pero no se pudo registrar en el servidor.\n\nDetalle: '+(sj.error||sr.status));}
-    const r=await fetch('/api/push-test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});const j=await r.json().catch(()=>({}));
+    const r=await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'test'})});const j=await r.json().catch(()=>({}));
     if(j.error==='push_not_configured')return alert('Falta terminar la configuración de Web Push en Vercel.');
     if(r.status===404)return alert('Dispositivo registrado correctamente ✅\n\nLa prueba de envío todavía no está instalada en el servidor (falta api/push-test.js).');if(!r.ok)return alert('No se pudo hacer la prueba.\n\nDetalle: '+(j.error||r.status));
     if(j.sent){const fallos=(j.errors||[]).length;const detalle=fallos?'\n\nFallos: '+(j.errors||[]).map(e=>`${e.statusCode||''} ${e.message||''}`).join(' | '):'';return alert(`Dispositivos encontrados: ${j.found||0}\nEnviados: ${j.sent}\nFallidos: ${fallos}${detalle}`);}
@@ -3534,7 +3534,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="891";
+const APP_VERSION="892";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -8866,7 +8866,7 @@ function gym(k,x=null){
 }
 
 async function v140AssignResult(kind,sourceId,type,actualDate,athleteUserId=currentUser?.id,teamCode=currentTeamCode,onDone=null,currentTrainingSessionId=''){
-  const plannedType=String(type||'').toUpperCase().replace('ERGO','ERG'),actual=String(actualDate||localISODate()).slice(0,10),start=addDaysISO(actual,-120),end=addDaysISO(actual,60); /* V891 · antes ±42 días: una sesión 43 días antes (p. ej. 1/9 para un resultado del 14/10) ni aparecía */
+  const plannedType=String(type||'').toUpperCase().replace('ERGO','ERG'),actual=String(actualDate||localISODate()).slice(0,10),start=addDaysISO(actual,-120),end=addDaysISO(actual,60);
   const q=await sb.from('training_sessions').select('id,session_date,session_type,title,content,target_user_ids').eq('team_code',teamCode).eq('session_type',plannedType).gte('session_date',start).lte('session_date',end).order('session_date');
   if(q.error)return alert('No se pudieron cargar las sesiones planificadas: '+q.error.message);
   const dayDiff=(a,b)=>Math.round((Date.parse(a+'T00:00:00Z')-Date.parse(b+'T00:00:00Z'))/86400000);
