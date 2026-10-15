@@ -34,10 +34,27 @@ async function deliverNotifications({supabaseUrl,serviceKey,recipientIds,title,b
     // V731 · nº de avisos sin leer de cada persona, para el globo del icono de la app
     const unread=new Map();
     await Promise.all([...new Set(subs.map(x=>x.user_id))].map(async uid=>{try{const r=await rest(`${supabaseUrl}/rest/v1/app_notifications?user_id=eq.${encodeURIComponent(uid)}&is_read=eq.false&select=id&limit=99`,{key:serviceKey})||[];unread.set(uid,r.length)}catch(e){}}));
-    for(const ps of subs){
-      try{await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},JSON.stringify({title,body,url,badge:unread.get(ps.user_id),tag:`rowtraining-${type}-${sourceBase}`}));pushSent++}
-      catch(e){pushFailed++;errors.push({user_id:ps.user_id,statusCode:e?.statusCode||null,message:String(e?.body||e?.message||e).slice(0,250)});if(e?.statusCode===404||e?.statusCode===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey})}catch(_){}}}
-    }
+    // V890 · envío en paralelo (10 a la vez) con límite de tiempo y 1 reintento ante fallos temporales,
+    // para que un móvil lento no retrase ni corte al resto. Solo se borra la suscripción si el servicio
+    // push dice que ya no existe (404/410).
+    const sendOne=async ps=>{
+      const payload=JSON.stringify({title,body,url,badge:unread.get(ps.user_id),tag:`rowtraining-${type}-${sourceBase}`});
+      const opts={TTL:60*60*24*2,urgency:'high',timeout:8000};
+      let lastErr=null;
+      for(let attempt=0;attempt<2;attempt++){
+        try{await webpush.sendNotification({endpoint:ps.endpoint,keys:{p256dh:ps.p256dh,auth:ps.auth}},payload,opts);pushSent++;return}
+        catch(e){
+          lastErr=e;const code=e?.statusCode||0;
+          if(code===404||code===410){try{await rest(`${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${ps.id}`,{method:'DELETE',key:serviceKey})}catch(_){}break}
+          const temporary=!code||code===429||code>=500;
+          if(!temporary)break;
+          await new Promise(r=>setTimeout(r,600));
+        }
+      }
+      pushFailed++;errors.push({user_id:ps.user_id,statusCode:lastErr?.statusCode||null,message:String(lastErr?.body||lastErr?.message||lastErr).slice(0,250)});
+    };
+    const queue=[...subs];
+    await Promise.all(Array.from({length:Math.min(10,queue.length)},async()=>{while(queue.length){const ps=queue.shift();await sendOne(ps)}}));
   }
   return {ok:true,recipients:recipientIds.length,push_found:pushFound,push_sent:pushSent,push_failed:pushFailed,errors:errors.slice(0,10)};
 }
