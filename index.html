@@ -819,8 +819,8 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Img{display:block;max-width:100%;max-height:260px;border-radius:8px;cursor:zoom-in;background:#0002;object-fit:cover}
 .v583File{display:flex;gap:8px;align-items:center;color:inherit;text-decoration:none;background:#0000001a;border-radius:8px;padding:8px 10px}
 .v583FileIc{font-size:22px}.v583FileTx{display:flex;flex-direction:column;min-width:0}.v583FileTx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;font-size:13px}.v583FileTx small{opacity:.75}
-.v583Light{position:fixed;inset:0;z-index:10000;background:#000e;display:flex;align-items:center;justify-content:center}
-.v583Light img{max-width:96vw;max-height:90vh;object-fit:contain}
+.v583Light{position:fixed;inset:0;z-index:10000;background:#000e;display:flex;align-items:center;justify-content:center;touch-action:none;overflow:hidden;-webkit-user-select:none;user-select:none}
+.v583Light img{max-width:96vw;max-height:90vh;object-fit:contain;transform-origin:center center;will-change:transform;-webkit-touch-callout:none}
 .v583Light button{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;border:0;background:#fff3;color:#fff;font-size:20px;border-radius:99px;width:38px;height:38px}
 
 .v583Full{position:fixed;left:0;right:0;z-index:55;display:flex;flex-direction:column;background:var(--bg);padding:6px 12px 0;box-sizing:border-box}
@@ -3534,7 +3534,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="894";
+const APP_VERSION="895";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -7396,6 +7396,7 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
     return mapping;
   }
   function seaOpenPhotoLightboxV262(src){
+    if(window.v583Lightbox){window.v583Lightbox(src);return}
     let overlay=document.getElementById('seaPhotoLightboxV262');
     if(!overlay){
       overlay=document.createElement('div');overlay.id='seaPhotoLightboxV262';
@@ -9509,9 +9510,31 @@ async function v583Hydrate(root){
   els.forEach(e=>{const u=V583_SIGNED.get(e.dataset.path)?.u;if(!u)return;if(e.tagName==='IMG'||e.tagName==='AUDIO'){if(e.src!==u)e.src=u}else if(!e.getAttribute('href')){e.href=u;e.target='_blank';e.rel='noopener'}});
 }
 function v583Lightbox(src){
-  const l=document.createElement('div');l.className='v583Light';l.innerHTML=`<img src="${esc(src)}"><button type="button" aria-label="Cerrar">✕</button>`;
-  l.onclick=()=>l.remove();document.body.appendChild(l);
+  /* V895 · visor de fotos con zoom: pellizcar para ampliar, arrastrar para mover, doble toque para acercar/volver */
+  const l=document.createElement('div');l.className='v583Light';l.innerHTML=`<img src="${esc(src)}" draggable="false"><button type="button" aria-label="Cerrar">✕</button>`;
+  const im=l.querySelector('img'),bt=l.querySelector('button');
+  let sc=1,tx=0,ty=0,pts=new Map(),d0=0,sc0=1,mx=0,my=0,moved=0,lastTap=0,tapT=0;
+  const apply=()=>{im.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`};
+  const clamp=()=>{if(sc<=1){tx=0;ty=0;return}const w=im.offsetWidth*sc,h=im.offsetHeight*sc,mxX=Math.max(0,(w-innerWidth)/2),mxY=Math.max(0,(h-innerHeight)/2);tx=Math.max(-mxX,Math.min(mxX,tx));ty=Math.max(-mxY,Math.min(mxY,ty))};
+  const dist=()=>{const a=[...pts.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+  const close=()=>l.remove();
+  bt.onclick=e=>{e.stopPropagation();close()};
+  l.addEventListener('pointerdown',e=>{if(e.target===bt)return;try{l.setPointerCapture(e.pointerId)}catch(_){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;im.style.transition='none';if(pts.size===2){d0=dist();sc0=sc}mx=e.clientX;my=e.clientY});
+  l.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size>=2){moved=1;sc=Math.max(1,Math.min(5,sc0*dist()/(d0||1)));clamp();apply()}
+    else if(sc>1){tx+=e.clientX-o.x;ty+=e.clientY-o.y;if(Math.abs(e.clientX-mx)+Math.abs(e.clientY-my)>6)moved=1;clamp();apply()}
+    else if(Math.abs(e.clientX-mx)+Math.abs(e.clientY-my)>8)moved=1});
+  const up=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);im.style.transition='transform .18s';
+    if(pts.size===1){const r=[...pts.values()][0];mx=r.x;my=r.y}
+    if(pts.size===0){
+      if(sc<1.05){sc=1;tx=0;ty=0;apply()}
+      if(!moved){const now=Date.now();
+        if(now-lastTap<300){clearTimeout(tapT);lastTap=0;if(sc>1){sc=1;tx=0;ty=0}else{sc=2.5;const r=im.getBoundingClientRect();tx=(innerWidth/2-e.clientX)*1.5;ty=(innerHeight/2-e.clientY)*1.5;clamp()}apply()}
+        else{lastTap=now;clearTimeout(tapT);tapT=setTimeout(()=>{if(sc<=1)close()},300)}}}};
+  l.addEventListener('pointerup',up);l.addEventListener('pointercancel',up);
+  document.body.appendChild(l);
 }
+window.v583Lightbox=v583Lightbox;
 async function v583Compress(file){
   if(!/^image\//i.test(file.type))return file;
   if(file.size<250*1024&&/jpeg|png/.test(file.type))return file;
