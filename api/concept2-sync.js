@@ -233,38 +233,29 @@ async function enrichIntervalDetails(results,token){
   detailed.forEach(x=>byId.set(String(x.id),x));
   return results.map(x=>byId.get(String(x.id))||x);
 }
-module.exports=async function handler(req,res){
-  try{
-    const me=await authUser(req);
-    if(req.method!=="GET"&&req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
-    if(req.method==="POST"&&req.body?.action){
-      if(await handleReviewAction(me,req.body,res))return;
-      return res.status(400).json({error:"Acción no válida."});
-    }
-    const c=await connection(me.id);
-    if(req.method==="GET")return res.json({connected:!!c,username:c?.concept2_username||null,last_sync_at:c?.last_sync_at||null});
-    if(!c)return res.status(409).json({error:"Primero conecta tu cuenta Concept2."});
-
+function httpErr(status,msg){const e=new Error(msg);e.status=status;return e}
+// V893 · la sincronización de UN remero, separada del handler para poder usarla también desde el entrenador.
+async function syncForUser(c,userId,limit,teamCode){
     const token=await validToken(c);
     // 50 resultados siguen siendo manejables: el cambio clave es procesarlos en lote,
     // no hacer 2 peticiones a Supabase por cada entrenamiento.
-    const limit=Math.min(Math.max(Number(req.body?.limit)||50,1),50);
+    limit=Math.min(Math.max(Number(limit)||50,1),50);
     const rr=await fetchTimed(`https://log.concept2.com/api/users/me/results?type=rower&number=${limit}`,{
       headers:{Authorization:`Bearer ${token}`,Accept:"application/vnd.c2logbook.v1+json"}
     },15000);
     const rj=await rr.json().catch(()=>({}));
-    if(!rr.ok)return res.status(rr.status).json({error:rj.message||"No se pudieron leer resultados de Concept2."});
+    if(!rr.ok)throw httpErr(rr.status,rj.message||"No se pudieron leer resultados de Concept2.");
     let results=Array.isArray(rj)?rj:(rj.data||[]);
     if(!results.length){
       const now=new Date().toISOString();
-      await rest(`concept2_connections?user_id=eq.${encodeURIComponent(me.id)}`,{method:"PATCH",body:JSON.stringify({last_sync_at:now,updated_at:now})});
-      return res.json({ok:true,imported:0,updated:0,total:0});
+      await rest(`concept2_connections?user_id=eq.${encodeURIComponent(userId)}`,{method:"PATCH",body:JSON.stringify({last_sync_at:now,updated_at:now})});
+      return {ok:true,imported:0,updated:0,total:0};
     }
 
     results=await enrichIntervalDetails(results,token);
-    const ir=await rest(`ergo_intents?user_id=eq.${encodeURIComponent(me.id)}&select=*&order=scheduled_date.desc`);
+    const ir=await rest(`ergo_intents?user_id=eq.${encodeURIComponent(userId)}&select=*&order=scheduled_date.desc`);
     const savedIntents=(ir.ok?await ir.json():[]).map(i=>({...i,signature:planSignature(i.session_name||i.session_code||'',i.content||'')}));
-    const planningIntents=await plannedErgoIntents(me.id,results).catch(()=>[]);
+    const planningIntents=await plannedErgoIntents(userId,results).catch(()=>[]);
     const seenPlans=new Set();
     const intents=[...savedIntents,...planningIntents].filter(i=>{
       const key=i.training_session_id?`plan:${i.training_session_id}`:`intent:${i.id||''}:${i.scheduled_date||''}:${i.session_code||''}`;
@@ -275,7 +266,7 @@ module.exports=async function handler(req,res){
     const idList=results.map(x=>String(x.id)).filter(Boolean);
     let existing=new Set(),existingRows=new Map();
     if(idList.length){
-      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(me.id)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_intent_id,matched_session_code,match_status,match_confidence,is_additional`);
+      const er=await rest(`concept2_results?user_id=eq.${encodeURIComponent(userId)}&concept2_result_id=in.(${idList.map(x=>encodeURIComponent(x)).join(",")})&select=concept2_result_id,training_session_id,matched_intent_id,matched_session_code,match_status,match_confidence,is_additional`);
       if(er.ok){
         const old=await er.json();
         existing=new Set(old.map(x=>String(x.concept2_result_id)));
@@ -301,7 +292,7 @@ module.exports=async function handler(req,res){
       // puede volver a poner true por sí solo.
       const isAdditional=old?.is_additional?true:!!match.isAdditional;
       return {
-        user_id:me.id,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
+        user_id:userId,concept2_result_id:String(x.id),workout_date:x.date||x.date_utc,
         distance_m:x.distance==null?null:Number(x.distance),
         time_tenths:x.time==null?null:Number(x.time),time_formatted:x.time_formatted||null,
         pace_500_seconds:pace500(x.time,x.distance),spm:x.stroke_rate==null?null:Number(x.stroke_rate),
@@ -321,18 +312,76 @@ module.exports=async function handler(req,res){
     });
     if(!up.ok){const txt=await up.text().catch(()=>"");throw new Error(txt||"No se pudieron guardar los resultados Concept2.");}
 
-    await rest(`concept2_connections?user_id=eq.${encodeURIComponent(me.id)}`,{
+    await rest(`concept2_connections?user_id=eq.${encodeURIComponent(userId)}`,{
       method:"PATCH",body:JSON.stringify({last_sync_at:now,updated_at:now})
     });
     const imported=rows.filter(x=>!existing.has(String(x.concept2_result_id))).length;
     const updated=rows.length-imported;
     // V731 · avisar a los entrenadores de los resultados NUEVOS (de los últimos 3 días, para no avisar de todo el histórico en la primera sincronización)
-    const teamCode=String(req.body?.team_code||'').slice(0,60);
+    teamCode=String(teamCode||'').slice(0,60);
     const recent=new Date(Date.now()-3*864e5).toISOString().slice(0,10);
     const notification_events=teamCode?rows.filter(x=>!existing.has(String(x.concept2_result_id))&&String(x.workout_date||'').slice(0,10)>=recent).map(x=>({source_id:String(x.concept2_result_id),team_code:teamCode})):[];
-    return res.json({ok:true,imported,updated,total:rows.length,notification_events});
+    return {ok:true,imported,updated,total:rows.length,notification_events};
+}
+
+// V893 · el entrenador sincroniza a los remeros (uno a uno, cada uno en su propia llamada)
+async function coachScope(userId){
+  const gr=await rest(`user_roles?user_id=eq.${encodeURIComponent(userId)}&role=eq.coach&select=user_id&limit=1`);
+  if(gr.ok&&(await gr.json()).length)return {global:true,teams:[]};
+  const tr=await rest(`team_staff_roles?user_id=eq.${encodeURIComponent(userId)}&staff_role=eq.coach&select=team_code`);
+  const teams=tr.ok?[...new Set((await tr.json()).map(x=>x.team_code).filter(Boolean))]:[];
+  return {global:false,teams};
+}
+async function athletesInScope(scope){
+  let ids=null;
+  if(!scope.global){
+    if(!scope.teams.length)return [];
+    const mr=await rest(`rower_team_memberships?team_code=in.(${scope.teams.map(encodeURIComponent).join(",")})&is_rower=eq.true&select=user_id`);
+    ids=mr.ok?[...new Set((await mr.json()).map(x=>x.user_id))]:[];
+    if(!ids.length)return [];
+  }
+  const filter=ids?`&user_id=in.(${ids.map(encodeURIComponent).join(",")})`:"";
+  const cr=await rest(`concept2_connections?select=user_id,concept2_username,last_sync_at${filter}&order=last_sync_at.asc.nullsfirst`);
+  if(!cr.ok)throw new Error("No se pudieron leer las conexiones Concept2.");
+  const conns=await cr.json();
+  const nr=conns.length?await rest(`profiles?user_id=in.(${conns.map(x=>encodeURIComponent(x.user_id)).join(",")})&select=user_id,full_name`):null;
+  const names=new Map(((nr&&nr.ok?await nr.json():[])).map(x=>[x.user_id,x.full_name]));
+  return conns.map(x=>({user_id:x.user_id,name:names.get(x.user_id)||x.concept2_username||"Remero",last_sync_at:x.last_sync_at}));
+}
+async function handleCoachSync(me,body,res){
+  const action=String(body?.action||"");
+  if(!["list_connected","sync_user"].includes(action))return false;
+  const scope=await coachScope(me.id);
+  if(!scope.global&&!scope.teams.length){res.status(403).json({error:"Solo disponible para entrenadores."});return true}
+  const athletes=await athletesInScope(scope);
+  if(action==="list_connected"){res.json({ok:true,athletes});return true}
+  const target=String(body.athlete_user_id||"");
+  if(!athletes.some(x=>x.user_id===target)){res.status(403).json({error:"Ese remero no está en tus equipos o no tiene Concept2 conectado."});return true}
+  const c=await connection(target);
+  if(!c){res.status(409).json({error:"Ese remero no tiene Concept2 conectado."});return true}
+  // sin team_code: el aviso a entrenadores de resultados nuevos solo lo envía el propio remero (ver app); aquí no se manda ninguno
+  const r=await syncForUser(c,target,body.limit,"");
+  res.json({ok:true,imported:r.imported||0,updated:r.updated||0,total:r.total||0});
+  return true;
+}
+module.exports=async function handler(req,res){
+  try{
+    const me=await authUser(req);
+    if(req.method!=="GET"&&req.method!=="POST")return res.status(405).json({error:"Método no permitido"});
+    if(req.method==="POST"&&req.body?.action){
+      if(await handleCoachSync(me,req.body,res))return;
+      if(await handleReviewAction(me,req.body,res))return;
+      return res.status(400).json({error:"Acción no válida."});
+    }
+    const c=await connection(me.id);
+    if(req.method==="GET")return res.json({connected:!!c,username:c?.concept2_username||null,last_sync_at:c?.last_sync_at||null});
+    if(!c)return res.status(409).json({error:"Primero conecta tu cuenta Concept2."});
+
+    const result=await syncForUser(c,me.id,req.body?.limit,req.body?.team_code);
+    return res.json(result);
   }catch(e){
     if(e.message==="AUTH")return res.status(401).json({error:"Sesión de Row Training no válida."});
+    if(e?.status)return res.status(e.status).json({error:e.message});
     if(e?.name==="AbortError")return res.status(504).json({error:"La sincronización está tardando demasiado. Inténtalo de nuevo."});
     console.error(e);return res.status(500).json({error:e.message||"Error interno"});
   }
