@@ -618,6 +618,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .v544Train{margin:10px 0}.v544Train>summary{font-weight:600}.v546Sum{flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v546Sum .muted{font-weight:400}
 .v536Box{background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:10px 0}.v536Head{font-weight:700;margin-bottom:6px}.v536Item{margin:6px 0}.v536ItemHead{display:flex;justify-content:space-between;align-items:center;gap:8px}.v536Unlink{padding:4px 9px;font-size:.8rem}.v536Opt{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}.v536AssignBox{margin-top:6px}.v536EditorLink{display:block;margin:10px 0}
 .v531Bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-tint);border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin:0 0 10px}.v531Bar.cancelled{background:#fee2e2;border-color:#fecaca}.v531Btns{display:flex;gap:8px;flex-wrap:wrap}.v531FormCard{margin:0 0 12px}
+.v898Filter{display:flex;align-items:center;gap:10px;margin:0 2px 8px}.v898Filter label{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-muted);flex:1;min-width:0}.v898Filter select{flex:1;min-width:0;height:38px;font-size:.9rem;margin:0}.v898Filter small{white-space:nowrap}.v678Tx small.v898By{font-size:12px;color:var(--text-muted);opacity:.9}
 .v896Tools{display:flex;align-items:center;gap:8px;margin:10px 0 8px}.v896Tools>button{margin:0;height:40px;padding:0 16px;border-radius:20px;font-size:.9rem;font-weight:700;white-space:nowrap}.v896Tools .v896Menu{margin-left:auto}
 .v896Menu{position:relative}.v896More{margin:0;width:40px;height:40px;padding:0 0 6px;border-radius:50%;font-size:1.3rem;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center}.v896More.v896Sm{width:32px;height:32px;font-size:1.1rem;padding-bottom:5px}
 .v896Pop{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 28px #0f172a33;overflow:hidden}.v896Menu.open .v896Pop{display:block}
@@ -3542,7 +3543,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="897";
+const APP_VERSION="899";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -3815,6 +3816,8 @@ function staffRoleForTeam(team){
 function canEditTeamJS(team){return staffRoleForTeam(team)==="coach"}
 function canRecordTeamJS(team){return ["coach","assistant"].includes(staffRoleForTeam(team))}
 function hasStaffMode(){return isGlobalCoach||staffRoles.length>0}
+// V898 · quien solo es ayudante (sin ser entrenador en ningún equipo) ve «ayudante» en vez de «entrenador»
+function staffModeWord(){return (isGlobalCoach||(staffRoles||[]).some(x=>x.staff_role==='coach'))?'entrenador':'ayudante'}
 function hasRowerMode(){return rowerTeamCodes.length>0||!!currentTeamCode}
 function hasAnyCoachTeam(){return isGlobalCoach||editableTeamCodes().length>0}
 function staffRoleText(){
@@ -4288,7 +4291,7 @@ function v300NavItems(){
   else{
     a=[["hoy",v311T('nav_hoy')],["semana",v311T('nav_semana')],["mes",v311T('nav_mes')],["biblioteca",v311T('nav_biblioteca')],["hist",v311T('nav_hist')],["mensajes",`${v311T('nav_mensajes')}${v300UnreadMsgCount?` (${v300UnreadMsgCount})`:''}`],["perfil",v311T('nav_perfil')],["ayuda",v311T('nav_ayuda')],["salir",v311T('nav_salir')]];
   }
-  if(hasStaffMode()&&hasRowerMode())a=[["__switchmode__",currentMode==="staff"?"Cambiar a modo remero":"Cambiar a modo entrenador"],...a];
+  if(hasStaffMode()&&hasRowerMode())a=[["__switchmode__",currentMode==="staff"?"Cambiar a modo remero":"Cambiar a modo "+staffModeWord()],...a];
   const salirIdxV324=a.findIndex(x=>x[0]==="salir");
   const settingsItemV324=["__settings__","Ajustes"];
   if(salirIdxV324>=0)a.splice(salirIdxV324,0,settingsItemV324);else a.push(settingsItemV324);
@@ -4606,8 +4609,9 @@ function v390MasBarHtml(activeTab){
   // existe en modo remero para volver). Se añade aquí un botón explícito y simétrico.
   const items=[
     ['perfil','Perfil','perfil'],
-    ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo'],['recursos','Recursos','recursos']]:[]),
-    ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Remero':'Entrenador','compass']]:[]),
+    ...(hasAnyCoachTeam()?[['equipo','Equipo','equipo']]:[]),
+    ...(hasStaffMode()?[['recursos','Recursos','recursos']]:[]),
+    ...(hasStaffMode()&&hasRowerMode()?[['__switchmode__',currentMode==='staff'?'Remero':(staffModeWord()==='ayudante'?'Ayudante':'Entrenador'),'compass']]:[]),
     ['__settings__','Ajustes','ajustes']
     // V577 · Ayuda, Sistema y Salir pasan a la ventana de Ajustes (barra de arriba más limpia)
   ];
@@ -4668,7 +4672,7 @@ function render(){
     if(tab==="hoy")return staffTodayView();if(tab==="semana"){if(!coachWeekStart||coachWeekStart==="2026-08-31")coachWeekStart=mondayOfISO(localISODate());return coachWeekView()}if(tab==="registro")return staffRegisterView();
     // V379 · "Mes" se activa para el entrenador (antes solo el remero la tenía), dentro del grupo Trabajo.
     if(tab==="mes"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachMonthView();}
-    if(tab==="recursos"&&hasAnyCoachTeam())return staffResourcesView();if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
+    if(tab==="recursos"&&hasStaffMode())return staffResourcesView();if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
@@ -4834,40 +4838,51 @@ async function staffResourcesView(){
   const q=await sb.from('staff_resources').select('*').order('category').order('title');
   if(tab!=='recursos')return;
   if(q.error){content.innerHTML=`<div class="card"><h2>Recursos</h2><p>${/does not exist|relation/i.test(q.error.message||'')?'Falta ejecutar 67_recursos_entrenadores.sql en Supabase.':esc(q.error.message)}</p></div>`;return}
-  const rows=q.data||[],admin=!!isGlobalCoach;
-  const rq=await sb.from('sea_recordings').select('id,title,rec_date,series,created_at').order('created_at',{ascending:false}).limit(30);
+    const rq=await sb.from('sea_recordings').select('id,title,rec_date,series,created_at,user_id,user_name').order('created_at',{ascending:false}).limit(80);
   if(tab!=='recursos')return;
-  const recs=rq.error?[]:(rq.data||[]),recMissing=!!rq.error&&/does not exist|relation|schema cache/i.test(rq.error.message||'');
+  const allRows=q.data||[],admin=!!isGlobalCoach,meId=currentUser&&currentUser.id,canAdd=hasStaffMode();
+  // V898 · biblioteca compartida: cada recurso lleva autor y fecha; cada uno edita/borra lo suyo (el administrador, todo)
+  const mineOf=r=>admin||(!!meId&&r.created_by===meId);
+  const shortNm=n=>String(n||'').trim().split(/\s+/).slice(0,2).join(' ')||'Sin autor';
+  const authors=new Map();allRows.forEach(r=>{if(r.created_by)authors.set(r.created_by,r.created_by_name||'Sin nombre')});const recsA=rq.error?[]:(rq.data||[]);recsA.forEach(r=>{if(r.user_id&&!authors.has(r.user_id))authors.set(r.user_id,r.user_name||'Sin nombre')});
+  let fa=window._v898Auth;if(fa==null){try{fa=localStorage.getItem('rowtraining_res_auth_v898')}catch(_){}}fa=fa||'all';
+  if(fa!=='all'&&fa!=='mine'&&!authors.has(fa))fa='all';
+  const rows=allRows.filter(r=>fa==='all'||(fa==='mine'?r.created_by===meId:r.created_by===fa));
+  const authOpts=[...authors.entries()].filter(([id])=>id!==meId).sort((a,b)=>String(a[1]).localeCompare(String(b[1]),'es'));
+  const fbar=`<div class="v898Filter"><label>Subidos por<select id="v898Auth"><option value="all"${fa==='all'?' selected':''}>Todos</option><option value="mine"${fa==='mine'?' selected':''}>Solo los míos</option>${authOpts.map(([id,nm])=>`<option value="${esc(id)}"${fa===id?' selected':''}>${esc(shortNm(nm))}</option>`).join('')}</select></label>${fa!=='all'?`<small class="muted">${rows.length} de ${allRows.length}</small>`:''}</div>`;
+  const dtTx=r=>{try{return new Date(r.created_at).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}catch(_){return ''}};
+  const recsAll=recsA,recs=recsAll.filter(r=>fa==='all'||(fa==='mine'?r.user_id===meId:r.user_id===fa)),recMissing=!!rq.error&&/does not exist|relation|schema cache/i.test(rq.error.message||'');
   const rsum=x=>`${mmssV690(x.duration_seconds)} · ${x.distance_m} m${x.pace_500_seconds?' · '+mmssV690(x.pace_500_seconds)+'/500':''}${x.average_spm!=null?' · '+x.average_spm+' ppm':''}`;
-  const v690Card=`<div class="card" id="v690Card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span></span><button type="button" class="primary" id="v690New">Nueva grabación</button></div><p class="muted" style="margin:6px 0 8px">Graba series con GPS y palas por minuto. Después decides si las asignas a un entrenamiento.</p>${recMissing?'<div class="warn">Falta ejecutar 70_grabaciones_gps.sql en Supabase para guardar las grabaciones.</div>':(recs.length?recs.map(r=>`<details class="libraryAccordion" style="margin-bottom:6px"><summary>${esc(r.title)} · ${(r.series||[]).length} serie${(r.series||[]).length===1?'':'s'}</summary><div class="accordionBody">${(r.series||[]).map((x,i)=>`<div class="last"><b>${esc(x.label||'Serie '+(i+1))}</b><br><span class="muted">${esc(rsum(x))}</span></div>`).join('')}<div class="actions" style="margin-top:8px"><button type="button" class="primary v690Assign" data-id="${r.id}">Asignar a un entrenamiento</button><button type="button" class="dangerBtn v690Del" data-id="${r.id}">Borrar</button></div></div></details>`).join(''):'<p class="muted" style="margin:0">Todavía no hay grabaciones guardadas.</p>')}</div>`;
-  const cats=[...new Set(rows.map(r=>r.category||'General'))];
+  const v690Card=`<div class="card" id="v690Card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span></span><button type="button" class="primary" id="v690New">Nueva grabación</button></div><p class="muted" style="margin:6px 0 8px">Graba series con GPS y palas por minuto. Después decides si las asignas a un entrenamiento.</p>${recMissing?'<div class="warn">Falta ejecutar 70_grabaciones_gps.sql en Supabase para guardar las grabaciones.</div>':(recs.length?recs.map(r=>`<details class="libraryAccordion" style="margin-bottom:6px"><summary>${esc(r.title)} · ${(r.series||[]).length} serie${(r.series||[]).length===1?'':'s'}</summary><div class="accordionBody"><div class="v898By" style="margin-bottom:6px">Grabada por ${esc(shortNm(r.user_name))}${r.created_at?' · '+esc(dtTx(r)):''}</div>${(r.series||[]).map((x,i)=>`<div class="last"><b>${esc(x.label||'Serie '+(i+1))}</b><br><span class="muted">${esc(rsum(x))}</span></div>`).join('')}<div class="actions" style="margin-top:8px"><button type="button" class="primary v690Assign" data-id="${r.id}">Asignar a un entrenamiento</button>${admin||r.user_id===meId?`<button type="button" class="dangerBtn v690Del" data-id="${r.id}">Borrar</button>`:''}</div></div></details>`).join(''):'<p class="muted" style="margin:0">Todavía no hay grabaciones guardadas.</p>')}</div>`;
+  const cats=[...new Set(allRows.map(r=>r.category||'General'))];
   const sizeTx=n=>!n?'':n>1048576?` · ${(n/1048576).toFixed(1)} MB`:` · ${Math.max(1,Math.round(n/1024))} KB`;
-  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}${/pdf/i.test(r.file_type||r.file_name||'')?v887Tag(r):''}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}</span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${admin&&r.kind==='file'&&r.content_status!=='ok'&&/pdf/i.test(r.file_type||r.file_name||'')?`<button type="button" class="v887Re" data-id="${r.id}">Releer</button>`:''}${admin?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
+  const item=r=>`<div class="v678Item" data-id="${r.id}"><button type="button" class="v678Open" data-id="${r.id}"><span class="v678Ic">${r.kind==='file'?'📄':'🔗'}</span><span class="v678Tx"><b>${esc(r.title)}</b>${r.description?`<small>${esc(r.description)}</small>`:''}${r.kind==='file'?`<small class="muted">${esc(r.file_name||'archivo')}${sizeTx(r.file_size)}${/pdf/i.test(r.file_type||r.file_name||'')?v887Tag(r):''}</small>`:`<small class="muted">${esc((r.url||'').replace(/^https?:\/\//,'').slice(0,48))}</small>`}<small class="v898By">Subido por ${esc(shortNm(r.created_by_name))}${r.created_at?' · '+esc(dtTx(r)):''}</small></span><span class="v672Ch">›</span></button><div class="v678Adm"><button type="button" class="v678Share" data-id="${r.id}">↪️ Compartir</button>${mineOf(r)&&r.kind==='file'&&r.content_status!=='ok'&&/pdf/i.test(r.file_type||r.file_name||'')?`<button type="button" class="v887Re" data-id="${r.id}">Releer</button>`:''}${mineOf(r)?`<button type="button" class="v678Edit" data-id="${r.id}">Editar</button><button type="button" class="v678Del" data-id="${r.id}">🗑</button>`:''}</div></div>`;
   const F=window._v882F,allC=[...new Set([...V678_CATS,...cats])];
   const yr=r=>{const m=(r.title+' '+(r.file_name||'')).match(/20\d\d/);return m?m[0]:''};
   const folderBtn=(key,ic,name,n)=>`<button type="button" class="v882Fold" data-f="${esc(key)}"><span class="v882Fi">${ic}</span><span class="v882Ft"><span class="v882Fn">${esc(name)}</span><small>${n}</small></span></button>`;
-  const topBar=(title,addCat)=>`<div class="card v882Head"><div class="v882Row">${F?'<button type="button" id="v882Back" class="v882BackB">← Recursos</button>':''}<h2>${F?esc(title):'📁 Recursos'}</h2>${admin&&addCat!==false?`<button type="button" class="primary v882Plus" id="v678Add" aria-label="Añadir recurso">${F?'+ Añadir':'+'}</button>`:''}</div></div>`;
+  const topBar=(title,addCat)=>`<div class="card v882Head"><div class="v882Row">${F?'<button type="button" id="v882Back" class="v882BackB">← Recursos</button>':''}<h2>${F?esc(title):'📁 Recursos'}</h2>${canAdd&&addCat!==false?`<button type="button" class="primary v882Plus" id="v678Add" aria-label="Añadir recurso">${F?'+ Añadir':'+'}</button>`:''}</div></div>`;
   if(!F){
     const row=(key,ic,name,cnt)=>`<button type="button" class="v882Fold v885Li" data-f="${esc(key)}"><span class="v885I">${ic}</span><span class="v885N">${esc(name)}</span>${cnt===''?'':`<span class="v885C">${cnt}</span>`}<span class="v885Ch">›</span></button>`;
     const lbl=c=>c==='Regatas ART · Liga de Jábegas'?'Regatas ART · Jábegas':c;
-    content.innerHTML=topBar('',true)+'<div class="v885Sec">Herramientas</div><div class="card v885Grp">'+row('__prev','🌊','Previsión','')+row('__gps','📍','Grabadora GPS',recMissing?'':recs.length)+'</div><div class="v885Sec">Archivos</div><div class="card v885Grp">'+allC.map(c=>row(c,V882_ICONS[c]||'📁',lbl(c),rows.filter(r=>(r.category||'General')===c).length)).join('')+'</div>';
+    content.innerHTML=topBar('',true)+'<div class="v885Sec">Herramientas</div><div class="card v885Grp">'+row('__prev','🌊','Previsión','')+row('__gps','📍','Grabadora GPS',recMissing?'':recs.length)+'</div><div class="v885Sec">Archivos</div>'+fbar+'<div class="card v885Grp">'+allC.map(c=>row(c,V882_ICONS[c]||'📁',lbl(c),rows.filter(r=>(r.category||'General')===c).length)).join('')+'</div>';
   }else if(F==='__prev'){
     content.innerHTML=topBar('🌊 Previsión para entrenar',false)+'<div class="card" id="v864Card"><p class="muted">Mira cómo estará el mar a una hora, o qué día de la semana sale mejor.</p><div id="v864Box"></div></div>';
   }else if(F==='__gps'){
-    content.innerHTML=topBar('📍 Grabadora GPS',false)+v690Card;
+    content.innerHTML=topBar('📍 Grabadora GPS',false)+fbar+v690Card;
   }else{
     const list=rows.filter(r=>(r.category||'General')===F);
     let body;
-    if(!list.length)body='<div class="card"><p class="muted" style="margin:0">Carpeta vacía.'+(admin?' Pulsa "+ Añadir" para subir el primero.':'')+'</p></div>';
+    if(!list.length)body='<div class="card"><p class="muted" style="margin:0">Carpeta vacía.'+(canAdd?(fa==='all'?' Pulsa "+ Añadir" para subir el primero.':' Prueba con otro filtro de autor.'):'')+'</p></div>';
     else if(list.some(yr)){const ys=[...new Set(list.map(r=>yr(r)||'Otros'))].sort().reverse();body=ys.map(y=>`<div class="card v678Cat"><h3>${y==='Otros'?'Otros':'Temporada '+y}</h3>${list.filter(r=>(yr(r)||'Otros')===y).map(item).join('')}</div>`).join('')}
     else body=`<div class="card v678Cat">${list.map(item).join('')}</div>`;
-    content.innerHTML=topBar((V882_ICONS[F]||'📁')+' '+F,true)+body;
+    content.innerHTML=topBar((V882_ICONS[F]||'📁')+' '+F,true)+fbar+body;
   }
   content.querySelectorAll('.v882Fold').forEach(b=>b.onclick=()=>{window._v882F=b.dataset.f;staffResourcesView()});
+  const v898A=document.getElementById('v898Auth');if(v898A)v898A.onchange=()=>{window._v898Auth=v898A.value;try{localStorage.setItem('rowtraining_res_auth_v898',v898A.value)}catch(_){}staffResourcesView()};
   const bk=document.getElementById('v882Back');if(bk)bk.onclick=()=>{window._v882F=null;staffResourcesView()};
   // V883 · arrastrar y soltar PDF (varios) sobre una carpeta real
   content.ondragenter=content.ondragover=content.ondragleave=content.ondrop=null;
-  if(admin&&F&&F[0]!=='_'){
+  if(canAdd&&F&&F[0]!=='_'){
     let dep=0;const drop=document.createElement('div');drop.className='v882Drop';drop.innerHTML='<div>⬇️ Suelta aquí los archivos<br><small>en '+esc(F)+'</small></div>';
     const hasF=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files');
     const hide=()=>{dep=0;drop.remove()};
@@ -11624,7 +11639,7 @@ async function profileView(){
   const birthAge=pdata?.birth_date?Math.floor((Date.now()-new Date(pdata.birth_date+"T12:00:00").getTime())/(365.2425*24*3600*1000)):"";
   const effectiveAge=savedAge||birthAge||"";
 
-  content.innerHTML=`<div class="card v330ProfileQuickActions v577Bar" style="--v577n:${hasStaffMode()?2:1}"><button type="button" id="v330OpenSettings">${v332Icon('ajustes')}${v311T('nav_ajustes')}</button>${hasStaffMode()?`<button type="button" id="v330SwitchMode">${v332Icon('compass')}Cambiar a modo entrenador</button>`:''}</div><div class="card"><h2>${v311T('perfil_titulo')}</h2>
+  content.innerHTML=`<div class="card v330ProfileQuickActions v577Bar" style="--v577n:${hasStaffMode()?2:1}"><button type="button" id="v330OpenSettings">${v332Icon('ajustes')}${v311T('nav_ajustes')}</button>${hasStaffMode()?`<button type="button" id="v330SwitchMode">${v332Icon('compass')}Cambiar a modo ${staffModeWord()}</button>`:''}</div><div class="card"><h2>${v311T('perfil_titulo')}</h2>
   <label>${v311T('idioma')}<select id="pf_locale"><option value="es" ${currentLocale==='es'?'selected':''}>Español</option><option value="en" ${currentLocale==='en'?'selected':''}>English</option><option value="nl" ${currentLocale==='nl'?'selected':''}>Nederlands</option></select></label>
   ${v505AvatarUploadBoxHtml(pdata||{},'pfAvatarInput','pfAvatarPreview')}
   <label>${v311T('nombre_label')}<input id="pf_name" value="${pdata?.full_name||""}"></label>
