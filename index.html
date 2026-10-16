@@ -3543,7 +3543,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="899";
+const APP_VERSION="900";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -15299,7 +15299,10 @@ async function loadAthleteSessionsV139(team,start,end){
   unique.forEach((x,k)=>{if(x.cancelled_at)unique.set(k,{...x,title:`🚫 CANCELADO · ${x.title||x.session_type||''}`,content:`CANCELADO · ${x.cancel_reason||'Este entrenamiento se ha cancelado.'}`})});
   return {data:filterSessionsForUserV249([...unique.values()],currentUser?.id).sort((a,b)=>String(a.session_date).localeCompare(String(b.session_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))),error:regular.error||sea.error};
 }
-async function plannedErgoLinkV113(s){const rows=await loadErgoLibrary(),hay=v79Norm(`${s.title||''} ${s.content||''}`),direct=String(s.content||'').match(/https:\/\/workout\.ergdata\.com\/shared\/[a-z0-9]+/i)?.[0],signature=v=>String(v||'').match(/(\d+)\s*[×x]\s*(\d+)\s*(?:min|')/i)?.slice(1,3).join('x'),sig=signature(hay);let hit=direct?{url:direct}:rows.find(x=>x.url&&sig&&signature(v79Norm(x.name))===sig);if(!hit)hit=rows.find(x=>x.url&&hay.includes(v79Norm(x.name).replace(/opcional senior/g,'').trim()));const code=`PLAN-${s.id}`;await sb.from('ergo_intents').upsert({user_id:currentUser.id,scheduled_date:s.session_date,session_code:code,session_name:s.title||'ERGO',content:s.content||null,training_session_id:s.id,ergdata_url:hit?.url||null},{onConflict:'user_id,scheduled_date,session_code'});if(hit?.url)location.href=hit.url;else{tab='biblioteca';draw();await ergoLibrary();alert('No hay un enlace exacto asociado a esta sesión. Se abre la biblioteca ERGO para elegirlo.')}}
+async function plannedErgoLinkV113(s){const rows=await loadErgoLibrary(),hay=v79Norm(`${s.title||''} ${s.content||''}`),direct=String(s.content||'').match(/https:\/\/workout\.ergdata\.com\/shared\/[a-z0-9]+/i)?.[0],signature=v=>String(v||'').match(/(\d+)\s*[×x]\s*(\d+)\s*(?:min|')/i)?.slice(1,3).join('x'),sig=signature(hay);let hit=direct?{url:direct}:null;
+  /* V900 · primero la sesión cuyo nombre completo aparece en el título (la más específica); después, por «n×m» pero solo si coinciden zona (UT1/UT2) y ppm. Antes «UT1 · 2×12' @22» abría el enlace de «UT2 · 2×12' @20». */
+  if(!hit){const inc=rows.filter(x=>{const n=v79Norm(x.name).replace(/opcional senior/g,'').trim();return x.url&&n&&hay.includes(n)}).sort((a,b)=>String(b.name).length-String(a.name).length);hit=inc[0]||null}
+  if(!hit&&sig){const zone=(hay.match(/\b(ut1-at|ut1|ut2)\b/)||[])[1],rate=(hay.match(/@\s*(\d{2})/)||[])[1],c=rows.filter(x=>x.url&&signature(v79Norm(x.name))===sig);hit=c.find(x=>{const nn=v79Norm(x.name);return (!zone||nn.includes(zone))&&(!rate||nn.includes('@'+rate))})||null}const code=`PLAN-${s.id}`;await sb.from('ergo_intents').upsert({user_id:currentUser.id,scheduled_date:s.session_date,session_code:code,session_name:s.title||'ERGO',content:s.content||null,training_session_id:s.id,ergdata_url:hit?.url||null},{onConflict:'user_id,scheduled_date,session_code'});if(hit?.url)location.href=hit.url;else{tab='biblioteca';draw();await ergoLibrary();alert('No hay un enlace exacto asociado a esta sesión. Se abre la biblioteca ERGO para elegirlo.')}}
 function athleteGymLibraryMatchV116(name,rows){
   const aliases={
     'remo unilateral':'Remo con mancuerna a una mano',
