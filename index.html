@@ -3542,7 +3542,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="896";
+const APP_VERSION="897";
 const seasonBadgeV283=document.getElementById("seasonBadgeV283");if(seasonBadgeV283)seasonBadgeV283.textContent=CURRENT_SEASON_LABEL_V283;
 // V249 · sesiones GYM/ERGO dirigidas a remeros concretos (columna training_sessions.target_user_ids uuid[]; vacía/null = todo el equipo)
 function sessionTargetsV249(s){const t=s&&s.target_user_ids;return Array.isArray(t)?t.filter(Boolean):[]}
@@ -16832,10 +16832,24 @@ if(m){m.parentNode.classList.toggle('open');e.stopPropagation();return}
 },true);
 document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.v896Pop button'))document.querySelectorAll('.v896Menu.open').forEach(function(x){x.classList.remove('open')})});
 </script>
+<script>/* V897 · zona táctil desplazada (iOS): si la página se queda movida respecto a la pantalla (tras teclado, zoom o volver de otra app) los toques caen en otro botón. Se recoloca sola antes de cada toque. */
+(function(){try{var vv=window.visualViewport;
+function typing(){var a=document.activeElement;return !!(a&&(a.tagName==='TEXTAREA'||a.isContentEditable||(a.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|range|file|color)$/i.test(a.type||''))))}
+function fix(){try{if(!document.getElementById('v347Scroll')||typing())return;
+var off=(window.scrollY||0)>0||(window.scrollX||0)>0||(vv&&vv.scale<=1.02&&(Math.abs(vv.offsetTop)>1||Math.abs(vv.offsetLeft)>1));
+if(off){window.scrollTo(0,0);window.__v897Fixes=(window.__v897Fixes||0)+1}}catch(e){}}
+document.addEventListener('touchstart',fix,{capture:true,passive:true});
+document.addEventListener('pointerdown',fix,true);
+document.addEventListener('focusout',function(){setTimeout(fix,60);setTimeout(fix,400)},true);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){fix();setTimeout(fix,300)}});
+window.addEventListener('pageshow',function(){fix();setTimeout(fix,300)});window.addEventListener('orientationchange',function(){setTimeout(fix,300)});
+if(vv){vv.addEventListener('resize',function(){setTimeout(fix,120)});vv.addEventListener('scroll',function(){setTimeout(fix,120)})}
+}catch(e){}})();
+</script>
 <script>
 /* V886 · si la pantalla se queda ampliada (zoom accidental o de iOS al enfocar un campo), vuelve al 100 % sola */
 (function(){try{var vv=window.visualViewport;if(!vv)return;var mt=document.querySelector('meta[name=viewport]');var base='width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover',busy=0;
-function reset(){if(busy||!mt)return;busy=1;mt.setAttribute('content','width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover');setTimeout(function(){mt.setAttribute('content',base);try{window.scrollTo(0,window.scrollY)}catch(e){}busy=0},120)}
+function reset(){if(busy||!mt)return;busy=1;mt.setAttribute('content','width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover');setTimeout(function(){mt.setAttribute('content',base);try{window.scrollTo(0,document.getElementById('v347Scroll')?0:window.scrollY)}catch(e){}busy=0},120)}
 var tm=0;function chk(){clearTimeout(tm);tm=setTimeout(function(){if(vv.scale>1.02)reset()},350)}
 vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true);document.addEventListener('touchend',chk,{passive:true})}catch(e){}})();
 </script></body></html>
