@@ -3543,7 +3543,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="901";
+const APP_VERSION="902";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -8115,6 +8115,8 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
   };
   const renderAudit=()=>{
     if(!auditBox)return;
+    /* V902 · la revisión de asignaciones ERGO sale de la vista Semana (se revisa desde Análisis). El resto del código queda intacto por si se vuelve a activar. */
+    auditBox.innerHTML='';auditBox.style.display='none';return;
     const auditRows=c2Rows.filter(r=>!v161Concept2EffectiveHidden(r)).map(r=>{const a=v228AuditOne(r,auditPlans);return a?{r,a}:null}).filter(Boolean);
     // V230 · si un mismo remero tiene más de un ErgData asociado a la MISMA sesión,
     // ninguno se etiqueta como correcto automáticamente. Es el patrón típico calentamiento + trabajo.
