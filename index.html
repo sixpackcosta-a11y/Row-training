@@ -3543,7 +3543,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="902";
+const APP_VERSION="903";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5548,6 +5548,15 @@ async function v516FetchInvitedClubEvents(range){
     return r.error?[]:(r.data||[]).map(v516MapClubEvent);
   }catch(e){return []}
 }
+// V903 · entrenamientos convertidos en evento (MAR/GIM/ERGO) de otro grupo a los que me han invitado personalmente.
+async function v903FetchInvitedSessions(range){
+  if(!currentUser)return [];
+  try{
+    const start=range==='past'?addDaysISO(localISODate(),-183):addDaysISO(localISODate(),-7),end=range==='past'?addDaysISO(localISODate(),-1):addDaysISO(localISODate(),90);
+    const r=await sb.from('training_sessions').select('*').eq('is_event',true).is('target_user_ids',null).contains('invitee_ids',[currentUser.id]).gte('session_date',start).lte('session_date',end);
+    return r.error?[]:(r.data||[]).filter(x=>x.team_code!==currentTeamCode).map(x=>({...x,kind:'session',event_date:x.session_date,event_title:v524SessionEventName(x),_invitedOut:true}));
+  }catch(e){return []}
+}
 // V516 · roster completo de un evento: su equipo + los grupos añadidos (extra_team_codes). Caché por
 // pantalla para no repetir consultas.
 // V538 · "al pulsar Eventos tarda 4 o 5 segundos": las plantillas de cada equipo se pedían una a una
@@ -5626,16 +5635,26 @@ function v516RosterOf(team,cache){
   return cache.get(team);
 }
 async function v516FullRoster(ev,viewTeam,cache){
-  const main=ev.kind==='club_event'?(ev.team_code||viewTeam):viewTeam;
+  const main=(ev.kind==='club_event'||ev._invitedOut)?(ev.team_code||viewTeam):viewTeam;
   const teams=[...new Set([main,...(ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes:[])].filter(Boolean))];
   const lists=await Promise.all(teams.map(t=>v516RosterOf(t,cache)));
-  return v499MergeRoster(lists.flat(),[]);
+  let merged=v499MergeRoster(lists.flat(),[]);
+  // V903 · invitados de otros grupos en un entrenamiento convertido en evento
+  if(ev.kind==='session'&&Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length){
+    const have=new Set(merged.map(p=>String(p.user_id))),miss=ev.invitee_ids.map(String).filter(id=>!have.has(id));
+    if(miss.length){
+      const key='v903:'+miss.slice().sort().join(',');
+      if(!cache.has(key))cache.set(key,(async()=>{try{let pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',miss);return pr.data||[]}catch(e){return []}})());
+      merged=v499MergeRoster([...merged,...await cache.get(key)],[]);
+    }
+  }
+  return merged;
 }
 async function v516CountsForEvents(events,statusByEvent,viewTeam,cache){
   const out=[];
   for(const ev of events){
     const r=await v516FullRoster(ev,viewTeam,cache);
-    out.push(v503CountsForEvents([ev],r,statusByEvent,ev.kind==='club_event'?(ev.team_code||viewTeam):viewTeam)[0]);
+    out.push(v503CountsForEvents([ev],r,statusByEvent,(ev.kind==='club_event'||ev._invitedOut)?(ev.team_code||viewTeam):viewTeam)[0]);
   }
   return out;
 }
@@ -5665,10 +5684,13 @@ async function v495RsvpStatusMapsForEvents(events,team){
   // team_code, así que confirmar en un equipo "contaminaba" el mismo competition_id visto desde el
   // otro equipo. Ahora se filtra siempre por el equipo que se está viendo, para que cada equipo
   // lleve su propia confirmación aunque compartan la misma competición.
-  const sessionIds=events.filter(e=>e.kind==='session').map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
+  const invSessIds=events.filter(e=>e.kind==='session'&&e._invitedOut).map(e=>e.id);
+  const sessionIds=events.filter(e=>e.kind==='session'&&!e._invitedOut).map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
   const mkQs=nt=>{const qq=[];
   if(sessionIds.length)qq.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at'+nt).in('training_session_id',sessionIds).eq('team_code',team));
   if(compIds.length)qq.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at'+nt).in('competition_id',compIds).eq('team_code',team));
+  // V903 · eventos de otro grupo a los que me han invitado: mi respuesta va con el equipo del evento.
+  if(invSessIds.length)qq.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at'+nt).in('training_session_id',invSessIds));
   // V516 · un evento propio puede incluir varios grupos: sus respuestas no se filtran por equipo.
   if(clubIds.length)qq.push(sb.from('session_rsvp').select('club_event_id,user_id,status,responded_at'+nt).in('club_event_id',clubIds));
   return qq};
@@ -5764,6 +5786,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   let invitees=new Set((x.invitee_ids||[]).map(String));
   let coverUrl=x.cover_url||null,coverFile=null;
   const rosterCache=new Map();
+  const extraPeople=new Map();let v903Presel=false;
   container.classList.remove('hidden');
   const sec=(title,body)=>`<div class="v514Sec">${title?`<div class="v514SecTitle">${esc(title)}</div>`:''}${body}</div>`;
   const remOpts=[['','Desactivado'],['2','2 horas antes'],['6','6 horas antes'],['12','12 horas antes'],['24','1 día antes'],['48','2 días antes']];
@@ -5794,17 +5817,40 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
     const box=$('v514People');if(!box)return;
     box.classList.toggle('hidden',inviteMode!=='some');
     if(inviteMode!=='some')return;
-    box.innerHTML=v316Loading('Cargando personas…');
+    const v903Open=!!box.querySelector('#v903Other')?.open,v903Team=box.querySelector('#v903OtherTeam')?.value||'';
+    if(!box.querySelector('.v514PeopleList'))box.innerHTML=v316Loading('Cargando personas…');
     const lists=await Promise.all([...teamsSel].map(rosterFor));
     const seen=new Set(),people=[];
     lists.flat().forEach(p=>{const k=String(p.user_id);if(!seen.has(k)){seen.add(k);people.push(p)}});
+    if(isSess){
+      // V903 · entrenamiento convertido en evento: se pueden añadir remeros de OTROS grupos al mismo evento
+      // (sin duplicarlo ni perder respuestas). Los ya invitados de fuera se cargan por id.
+      if(!v903Presel&&!invitees.size){people.forEach(p=>invitees.add(String(p.user_id)))}
+      v903Presel=true;
+      const miss=[...invitees].filter(id=>!seen.has(id)&&!extraPeople.has(id));
+      if(miss.length){try{let pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',miss);(pr.data||[]).forEach(r=>extraPeople.set(String(r.user_id),r))}catch(e){}}
+      extraPeople.forEach((r,k)=>{if(!seen.has(k)){seen.add(k);people.push({...r,_otherGroup:true})}});
+    }
     people.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es',{sensitivity:'base'}));
-    box.innerHTML=`<div class="v514PeopleHead"><span id="v514PeopleCount"></span><button type="button" id="v514PickAll" class="linkButton">Elegir todo</button></div><input type="search" id="v514PeopleSearch" placeholder="Buscar por nombre…"><div class="v514PeopleList">${people.map(p=>`<label class="v514Person" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,28)}<span>${esc(p.full_name||'Sin nombre')}</span><input type="checkbox" value="${esc(p.user_id)}" ${invitees.has(String(p.user_id))?'checked':''}></label>`).join('')}</div>`;
+    box.innerHTML=`<div class="v514PeopleHead"><span id="v514PeopleCount"></span><button type="button" id="v514PickAll" class="linkButton">Elegir todo</button></div><input type="search" id="v514PeopleSearch" placeholder="Buscar por nombre…"><div class="v514PeopleList">${people.map(p=>`<label class="v514Person" data-name="${esc((p.full_name||'').toLowerCase())}">${v505AvatarCircleHtml(p,28)}<span>${esc(p.full_name||'Sin nombre')}${p._otherGroup?' <small class="muted">· otro grupo</small>':''}</span><input type="checkbox" value="${esc(p.user_id)}" ${invitees.has(String(p.user_id))?'checked':''}></label>`).join('')}</div>${isSess&&allTeams.length>1?`<details id="v903Other" class="v903Other" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">➕ Añadir remeros de otros grupos</summary><div style="margin-top:8px"><select id="v903OtherTeam"><option value="">— Elige un grupo —</option>${allTeams.filter(t=>!teamsSel.has(t)).map(t=>`<option value="${esc(t)}">${esc(teamLabel(t))}</option>`).join('')}</select><div id="v903OtherList" class="v514PeopleList" style="margin-top:8px"></div></div></details>`:''}`;
     const upd=()=>{$('v514PeopleCount').textContent=`Miembros (${[...box.querySelectorAll('input[type=checkbox]')].filter(c=>c.checked).length}/${people.length})`};
     box.querySelectorAll('input[type=checkbox]').forEach(c=>c.onchange=()=>{if(c.checked)invitees.add(c.value);else invitees.delete(c.value);upd()});
     $('v514PickAll').onclick=()=>{const cbs=[...box.querySelectorAll('input[type=checkbox]')],allOn=cbs.every(c=>c.checked);cbs.forEach(c=>{c.checked=!allOn;if(c.checked)invitees.add(c.value);else invitees.delete(c.value)});upd()};
+    const oSel=$('v903OtherTeam');
+    if(oSel)oSel.onchange=async()=>{
+      const t=oSel.value,L=$('v903OtherList');if(!t){L.innerHTML='';return}
+      L.innerHTML=v316Loading('Cargando…');
+      const r=(await rosterFor(t)).filter(p=>!p._staff);
+      L.innerHTML=r.length?r.map(p=>`<label class="v514Person">${v505AvatarCircleHtml(p,28)}<span>${esc(p.full_name||'Sin nombre')}</span><input type="checkbox" value="${esc(p.user_id)}" ${invitees.has(String(p.user_id))?'checked':''}></label>`).join(''):'<p class="muted">Sin remeros en este grupo.</p>';
+      L.querySelectorAll('input[type=checkbox]').forEach(c=>c.onchange=()=>{
+        const pp=r.find(x=>String(x.user_id)===c.value);
+        if(c.checked){invitees.add(c.value);if(pp)extraPeople.set(c.value,pp)}else{invitees.delete(c.value);extraPeople.delete(c.value)}
+        paintPeople();
+      });
+    };
     $('v514PeopleSearch').oninput=e=>{const q=e.target.value.trim().toLowerCase();box.querySelectorAll('.v514Person').forEach(r=>r.classList.toggle('hidden',!!q&&!r.dataset.name.includes(q)))};
     upd();
+    if(v903Open){const d=$('v903Other');if(d)d.open=true;if(v903Team&&$('v903OtherTeam')){$('v903OtherTeam').value=v903Team;$('v903OtherTeam').onchange()}}
   }
   function paintSeg(){container.querySelectorAll('.v514SegBtn').forEach(b=>b.classList.toggle('on',b.dataset.mode===inviteMode))}
   container.querySelectorAll('.v514SegBtn').forEach(b=>b.onclick=()=>{inviteMode=b.dataset.mode;paintSeg();paintPeople()});
@@ -5961,8 +6007,11 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         if((base.end_time||'')!==(existing.end_time||''))changes.push(base.end_time?`termina a las ${base.end_time}`:'sin hora de fin');
         if((base.location||'')!==(existing.location||''))changes.push(base.location?`lugar: ${base.location}`:'sin lugar');
         if(v749Moved)changes.unshift(`ahora es el ${v512DetailDateLabel(date,base.event_time||existing.event_time)}`);
-        const aud=inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
-        try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
+        // V903 · a quien se acaba de añadir al evento (otro grupo incluido) se le manda la convocatoria; al resto, el aviso de cambios.
+        const origInv=new Set((Array.isArray(x.invitee_ids)?x.invitee_ids:[]).map(String)),newInv=(inv||[]).filter(id=>origInv.size&&!origInv.has(String(id))),oldInv=(inv||[]).filter(id=>!newInv.includes(id));
+        if(newInv.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:newInv,team_codes:[t0]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${nm}" (${shortDateES(existing.event_date)}) en Row Training.`,url:v530EventUrl('session',existing.id,t0),category:'event_change',type:'training'})}catch(e){}}
+        const aud=inv&&inv.length?{mode:'users',user_ids:oldInv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
+        if(!(inv&&inv.length&&!oldInv.length))try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
       }
       if(($('v750After')?.value||'')==='notify'||($('v750After')?.value||'')==='reset')await v754Unsee('session',[existing.id,...others.map(o=>o.id)]);
       await syncOrgs({kind:'session',id:existing.id},true);
@@ -6821,10 +6870,10 @@ async function athleteEventsView(){
   const area=document.getElementById('eventsArea');
   if(!v533RowerSeesEvents(team)){area.innerHTML='<div class="info">Los eventos todavía no están disponibles.</div>';return}
   let events,invited;const cacheA=v538Cache();
-  try{[events,invited]=await Promise.all([v495FetchEvents(team,when),v516FetchInvitedClubEvents(when),v538PrefetchRosters([team],cacheA)]);events=v545FilterWhen(events);invited=v545FilterWhen(invited)}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  try{[events,invited]=await Promise.all([v495FetchEvents(team,when),Promise.all([v516FetchInvitedClubEvents(when),v903FetchInvitedSessions(when)]).then(a=>a.flat()),v538PrefetchRosters([team],cacheA)]);events=v545FilterWhen(events);invited=v545FilterWhen(invited)}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
-  const ids=new Set(events.filter(e=>e.kind==='club_event').map(e=>String(e.id)));
-  invited.forEach(ev=>{if(!ids.has(String(ev.id)))events.push(ev)});
+  const ids=new Set(events.map(e=>e.kind+'_'+e.id));
+  invited.forEach(ev=>{if(!ids.has(ev.kind+'_'+ev.id))events.push(ev)});
   events.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
   if(tab!=='eventos'||currentMode!=='athlete'||V545_WHEN!==when)return;
   const v543ExtraP=v538PrefetchRosters(events.flatMap(ev=>ev.kind==='club_event'?[ev.team_code,...(ev.extra_team_codes||[])]:[]),cacheA);
