@@ -100,15 +100,21 @@ function planSignature(title,content){
   m=t.match(/(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*m\b/i);
   if(m){const reps=Number(m[1]),eachM=Number(String(m[2]).replace(',','.'));return {kind:'distance_intervals',reps,eachM,totalM:reps*eachM,spm};}
   const workLine=String(content||'').split(/\n+/).map(x=>x.trim()).find(x=>/^TRABAJO\b/i.test(x))||'';
-  m=workLine.match(/(\d+(?:[.,]\d+)?)\s*min\b/i);
-  if(m)return {kind:'time',totalSec:Number(String(m[1]).replace(',','.'))*60,spm};
-  m=workLine.match(/(\d+(?:[.,]\d+)?)\s*m\b/i);
-  if(m)return {kind:'distance',totalM:Number(String(m[1]).replace(',','.')),spm};
+  // V901 · se SUMAN todos los bloques de minutos del trabajo (p. ej. 4+6+8+6+4 = 28) y se ignoran los descansos
+  // ("rec 2 min"). Antes se cogía solo el primer "N min" y una pirámide 4-6-8-6-4 se leía como una sesión de 4 min.
+  const workOnly=workLine.replace(/\brec(?:uperaci[oó]n)?\b[^·+\n]*/ig,'');
+  const mins=[...workOnly.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:min\b|')/gi)].map(x=>Number(String(x[1]).replace(',','.'))).filter(Number.isFinite);
+  if(mins.length)return {kind:'time',totalSec:mins.reduce((a,b)=>a+b,0)*60,spm};
+  // V901 · distancia total = suma de todos los tramos en metros del trabajo (sin descansos), × nº de bloques si dice "3 bloques de …"
+  const mets=[...workOnly.matchAll(/(\d+(?:[.,]\d+)?)\s*m\b/gi)].map(x=>Number(String(x[1]).replace(',','.'))).filter(Number.isFinite);
+  if(mets.length){const bl=Number((workOnly.match(/(\d+)\s*bloques?\s+de\b/i)||[])[1]||1);return {kind:'distance',totalM:mets.reduce((x,y)=>x+y,0)*bl,spm};}
   return {kind:'unknown',spm};
 }
 function resultParts(result){
   const w=result?.workout||{};
-  const parts=w.intervals||w.splits||result?.intervals||result?.splits||[];
+  // V901 · solo los "intervals" son repeticiones. Los "splits" (FixedTimeSplits/FixedDistanceSplits) son parciales
+  // de UNA pieza continua: un 12' con parciales de 3' no es un 4×700.
+  const parts=w.intervals||result?.intervals||[];
   return Array.isArray(parts)?parts.filter(p=>p&&Number(p.time||0)>0&&Number(p.distance||0)>=0):[];
 }
 function median(nums){const a=nums.filter(Number.isFinite).sort((x,y)=>x-y);if(!a.length)return null;const n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2}
@@ -143,15 +149,24 @@ function hrOf(x){
   return {avg:avg||null,max:max||null};
 }
 function relDiff(a,b){return a&&b?Math.abs(a-b)/Math.abs(b):Infinity}
+function daysBetween(a,b){if(!a||!b)return Infinity;return Math.abs(Math.round((new Date(`${a}T12:00:00Z`)-new Date(`${b}T12:00:00Z`))/864e5))}
 function compatibility(result,intent){
   const ps=intent.signature||{kind:'unknown'},rs=resultSignature(result);
   let score=0,exact=false;
+  const rDate=dateOnly(result.date||result.date_utc);
+  const days=daysBetween(rDate,intent.scheduled_date);
+  // V901 · un "remo libre" (JustRow) corto casi siempre es calentamiento: solo se asigna si es del mismo día y encaja al 3%
+  if(/justrow/.test(rs.workoutType)){
+    if(days!==0)return null;
+    if(ps.kind==='time'&&relDiff(rs.totalSec,ps.totalSec)>.03)return null;
+    if(ps.kind==='distance'&&relDiff(rs.totalM,ps.totalM)>.03)return null;
+  }
   if(ps.kind==='time_intervals'){
     if(rs.reps!=null){
       if(rs.reps!==ps.reps||!rs.eachSec||relDiff(rs.eachSec,ps.eachSec)>.08)return null;
       score=75;exact=true;
     }else{
-      if(!rs.totalSec||relDiff(rs.totalSec,ps.totalSec)>.05||!/interval|split/.test(rs.workoutType))return null;
+      if(!rs.totalSec||relDiff(rs.totalSec,ps.totalSec)>.05||!/interval/.test(rs.workoutType))return null;
       score=60;
     }
   }else if(ps.kind==='distance_intervals'){
@@ -159,7 +174,7 @@ function compatibility(result,intent){
       if(rs.reps!==ps.reps||!rs.eachM||relDiff(rs.eachM,ps.eachM)>.08)return null;
       score=75;exact=true;
     }else{
-      if(!rs.totalM||relDiff(rs.totalM,ps.totalM)>.05||!/interval|split/.test(rs.workoutType))return null;
+      if(!rs.totalM||relDiff(rs.totalM,ps.totalM)>.05||!/interval/.test(rs.workoutType))return null;
       score=60;
     }
   }else if(ps.kind==='time'){
@@ -176,11 +191,16 @@ function compatibility(result,intent){
   const sameDate=dateOnly(result.date||result.date_utc)===intent.scheduled_date;
   if(sameDate)score+=20;
   else if(intent.scheduled_date&&dateOnly(result.date||result.date_utc)>intent.scheduled_date)score+=5;
-  return {score,exact,sameDate};
+  return {score,exact,sameDate,days};
 }
-function scoreResult(result,intents){
+function scoreResult(result,intents,claimed){
   const hits=[];
-  for(const i of intents){const c=compatibility(result,i);if(c)hits.push({intent:i,...c});}
+  for(const i of intents){
+    // V901 · una sesión planificada ya ocupada por OTRO resultado de este remero no se vuelve a ofrecer
+    const sid=i.training_session_id?String(i.training_session_id):'';
+    if(sid&&claimed&&claimed.has(sid)&&claimed.get(sid)!==String(result.id))continue;
+    const c=compatibility(result,i);if(c)hits.push({intent:i,...c});
+  }
   hits.sort((a,b)=>b.score-a.score);
   const best=hits[0];
   if(!best)return {status:'unplanned',confidence:0,code:null,intentId:null,sessionId:null,isAdditional:false};
@@ -193,7 +213,9 @@ function scoreResult(result,intents){
   if(second&&second.score>=best.score-5){
     return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null,isAdditional};
   }
-  if(best.score>=70){
+  // V901 · para asignar sola hace falta encaje exacto de la prescripción Y que el día sea el mismo o cercano (≤7 días).
+  // Si no, queda en "review" (sin asignar) para que lo resuelva el entrenador: mejor sin asignar que mal asignado.
+  if(best.score>=70&&best.exact&&(best.sameDate||best.days<=7)){
     return {status:'matched',confidence:Math.min(best.score,100),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:isAdditional?null:(best.intent.training_session_id||null),isAdditional};
   }
   return {status:'review',confidence:Math.min(best.score,99),code:best.intent.session_code,intentId:best.intent.id||null,sessionId:null,isAdditional};
@@ -274,8 +296,15 @@ async function syncForUser(c,userId,limit,teamCode){
       }
     }
 
+    // V901 · sesiones planificadas que este remero ya tiene asignadas a un resultado (para no asignar dos resultados a la misma)
+    const claimed=new Map();
+    try{
+      const cr=await rest(`concept2_results?user_id=eq.${encodeURIComponent(userId)}&training_session_id=not.is.null&select=concept2_result_id,training_session_id,hidden`);
+      if(cr.ok)for(const x of await cr.json()){if(!x.hidden)claimed.set(String(x.training_session_id),String(x.concept2_result_id));}
+    }catch(e){}
     const now=new Date().toISOString();
-    const rows=results.map(x=>{
+    const ordered=[...results].sort((a,b)=>String(a.date||a.date_utc||'').localeCompare(String(b.date||b.date_utc||'')));
+    const rows=ordered.map(x=>{
       const old=existingRows.get(String(x.id));
       let match;
       if(old?.training_session_id){
@@ -285,7 +314,8 @@ async function syncForUser(c,userId,limit,teamCode){
         // Si el entrenador/remero lo dejó expresamente sin asignar, no lo reasignamos en una sincronización posterior.
         match={status:'unplanned',confidence:old.match_confidence??0,code:null,intentId:null,sessionId:null,isAdditional:false};
       }else{
-        match=scoreResult(x,intents);
+        match=scoreResult(x,intents,claimed);
+        if(match.sessionId)claimed.set(String(match.sessionId),String(x.id));
       }
       // v291: si alguien lo marcó a mano como "adicional" desde la app, una sincronización
       // posterior nunca se lo quita — solo un match nuevo contra un intent 'additional' lo
