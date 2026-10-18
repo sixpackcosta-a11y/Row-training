@@ -13082,10 +13082,10 @@ function v905Html(){
   const seg=(k,opts,val,span)=>`<div class="v905Seg" data-k="${k}" style="grid-column:span ${span}">${opts.map(o=>`<button type="button" data-v="${o[0]}" class="${o[0]===val?'on':''}">${esc(o[1])}</button>`).join('')}</div>`;
   const cats=[['VET MASC','Vet. masc.'],['VET FEM','Vet. fem.'],['ABS MASC','Abs. masc.'],['ABS FEM','Abs. fem.']].concat(far?[['VET MX','Vet. mixto'],['ABS MX','Abs. mixto']]:[]);
   const sp=far?3:2;
-  const bar=`<div class="v905Bar">${seg('liga',[['ART','Jábega'],['FAR','Llaut']],v905F.liga,3)}${seg('tm',[['real','Tiempo real'],['hand','Con handicap']],v905F.tm,3)}${sel('v905Cat',cats,v905F.cat).replace('<select','<select style="grid-column:span '+sp+'"')}${sel('v905Year',[['all','Todos los años'],['2026','2026'],['2025','2025'],['2024','2024']],v905F.year).replace('<select','<select style="grid-column:span '+sp+'"')}${far?'':sel('v905Mar',[['all','Todo mar'],['0','Mar en calma'],['1','Viento suave'],['2','Arreciando'],['3','Muy agitada'],['le1','Calma o suave']],v905F.mar).replace('<select','<select style="grid-column:span 2"')}${seg('dist',far?[['normal','700 / 1400 m'],['larga','3000 / 4000 m']]:[['normal','700 / 1400 m']],v905F.dist,3)}${seg('view',far?[['best','Regatas'],['clubs','Clubes']]:[['best','Regatas'],['clubs','Clubes'],['mar','Por mar']],v905F.view,3)}</div>`;
+  const bar=`<div class="v905Bar">${seg('liga',[['ART','Jábega'],['FAR','Llaut']],v905F.liga,3)}${seg('tm',[['real','Tiempo real'],['hand','Con handicap']],v905F.tm,3)}${sel('v905Cat',cats,v905F.cat).replace('<select','<select style="grid-column:span '+sp+'"')}${sel('v905Year',[['all','Todos los años'],['2026','2026'],['2025','2025'],['2024','2024']],v905F.year).replace('<select','<select style="grid-column:span '+sp+'"')}${far?'':sel('v905Mar',[['all','Todo mar'],['0','Mar en calma'],['1','Viento suave'],['2','Arreciando'],['3','Muy agitada'],['le1','Calma o suave']],v905F.mar).replace('<select','<select style="grid-column:span 2"')}${seg('dist',far?[['normal','700 / 1400 m'],['larga','3000 / 4000 m']]:[['normal','700 / 1400 m']],v905F.dist,6)}</div>`;
   let body='';
   if(!rows.length)body='<p class="muted">Sin datos para este filtro.</p>';
-  else if(v905F.view==='best'){
+  else if(true){v905F.view='best';
     const by={};rows.forEach(r=>{(by[r.regata+'|'+r.fecha+'|'+r.distancia_m]=by[r.regata+'|'+r.fecha+'|'+r.distancia_m]||[]).push(r)});
     const bp=k=>Math.min(...by[k].map(r=>v905R(r)));
     const keys=Object.keys(by).sort(v905F.sort==='pace'?((a,b)=>bp(a)-bp(b)):((a,b)=>by[b][0].fecha.localeCompare(by[a][0].fecha)));
@@ -13101,7 +13101,7 @@ function v905Html(){
   else if(v905F.view==='mar'){
     const rg={};rows.forEach(r=>{const k=r.regata+'|'+r.fecha+'|'+r.distancia_m;if(!rg[k]||v905R(r)<v905R(rg[k]))rg[k]=r});
     const lv=[[0,'Mar en calma'],[1,'Viento suave'],[2,'Arreciando'],[3,'Muy agitada'],[null,'Sin dato']];
-    body=`<p class="muted v905Note">Mejor ritmo de cada regata agrupado por estado del mar del acta. Sirve de referencia: con el mismo mar y el mismo tipo de campo, ¿cuánto es "un buen ritmo"?</p><div class="v766List">`+lv.map(l=>{
+    body=`<p class="muted v905Note">Aquí se agrupan las regatas según el mar que hubo ese día (calma, suave, arreciando…) y se ve el mejor ritmo y el ritmo medio de cada grupo. Sirve para saber qué ritmo es bueno con cada tipo de mar.</p><div class="v766List">`+lv.map(l=>{
       const g=Object.values(rg).filter(r=>(r.mar_nivel==null?null:r.mar_nivel)===l[0]);if(!g.length)return '';
       const best=Math.min(...g.map(x=>v905R(x))),avg=g.reduce((s,x)=>s+v905R(x),0)/g.length;
       const names=g.sort((a,b)=>v905R(a)-v905R(b)).map(x=>x.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'')+' '+String(x.fecha).slice(2,4)+' '+v905Pace(v905R(x))).join(' · ');
