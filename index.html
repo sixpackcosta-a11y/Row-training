@@ -1665,6 +1665,7 @@ div.v869ShareBar{display:flex;margin:10px 0 0}
 html,body{touch-action:pan-x pan-y;max-width:100%;overflow-x:hidden}
 .v887Re{padding:5px 12px;font-size:13px}
 .v905Bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}.v905Bar select{flex:1 1 140px;min-width:0}.v905Chk{display:flex;gap:8px;align-items:center;margin:4px 0 10px;font-size:12px}.v905Chk input{width:auto}.v905Row{cursor:pointer}.v905Val{flex:0 0 auto;text-align:right;font-weight:500;font-size:16px}.v905Val small{display:block;font-size:12px;opacity:.6}.v905Detail{padding:2px 0 8px 46px}.v905Line{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:12px}.v905Line.me,.v905Row.me{font-weight:500}.v905Pos{flex:0 0 18px;opacity:.6}.v905Nm{flex:1;min-width:0}.v905Rt{flex:0 0 52px;text-align:right}.v905Pc{flex:0 0 58px;text-align:right;opacity:.6}.v905Note{margin:4px 0 8px}
+.v330SubTabs{overflow-x:visible;gap:5px}.v330SubTab{flex:1 1 auto;min-width:0;padding:0 8px;justify-content:center;white-space:nowrap;font-size:13px}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3544,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="906";
+const APP_VERSION="908";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13053,42 +13054,44 @@ function v766DateHtml(iso){const t=String(iso||'').slice(0,10);if(!/^\d{4}-\d{2}
 function v766StateHtml(st){const M={assigned:['ok','Asignado'],additional:['ad','Adicional'],unassigned:['pe','Sin asignar'],hidden:['ad','Oculta'],pending:['re','Pendiente']};const x=M[st]||M.unassigned;return `<div class="v766S"><i class="v766Dot ${x[0]}"></i>${x[1]}</div>`}
 function v766RowHead(iso,title,sub,st){return `${v766DateHtml(iso)}<div class="v766M"><p class="a">${title}</p>${sub?`<p class="b">${sub}</p>`:''}</div>${v766StateHtml(st)}`}
 /* V905 · Archivo de regatas (solo entrenadores): ritmo /500 por regata y por club, desde archivo_regatas_art_ritmo */
-var v905Rows=null,v905Open={},v905F={year:'all',cat:'VET MASC',view:'best',all:false,mar:'all'};
+var v905Rows=null,v905Open={},v905F={year:'all',cat:'VET MASC',view:'best',all:false,mar:'all',liga:'ART'};
 function v905Pace(s){if(s==null||isNaN(s))return '–';s=Number(s);let m=Math.floor(s/60),r=s-m*60;r=Math.round(r*10)/10;if(r>=60){m+=1;r=0}return m+':'+(r<10?'0':'')+r.toFixed(1)}
+function v905Cl(r){return r.club||v905Club(r.equipo)}
 function v905Club(n){return String(n||'').replace(/\s+[AB]$/,'').trim()}
 function v905Date(iso){const d=new Date(iso+'T00:00:00Z');return {m:['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'][d.getUTCMonth()],d:d.getUTCDate()}}
 async function v905Load(){
   if(v905Rows)return v905Rows;
   let all=[],from=0;
   for(;;){
-    const q=await sb.from('archivo_regatas_art_ritmo').select('regata,fecha,categoria,serie,equipo,fase,distancia_m,tiempo_real_s,hand_s,ritmo_500_s,pct_sobre_mejor,comparable_700,mar_estado,mar_nivel').order('fecha',{ascending:false}).range(from,from+999);
+    const q=await sb.from('archivo_regatas_art_ritmo').select('regata,fecha,categoria,serie,equipo,fase,distancia_m,tiempo_real_s,hand_s,ritmo_500_s,pct_sobre_mejor,comparable_700,mar_estado,mar_nivel,club,liga').order('fecha',{ascending:false}).range(from,from+999);
     if(q.error)throw q.error;
     all=all.concat(q.data||[]);if(!q.data||q.data.length<1000)break;from+=1000;
   }
   v905Rows=all;return all;
 }
 function v905Filter(){
-  return (v905Rows||[]).filter(r=>r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.all||r.comparable_700)&&(v905F.mar==='all'||(r.mar_nivel!=null&&r.mar_nivel<=Number(v905F.mar)))&&(r.fase==='series'||r.fase==null));
+  return (v905Rows||[]).filter(r=>(r.liga||'ART')===v905F.liga&&r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.all||r.comparable_700)&&(v905F.mar==='all'||(r.mar_nivel!=null&&r.mar_nivel<=Number(v905F.mar))));
 }
 function v905Html(){
   const rows=v905Filter();
   const sel=(id,opts,val)=>`<select id="${id}">${opts.map(o=>`<option value="${o[0]}" ${o[0]===val?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
-  const bar=`<div class="v905Bar">${sel('v905Year',[['all','2025 y 2026'],['2026','2026'],['2025','2025']],v905F.year)}${sel('v905Cat',[['VET MASC','Veteranos masculino'],['VET FEM','Veteranas femenino']],v905F.cat)}${sel('v905View',[['best','Mejor por regata'],['clubs','Ranking de clubes'],['mar','Por estado del mar']],v905F.view)}${sel('v905Mar',[['all','Cualquier mar'],['0','Solo mar en calma'],['1','Calma o suave']],v905F.mar)}</div><label class="v905Chk"><input type="checkbox" id="v905All" ${v905F.all?'checked':''}> Incluir regatas de otra distancia (no comparables)</label>`;
+  const bar=`<div class="v905Bar">${sel('v905Liga',[['ART','Jábega (ART)'],['FAR','Llaut (FAR)']],v905F.liga)}${sel('v905Year',[['all','Todos los años'],['2026','2026'],['2025','2025'],['2024','2024']],v905F.year)}${sel('v905Cat',[['VET MASC','Veteranos masculino'],['VET FEM','Veteranas femenino'],['VET MX','Veteranos mixto (FAR)'],['ABS MASC','Absoluto masculino'],['ABS FEM','Absoluto femenino'],['ABS MX','Absoluto mixto (FAR)']],v905F.cat)}${sel('v905View',[['best','Mejor por regata'],['clubs','Ranking de clubes'],['mar','Por estado del mar']],v905F.view)}${v905F.liga==='ART'?sel('v905Mar',[['all','Cualquier mar'],['0','Solo mar en calma'],['1','Calma o suave']],v905F.mar):''}</div><label class="v905Chk"><input type="checkbox" id="v905All" ${v905F.all?'checked':''}> Incluir regatas de otra distancia (no comparables)</label>`;
   let body='';
   if(!rows.length)body='<p class="muted">Sin datos para este filtro.</p>';
   else if(v905F.view==='best'){
-    const by={};rows.forEach(r=>{(by[r.regata+'|'+r.fecha]=by[r.regata+'|'+r.fecha]||[]).push(r)});
+    const by={};rows.forEach(r=>{(by[r.regata+'|'+r.fecha+'|'+r.distancia_m]=by[r.regata+'|'+r.fecha+'|'+r.distancia_m]||[]).push(r)});
     const keys=Object.keys(by).sort((a,b)=>by[b][0].fecha.localeCompare(by[a][0].fecha));
     let bestKey=null,bestV=1e9;keys.forEach(k=>{const m=Math.min(...by[k].map(r=>r.ritmo_500_s));if(m<bestV){bestV=m;bestKey=k}});
     body=`<div class="v766List">`+keys.map(k=>{
       const g=by[k].slice().sort((a,b)=>a.ritmo_500_s-b.ritmo_500_s),b=g[0],dt=v905Date(b.fecha),open=!!v905Open[k];
       const name=b.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'');
-      const sub=`${b.distancia_m} m · ${b.mar_estado||'mar sin dato'} · ${g.length} equipos${k===bestKey?' · mejor de la temporada':''}`;
-      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span></div><div class="v503Info"><div class="v503Title">${esc(name)} · ${esc(v905Club(b.equipo))}</div><div class="v503Sub">${esc(sub)}</div></div><div class="v905Val">${v905Pace(b.ritmo_500_s)}<small>/500</small></div></div>`;
+      const sub=`${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))} · ${g.length} equipos${k===bestKey?' · mejor de la temporada':''}`;
+      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span></div><div class="v503Info"><div class="v503Title">${esc(name)} · ${esc(v905Cl(b))}</div><div class="v503Sub">${esc(sub)}</div></div><div class="v905Val">${v905Pace(b.ritmo_500_s)}<small>/500</small></div></div>`;
       if(open)h+=`<div class="v905Detail">`+g.map((r,i)=>`<div class="v905Line${/pedregalejo/i.test(r.equipo)?' me':''}"><span class="v905Pos">${i+1}</span><span class="v905Nm">${esc(r.equipo)}</span><span class="v905Rt">${v905Pace(r.ritmo_500_s)}</span><span class="v905Pc">${i===0?'':'+'+Number(r.pct_sobre_mejor).toFixed(1)+' %'}</span></div>`).join('')+`</div>`;
       return h}).join('')+`</div>`;
-  }else if(v905F.view==='mar'){
-    const rg={};rows.forEach(r=>{const k=r.regata+'|'+r.fecha;if(!rg[k]||r.ritmo_500_s<rg[k].ritmo_500_s)rg[k]=r});
+  }else if(v905F.view==='mar'&&v905F.liga==='FAR'){body='<p class="muted v905Note">Las actas de la FAR no traen el estado del mar. Esta vista solo existe para Jábega (ART).</p>'}
+  else if(v905F.view==='mar'){
+    const rg={};rows.forEach(r=>{const k=r.regata+'|'+r.fecha+'|'+r.distancia_m;if(!rg[k]||r.ritmo_500_s<rg[k].ritmo_500_s)rg[k]=r});
     const lv=[[0,'Mar en calma'],[1,'Viento suave'],[2,'Arreciando'],[3,'Muy agitada'],[null,'Sin dato']];
     body=`<p class="muted v905Note">Mejor ritmo de cada regata agrupado por estado del mar del acta. Sirve de referencia: con el mismo mar y el mismo tipo de campo, ¿cuánto es "un buen ritmo"?</p><div class="v766List">`+lv.map(l=>{
       const g=Object.values(rg).filter(r=>(r.mar_nivel==null?null:r.mar_nivel)===l[0]);if(!g.length)return '';
@@ -13096,21 +13099,21 @@ function v905Html(){
       const names=g.sort((a,b)=>a.ritmo_500_s-b.ritmo_500_s).map(x=>x.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'')+' '+String(x.fecha).slice(2,4)+' '+v905Pace(x.ritmo_500_s)).join(' · ');
       return `<div class="v503EventRow"><div class="v503Info"><div class="v503Title">${l[1]}</div><div class="v503Sub">${g.length} regata${g.length>1?'s':''} · media ${v905Pace(avg)} · ${esc(names)}</div></div><div class="v905Val">${v905Pace(best)}<small>mejor</small></div></div>`}).join('')+`</div>`;
   }else{
-    const by={};rows.forEach(r=>{const c=v905Club(r.equipo);(by[c]=by[c]||[]).push(r)});
+    const by={};rows.forEach(r=>{const c=v905Cl(r);(by[c]=by[c]||[]).push(r)});
     const list=Object.keys(by).map(c=>{const g=by[c],regs=new Set(g.map(x=>x.regata)).size;
       const best=Math.min(...g.map(x=>x.ritmo_500_s)),avg=g.reduce((s,x)=>s+x.ritmo_500_s,0)/g.length,pc=g.reduce((s,x)=>s+Number(x.pct_sobre_mejor),0)/g.length;
       return {c,regs,best,avg,pc}}).sort((a,b)=>a.pc-b.pc);
     body=`<p class="muted v905Note">Ordenado por la media de % sobre el mejor de cada regata (compara bien aunque cambie el mar). Si un club presenta dos equipos, cuentan los dos.</p><div class="v766List">`+list.map((x,i)=>`<div class="v503EventRow v905Row${/pedregalejo/i.test(x.c)?' me':''}"><div class="v503DateBlock"><span class="v503Day">${i+1}</span></div><div class="v503Info"><div class="v503Title">${esc(x.c)}</div><div class="v503Sub">${x.regs} regatas · mejor ${v905Pace(x.best)} · media ${v905Pace(x.avg)} · +${x.pc.toFixed(1)} % sobre el mejor</div></div></div>`).join('')+`</div>`;
   }
-  return `<div class="card"><h2>Archivo de regatas · Jábega</h2><p class="muted">Ritmo cada 500 m con el tiempo real (sin handicap) y la distancia medida en cada acta. Solo lo ven los entrenadores.</p>${bar}${body}</div>`;
+  return `<div class="card"><h2>Archivo de regatas</h2><p class="muted">Ritmo cada 500 m con el tiempo real (sin handicap). Jábega: distancia medida en cada acta; Llaut: distancia nominal. Solo lo ven los entrenadores.</p>${bar}${body}</div>`;
 }
 async function v905RegattaView(){
   content.innerHTML='<div class="card"><h2>Archivo de regatas · Jábega</h2><p class="muted">Cargando…</p></div>';
   try{await v905Load()}catch(e){content.innerHTML=`<div class="card"><h2>Archivo de regatas</h2><p class="muted">No se pudo cargar: ${esc(e.message||e)}</p></div>`;return}
   const paint=()=>{
     content.innerHTML=v905Html();
-    const y=document.getElementById('v905Year'),c=document.getElementById('v905Cat'),v=document.getElementById('v905View'),a=document.getElementById('v905All'),mr=document.getElementById('v905Mar');
-    if(y)y.onchange=()=>{v905F.year=y.value;paint()};if(c)c.onchange=()=>{v905F.cat=c.value;paint()};if(v)v.onchange=()=>{v905F.view=v.value;paint()};if(a)a.onchange=()=>{v905F.all=a.checked;paint()};if(mr)mr.onchange=()=>{v905F.mar=mr.value;paint()};
+    const y=document.getElementById('v905Year'),c=document.getElementById('v905Cat'),v=document.getElementById('v905View'),a=document.getElementById('v905All'),lg=document.getElementById('v905Liga'),mr=document.getElementById('v905Mar');
+    if(y)y.onchange=()=>{v905F.year=y.value;paint()};if(c)c.onchange=()=>{v905F.cat=c.value;paint()};if(v)v.onchange=()=>{v905F.view=v.value;paint()};if(a)a.onchange=()=>{v905F.all=a.checked;paint()};if(lg)lg.onchange=()=>{v905F.liga=lg.value;paint()};if(mr)mr.onchange=()=>{v905F.mar=mr.value;paint()};
     content.querySelectorAll('.v905Row[data-k]').forEach(el=>el.onclick=()=>{const k=el.dataset.k;v905Open[k]=!v905Open[k];paint()});
     if(typeof v330InjectSubTabs==='function')v330InjectSubTabs();
   };
