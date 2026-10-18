@@ -13054,7 +13054,7 @@ function v766DateHtml(iso){const t=String(iso||'').slice(0,10);if(!/^\d{4}-\d{2}
 function v766StateHtml(st){const M={assigned:['ok','Asignado'],additional:['ad','Adicional'],unassigned:['pe','Sin asignar'],hidden:['ad','Oculta'],pending:['re','Pendiente']};const x=M[st]||M.unassigned;return `<div class="v766S"><i class="v766Dot ${x[0]}"></i>${x[1]}</div>`}
 function v766RowHead(iso,title,sub,st){return `${v766DateHtml(iso)}<div class="v766M"><p class="a">${title}</p>${sub?`<p class="b">${sub}</p>`:''}</div>${v766StateHtml(st)}`}
 /* V905 · Archivo de regatas (solo entrenadores): ritmo /500 por regata y por club, desde archivo_regatas_art_ritmo */
-var v905Rows=null,v905Open={},v905F={year:'all',cat:'VET MASC',view:'best',all:false,mar:'all',liga:'ART',sort:'date',tm:'real',dist:'normal'}
+var v905Rows=null,v905Open={},v905F={year:'all',cat:'VET MASC',view:'best',all:false,mar:'all',liga:'ART',sort:'date',tm:'real',dist:'normal',me:'all'}
 function v905R(r){return v905F.tm==='hand'&&r.ritmo_hand_500_s!=null?Number(r.ritmo_hand_500_s):Number(r.ritmo_500_s)};
 function v905Pace(s){if(s==null||isNaN(s))return '–';s=Number(s);let m=Math.floor(s/60),r=s-m*60;r=Math.round(r*10)/10;if(r>=60){m+=1;r=0}return m+':'+(r<10?'0':'')+r.toFixed(1)}
 function v905Cl(r){return r.club||v905Club(r.equipo)}
@@ -13088,15 +13088,18 @@ function v905Html(){
   else if(true){v905F.view='best';
     const by={};rows.forEach(r=>{(by[r.regata+'|'+r.fecha+'|'+r.distancia_m]=by[r.regata+'|'+r.fecha+'|'+r.distancia_m]||[]).push(r)});
     const bp=k=>Math.min(...by[k].map(r=>v905R(r)));
+    const isMe=r=>/pedregalejo/i.test((r.equipo||'')+' '+(r.club||''));
+    if(v905F.me==='ped')Object.keys(by).forEach(k=>{if(!by[k].some(isMe))delete by[k]});
+    if(!Object.keys(by).length){body='<p class="muted">Pedregalejo no tiene resultados con estos filtros.</p>'}else{
     const keys=Object.keys(by).sort(v905F.sort==='pace'?((a,b)=>bp(a)-bp(b)):((a,b)=>by[b][0].fecha.localeCompare(by[a][0].fecha)));
     let bestKey=null,bestV=1e9;keys.forEach(k=>{const m=Math.min(...by[k].map(r=>v905R(r)));if(m<bestV){bestV=m;bestKey=k}});
-    body=`<div class="v905Ord"><span class="muted">Ordenar por</span>${seg('sort',[['date','Fecha'],['pace','Ritmo']],v905F.sort,1)}</div><p class="muted v905Note">Cada regata muestra el equipo más rápido (siglas abajo); en azul, la más rápida de la lista. Toca una regata para ver todos los equipos.</p><div class="v766List">`+keys.map(k=>{
-      const g=by[k].slice().sort((a,b)=>v905R(a)-v905R(b)),b=g[0],dt=v905Date(b.fecha),open=!!v905Open[k];
+    body=`<div class="v905Ord">${seg('me',[['all','Todos los equipos'],['ped','Solo Pedregalejo']],v905F.me,1)}<span class="muted">Orden</span>${seg('sort',[['date','Fecha'],['pace','Ritmo']],v905F.sort,1)}</div><p class="muted v905Note">${v905F.me==='ped'?'Solo las regatas en las que corrió Pedregalejo: puesto que quedó (por ritmo) y su ritmo. Toca una regata para ver la clasificación completa.':'Cada regata muestra el equipo más rápido (siglas abajo); en azul, la más rápida de la lista. Toca una regata para ver todos los equipos.'}</p><div class="v766List">`+keys.map(k=>{
+      const g=by[k].slice().sort((a,b)=>v905R(a)-v905R(b)),b0=g[0],pi=v905F.me==='ped'?g.findIndex(isMe):0,b=g[Math.max(pi,0)],dt=v905Date(b.fecha),open=!!v905Open[k];
       const name=b.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'');
-      const sub=`Mejor: ${v905Ab(v905Cl(b))} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''} · ${g.length} eq.`;
-      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span></div><div class="v503Info"><div class="v905T">${esc(name)}</div><div class="v905Sub">${esc(sub)}</div></div><div class="v905Val${k===bestKey?' best':''}">${v905Pace(v905R(b))}<small>/500</small></div></div>`;
+      const sub=v905F.me==='ped'?`Puesto ${pi+1}º de ${g.length} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''}${pi>0?' · mejor: '+v905Ab(v905Cl(b0)):''}`:`Mejor: ${v905Ab(v905Cl(b))} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''} · ${g.length} eq.`;
+      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span></div><div class="v503Info"><div class="v905T">${esc(name)}</div><div class="v905Sub">${esc(sub)}</div></div><div class="v905Val${k===bestKey&&v905F.me!=='ped'?' best':''}">${v905Pace(v905R(b))}<small>/500</small></div></div>`;
       if(open)h+=`<div class="v905Detail"><div class="v905Line v905Hd"><span class="v905Pos"></span><span class="v905Nm">Equipo</span><span class="v905Rt">Ritmo /500</span><span class="v905Pc">vs. 1º</span></div>`+g.map((r,i)=>`<div class="v905Line${/pedregalejo/i.test(r.equipo)?' me':''}"><span class="v905Pos">${i+1}</span><span class="v905Nm">${esc(r.equipo)}</span><span class="v905Rt">${v905Pace(v905R(r))}</span><span class="v905Pc">${i===0?'':'+'+(v905R(r)-v905R(b)).toFixed(1)+' s'}</span></div>`).join('')+`</div>`;
-      return h}).join('')+`</div><p class="muted v905Note">Siglas: TDM Torre del Mar · CAL La Cala · PED Pedregalejo · CAR Carihuela · ARA La Araña · IES El Palo · MAL Malagueño · RIN Rincón · TBJ Torrebermeja · TOR Torremolinos · RCM Real Club Mediterráneo · CAN El Candado · BAR Barbate · ALG Algeciras.</p>`;
+      return h}).join('')+`</div><p class="muted v905Note">Siglas: TDM Torre del Mar · CAL La Cala · PED Pedregalejo · CAR Carihuela · ARA La Araña · IES El Palo · MAL Malagueño · RIN Rincón · TBJ Torrebermeja · TOR Torremolinos · RCM Real Club Mediterráneo · CAN El Candado · BAR Barbate · ALG Algeciras.</p>`;}
   }else if(v905F.view==='mar'&&v905F.liga==='FAR'){body='<p class="muted v905Note">Las actas de la FAR no traen el estado del mar. Esta vista solo existe para Jábega (ART).</p>'}
   else if(v905F.view==='mar'){
     const rg={};rows.forEach(r=>{const k=r.regata+'|'+r.fecha+'|'+r.distancia_m;if(!rg[k]||v905R(r)<v905R(rg[k]))rg[k]=r});
