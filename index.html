@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="932";
+const APP_VERSION="933";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6192,7 +6192,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // "CDR Pedregalejo · VET F - Llaut" en la ficha de Spond.
   const tcol=v502TeamColor(team);
   const extraT=ev.kind==='club_event'&&Array.isArray(ev.extra_team_codes)?ev.extra_team_codes:[];
-  const teamLine=team?`<p class="v512TeamLine">${[team,...extraT.filter(t=>t!==team)].map(t=>`<span class="v503Dot" style="background:${v502TeamColor(t).stripe}"></span>${esc(teamLabel(t))}`).join(' &nbsp;')}${Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?` · <span class="muted">${ev.invitee_ids.length} invitados</span>`:''}</p>`:'';
+  const teamLine=team?`<p class="v512TeamLine">${[team,...extraT.filter(t=>t!==team)].map(t=>`<span class="v503Dot" style="background:${v502TeamColor(t).stripe}"></span>${esc(teamLabel(t))}`).join(' &nbsp;')}${Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length?` · <span class="muted">${ev.kind==='competition'?roster.length:ev.invitee_ids.length} invitados</span>`:''}</p>`:'';
   // V512 · "Añadir organizador" como en Spond (sustituye al cuadro de "marcar la asistencia de otra
   // persona"): la persona añadida recibe un aviso y es ella quien acepta.
   const orgNames=orgIds.map(uid=>{const n=nameOf(uid);if(!n)return '';const removable=canEdit&&organizerIds&&organizerIds.includes(uid)&&String(uid)!==String(ev.created_by);return `<span class="v512OrgName">${esc(n)}${removable?` <button type="button" class="v512RemoveOrg" data-uid="${esc(uid)}" title="Quitar organizador">✕</button>`:''}</span>`}).filter(Boolean);
@@ -6727,7 +6727,8 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
     const seen2=await v588SyncViews(ev2.kind,ev2.id);statusByUser._seen=seen2;
     if(ev2.kind!=='session'&&Array.isArray(ev2.session_ids)&&ev2.session_ids.length){
       const ls=await sb.from('training_sessions').select('*').in('id',ev2.session_ids);
-      ev2._linkedSessions=(ls.data||[]).sort((a,b)=>String(a.session_type).localeCompare(String(b.session_type)));
+      // V933 · competición compartida por varios grupos: cada grupo solo ve SU entrenamiento vinculado
+      ev2._linkedSessions=(ls.data||[]).filter(s=>ev2.kind!=='competition'||!s.team_code||s.team_code===tc).sort((a,b)=>String(a.session_type).localeCompare(String(b.session_type)));
     }else ev2._linkedSessions=[];
     const activeTab=reuse?body.querySelector('.v493SumRow.active')?.dataset.key:null;
     if(canEdit){try{await v649AllStaff()}catch(e){}}
