@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="928";
+const APP_VERSION="930";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6380,16 +6380,22 @@ async function v928Invite(ev,team){
   if(cur.error||!cur.data){alert('No se pudo leer el evento.');return false}
   const pr=await sb.from('profiles').select('user_id,full_name,team_code').order('full_name');
   if(pr.error){alert('No se pudo cargar la lista de remeros.');return false}
-  const all=(pr.data||[]).filter(p=>p.user_id&&p.full_name);
+  const mm=await sb.from('rower_team_memberships').select('user_id,team_code');
+  const tmap=new Map();(mm.data||[]).forEach(r=>{const k=String(r.user_id);if(!tmap.has(k))tmap.set(k,[]);tmap.get(k).push(r.team_code)});
+  const all=(pr.data||[]).filter(p=>p.user_id&&p.full_name).map(p=>({...p,_teams:tmap.get(String(p.user_id))||(p.team_code?[p.team_code]:[])}));
   const invSet=Array.isArray(cur.data.invitee_ids)&&cur.data.invitee_ids.length?new Set(cur.data.invitee_ids.map(String)):null;
   const excl=new Set((cur.data.excluded_ids||[]).map(String));
-  const already=p=>!excl.has(String(p.user_id))&&(invSet?invSet.has(String(p.user_id)):teams.includes(p.team_code));
-  const cand=all.filter(p=>!already(p));
+  const already=p=>!excl.has(String(p.user_id))&&(invSet?invSet.has(String(p.user_id)):p._teams.some(t=>teams.includes(t)));
+  const rcol=ev.kind==='competition'?'competition_id':ev.kind==='club_event'?'club_event_id':'training_session_id';
+  const rr=await sb.from('session_rsvp').select('user_id').eq(rcol,ev.id);
+  const answered=new Set((rr.data||[]).map(r=>String(r.user_id)));
+  const pend=new Set(all.filter(p=>already(p)&&!answered.has(String(p.user_id))).map(p=>String(p.user_id)));
+  const cand=all.filter(p=>!already(p)||pend.has(String(p.user_id)));
   if(!cand.length){alert('Ya están invitados todos los remeros.');return false}
   const title=ev.event_title||ev.title||ev.name||'evento';
   return new Promise(resolve=>{
     const layer=document.createElement('div');layer.className='modalBack';layer.style.zIndex=99999;
-    layer.innerHTML=`<div class="modalCard" style="max-width:460px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">➕ Invitar a más remeros</h2></div><p class="muted"><small>Solo se avisará a quien elijas. Los que ya estaban invitados no reciben nada.</small></p><input type="search" id="v928S" placeholder="Buscar por nombre…" style="width:100%;margin-bottom:8px"><div id="v928L" style="max-height:300px;overflow:auto">${cand.map(p=>`<label class="v514Person" data-name="${esc(p.full_name.toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:6px 2px"><input type="checkbox" value="${esc(p.user_id)}"><span>${esc(p.full_name)} <small class="muted">· ${esc(teamLabel(p.team_code)||p.team_code||'')}</small></span></label>`).join('')}</div><div class="actions"><button type="button" class="primary" id="v928Ok">Invitar y avisar</button><button type="button" id="v928No">Cancelar</button></div></div>`;
+    layer.innerHTML=`<div class="modalCard" style="max-width:460px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">➕ Invitar a más remeros</h2></div><p class="muted"><small>Solo se avisará a quien elijas. Los que ya estaban invitados no reciben nada. Los marcados "ya invitado, sin responder" aparecen por si nunca les llegó el aviso.</small></p><input type="search" id="v928S" placeholder="Buscar por nombre…" style="width:100%;margin-bottom:8px"><div id="v928L" style="max-height:300px;overflow:auto">${cand.map(p=>`<label class="v514Person" data-name="${esc(p.full_name.toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:6px 2px"><input type="checkbox" value="${esc(p.user_id)}"><span>${esc(p.full_name)} <small class="muted">· ${esc(p._teams.map(t=>teamLabel(t)||t).join(', '))}${pend.has(String(p.user_id))?' · ya invitado, sin responder':''}</small></span></label>`).join('')}</div><div class="actions"><button type="button" class="primary" id="v928Ok">Invitar y avisar</button><button type="button" id="v928No">Cancelar</button></div></div>`;
     document.body.appendChild(layer);
     const q=layer.querySelector('#v928S');
     q.oninput=()=>{const t=q.value.trim().toLowerCase();layer.querySelectorAll('.v514Person').forEach(l=>l.style.display=!t||l.dataset.name.includes(t)?'flex':'none')};
@@ -6399,12 +6405,15 @@ async function v928Invite(ev,team){
       if(!ids.length){alert('Elige al menos a una persona.');return}
       const ok=layer.querySelector('#v928Ok');ok.disabled=true;ok.textContent='Invitando…';
       try{
-        const base=invSet?[...invSet]:all.filter(p=>teams.includes(p.team_code)&&!excl.has(String(p.user_id))).map(p=>String(p.user_id));
+        const base=invSet?[...invSet]:all.filter(p=>p._teams.some(t=>teams.includes(t))&&!excl.has(String(p.user_id))).map(p=>String(p.user_id));
         const full=[...new Set([...base,...ids])];
-        const patch={invitee_ids:full};
-        if(excl.size){const ne=[...excl].filter(x=>!ids.includes(x));patch.excluded_ids=ne.length?ne:null}
-        const u=await sb.from(table).update(patch).eq('id',ev.id);
-        if(u.error)throw u.error;
+        const fresh=ids.filter(i=>!pend.has(String(i)));
+        if(fresh.length){
+          const patch={invitee_ids:full};
+          if(excl.size){const ne=[...excl].filter(x=>!ids.includes(x));patch.excluded_ids=ne.length?ne:null}
+          const u=await sb.from(table).update(patch).eq('id',ev.id);
+          if(u.error)throw u.error;
+        }
         const date=ev.event_date||ev.session_date||'';
         try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:teams},title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,ev.event_time)}) en Row Training.`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_new',type:'training'})}catch(e){}
         if(typeof v540ClearCache==='function')v540ClearCache();
