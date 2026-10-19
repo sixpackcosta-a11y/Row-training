@@ -596,7 +596,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .v568Tools button{margin:0;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.78rem;font-weight:600;line-height:1.1;min-width:0;border-radius:12px}
 .v568Tools button span{font-size:1.15rem;line-height:1}
 .v568More{margin:2px 0 8px}.v568More>summary{font-size:.85rem;color:var(--muted,#64748b);cursor:pointer;padding:6px 2px;list-style:none}.v568More>summary::-webkit-details-marker{display:none}.v568More>summary::before{content:'⋯ ';font-weight:700}
-.v568MoreBody{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.v568MoreBody>*{margin:0;font-size:.8rem;padding:8px 4px;text-align:center}
+.v568MoreBody{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}.v568MoreBody>*{margin:0!important;font-size:.85rem!important;font-weight:500!important;line-height:1.2!important;min-height:40px;box-sizing:border-box;padding:8px 4px!important;display:flex!important;align-items:center;justify-content:center;text-align:center;font-family:inherit!important;cursor:pointer}
 .v567Btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.v567Btns button{margin:0;padding:9px 4px;font-size:.85em}
 .v567TrBox{margin-top:10px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line,rgba(0,0,0,.08))}
 .v567Item,.v567Opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.06))}.v567Item:last-child,.v567Opt:last-child{border-bottom:0}
@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="930";
+const APP_VERSION="932";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5575,6 +5575,16 @@ async function v516FetchInvitedClubEvents(range){
     return r.error?[]:(r.data||[]).map(v516MapClubEvent);
   }catch(e){return []}
 }
+// V932 · competiciones de otro grupo a las que me han invitado personalmente (van con el equipo de invitee_teams).
+async function v932FetchInvitedComps(range){
+  if(!currentUser)return [];
+  try{
+    const me=String(currentUser.id);
+    const start=range==='past'?addDaysISO(localISODate(),-183):addDaysISO(localISODate(),-7),end=range==='past'?addDaysISO(localISODate(),-1):addDaysISO(localISODate(),90);
+    const r=await sb.from('competitions').select('*').contains('invitee_ids',[me]).gte('competition_date',start).lte('competition_date',end);
+    return r.error?[]:(r.data||[]).filter(x=>!(x.team_codes||[]).includes(currentTeamCode)).map(x=>({...x,kind:'competition',event_date:x.competition_date,event_title:x.name||'Competición',_invitedOut:true,team_code:(x.invitee_teams||{})[me]||(x.team_codes||[])[0]}));
+  }catch(e){return []}
+}
 // V903 · entrenamientos convertidos en evento (MAR/GIM/ERGO) de otro grupo a los que me han invitado personalmente.
 async function v903FetchInvitedSessions(range){
   if(!currentUser)return [];
@@ -5667,8 +5677,10 @@ async function v516FullRoster(ev,viewTeam,cache){
   const lists=await Promise.all(teams.map(t=>v516RosterOf(t,cache)));
   let merged=v499MergeRoster(lists.flat(),[]);
   // V903 · invitados de otros grupos en un entrenamiento convertido en evento
-  if(ev.kind==='session'&&Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length){
-    const have=new Set(merged.map(p=>String(p.user_id))),miss=ev.invitee_ids.map(String).filter(id=>!have.has(id));
+  // V932 · competiciones: invitados de otro grupo (invitee_teams = {usuario: equipo con el que va})
+  if((ev.kind==='session'||ev.kind==='competition')&&Array.isArray(ev.invitee_ids)&&ev.invitee_ids.length){
+    const it=ev.invitee_teams||{};
+    const have=new Set(merged.map(p=>String(p.user_id))),miss=ev.invitee_ids.map(String).filter(id=>!have.has(id)&&(ev.kind==='session'||it[id]===main));
     if(miss.length){
       const key='v903:'+miss.slice().sort().join(',');
       if(!cache.has(key))cache.set(key,(async()=>{try{let pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',miss);return pr.data||[]}catch(e){return []}})());
@@ -5712,11 +5724,12 @@ async function v495RsvpStatusMapsForEvents(events,team){
   // otro equipo. Ahora se filtra siempre por el equipo que se está viendo, para que cada equipo
   // lleve su propia confirmación aunque compartan la misma competición.
   const invSessIds=events.filter(e=>e.kind==='session'&&e._invitedOut).map(e=>e.id);
-  const sessionIds=events.filter(e=>e.kind==='session'&&!e._invitedOut).map(e=>e.id),compIds=events.filter(e=>e.kind==='competition').map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
+  const sessionIds=events.filter(e=>e.kind==='session'&&!e._invitedOut).map(e=>e.id),compIds=events.filter(e=>e.kind==='competition'&&!e._invitedOut).map(e=>e.id),invCompIds=events.filter(e=>e.kind==='competition'&&e._invitedOut).map(e=>e.id),clubIds=events.filter(e=>e.kind==='club_event').map(e=>e.id),qs=[];
   const mkQs=nt=>{const qq=[];
   if(sessionIds.length)qq.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at'+nt).in('training_session_id',sessionIds).eq('team_code',team));
   if(compIds.length)qq.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at'+nt).in('competition_id',compIds).eq('team_code',team));
   // V903 · eventos de otro grupo a los que me han invitado: mi respuesta va con el equipo del evento.
+  if(invCompIds.length)qq.push(sb.from('session_rsvp').select('competition_id,user_id,status,responded_at'+nt).in('competition_id',invCompIds));
   if(invSessIds.length)qq.push(sb.from('session_rsvp').select('training_session_id,user_id,status,responded_at'+nt).in('training_session_id',invSessIds));
   // V516 · un evento propio puede incluir varios grupos: sus respuestas no se filtran por equipo.
   if(clubIds.length)qq.push(sb.from('session_rsvp').select('club_event_id,user_id,status,responded_at'+nt).in('club_event_id',clubIds));
@@ -6376,7 +6389,7 @@ function v527Dialog({title,html,okText,danger}){
 async function v928Invite(ev,team){
   const table=ev.kind==='competition'?'competitions':ev.kind==='club_event'?'club_events':'training_sessions';
   const teams=(ev.kind==='competition'?(ev.team_codes&&ev.team_codes.length?ev.team_codes:[team]):ev.kind==='club_event'?[ev.team_code||team,...(ev.extra_team_codes||[])]:[ev.team_code||team]).filter(Boolean);
-  const cur=await sb.from(table).select('invitee_ids,excluded_ids').eq('id',ev.id).maybeSingle();
+  const cur=await sb.from(table).select(ev.kind==='competition'?'invitee_ids,excluded_ids,invitee_teams':'invitee_ids,excluded_ids').eq('id',ev.id).maybeSingle();
   if(cur.error||!cur.data){alert('No se pudo leer el evento.');return false}
   const pr=await sb.from('profiles').select('user_id,full_name,team_code').order('full_name');
   if(pr.error){alert('No se pudo cargar la lista de remeros.');return false}
@@ -6410,6 +6423,7 @@ async function v928Invite(ev,team){
         const fresh=ids.filter(i=>!pend.has(String(i)));
         if(fresh.length){
           const patch={invitee_ids:full};
+          if(ev.kind==='competition'){const it={...(cur.data.invitee_teams||{})};fresh.forEach(i=>{const pp=all.find(p=>String(p.user_id)===String(i));if(!pp||!pp._teams.some(t=>teams.includes(t)))it[String(i)]=team});patch.invitee_teams=it}
           if(excl.size){const ne=[...excl].filter(x=>!ids.includes(x));patch.excluded_ids=ne.length?ne:null}
           const u=await sb.from(table).update(patch).eq('id',ev.id);
           if(u.error)throw u.error;
@@ -6959,7 +6973,7 @@ async function athleteEventsView(){
   const area=document.getElementById('eventsArea');
   if(!v533RowerSeesEvents(team)){area.innerHTML='<div class="info">Los eventos todavía no están disponibles.</div>';return}
   let events,invited;const cacheA=v538Cache();
-  try{[events,invited]=await Promise.all([v495FetchEvents(team,when),Promise.all([v516FetchInvitedClubEvents(when),v903FetchInvitedSessions(when)]).then(a=>a.flat()),v538PrefetchRosters([team],cacheA)]);events=v545FilterWhen(events);invited=v545FilterWhen(invited)}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
+  try{[events,invited]=await Promise.all([v495FetchEvents(team,when),Promise.all([v516FetchInvitedClubEvents(when),v903FetchInvitedSessions(when),v932FetchInvitedComps(when)]).then(a=>a.flat()),v538PrefetchRosters([team],cacheA)]);events=v545FilterWhen(events);invited=v545FilterWhen(invited)}catch(e){area.innerHTML=`<div class="info">${esc(e.message||'No se pudieron cargar los eventos.')}</div>`;return}
   // V516 · también los eventos de otros grupos a los que me han invitado personalmente.
   const ids=new Set(events.map(e=>e.kind+'_'+e.id));
   invited.forEach(ev=>{if(!ids.has(ev.kind+'_'+ev.id))events.push(ev)});
