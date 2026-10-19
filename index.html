@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="919";
+const APP_VERSION="921";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13082,7 +13082,7 @@ async function v905Load(){
   v905Rows=all;return all;
 }
 function v905Filter(){
-  return (v905Rows||[]).filter(r=>(r.liga||'ART')===v905F.liga&&r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.liga==='FAR'&&v905F.dist==='larga'?r.distancia_m>=3000:r.comparable_700)&&(v905F.mar==='all'||(r.mar_nivel!=null&&(v905F.mar==='le1'?r.mar_nivel<=1:r.mar_nivel===Number(v905F.mar)))));
+  return (v905Rows||[]).filter(r=>(r.liga||'ART')===v905F.liga&&r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.liga==='FAR'?(v905F.dist==='larga'?r.distancia_m>=3000:r.comparable_700):true)&&(v905F.mar==='all'||(r.mar_nivel!=null&&(v905F.mar==='le1'?r.mar_nivel<=1:r.mar_nivel===Number(v905F.mar)))));
 }
 function v905Html(){
   const rows=v905Filter();
@@ -13096,7 +13096,7 @@ function v905Html(){
   const catLb=(cats.find(c=>c[0]===v905F.cat)||[0,v905F.cat])[1];
   const marLb={'0':'mar en calma','1':'viento suave','2':'arreciando','3':'muy agitada',le1:'calma o suave'}[v905F.mar];
   const parts=[catLb,v905F.year!=='all'?v905F.year:null,v905F.tm==='hand'?'con handicap':'tiempo real',far&&v905F.dist==='larga'?'3000/4000 m':null,(!far&&marLb)?marLb:null,v905F.me==='ped'?'solo Pedregalejo':null,v905F.sort==='pace'?'por ritmo':null].filter(Boolean);
-  const panel=v905F.panel?`<div class="v905Bar">${sel('v905Cat',cats,v905F.cat).replace('<select','<select style="grid-column:span '+sp+'"')}${sel('v905Year',[['all','Todos los años'],['2026','2026'],['2025','2025'],['2024','2024']],v905F.year).replace('<select','<select style="grid-column:span '+sp+'"')}${far?'':sel('v905Mar',[['all','Todo mar'],['0','Mar en calma'],['1','Viento suave'],['2','Arreciando'],['3','Muy agitada'],['le1','Calma o suave']],v905F.mar).replace('<select','<select style="grid-column:span 2"')}${seg('tm',[['real','Tiempo real'],['hand','Con handicap']],v905F.tm,3)}${seg('me',[['all','Todos'],['ped','Pedregalejo']],v905F.me,3)}${seg('dist',far?[['normal','700 / 1400 m'],['larga','3000 / 4000 m']]:[['normal','700 / 1400 m']],v905F.dist,6)}${seg('sort',[['date','Por fecha'],['pace','Por ritmo']],v905F.sort,6)}</div>`:'';
+  const panel=v905F.panel?`<div class="v905Bar">${sel('v905Cat',cats,v905F.cat).replace('<select','<select style="grid-column:span '+sp+'"')}${sel('v905Year',[['all','Todos los años'],['2026','2026'],['2025','2025'],['2024','2024']],v905F.year).replace('<select','<select style="grid-column:span '+sp+'"')}${far?'':sel('v905Mar',[['all','Todo mar'],['0','Mar en calma'],['1','Viento suave'],['2','Arreciando'],['3','Muy agitada'],['le1','Calma o suave']],v905F.mar).replace('<select','<select style="grid-column:span 2"')}${seg('tm',[['real','Tiempo real'],['hand','Con handicap']],v905F.tm,3)}${seg('me',[['all','Todos'],['ped','Pedregalejo']],v905F.me,3)}${far?seg('dist',[['normal','700 / 1400 m'],['larga','3000 / 4000 m']],v905F.dist,6):''}${seg('sort',[['date','Por fecha'],['pace','Por ritmo']],v905F.sort,6)}</div>`:'';
   const bar=`<div class="v905Bar">${seg('liga',[['ART','Jábega'],['FAR','Llaut']],v905F.liga,3)}<button type="button" id="v905Sh" class="v905Fb" style="grid-column:span 1" aria-label="Compartir o descargar">📤</button><button type="button" id="v905Fb" class="v905Fb${v905F.panel?' on':''}" style="grid-column:span 2">Filtros${nAct?` <span class="v905Badge">${nAct}</span>`:''}</button></div><div class="v905Sum"><span>${esc(parts.join(' · '))}</span>${nAct?'<b id="v905Rs" title="Quitar filtros">✕</b>':''}</div>${panel}`;
   let body='';
   if(!rows.length)body='<p class="muted">Sin datos para este filtro.</p>';
