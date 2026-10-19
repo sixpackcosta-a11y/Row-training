@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="935";
+const APP_VERSION="937";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4717,7 +4717,7 @@ function render(){
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
-    if(tab==="regatas"&&hasAnyCoachTeam())return v905RegattaView();if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam()&&v534EventsUI())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasAnyCoachTeam())return coachMessagesView();return staffTodayView();
+    if(tab==="regatas"&&hasStaffMode())return v905RegattaView(); /* V937 · también ayudantes */if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam()&&v534EventsUI())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasAnyCoachTeam())return coachMessagesView();return staffTodayView();
   }
   if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="eventos"){if(!v533RowerSeesEvents(currentTeamCode)){tab="hist";draw();return history()}athleteEventsView()}else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
 }
@@ -13166,7 +13166,7 @@ function v762FindLatestTest(userId,sessions,c2rows,ergo,workouts){
 function v766DateHtml(iso){const t=String(iso||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(t))return '<div class="v766D"><b>–</b><span></span></div>';const dt=new Date(t+'T12:00:00');return `<div class="v766D"><b>${dt.getDate()}</b><span>${esc(new Intl.DateTimeFormat('es-ES',{month:'short'}).format(dt).replace('.',''))}</span></div>`}
 function v766StateHtml(st){const M={assigned:['ok','Asignado'],additional:['ad','Adicional'],unassigned:['pe','Sin asignar'],hidden:['ad','Oculta'],pending:['re','Pendiente']};const x=M[st]||M.unassigned;return `<div class="v766S"><i class="v766Dot ${x[0]}"></i>${x[1]}</div>`}
 function v766RowHead(iso,title,sub,st){return `${v766DateHtml(iso)}<div class="v766M"><p class="a">${title}</p>${sub?`<p class="b">${sub}</p>`:''}</div>${v766StateHtml(st)}`}
-/* V905 · Archivo de regatas (solo entrenadores): ritmo /500 por regata y por club, desde archivo_regatas_art_ritmo */
+/* V905 · Archivo de regatas (entrenadores y ayudantes, V937): ritmo /500 por regata y por club, desde archivo_regatas_art_ritmo */
 var v905Rows=null,v905Open={},v905F={year:'all',cat:'VET MASC',view:'best',all:false,mar:'all',liga:'ART',sort:'date',tm:'real',dist:'normal',me:'all',panel:false,unit:'p'}
 function v905R(r){return v905F.tm==='hand'&&r.ritmo_hand_500_s!=null?Number(r.ritmo_hand_500_s):Number(r.ritmo_500_s)};
 function v905Kmh(s){return (s>0&&!isNaN(s))?(1800/Number(s)).toFixed(2).replace('.',','):'–'}
@@ -13221,7 +13221,7 @@ function v905Html(){
       const g=by[k].slice().sort((a,b)=>v905R(a)-v905R(b)),b0=g[0],pi=v905F.me==='ped'?g.findIndex(isMe):0,b=g[Math.max(pi,0)],dt=v905Date(b.fecha),open=!!v905Open[k];
       const name=b.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'');
       const fl={final:'Final',semifinal:'Semifinales',eliminatoria:'Eliminatorias',series:'Series'};const nameF=name+(multi(b)?' · '+(fl[b.fase]||b.fase):'');
-      const sub=v905F.me==='ped'?`Puesto ${pi+1}º de ${g.length}${pi>0?' · a '+((v905R(b)-v905R(b0))*b.distancia_m/500).toFixed(1)+' s de '+v905Ab(v905Cl(b0))+' ('+v905U(v905R(b0))+')':(g[1]?' · gana por '+((v905R(g[1])-v905R(b))*b.distancia_m/500).toFixed(1)+' s a '+v905Ab(v905Cl(g[1]))+' ('+v905U(v905R(g[1]))+')':'')} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''}`:`Mejor: ${v905Ab(v905Cl(b))} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''} · ${g.length} eq.`;
+      const sub=v905F.me==='ped'?`Puesto ${pi+1}º de ${g.length}${pi>0?' · a '+((v905R(b)-v905R(b0))*b.distancia_m/500).toFixed(1)+' s de '+v905Ab(v905Cl(b0))+' ('+v905U(v905R(b0))+')':(g[1]?' · gana por '+((v905R(g[1])-v905R(b))*b.distancia_m/500).toFixed(1)+' s a '+v905Ab(v905Cl(g[1]))+' ('+v905U(v905R(g[1]))+')':'')} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''}`:`Mejor: ${v905Ab(v905Cl(b))}${(()=>{const q=g.findIndex(isMe);if(q<0)return '';const pr=g[q];return q===0?' · PED 1º'+(g[1]?' por '+((v905R(g[1])-v905R(pr))*pr.distancia_m/500).toFixed(1)+' s':''):' · PED '+(q+1)+'º a '+((v905R(pr)-v905R(b0))*pr.distancia_m/500).toFixed(1)+' s ('+v905U(v905R(pr))+')'})()} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''} · ${g.length} eq.`;
       let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span><span class="v503Month">${String(b.fecha).slice(0,4)}</span></div><div class="v503Info"><div class="v905T">${esc(nameF)}</div><div class="v905Sub">${esc(sub)}</div></div><div class="v905Val${k===bestKey?' best':''}">${(v905F.unit||'p')==='k'?v905Kmh(v905R(b))+'<small>km/h</small>':v905Pace(v905R(b))+'<small>/500'+((v905F.unit||'p')==='b'?' · '+v905Kmh(v905R(b))+' km/h':'')+'</small>'}</div></div>`;
       if(open)h+=`<div class="v905Detail"><div class="v905Line v905Hd"><span class="v905Pos"></span><span class="v905Nm">Equipo</span><span class="v905Rt">${({p:'Ritmo /500',k:'km/h',b:'/500 · km/h'})[v905F.unit||'p']}</span><span class="v905Pc">vs. 1º</span></div>`+g.map((r,i)=>`<div class="v905Line${/pedregalejo/i.test(r.equipo)?' me':''}"><span class="v905Pos">${i+1}</span><span class="v905Nm">${esc(r.equipo)}</span><span class="v905Rt">${v905U(v905R(r))}</span><span class="v905Pc">${i===0?'':'+'+(v905R(r)-v905R(b0)).toFixed(1)+' s'}</span></div>`).join('')+`</div>`;
       return h}).join('')+`</div><p class="muted v905Note">Siglas: TDM Torre del Mar · CAL La Cala · PED Pedregalejo · CAR Carihuela · ARA La Araña · IES El Palo · MAL Malagueño · RIN Rincón · TBJ Torrebermeja · TOR Torremolinos · RCM Real Club Mediterráneo · CAN El Candado · BAR Barbate · ALG Algeciras.</p>`;}
