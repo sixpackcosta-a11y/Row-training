@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="934";
+const APP_VERSION="935";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13249,23 +13249,44 @@ async function v905Export(){
   if(!rows.length){try{v300ShowToast('No hay regatas que compartir')}catch(_){}return}
   const far=v905F.liga==='FAR',lbl=far?'Llaut':'Jábega';
   const sum=(content.querySelector('.v905Sum span')?.textContent||'').trim();
-  const W=900,rowH=84,bannerH=96,subH=64,foot=40,H=bannerH+subH+rows.length*rowH+foot;
+  const W=900,rowH=104,bannerH=96,subH=60,foot=44,H=bannerH+subH+rows.length*rowH+foot;
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
   const F=(w,sz)=>`${w} ${sz}px -apple-system,Segoe UI,Roboto,Arial,sans-serif`;
+  const U=v905F.unit||'p';
   c.fillStyle='#fff';c.fillRect(0,0,W,H);
   c.fillStyle='#0b1b35';c.fillRect(0,0,W,bannerH);
   c.fillStyle='#fff';c.font=F(700,30);c.fillText('Archivo de regatas · '+lbl,28,46);
-  c.fillStyle='#9fb3d1';c.font=F(400,17);c.fillText(({p:'Ritmo cada 500 m',k:'Velocidad media (km/h)',b:'Ritmo /500 m y km/h'})[v905F.unit||'p']+(v905F.tm==='hand'?' con handicap':', tiempo real'),28,76);
-  c.fillStyle='#1e3a8a';c.font=F(500,18);
-  const fit=(t,max)=>{while(t.length>3&&c.measureText(t).width>max)t=t.slice(0,-2);return t};
-  c.fillText(fit(sum,W-56)+((sum&&c.measureText(sum).width>W-56)?'…':''),28,bannerH+38);
-  const cut=(t,max,ctx)=>{if(ctx.measureText(t).width<=max)return t;while(t.length>3&&ctx.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'};
+  c.fillStyle='#9fb3d1';c.font=F(400,17);c.fillText(({p:'Ritmo cada 500 m',k:'Velocidad media (km/h)',b:'Ritmo cada 500 m y velocidad media'})[U]+(v905F.tm==='hand'?' · con handicap':' · tiempo real'),28,76);
+  const cut=(t,max)=>{if(c.measureText(t).width<=max)return t;while(t.length>3&&c.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'};
+  c.fillStyle='#1e3a8a';c.font=F(500,18);c.fillText(cut(sum,W-56),28,bannerH+36);
+  const kmh=v=>{const m=String(v).match(/^(\d+):(\d+(?:\.\d+)?)$/);return m?(1800/(+m[1]*60+parseFloat(m[2]))).toFixed(2).replace('.',','):''};
+  const X0=28,XT=150,XV=W-28,VW=210,TW=XV-VW-XT-16;
   rows.forEach((r,i)=>{const y=bannerH+subH+i*rowH;
-    if(i%2)  {c.fillStyle='#f6f9fc';c.fillRect(0,y,W,rowH)}
-    c.fillStyle='#64748b';c.font=F(700,17);c.textAlign='left';c.fillText(r.d.trim(),28,y+36);
-    c.fillStyle='#0b1b35';c.font=F(700,23);c.fillText(cut(r.t,W-340,c),190,y+36);
-    c.fillStyle='#64748b';c.font=F(400,16);c.fillText(cut(r.s,W-340,c),190,y+62);
-    c.fillStyle=r.best?'#2563eb':'#0b1b35';c.font=F(700,28);c.textAlign='right';c.fillText((v905F.unit||'p')==='k'?r.v+' km/h':(v905F.unit||'p')==='b'?r.v+' /500 · '+(r.v.includes(':')?(1800/((+r.v.split(':')[0])*60+parseFloat(r.v.split(':')[1]))).toFixed(2).replace('.',','):'')+' km/h':r.v+' /500',W-28,y+48);c.textAlign='left'});
+    c.fillStyle='#e2e8f0';c.fillRect(X0,y,W-2*X0,1);
+    if(r.best){c.fillStyle='#eff6ff';c.fillRect(0,y+1,W,rowH-1);c.fillStyle='#2563eb';c.fillRect(0,y+1,5,rowH-1)}
+    // fecha: día grande, mes y año debajo
+    const dp=r.d.trim().split(/\s+/),mon=dp[0]||'',day=dp[1]||'',yr=dp[2]||'';
+    c.textAlign='left';c.fillStyle='#0b1b35';c.font=F(800,34);c.fillText(day,X0,y+50);
+    c.fillStyle='#64748b';c.font=F(700,14);c.fillText((mon+' '+yr).toUpperCase(),X0,y+74);
+    // texto: título, puesto/diferencia, distancia/mar
+    const parts=r.s.split(' · ');let pos='',rest=parts;
+    const pm=(parts[0]||'').match(/^Puesto (\d+)º de (\d+)/);if(pm){pos=pm[1]+'º de '+pm[2];rest=parts.slice(1)}
+    const di=rest.findIndex(x=>/^\d+ m$/.test(x));
+    const l2=(di>0?rest.slice(0,di):di===0?[]:rest).join(' · '),l3=(di>=0?rest.slice(di):[]).join(' · ');
+    c.fillStyle='#0b1b35';c.font=F(700,23);c.fillText(cut(r.t,TW),XT,y+36);
+    let x2=XT;
+    if(pos){c.font=F(700,14);const pw=c.measureText(pos).width+18,top=+pm[1]<=3;c.fillStyle=top?'#dcfce7':'#e2e8f0';c.beginPath();if(c.roundRect)c.roundRect(XT,y+46,pw,24,12);else c.rect(XT,y+46,pw,24);c.fill();c.fillStyle=top?'#166534':'#334155';c.fillText(pos,XT+9,y+63);x2=XT+pw+10}
+    c.fillStyle='#334155';c.font=F(500,15);c.fillText(cut(l2,TW-(x2-XT)),x2,y+63);
+    c.fillStyle='#94a3b8';c.font=F(400,14);c.fillText(cut(l3,TW),XT,y+88);
+    // valor a la derecha: principal grande y secundario debajo
+    c.textAlign='right';
+    const main=U==='k'?r.v:r.v,mainU=U==='k'?' km/h':' /500',sec=U==='b'?kmh(r.v)+' km/h':'';
+    c.font=F(800,30);const mw=c.measureText(main).width;c.font=F(600,15);const uw=c.measureText(mainU).width;
+    c.fillStyle=r.best?'#2563eb':'#94a3b8';c.fillText(mainU,XV,y+48);
+    c.fillStyle=r.best?'#2563eb':'#0b1b35';c.font=F(800,30);c.fillText(main,XV-uw,y+48);
+    if(sec){c.fillStyle=r.best?'#3b82f6':'#64748b';c.font=F(600,17);c.fillText(sec,XV,y+76)}
+    c.textAlign='left'});
+  c.fillStyle='#e2e8f0';c.fillRect(X0,bannerH+subH+rows.length*rowH,W-2*X0,1);
   c.fillStyle='#94a3b8';c.font=F(400,14);c.fillText('Generado el '+new Date().toLocaleDateString('es-ES')+' · Row Training',28,H-14);
   const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
   if(!blob){try{v300ShowToast('No se pudo generar la imagen')}catch(_){}return}
