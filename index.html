@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="922";
+const APP_VERSION="924";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13082,7 +13082,8 @@ async function v905Load(){
   v905Rows=all;return all;
 }
 function v905Filter(){
-  return (v905Rows||[]).filter(r=>(r.liga||'ART')===v905F.liga&&r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.liga==='FAR'?(v905F.dist==='larga'?r.distancia_m>=3000:r.comparable_700):true)&&(v905F.mar==='all'||(r.mar_nivel!=null&&(v905F.mar==='le1'?r.mar_nivel<=1:r.mar_nivel===Number(v905F.mar)))));
+  const L=(v905Rows||[]).filter(r=>(r.liga||'ART')===v905F.liga&&r.categoria===v905F.cat&&(v905F.year==='all'||String(r.fecha).slice(0,4)===v905F.year)&&(v905F.liga==='FAR'?(v905F.dist==='larga'?r.distancia_m>=3000:r.comparable_700):true)&&(v905F.mar==='all'||(r.mar_nivel!=null&&(v905F.mar==='le1'?r.mar_nivel<=1:r.mar_nivel===Number(v905F.mar)))));
+  return L;
 }
 function v905Html(){
   const rows=v905Filter();
@@ -13101,7 +13102,9 @@ function v905Html(){
   let body='';
   if(!rows.length)body='<p class="muted">Sin datos para este filtro.</p>';
   else if(true){v905F.view='best';
-    const by={};rows.forEach(r=>{(by[r.regata+'|'+r.fecha+'|'+r.distancia_m]=by[r.regata+'|'+r.fecha+'|'+r.distancia_m]||[]).push(r)});
+    const fs0={};rows.forEach(r=>{(fs0[r.regata+'|'+r.fecha]=fs0[r.regata+'|'+r.fecha]||new Set()).add(r.fase)});
+    const multi=r=>fs0[r.regata+'|'+r.fecha].size>1;
+    const by={};rows.forEach(r=>{const k=r.regata+'|'+r.fecha+'|'+r.distancia_m+(multi(r)?'|'+r.fase:'');(by[k]=by[k]||[]).push(r)});
     const bp=k=>Math.min(...by[k].map(r=>v905R(r)));
     const isMe=r=>/pedregalejo/i.test((r.equipo||'')+' '+(r.club||''));
     if(v905F.me==='ped')Object.keys(by).forEach(k=>{if(!by[k].some(isMe))delete by[k]});
@@ -13111,8 +13114,9 @@ function v905Html(){
     body=`<p class="muted v905Note">${v905F.me==='ped'?'Solo las regatas en las que corrió Pedregalejo: puesto que quedó (por ritmo) y su ritmo. Toca una regata para ver la clasificación completa.':'Cada regata muestra el equipo más rápido (siglas abajo); en azul, la más rápida de la lista. Toca una regata para ver todos los equipos.'}</p><div class="v766List">`+keys.map(k=>{
       const g=by[k].slice().sort((a,b)=>v905R(a)-v905R(b)),b0=g[0],pi=v905F.me==='ped'?g.findIndex(isMe):0,b=g[Math.max(pi,0)],dt=v905Date(b.fecha),open=!!v905Open[k];
       const name=b.regata.replace(/^G\.P\.\s*/,'').replace(/\s+\d{4}$/,'');
+      const fl={final:'Final',semifinal:'Semifinales',eliminatoria:'Eliminatorias',series:'Series'};const nameF=name+(multi(b)?' · '+(fl[b.fase]||b.fase):'');
       const sub=v905F.me==='ped'?`Puesto ${pi+1}º de ${g.length}${pi>0?' · a '+((v905R(b)-v905R(b0))*b.distancia_m/500).toFixed(1)+' s de '+v905Ab(v905Cl(b0))+' ('+v905Pace(v905R(b0))+')':(g[1]?' · gana por '+((v905R(g[1])-v905R(b))*b.distancia_m/500).toFixed(1)+' s a '+v905Ab(v905Cl(g[1]))+' ('+v905Pace(v905R(g[1]))+')':'')} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''}`:`Mejor: ${v905Ab(v905Cl(b))} · ${b.distancia_m} m · ${(b.liga==='FAR'?'llaut':(b.mar_estado||'mar sin dato'))}${v905F.tm==='hand'&&!b.hand_aplicado?' · sin handicap':''} · ${g.length} eq.`;
-      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span><span class="v503Month">${String(b.fecha).slice(0,4)}</span></div><div class="v503Info"><div class="v905T">${esc(name)}</div><div class="v905Sub">${esc(sub)}</div></div><div class="v905Val${k===bestKey?' best':''}">${v905Pace(v905R(b))}<small>/500</small></div></div>`;
+      let h=`<div class="v503EventRow v905Row" data-k="${esc(k)}"><div class="v503DateBlock"><span class="v503Month">${dt.m}</span><span class="v503Day">${dt.d}</span><span class="v503Month">${String(b.fecha).slice(0,4)}</span></div><div class="v503Info"><div class="v905T">${esc(nameF)}</div><div class="v905Sub">${esc(sub)}</div></div><div class="v905Val${k===bestKey?' best':''}">${v905Pace(v905R(b))}<small>/500</small></div></div>`;
       if(open)h+=`<div class="v905Detail"><div class="v905Line v905Hd"><span class="v905Pos"></span><span class="v905Nm">Equipo</span><span class="v905Rt">Ritmo /500</span><span class="v905Pc">vs. 1º</span></div>`+g.map((r,i)=>`<div class="v905Line${/pedregalejo/i.test(r.equipo)?' me':''}"><span class="v905Pos">${i+1}</span><span class="v905Nm">${esc(r.equipo)}</span><span class="v905Rt">${v905Pace(v905R(r))}</span><span class="v905Pc">${i===0?'':'+'+(v905R(r)-v905R(b0)).toFixed(1)+' s'}</span></div>`).join('')+`</div>`;
       return h}).join('')+`</div><p class="muted v905Note">Siglas: TDM Torre del Mar · CAL La Cala · PED Pedregalejo · CAR Carihuela · ARA La Araña · IES El Palo · MAL Malagueño · RIN Rincón · TBJ Torrebermeja · TOR Torremolinos · RCM Real Club Mediterráneo · CAN El Candado · BAR Barbate · ALG Algeciras.</p>`;}
   }else if(v905F.view==='mar'&&v905F.liga==='FAR'){body='<p class="muted v905Note">Las actas de la FAR no traen el estado del mar. Esta vista solo existe para Jábega (ART).</p>'}
