@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="924";
+const APP_VERSION="926";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5360,7 +5360,7 @@ function v495WireRsvpButtons(root,afterChange){
   root.querySelectorAll('.v493RsvpBtn').forEach(b=>b.onclick=async()=>{
     if(!currentUser)return;
     const row=b.closest('.v493RsvpRow'),eventId=Number(row.dataset.id),kind=row.dataset.kind||'session',teamCode=row.dataset.team,status=b.dataset.status;
-    let declineReason='';
+    let declineReason='';const wasActive=b.classList.contains('active');
     if(status==='out'&&!b.classList.contains('active')){const dd=await v610DeclineDialog();if(!dd)return;declineReason=dd.reason||''}
     row.querySelectorAll('.v493RsvpBtn').forEach(x=>x.disabled=true);
     try{
@@ -5375,7 +5375,7 @@ function v495WireRsvpButtons(root,afterChange){
       const st=row.querySelector('.v493RsvpStatus');if(st)st.textContent=real==='in'?'Has confirmado que vas':real==='waitlist'?'Estás en la lista de espera. Si queda una plaza libre te avisaremos.':'Has avisado de que no vas';
       if(real==='waitlist'&&status==='in')v300ShowToast('El evento está completo: has quedado en lista de espera');
       row.dispatchEvent(new CustomEvent('v495rsvp',{bubbles:true,detail:{eventId,kind,status:real}}));
-      v530NotifyOrganizersRsvp(kind,eventId,teamCode,real,declineReason);
+      if(!wasActive)v530NotifyOrganizersRsvp(kind,eventId,teamCode,real,declineReason); /* v926: si pulsa otra vez la misma respuesta, no se vuelve a avisar */
       if(real==='out')v598Promote(kind,eventId,teamCode);
       // V500 · el botón se actualiza al instante (líneas de arriba), pero el panel de
       // "Confirmaciones" (quién va/no va/falta) de la misma tarjeta se había quedado con los datos
@@ -6390,8 +6390,18 @@ async function v527Cancel(ev,team,reactivate=false){
 }
 async function v527Delete(ev,team){
   const name=ev.event_title||'el evento',isSess=ev.kind==='session';
-  const d=await v527Dialog({title:(isSess?'Eliminar entrenamiento: ':'Eliminar ')+name,danger:true,okText:'Eliminar',html:`<p class="muted">${isSess?'Se borra el entrenamiento de la planificación (contenido incluido), con sus confirmaciones y su chat. No se puede deshacer. Si solo no se va a hacer, mejor <b>Cancelar</b>.':'Se borra el evento con sus confirmaciones y su chat. No se puede deshacer.'}</p><label class="inlineCheck"><input type="checkbox" data-f="notify"> <span>Avisar a los invitados de que se ha eliminado</span></label>`});
+  /* competición compartida por varios equipos: por defecto se quita SOLO de este equipo (antes se borraba para todos, con sus respuestas) */
+  const multi=ev.kind==='competition'&&Array.isArray(ev.team_codes)&&ev.team_codes.length>1&&team&&ev.team_codes.includes(team);
+  const others=multi?ev.team_codes.filter(t=>t!==team):[];
+  const d=await v527Dialog({title:(isSess?'Eliminar entrenamiento: ':'Eliminar ')+name,danger:true,okText:multi?'Quitar':'Eliminar',html:multi?`<p>Este evento es de <b>varios equipos</b>: ${esc(ev.team_codes.map(teamShort).join(', '))}.</p><p class="muted">Se quita solo de <b>${esc(teamShort(team))}</b>, con las respuestas de ese equipo. ${esc(others.map(teamShort).join(', '))} lo seguirán viendo, con sus respuestas.</p><label class="inlineCheck"><input type="checkbox" data-f="all"> <span>Eliminarlo también para ${esc(others.map(teamShort).join(', '))} (con todas sus respuestas, no se puede deshacer)</span></label><label class="inlineCheck"><input type="checkbox" data-f="notify"> <span>Avisar a los invitados de ${esc(teamShort(team))}</span></label>`:`<p class="muted">${isSess?'Se borra el entrenamiento de la planificación (contenido incluido), con sus confirmaciones y su chat. No se puede deshacer. Si solo no se va a hacer, mejor <b>Cancelar</b>.':'Se borra el evento con sus confirmaciones y su chat. No se puede deshacer.'}</p><label class="inlineCheck"><input type="checkbox" data-f="notify"> <span>Avisar a los invitados de que se ha eliminado</span></label>`});
   if(!d)return false;
+  if(multi&&!d.all){
+    const u=await sb.from('competitions').update({team_codes:others}).eq('id',ev.id);
+    if(u.error){alert(u.error.message);return false}
+    try{await sb.from('session_rsvp').delete().eq('competition_id',ev.id).eq('team_code',team)}catch(e){}
+    if(d.notify){try{await sendNotificationV110({audience:{mode:'teams',team_codes:[team]},title:'🗑️ Eliminado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} ya no está en el calendario.`,url:'/?tab=eventos',category:'event_change',type:'training'})}catch(e){}}
+    return true;
+  }
   const q=await sb.from(V498_TABLE_BY_KIND[ev.kind]).delete().eq('id',ev.id);
   if(q.error){alert(q.error.message);return false}
   if(d.notify){try{await sendNotificationV110({audience:v527Audience(ev,team),title:'🗑️ Eliminado: '+name,body:`${v512DetailDateLabel(ev.event_date,ev.event_time)} ya no está en el calendario.`,url:'/?tab=eventos',category:'event_change',type:'training'})}catch(e){}}
@@ -12458,7 +12468,9 @@ async function renderPlanDay(){
  document.querySelectorAll('.moveSess').forEach(b=>b.onclick=()=>moveSessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.dupSess').forEach(b=>b.onclick=async()=>{const src=data.sessions.find(x=>String(x.id)===b.dataset.id);if(!src)return;const d=prompt('Fecha para la copia (AAAA-MM-DD)',addDaysISO(date,1));if(!d)return;const q=await sb.from('training_sessions').insert({team_code:team,session_date:d,session_type:src.session_type,title:src.title+' · copia',content:src.content,created_by:currentUser.id,...(sessionTargetsV249(src).length?{target_user_ids:sessionTargetsV249(src)}:{})});if(q.error)return alert(q.error.message);renderPlanDay()});
  document.querySelectorAll('.delSess').forEach(b=>b.onclick=async()=>{const sx=data.sessions.find(x=>String(x.id)===b.dataset.id);if(confirm('¿Eliminar esta sesión futura?')){const q=await sb.from('training_sessions').delete().eq('id',b.dataset.id);if(q.error)return alert(q.error.message);if(sx&&confirm('Sesión eliminada. ¿Quieres avisar a los remeros?'))await notifyTeamChangeV110(team,'Entrenamiento cancelado',`${shortDateES(date)} · ${sx.title||sx.session_type}`,'/');renderPlanDay()}});
- document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
+ document.querySelectorAll('.delRace').forEach(b=>b.onclick=async()=>{const c0=(data.competitions||[]).find(x=>String(x.id)===b.dataset.id),tc=(c0&&c0.team_codes)||[];
+   if(tc.length>1&&tc.includes(team)){if(confirm('Esta competición es de varios equipos ('+tc.map(teamShort).join(', ')+'). ¿Quitarla SOLO de '+teamShort(team)+'? Los demás equipos la mantienen con sus respuestas.')){const u=await sb.from('competitions').update({team_codes:tc.filter(t=>t!==team)}).eq('id',b.dataset.id);if(u.error)return alert(u.error.message);try{await sb.from('session_rsvp').delete().eq('competition_id',b.dataset.id).eq('team_code',team)}catch(e){}renderPlanDay()}return}
+   if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
  if(v534EventsUI())v531DayEventBar(data.sessions||[],team,date);
  try{v869AddShare()}catch(e){}
