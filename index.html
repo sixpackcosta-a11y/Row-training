@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="926";
+const APP_VERSION="927";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3901,12 +3901,37 @@ window.addEventListener('v561fresh',e=>{
 });
 // V570 · Papelera: todo entrenamiento que se borra se guarda 60 días en training_sessions_trash
 // (lo hace la base de datos sola, ver 42_papelera_sesiones.sql) y desde aquí se puede restaurar.
+// V927 · Papelera de competiciones y eventos del club (tabla events_trash; la llena la base de datos al borrar)
+async function v927EventTrash(layer,list,after){
+  const box=document.createElement('div');box.id='v927EvTrash';box.style.cssText='margin-top:14px';
+  list.parentNode.insertBefore(box,list.nextSibling);
+  const r=await sb.from('events_trash').select('id,kind,event_id,team_codes,title,event_date,deleted_at,data,rsvps,chat').order('deleted_at',{ascending:false}).limit(60);
+  if(r.error||!(r.data||[]).length){box.remove();return}
+  const cut=Date.now()-60*864e5;
+  const rows=r.data.filter(x=>new Date(x.deleted_at).getTime()>cut);
+  if(!rows.length){box.remove();return}
+  box.innerHTML='<h3 style="margin:0 0 6px;font-size:1rem">Competiciones y eventos borrados</h3>'+rows.map(x=>`<div class="v570Row"><div><b>${x.kind==='competition'?'🏁':'📅'} ${esc(x.title||'Sin título')}</b><br><small class="muted">${esc((x.team_codes||[]).map(c=>teamLabel(c)||c).join(', '))} · ${esc(x.event_date||'')} · ${(x.rsvps||[]).length} respuestas · borrado ${esc(String(x.deleted_at).slice(0,10))}</small></div><button class="btn small" data-ev="${x.id}">Restaurar</button></div>`).join('');
+  box.querySelectorAll('button[data-ev]').forEach(b=>b.onclick=async()=>{
+    const x=rows.find(y=>String(y.id)===b.dataset.ev);if(!x)return;
+    b.disabled=true;b.textContent='Restaurando…';
+    const tbl=x.kind==='competition'?'competitions':'club_events';
+    const fail=m=>{alert('No se pudo restaurar: '+m);b.disabled=false;b.textContent='Restaurar'};
+    let q=await sb.from(tbl).insert(x.data);if(q.error)return fail(q.error.message);
+    if((x.rsvps||[]).length){q=await sb.from('session_rsvp').upsert(x.rsvps,{onConflict:'id',ignoreDuplicates:true});if(q.error)return fail('respuestas: '+q.error.message)}
+    if((x.chat||[]).length){q=await sb.from('event_chat_messages').upsert(x.chat,{onConflict:'id',ignoreDuplicates:true});if(q.error)console.warn('chat',q.error)}
+    await sb.from('events_trash').delete().eq('id',x.id);
+    if(typeof v540ClearCache==='function')v540ClearCache();
+    b.closest('.v570Row').remove();
+    if(after)after();
+  });
+}
 async function v570OpenTrash(after){
   const layer=document.createElement('div');layer.className='modalBack';
   layer.innerHTML=`<div class="modalCard v570Trash" style="max-width:560px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">🗑️ Papelera</h2></div><p class="muted"><small>Entrenamientos borrados en los últimos 60 días. "Restaurar" los devuelve a la planificación tal cual estaban.</small></p><div id="v570List"><p class="muted">Cargando…</p></div><div class="actions"><button type="button" id="v570Close">Cerrar</button></div></div>`;
   document.body.appendChild(layer);
   layer.querySelector('#v570Close').onclick=()=>layer.remove();layer.onclick=e=>{if(e.target===layer)layer.remove()};
   const list=layer.querySelector('#v570List');
+  try{v927EventTrash(layer,list,after)}catch(_){}
   const r=await sb.from('training_sessions_trash').select('id,team_code,session_date,session_type,title,deleted_at').order('deleted_at',{ascending:false}).limit(150);
   if(r.error){list.innerHTML=`<div class="info">${/training_sessions_trash|does not exist|schema cache/.test(r.error.message||'')?'Falta ejecutar <b>42_papelera_sesiones.sql</b> en Supabase. A partir de entonces, todo lo que se borre se podrá recuperar aquí.':esc(r.error.message)}</div>`;return}
   const rows=r.data||[];
