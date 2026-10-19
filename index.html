@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="927";
+const APP_VERSION="928";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6027,7 +6027,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         others.forEach(o=>v499ApplyDefaultSubstitute(t0,'session',o.id));v499ApplyDefaultSubstitute(t0,'session',existing.id);
         const later=base.rsvp_open_days_before!=null||!!base.rsvp_open_time;
         if(!later&&$('v514Notify')?.checked){const nm=title||v524DefaultEventName(existing.session_type);try{await sendNotificationV110({audience:inv&&inv.length?{mode:'users',user_ids:inv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]},title:others.length?'📅 Nuevas convocatorias':'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${nm}" (${shortDateES(existing.event_date)}${others.length?` y ${others.length} fecha${others.length===1?'':'s'} más`:''}) en Row Training.`,url:v530EventUrl('session',existing.id,t0),category:'event_new',type:'training'})}catch(e){}}
-      }else if($('v514Notify')?.checked){
+      }else{
         const changes=[],nm=title||v524DefaultEventName(existing.session_type);
         if((base.event_time||'')!==(existing.event_time||''))changes.push(base.event_time?`empieza a las ${base.event_time}`:'sin hora de inicio');
         if((base.meet_time||'')!==(existing.meet_time||''))changes.push(base.meet_time?`encuentro a las ${base.meet_time}`:'sin hora de encuentro');
@@ -6038,7 +6038,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         const origInv=new Set((Array.isArray(x.invitee_ids)?x.invitee_ids:[]).map(String)),newInv=(inv||[]).filter(id=>origInv.size&&!origInv.has(String(id))),oldInv=(inv||[]).filter(id=>!newInv.includes(id));
         if(newInv.length){try{await sendNotificationV110({audience:{mode:'users',user_ids:newInv,team_codes:[t0]},title:'📅 Nueva convocatoria',body:`Confirma tu asistencia a "${nm}" (${shortDateES(existing.event_date)}) en Row Training.`,url:v530EventUrl('session',existing.id,t0),category:'event_change',type:'training'})}catch(e){}}
         const aud=inv&&inv.length?{mode:'users',user_ids:oldInv,team_codes:[t0]}:{mode:'teams',team_codes:[t0]};
-        if(!(inv&&inv.length&&!oldInv.length))try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
+        if($('v514Notify')?.checked&&!(inv&&inv.length&&!oldInv.length))try{await sendNotificationV110({audience:aud,title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+nm,url:v530EventUrl('session',existing.id,t0),body:`${shortDateES(v749Moved?date:existing.event_date)}: `+(changes.length?changes.join(' · '):'se han actualizado los detalles')+(others.length?` (y en los ${others.length} siguientes)`:'')+'. Revísalo en Eventos.'+(v750Reset?' Vuelve a confirmar tu asistencia.':''),category:'event_change',type:'training'})}catch(e){}
       }
       if(($('v750After')?.value||'')==='notify'||($('v750After')?.value||'')==='reset')await v754Unsee('session',[existing.id,...others.map(o=>o.id)]);
       await syncOrgs({kind:'session',id:existing.id},true);
@@ -6065,7 +6065,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         const q2=await sb.from('club_events').update({...base,...groupFields,updated_at:now}).in('id',others.map(o=>o.id));
         if(q2.error)return fail(colErr(q2.error));
       }
-      if($('v514Notify')?.checked){
+      { // V928 · a los recién invitados SIEMPRE se les avisa; el aviso de cambios al resto depende de "Al guardar"
         // quién ya estaba invitado antes y quién es nuevo
         const oldTeams=isComp?(existing.team_codes||[t0]):[existing.team_code,...(existing.extra_team_codes||[])];
         const oldInv=Array.isArray(existing.invitee_ids)&&existing.invitee_ids.length?existing.invitee_ids.map(String):null;
@@ -6079,7 +6079,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         // a los de antes (que siguen invitados): aviso de cambios
         const keepInv=oldInv?(inv?oldInv.filter(id=>inv.includes(id)):oldInv):null;
         const keepTeams=oldTeams.filter(t=>allTeamsSel.includes(t));
-        try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+title,body:body+(v750Reset?' Vuelve a confirmar tu asistencia.':''),url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_change',type:'training'})}catch(e){}
+        if($('v514Notify')?.checked)try{await sendNotificationV110({audience:audienceFor(keepInv,keepTeams),title:(v750Reset?'🔁 Confirma de nuevo · ':'✏️ Cambios en ')+title,body:body+(v750Reset?' Vuelve a confirmar tu asistencia.':''),url:v530EventUrl(isComp?'competition':'club_event',existing.id,t0),category:'event_change',type:'training'})}catch(e){}
         // a los nuevos: invitación
         if(!opensLater){
           let newAud=null;
@@ -6205,7 +6205,7 @@ function v495EventCardHtml(ev,roster,statusByUser,myStatus,team,showChat,canEdit
   // V544 · botones de gestión en rejilla de 2 columnas (antes una fila por botón): arriba editar,
   // debajo cancelar / quitar, y eliminar a lo ancho al final.
   const cancelBtn=`<button type="button" class="v527CancelBtn${cancelled?'':' v544Warn'}">${cancelled?'↩️ Reactivar':'🚫 Cancelar'}</button>`;
-  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entreno</button><button type="button" class="v571DupSession" data-id="${ev.id}">📄 Duplicar</button>${cancelBtn}<button type="button" class="v525UnEvent v571Wide" data-id="${ev.id}">➖ Quitar de eventos</button><button type="button" class="v498DeleteEvent v544Del" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">✏️ Editar</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">📄 Duplicar</button>`:`<button type="button" class="v572DupComp" data-id="${ev.id}">📄 Duplicar</button>`}${cancelBtn}<button type="button" class="v498DeleteEvent v544Del" data-kind="${ev.kind}" data-id="${ev.id}">🗑️ Eliminar</button></div>`:'';
+  const editBtns=!canEdit?'':ev.kind==='session'?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="session" data-id="${ev.id}">✏️ Editar evento</button><button type="button" class="v928Invite">➕ Invitar a más remeros</button><button type="button" class="v525EditSession" data-id="${ev.id}" data-date="${esc(ev.event_date)}" data-team="${esc(ev.team_code||team||'')}">🏋️ Editar entreno</button><button type="button" class="v571DupSession" data-id="${ev.id}">📄 Duplicar</button>${cancelBtn}<button type="button" class="v525UnEvent v571Wide" data-id="${ev.id}">➖ Quitar de eventos</button><button type="button" class="v498DeleteEvent v544Del" data-kind="session" data-id="${ev.id}">🗑️ Eliminar entrenamiento</button></div>`:(ev.kind==='competition'||ev.kind==='club_event')?`<div class="v544Actions"><button type="button" class="v498EditEvent" data-kind="${ev.kind}" data-id="${ev.id}">✏️ Editar</button><button type="button" class="v928Invite">➕ Invitar a más remeros</button>${ev.kind==='club_event'?`<button type="button" class="v517DupEvent">📄 Duplicar</button>`:`<button type="button" class="v572DupComp" data-id="${ev.id}">📄 Duplicar</button>`}${cancelBtn}<button type="button" class="v498DeleteEvent v544Del" data-kind="${ev.kind}" data-id="${ev.id}">🗑️ Eliminar</button></div>`:'';
   // V512 · en el detalle, fecha completa ("sábado, 24 oct · 9:00") — antes salía solo "sábado".
   return `<div class="card staffDayCard ${cardCls}" data-v498-id="${ev.id}" data-v498-kind="${ev.kind}">${cover}<span class="tag">${esc(typeLabel)}</span>${cancelled?`<div class="v527CancelBanner">🚫 Cancelado${ev.cancel_reason?` · ${esc(ev.cancel_reason)}`:''}</div>`:''}<h3${cancelled?' class="v527Strike"':''}>${esc(ev.event_title)}</h3><p class="v512DateLine">📅 ${esc(v512DetailDateLabel(ev.event_date,ev.event_time))}</p>${timesLine}${teamLine}${capLine}${organizerLine}${extra}${ev.kind==='session'?(canEdit?`<details class="libraryAccordion v544Train"><summary><span class="v546Sum">🏋️ Entrenamiento${ev.title?`<span class="muted"> · ${esc(ev.title)}</span>`:''}</span></summary><div class="accordionBody">${trainingContentHtml(ev.content)}</div></details>${String(ev.session_type||'').toUpperCase()==='MAR'?`<div class="actions v829RegBox"><button type="button" class="v816Reg v829Reg" data-sid="${ev.id}" data-team="${esc(ev.team_code||'')}" data-date="${esc(ev.event_date||'')}">📍 Registrar / importar log</button></div>`:''}`:(String(ev.session_type||'').toUpperCase()==='MAR'?'':`<button type="button" class="v517OpenSession primary" data-date="${esc(ev.event_date)}">🏋️ Abrir entrenamiento</button>`)):''}${deadline}${opensNote}${rsvp}${summary}${chat}${editBtns}</div>`;
 }
@@ -6369,6 +6369,48 @@ function v527Dialog({title,html,okText,danger}){
     document.body.appendChild(layer);
     layer.querySelector('#v527No').onclick=()=>{layer.remove();resolve(null)};
     layer.querySelector('#v527Ok').onclick=()=>{const data={};layer.querySelectorAll('[data-f]').forEach(el=>data[el.dataset.f]=el.type==='checkbox'?el.checked:el.value);layer.remove();resolve(data)};
+  });
+}
+// V928 · "Invitar a más remeros" desde el menú ⋯ del evento: se eligen personas (de cualquier grupo), se añaden
+// a los invitados y se avisa SOLO a ellas (el resto no recibe nada).
+async function v928Invite(ev,team){
+  const table=ev.kind==='competition'?'competitions':ev.kind==='club_event'?'club_events':'training_sessions';
+  const teams=(ev.kind==='competition'?(ev.team_codes&&ev.team_codes.length?ev.team_codes:[team]):ev.kind==='club_event'?[ev.team_code||team,...(ev.extra_team_codes||[])]:[ev.team_code||team]).filter(Boolean);
+  const cur=await sb.from(table).select('invitee_ids,excluded_ids').eq('id',ev.id).maybeSingle();
+  if(cur.error||!cur.data){alert('No se pudo leer el evento.');return false}
+  const pr=await sb.from('profiles').select('user_id,full_name,team_code').order('full_name');
+  if(pr.error){alert('No se pudo cargar la lista de remeros.');return false}
+  const all=(pr.data||[]).filter(p=>p.user_id&&p.full_name);
+  const invSet=Array.isArray(cur.data.invitee_ids)&&cur.data.invitee_ids.length?new Set(cur.data.invitee_ids.map(String)):null;
+  const excl=new Set((cur.data.excluded_ids||[]).map(String));
+  const already=p=>!excl.has(String(p.user_id))&&(invSet?invSet.has(String(p.user_id)):teams.includes(p.team_code));
+  const cand=all.filter(p=>!already(p));
+  if(!cand.length){alert('Ya están invitados todos los remeros.');return false}
+  const title=ev.event_title||ev.title||ev.name||'evento';
+  return new Promise(resolve=>{
+    const layer=document.createElement('div');layer.className='modalBack';layer.style.zIndex=99999;
+    layer.innerHTML=`<div class="modalCard" style="max-width:460px"><div class="modalTitle"><h2 style="margin:0;font-size:1.15rem">➕ Invitar a más remeros</h2></div><p class="muted"><small>Solo se avisará a quien elijas. Los que ya estaban invitados no reciben nada.</small></p><input type="search" id="v928S" placeholder="Buscar por nombre…" style="width:100%;margin-bottom:8px"><div id="v928L" style="max-height:300px;overflow:auto">${cand.map(p=>`<label class="v514Person" data-name="${esc(p.full_name.toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:6px 2px"><input type="checkbox" value="${esc(p.user_id)}"><span>${esc(p.full_name)} <small class="muted">· ${esc(teamLabel(p.team_code)||p.team_code||'')}</small></span></label>`).join('')}</div><div class="actions"><button type="button" class="primary" id="v928Ok">Invitar y avisar</button><button type="button" id="v928No">Cancelar</button></div></div>`;
+    document.body.appendChild(layer);
+    const q=layer.querySelector('#v928S');
+    q.oninput=()=>{const t=q.value.trim().toLowerCase();layer.querySelectorAll('.v514Person').forEach(l=>l.style.display=!t||l.dataset.name.includes(t)?'flex':'none')};
+    layer.querySelector('#v928No').onclick=()=>{layer.remove();resolve(false)};
+    layer.querySelector('#v928Ok').onclick=async()=>{
+      const ids=[...layer.querySelectorAll('#v928L input:checked')].map(c=>c.value);
+      if(!ids.length){alert('Elige al menos a una persona.');return}
+      const ok=layer.querySelector('#v928Ok');ok.disabled=true;ok.textContent='Invitando…';
+      try{
+        const base=invSet?[...invSet]:all.filter(p=>teams.includes(p.team_code)&&!excl.has(String(p.user_id))).map(p=>String(p.user_id));
+        const full=[...new Set([...base,...ids])];
+        const patch={invitee_ids:full};
+        if(excl.size){const ne=[...excl].filter(x=>!ids.includes(x));patch.excluded_ids=ne.length?ne:null}
+        const u=await sb.from(table).update(patch).eq('id',ev.id);
+        if(u.error)throw u.error;
+        const date=ev.event_date||ev.session_date||'';
+        try{await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:teams},title:'📅 Te han invitado: '+title,body:`Confirma tu asistencia a "${title}" (${v506SpondDayTimeLabel(date,ev.event_time)}) en Row Training.`,url:v530EventUrl(ev.kind,ev.id,team),category:'event_new',type:'training'})}catch(e){}
+        if(typeof v540ClearCache==='function')v540ClearCache();
+        layer.remove();resolve(true);
+      }catch(e){alert('No se pudo invitar: '+(e.message||e));ok.disabled=false;ok.textContent='Invitar y avisar'}
+    };
   });
 }
 // V546 · "Enviar ahora": abre ya las respuestas de ESTA fecha (las demás del periódico siguen con
@@ -6776,6 +6818,7 @@ async function v503OpenEventDetail(tc,kind,id,canEdit,afterChange,showChat=true,
         v498RenderClubEventForm(formBox,tc,ev2,afterChange); // V518 · competiciones también con el formulario completo
         formBox.scrollIntoView({behavior:'smooth',block:'start'});
       }});
+      body.querySelectorAll('.v928Invite').forEach(b=>{b.onclick=async()=>{b.disabled=true;try{if(await v928Invite(ev2,tc))reopen()}finally{b.disabled=false}}});
       body.querySelectorAll('.v498DeleteEvent').forEach(b=>{b.onclick=async()=>{
         b.disabled=true;
         if(await v527Delete(ev2,tc)){close();if(afterChange)afterChange()}else b.disabled=false;
