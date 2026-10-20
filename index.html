@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="939";
+const APP_VERSION="940";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4380,12 +4380,19 @@ function v300OpenSettingsMenu(){
 // llamada al servidor, con la misma lógica de guardado que cuando el remero abre la app: no duplica y respeta las
 // asignaciones hechas a mano). Muestra el progreso y el resultado de cada remero.
 async function v893OpenC2All(){
+  // V940 · si ya hay una sincronización en segundo plano, se vuelve a mostrar en vez de abrir otra
+  if(window._v940&&window._v940.layer&&document.body.contains(window._v940.layer)){window._v940.show();return}
   const layer=document.createElement('div');layer.className='modal';layer.style.cssText='position:fixed;inset:0;background:rgba(7,22,47,.58);z-index:9999;display:grid;place-items:center;padding:18px';
   layer.innerHTML='<div class="modalCard" style="max-width:420px;width:100%;max-height:85vh;overflow:auto"><div class="modalTitle"><h2 style="margin:0">🔄 Sincronizar ErgData</h2><button type="button" id="v893Close">Cerrar</button></div><p class="muted" id="v893Msg" style="font-size:.85rem">Buscando remeros con Concept2 conectado…</p><div id="v893List" style="display:flex;flex-direction:column;gap:6px;margin:10px 0"></div><button type="button" class="primary" id="v893Go" disabled style="width:100%">Sincronizar</button></div>';
   document.body.appendChild(layer);
   let running=false;
-  layer.querySelector('#v893Close').onclick=()=>{if(running&&!confirm('Hay una sincronización en marcha. ¿Cerrar igualmente? Seguirá hasta terminar el remero actual.'))return;layer.remove()};
-  layer.onclick=e=>{if(e.target===layer&&!running)layer.remove()};
+  // V940 · segundo plano: al cerrar con la sincronización en marcha, la ventana se oculta y queda una píldora con el progreso
+  const pill=document.createElement('button');pill.type='button';pill.className='v940Pill';pill.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));z-index:9998;background:#0b1b35;color:#fff;border:0;border-radius:999px;padding:10px 16px;font:600 .85rem inherit;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  document.body.appendChild(pill);
+  const V=window._v940={layer,hidden:false,show(){layer.style.display='grid';pill.style.display='none';V.hidden=false},hide(){layer.style.display='none';pill.style.display='block';V.hidden=true;V.upd()},upd(){pill.textContent='🔄 '+(msg?.textContent||'Sincronizando…')+' · Ver'}};
+  pill.onclick=()=>V.show();
+  layer.querySelector('#v893Close').onclick=()=>{if(running){V.hide();return}pill.remove();window._v940=null;layer.remove()};
+  layer.onclick=e=>{if(e.target!==layer)return;if(running)V.hide();else{pill.remove();window._v940=null;layer.remove()}};
   const msg=layer.querySelector('#v893Msg'),list=layer.querySelector('#v893List'),go=layer.querySelector('#v893Go');
   const call=async body=>{const {data:{session}}=await sb.auth.getSession();const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),40000);try{const r=await fetch('/api/concept2-sync',{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+(session?.access_token||'')},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('Error '+r.status));return j}finally{clearTimeout(t)}};
   let athletes=[];
@@ -4404,15 +4411,23 @@ async function v893OpenC2All(){
   list.querySelector('#v893Old').onclick=()=>{checks().forEach(c=>{const a=athletes.find(x=>x.user_id===c.value);c.checked=!a.last_sync_at||(Date.now()-new Date(a.last_sync_at))>864e5});refresh()};
   refresh();
   go.onclick=async()=>{
-    const todo=chosen();if(!todo.length)return;running=true;go.disabled=true;go.textContent='Sincronizando…';checks().forEach(c=>c.disabled=true);let nuevos=0,act=0,fallos=0,i=0;
+    const todo=chosen();if(!todo.length)return;running=true;go.disabled=true;go.textContent='Sincronizando…';try{layer.querySelector('#v893Close').textContent='Segundo plano'}catch(_){};try{v300ShowToast('Puedes pulsar «Segundo plano» y seguir usando la app: te aviso al terminar')}catch(_){};checks().forEach(c=>c.disabled=true);let nuevos=0,act=0,fallos=0,i=0;
     for(const a of todo){
-      i++;const row=list.querySelector(`[data-u="${CSS.escape(a.user_id)}"] .v893St`);msg.textContent=`Sincronizando ${i} de ${todo.length}…`;if(row)row.textContent='⏳';
+      i++;const row=list.querySelector(`[data-u="${CSS.escape(a.user_id)}"] .v893St`);msg.textContent=`Sincronizando ${i} de ${todo.length}…`;if(V.hidden)V.upd();if(row)row.textContent='⏳';
       let done=false,lastErr='';
       for(let t=0;t<2&&!done;t++){try{const r=await call({action:'sync_user',athlete_user_id:a.user_id});nuevos+=r.imported||0;act+=r.updated||0;if(row)row.innerHTML=`✅ ${r.imported||0} nuevos`;done=true}catch(e){lastErr=e?.name==='AbortError'?'tardó demasiado':(e.message||String(e))}}
       if(!done){fallos++;if(row)row.innerHTML='⚠️ '+esc(lastErr).slice(0,60)}
     }
     running=false;checks().forEach(c=>c.disabled=false);go.disabled=false;go.textContent='Volver a sincronizar';msg.textContent=`Terminado: ${nuevos} entrenamientos nuevos, ${act} ya existentes, ${fallos} con fallo.`;
     try{if(nuevos>0&&typeof draw==='function'){draw()}}catch(e){}
+    try{layer.querySelector('#v893Close').textContent='Cerrar'}catch(_){}
+    const fin=`ErgData: ${nuevos} entrenamientos nuevos, ${act} ya existentes${fallos?`, ${fallos} con fallo`:''}.`;
+    if(V.hidden){
+      pill.textContent='✅ Sincronización terminada · Ver';pill.style.background='#166534';
+      try{v300ShowToast('✅ '+fin)}catch(_){}
+      try{if(currentUser)await sendNotificationV110({audience:{mode:'users',user_ids:[currentUser.id],team_codes:[currentTeamCode].filter(Boolean)},title:'✅ Sincronización terminada',body:fin,url:'/',type:'sync_done'})}catch(_){}
+      setTimeout(()=>{if(V.hidden){pill.remove();window._v940=null;layer.remove()}},15000);
+    }
   };
 }
 // V705 · Panel "Avisos automáticos": interruptores del cron de eventos (solo entrenador principal). El cron los lee en cada pasada (15 min).
