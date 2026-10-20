@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="940";
+const APP_VERSION="941";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -11513,7 +11513,7 @@ async function history(opts={}){
     };
   });
   const selfFilter=content.querySelector('#v147SelfHistoryFilter'),selfTypeFilter=content.querySelector('#v300TypeFilterSelf');let applySelfFilter=null;if(selfFilter){applySelfFilter=()=>content.querySelectorAll('.v147SelfHistory').forEach(row=>{const stateOk=selfFilter.value==='active'?row.dataset.state!=='hidden':selfFilter.value==='pending'?(row.dataset.state!=='hidden'&&row.dataset.pending==='1'):selfFilter.value==='additional'?(row.dataset.state!=='hidden'&&row.dataset.additional==='1'):selfFilter.value==='hidden'?row.dataset.state==='hidden':true,typeOk=!selfTypeFilter||selfTypeFilter.value==='all'||row.dataset.type===selfTypeFilter.value;row.hidden=!(stateOk&&typeOk)});selfFilter.onchange=applySelfFilter;if(selfTypeFilter)selfTypeFilter.onchange=applySelfFilter;applySelfFilter()}
-  const selfPendingButton=content.querySelector('#v150SelfPending');if(selfPendingButton&&selfFilter&&applySelfFilter)selfPendingButton.onclick=()=>{selfFilter.value='pending';applySelfFilter();selfFilter.scrollIntoView({behavior:'smooth',block:'center'})};
+  const selfPendingButton=content.querySelector('#v150SelfPending');if(selfPendingButton&&selfFilter&&applySelfFilter)selfPendingButton.onclick=()=>{selfFilter.value='pending';applySelfFilter();/* V941 · baja hasta el primer entrenamiento pendiente (antes solo enfocaba el filtro) */const row=[...content.querySelectorAll('.v147SelfHistory')].find(r=>!r.hidden&&r.dataset.pending==='1');const t=row||selfFilter;let d=t.closest('details');while(d){d.open=true;d=d.parentElement&&d.parentElement.closest('details')}setTimeout(()=>{try{t.style.scrollMarginTop='90px';t.scrollIntoView({behavior:'smooth',block:'start'})}catch(_){}if(row){row.classList.remove('v528Flash');void row.offsetWidth;row.classList.add('v528Flash')}},60)};
   v300WireCharts(content);
 
   content.querySelectorAll('.v143ToggleSplit').forEach(button=>button.onclick=()=>{const row=(c2||[]).find(x=>String(x.id)===String(button.dataset.result));if(row)v143ToggleSplit(row,currentUser.id,row.training_session_id,Number(button.dataset.index),()=>history({skipAuto:true}))});
