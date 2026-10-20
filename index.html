@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="941";
+const APP_VERSION="942";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -14062,6 +14062,18 @@ async function results(){
         const key=v300NormalizeExerciseKey(rawTitle)||rawTitle.toLowerCase();
         if(!exerciseMap[key])exerciseMap[key]={label:rawTitle,labelCounts:{}};
         exerciseMap[key].labelCounts[rawTitle]=(exerciseMap[key].labelCounts[rawTitle]||0)+1;
+        if(!athleteRows.has(key))athleteRows.set(key,new Map());
+        const byAthlete=athleteRows.get(key),list=byAthlete.get(String(p.user_id))||[];list.push(r);byAthlete.set(String(p.user_id),list);
+      });
+      // V942 · también los ERGO "adicionales" (sin sesión del club), agrupados por distancia: p.ej. una simulación de
+      // regata de 4000 m hecha como adicional sale como "Adicional · 4000 m". Las distancias típicas se redondean
+      // (2943 m de un JustRow cuenta como 3000 m si está a menos de un 3 %).
+      paceRows.filter(r=>!r.training_session_id&&r._kind==='concept2'&&r._raw&&r._raw.is_additional&&!r.hidden&&r.pace_500_seconds&&Number(r.pace_500_seconds)>=60&&r.workout_date&&Number(r.distance_m)>=200).forEach(r=>{
+        const d=Number(r.distance_m),std=[500,1000,1500,2000,2500,3000,4000,5000,6000,8000,10000,21097].find(x=>Math.abs(d-x)/x<=0.03);
+        const dist=std||Math.round(d/100)*100;
+        const key='adicional:'+dist,label='Adicional · '+dist+' m';
+        if(!exerciseMap[key])exerciseMap[key]={label,labelCounts:{}};
+        exerciseMap[key].labelCounts[label]=(exerciseMap[key].labelCounts[label]||0)+1;
         if(!athleteRows.has(key))athleteRows.set(key,new Map());
         const byAthlete=athleteRows.get(key),list=byAthlete.get(String(p.user_id))||[];list.push(r);byAthlete.set(String(p.user_id),list);
       });
