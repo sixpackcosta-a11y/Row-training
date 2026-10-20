@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="937";
+const APP_VERSION="938";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5363,7 +5363,7 @@ async function v598Promote(kind,eventId,team){
       else if(kind==='club_event'){const e=await sb.from('club_events').select('title,event_date').eq('id',eventId).maybeSingle();name=e.data?.title||name;date=e.data?.event_date||''}
       else{const e=await sb.from('training_sessions').select('event_name,session_type,session_date').eq('id',eventId).maybeSingle();name=(e.data&&v524SessionEventName(e.data))||name;date=e.data?.session_date||''}
     }catch(_){}
-    await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'🎟️ Hay una plaza libre',body:`Se ha liberado una plaza en "${name}"${date?' ('+v495EventDateLabel(date)+')':''}. Entra en Eventos y confirma si vienes.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
+    await sendNotificationV110({audience:{mode:'users',user_ids:ids,team_codes:[team]},title:'🎟️ Tienes plaza',body:`Se ha liberado una plaza en "${name}"${date?' ('+v495EventDateLabel(date)+')':''} y has pasado de la lista de espera a «Voy». Si al final no puedes ir, márcalo en Eventos.`,url:'/?tab=eventos',category:'event_reminder',type:'training'});
   }catch(e){console.warn('No se pudo avisar a la lista de espera',e)}
 }
 // V610 · al decir "No voy" se ofrece dar un motivo (como en Spond); el motivo le llega a los organizadores en el aviso.
@@ -6055,6 +6055,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       }
       if(($('v750After')?.value||'')==='notify'||($('v750After')?.value||'')==='reset')await v754Unsee('session',[existing.id,...others.map(o=>o.id)]);
       await syncOrgs({kind:'session',id:existing.id},true);
+      try{await v598Promote('session',existing.id,t0)}catch(_){} // V938 · si se amplían plazas, sube la lista de espera
       container.classList.add('hidden');container.innerHTML='';
       afterSave();return;
     }
@@ -6116,6 +6117,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         }
       }
       await syncOrgs({kind:isComp?'competition':'club_event',id:existing.id},true);
+      try{await v598Promote(isComp?'competition':'club_event',existing.id,t0)}catch(_){}
       try{await v567Link(table,[{id:existing.id,date}],t0)}catch(e){return fail('El evento se ha guardado, pero no se pudo asociar el entrenamiento: '+v536LinkError(e))}
     }else{
       const dates=v498RecurrenceDates(date,$('v497CeRepeat').value,$('v497CeRepeatUntil').value);
@@ -6569,6 +6571,7 @@ async function v808RemovePerson(sel,all,afterChange){
       if(Object.keys(patch).length){const q=await sb.from(table).update(patch).eq('id',t.id);if(q.error){errs++;continue}}
       const col=t.kind==='competition'?'competition_id':t.kind==='club_event'?'club_event_id':'training_session_id';
       try{await v753DelRsvp(col,[Number(t.id)],uid)}catch(_){}
+      try{await v598Promote(t.kind,Number(t.id),team)}catch(_){} // V938 · al quitar a alguien, sube la primera de la lista de espera
     }
     if(errs){alert('No se pudo quitar en '+errs+' evento(s). ¿Falta ejecutar 33_eventos_excluidos.sql en Supabase?');sel.disabled=false;restore();return}
     if(afterChange){try{afterChange()}catch(_){}}
