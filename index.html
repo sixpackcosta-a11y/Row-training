@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="938";
+const APP_VERSION="939";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -10600,7 +10600,22 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
     if(!need.length)return;
     try{let nq=await sb.rpc('list_team_member_names_v597',{p_ids:need});if(nq.error||!(nq.data||[]).length)nq=await sb.from('profiles').select('user_id,full_name').in('user_id',need);(nq.data||[]).forEach(p=>names.set(String(p.user_id),p.full_name||'Sin nombre'))}catch(e){}
   };
-  const members=await v617Members(teamCode);
+  let members=await v617Members(teamCode);
+  // V939 · el chat del evento incluye a los invitados de otros grupos (leídos, info del mensaje y avisos) y quita a los excluidos
+  let v939Extra=[];
+  try{
+    const tb=kind==='competition'?'competitions':kind==='club_event'?'club_events':'training_sessions';
+    const er=await sb.from(tb).select(kind==='competition'?'invitee_ids,excluded_ids,invitee_teams':'invitee_ids,excluded_ids').eq('id',sessionId).maybeSingle();
+    const d=er.data||{},exc=new Set((d.excluded_ids||[]).map(String)),it=d.invitee_teams||{};
+    members=members.filter(p=>!exc.has(String(p.user_id)));
+    const have=new Set(members.map(p=>String(p.user_id)));
+    const miss=(d.invitee_ids||[]).map(String).filter(i=>!have.has(i)&&!exc.has(i)&&(kind!=='competition'||it[i]===teamCode));
+    if(miss.length){
+      const pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);
+      const add=(pr.data||[]).filter(p=>p.full_name);add.forEach(p=>V583_NAMES.set(String(p.user_id),p.full_name));
+      members=[...members,...add];v939Extra=add.map(p=>String(p.user_id)).filter(i=>i!==String(currentUser?.id||''));
+    }
+  }catch(e){}
   const allRows=[];
   const GR=v624GroupReads({table:'event_chat_reads',members,allRows});
   await v583Chat(container,{
@@ -10645,6 +10660,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
       (async()=>{try{
         const label=currentMode==='athlete'?(currentUserProfile?.full_name||'Una remera'):(currentUserProfile?.gender==='f'?'tu entrenadora':'tu entrenador');
         await sendNotificationV110({audience:{mode:'teams',team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=eventos&eid='+sessionId+'&ek='+kind+'&et='+encodeURIComponent(teamCode)+'&echat=1',muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
+        if(v939Extra.length)await sendNotificationV110({audience:{mode:'users',user_ids:v939Extra,team_codes:[teamCode]},title:`💬 ${label} · chat del evento`,body:pbody.length>140?pbody.slice(0,140)+'…':pbody,url:'/?tab=eventos&eid='+sessionId+'&ek='+kind+'&et='+encodeURIComponent(teamCode)+'&echat=1',muteKey:'event:'+kind+':'+sessionId,type:'event_chat_message'});
       }catch(e){v300ShowToast('⚠️ Mensaje guardado, pero no se pudo enviar la notificación push. Detalle: '+(e?.message||e))}})();
       return{row:res.data};
     },
