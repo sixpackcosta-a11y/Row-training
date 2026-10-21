@@ -3551,7 +3551,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="955";
+const APP_VERSION="956";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4737,7 +4737,7 @@ function render(){
     if(tab==="recursos"&&hasStaffMode())return staffResourcesView();if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
     if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
-    if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return (workoutNotificationAthleteV129||window._v953View==='rem')?results():coachSeaResultsView();}
+    if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
     if(tab==="regatas"&&hasStaffMode())return v905RegattaView(); /* V937 · también ayudantes */if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam()&&v534EventsUI())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasStaffMode())return coachMessagesView();return staffTodayView();
   }
   if(tab==="semana")weekly();else if(tab==="hoy")todayView();else if(tab==="biblioteca")ergoLibrary();else if(tab==="hist")history();else if(tab==="eventos"){if(!v533RowerSeesEvents(currentTeamCode)){tab="hist";draw();return history()}athleteEventsView()}else if(tab==="mensajes")messagesView();else if(tab==="perfil")profileView();else results();
@@ -11868,7 +11868,7 @@ async function checkForAppUpdate(){
       if(busy){lastAppUpdateCheck=0;return}
       // V952 · con la app ya abierta no se recarga de golpe (salía otra vez la pantalla de inicio): se ofrece
       // una píldora "Nueva versión" y se aplica al tocarla o la próxima vez que se abra la app desde cero.
-      if(!document.getElementById('v547Splash')&&!window._v952Force){v952UpdatePill(target);return}
+      if((!document.getElementById('v547Splash')||performance.now()>8000)&&!window._v952Force){v952UpdatePill(target);return}
       sessionStorage.setItem(key,"1");
       try{sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam,workoutNotificationAthleteV129,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}
       const u=new URL(location.href);
