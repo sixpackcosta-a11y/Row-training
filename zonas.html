@@ -1,0 +1,125 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zonas de FC · Row Training</title>
+<meta name="description" content="Calcula tus zonas de pulsaciones para remo">
+<meta property="og:title" content="Calcula tus zonas de FC · Row Training">
+<meta property="og:description" content="Pon tu FC en reposo y tu edad o FC máxima, y obtén tus 5 zonas de entrenamiento.">
+<meta name="theme-color" content="#07162f">
+<link rel="icon" href="/assets/brand/favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--text:#0b1830;--text-muted:#718096;--surface:#fff;--surface-2:#eef1f6;--border:#dbe5ef;--bg:#e9eef4}
+@media (prefers-color-scheme:dark){:root{--text:#e7ecf3;--text-muted:#93a2b8;--surface:#161f2e;--surface-2:#1d2838;--border:#2a3648;--bg:#0d1420}}
+*{box-sizing:border-box}body{margin:0;font-family:Manrope,system-ui,sans-serif;font-weight:300;background:var(--bg);color:var(--text)}
+header{background:#07162f;color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px}
+header img{width:36px;height:36px}header b{font-weight:800;letter-spacing:.5px}header b span{color:#22c3d6}header small{display:block;opacity:.75;font-size:12px}
+main{max-width:560px;margin:0 auto;padding:12px 10px 40px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 12px}
+h1{font-size:20px;font-weight:500;margin:2px 0 6px}
+.muted{color:var(--text-muted)}
+input{font:inherit;font-size:16px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--text)}
+button{font:inherit;cursor:pointer}
+.v979Btns button{border:0;border-radius:12px;padding:12px;font-weight:700;background:var(--surface-2);color:var(--text)}
+.v979Btns button.primary{background:#16a34a;color:#fff}
+.v959Note{font-size:13px;color:var(--text-muted);background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:8px 0}
+.foot{text-align:center;font-size:12px;color:var(--text-muted);margin-top:14px}
+/* V979 · calculadora de zonas de FC */
+.v979G{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v979G label{display:block;font-size:11.5px;color:var(--text-muted);margin:0}.v979G input{width:100%;box-sizing:border-box;margin:3px 0 0!important}
+.v979Row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px;flex-wrap:wrap}
+.v979Seg{display:flex;gap:6px}.v979Seg button{border:0!important;border-radius:999px!important;background:var(--surface-2)!important;color:var(--text)!important;padding:7px 14px!important;margin:0!important;min-height:0!important;box-shadow:none!important}
+.v979Seg button.on{background:#0b1b35!important;color:#fff!important}
+.v979Ck{display:flex;align-items:center;gap:6px;font-size:13px;margin:0}.v979Ck input{width:auto;margin:0}
+.v979How{margin:6px 0 10px;font-size:13px}.v979How summary{cursor:pointer;color:#2563eb}.v979How p{margin:6px 0 0;color:var(--text-muted)}
+.v979Sum{font-size:13px;margin:8px 2px}
+.v979Z{position:relative;background:var(--surface-2);border-radius:10px;padding:9px 10px 9px 18px;margin:6px 0}
+.v979Z::before{content:'';position:absolute;left:7px;top:9px;bottom:9px;width:4px;border-radius:2px;background:var(--zc)}
+.v979ZH{display:flex;align-items:center;gap:8px}.v979K{font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 6px;color:var(--zc);background:color-mix(in srgb,var(--zc) 14%,transparent)}
+.v979ZN{flex:1;font-size:15px}.v979ZR{font-size:15px;font-weight:600;white-space:nowrap}
+.v979ZT{font-size:13px;margin-top:3px;line-height:1.35}
+.v979Btns{display:flex;gap:8px;margin-top:10px}.v979Btns button{flex:1}
+.v979Link{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:0 0 10px;font-size:13px;flex-wrap:wrap}.v979Link button{border:0!important;background:#16a34a!important;color:#fff!important;border-radius:10px!important;padding:8px 12px!important;margin:0!important;min-height:0!important;box-shadow:none!important;font-weight:600!important}
+</style></head><body>
+<header><img src="/assets/brand/icon-192.png" alt=""><div><b>ROW<span>TRAINING</span></b><small>Club de Remo Pedregalejo</small></div></header>
+<main><div class="card"><h1>❤️ Tus zonas de pulsaciones</h1><div id="v979Box"></div></div>
+<div class="foot">Mismas fórmulas que usa la app Row Training (zonas de Karvonen).</div></main>
+<script>
+
+/* V979 · Recursos › Zonas de FC: calculadora (mismas fórmulas que la ficha del remero: Karvonen y FC máx
+   Whyte/Tanaka) con explicación de cada zona y texto listo para mandar por WhatsApp a quien aún no usa la app. */
+(function(){
+ var Z=[
+  {k:'UT2',lo:.55,hi:.70,c:'#16a34a',name:'Base aeróbica',
+   what:'Ritmo suave y constante. Puedes hablar con frases completas.',
+   why:'Es donde se hace la mayor parte del entrenamiento: construye el motor aeróbico, mejora la recuperación y la técnica sin acumular fatiga.',
+   how:'Sesiones largas y continuas: 30–90 min.'},
+  {k:'UT1',lo:.70,hi:.80,c:'#65a30d',name:'Aeróbico medio',
+   what:'Ritmo firme pero controlado. Solo puedes decir frases cortas.',
+   why:'Sube la capacidad aeróbica y acostumbra al cuerpo a mantener un ritmo exigente durante mucho tiempo.',
+   how:'Bloques de 10–30 min o continuo de 20–40 min.'},
+  {k:'AT',lo:.80,hi:.85,c:'#d97706',name:'Umbral',
+   what:'"Cómodamente duro": aguantarías unos 30–40 min a tope de ese ritmo. Casi no se puede hablar.',
+   why:'Retrasa el momento en que se acumula el ácido láctico: es la base del ritmo de regata larga.',
+   how:'Series de 6–12 min con recuperación corta.'},
+  {k:'TR',lo:.85,hi:.95,c:'#ea580c',name:'Transporte de oxígeno (VO₂máx)',
+   what:'Muy duro. Respiración muy agitada, no se puede hablar.',
+   why:'Aumenta el oxígeno máximo que tu cuerpo puede usar: da potencia para las regatas cortas y los cambios de ritmo.',
+   how:'Series de 2–6 min con recuperación igual o mayor.'},
+  {k:'AN',lo:.95,hi:1,c:'#dc2626',name:'Anaeróbico',
+   what:'Esfuerzo máximo, solo unos segundos o un par de minutos.',
+   why:'Salidas, sprints y finales de regata: potencia y tolerancia al esfuerzo máximo.',
+   how:'Tramos de 15 s – 2 min con recuperación completa.'}
+ ];
+ function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+ function maxHr(age,sex,trained){age=Number(age);if(!age||age<10||age>100)return null;if(trained){if(sex==='f')return Math.round(216-1.09*age);if(sex==='m')return Math.round(202-0.55*age)}return Math.round(208-0.7*age)}
+ window.v979FcTool=function(box){
+  if(!box)return;
+  box.innerHTML=
+   '<p class="muted" style="margin:0 0 10px">Calcula las zonas de pulsaciones de un remero (aunque aún no esté en la app) y mándaselas por WhatsApp.</p>'+
+   '<div class="v979G">'+
+    '<label>Nombre (opcional)<input id="v979N" placeholder="Ej.: Antonio"></label>'+
+    '<label>FC en reposo<input id="v979R" inputmode="numeric" placeholder="Ej.: 55"></label>'+
+    '<label>FC máxima (si la sabes)<input id="v979M" inputmode="numeric" placeholder="Ej.: 182"></label>'+
+    '<label>Edad (si no sabes la FC máx)<input id="v979A" inputmode="numeric" placeholder="Ej.: 52"></label>'+
+   '</div>'+
+   '<div class="v979Row"><div class="v979Seg" id="v979S"><button type="button" data-s="f">Mujer</button><button type="button" data-s="m">Hombre</button></div>'+
+   '<label class="v979Ck"><input type="checkbox" id="v979T" checked> Entreno habitualmente</label></div>'+
+   '<details class="v979How"><summary>¿Cómo medir la FC en reposo?</summary><p>Al despertar, antes de levantarse, tumbado y tranquilo: contar las pulsaciones durante 1 minuto (o usar el reloj/pulsómetro). Mejor la media de 3 días. La FC máxima medida en un test o una regata es más fiable que la estimada por edad.</p></details>'+
+   '<div id="v979Out"></div>';
+  if(!/zonas\.html/.test(location.pathname)){var u=location.origin+'/zonas.html';var ln=document.createElement('div');ln.className='v979Link';ln.innerHTML='<span>Que cada uno meta sus datos:</span><button type="button">🔗 Compartir la calculadora</button>';box.insertBefore(ln,box.firstChild);
+   ln.querySelector('button').onclick=function(){var t='Calcula tus zonas de pulsaciones para remo (FC en reposo + edad o FC máxima) y mándame el resultado: '+u;if(navigator.share){navigator.share({title:'Zonas de FC',text:t}).catch(function(){})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}}
+  var sex='f';
+  var segs=box.querySelectorAll('#v979S button');
+  function paintSeg(){segs.forEach(function(b){b.classList.toggle('on',b.dataset.s===sex)})}
+  segs.forEach(function(b){b.onclick=function(){sex=b.dataset.s;paintSeg();calc()}});paintSeg();
+  function calc(){
+   var out=box.querySelector('#v979Out');
+   var rest=Number(box.querySelector('#v979R').value),mx=Number(box.querySelector('#v979M').value),age=Number(box.querySelector('#v979A').value),trained=box.querySelector('#v979T').checked,name=(box.querySelector('#v979N').value||'').trim();
+   var est=false;if(!mx&&age){mx=maxHr(age,sex,trained);est=true}
+   if(!rest||!mx){out.innerHTML='<div class="v959Note">Pon la FC en reposo y la FC máxima (o la edad para estimarla).</div>';return}
+   if(mx-rest<40||rest<30||mx>230){out.innerHTML='<div class="v959Note">Revisa los datos: la FC máxima debe ser bastante mayor que la de reposo.</div>';return}
+   var res=mx-rest,zs=Z.map(function(z){return {z:z,min:Math.round(rest+res*z.lo),max:Math.round(rest+res*z.hi)}});
+   out.innerHTML='<div class="v979Sum">FC reposo <b>'+rest+'</b> · FC máx <b>'+mx+'</b>'+(est?' <span class="muted">(estimada por edad)</span>':'')+'</div>'+
+    zs.map(function(x){return '<div class="v979Z" style="--zc:'+x.z.c+'"><div class="v979ZH"><span class="v979K">'+x.z.k+'</span><span class="v979ZN">'+E(x.z.name)+'</span><span class="v979ZR">'+x.min+'–'+x.max+' lpm</span></div><div class="v979ZT">'+E(x.z.what)+'</div><div class="v979ZT muted">'+E(x.z.why)+'</div><div class="v979ZT muted">⏱ '+E(x.z.how)+'</div></div>'}).join('')+
+    '<div class="v979Btns"><button type="button" class="primary" id="v979Share">Enviar por WhatsApp</button><button type="button" id="v979Copy">Copiar texto</button></div>';
+   var txt=(name?'Zonas de pulsaciones de '+name+' 🚣\n\n':'Mis zonas de pulsaciones 🚣\n\n')+
+    'FC reposo: '+rest+' · FC máx: '+mx+(est?' (estimada por edad)':'')+'\n\n'+
+    zs.map(function(x){return '*'+x.z.k+' · '+x.z.name+': '+x.min+'–'+x.max+' pulsaciones*\n'+x.z.what+' '+x.z.why+' '+x.z.how}).join('\n\n')+
+    '\n\nLa mayor parte del entrenamiento va en UT2. Si tu reloj marca más de lo que toca, baja el ritmo.\n— Club de Remo Pedregalejo · Row Training';
+   box.querySelector('#v979Share').onclick=function(){window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')};
+   box.querySelector('#v979Copy').onclick=async function(){var b=this;try{await navigator.clipboard.writeText(txt);b.textContent='Copiado ✓'}catch(e){prompt('Copia el texto:',txt)}};
+  }
+  box.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);i.addEventListener('change',calc)});
+  calc();
+ };
+})();
+
+/* versión pública: textos para el propio remero */
+(function(){
+ window.v979FcTool(document.getElementById('v979Box'));
+ var box=document.getElementById('v979Box');
+ var intro=box.querySelector('p.muted');if(intro)intro.textContent='Pon tu FC en reposo y tu FC máxima (o tu edad si no la sabes). Verás tus 5 zonas y podrás mandárselas a tu entrenador.';
+ var nm=box.querySelector('#v979N');if(nm){nm.placeholder='Tu nombre';nm.parentNode.firstChild.textContent='Tu nombre'}
+ var fix=function(){var s=box.querySelector('#v979Share');if(s&&!s._p){s._p=1;s.textContent='Enviar a mi entrenador'}};
+ new MutationObserver(fix).observe(box,{childList:true,subtree:true});fix();
+})();
+</script></body></html>

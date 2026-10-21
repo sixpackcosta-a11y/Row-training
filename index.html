@@ -1939,6 +1939,23 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
 #refreshAppV159.v969Upd{animation:v976Breath 1.8s ease-in-out infinite}
 #refreshAppV159.v969Upd.spin{animation:none}
 @keyframes v976Breath{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(34,197,94,0)}50%{transform:scale(1.18);box-shadow:0 0 0 6px rgba(34,197,94,.25)}}
+.v978Ver{margin-top:14px;text-align:center;font-size:11.5px;color:var(--text-muted)}
+/* V979 · calculadora de zonas de FC */
+.v979G{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v979G label{display:block;font-size:11.5px;color:var(--text-muted);margin:0}.v979G input{width:100%;box-sizing:border-box;margin:3px 0 0!important}
+.v979Row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px;flex-wrap:wrap}
+.v979Seg{display:flex;gap:6px}.v979Seg button{border:0!important;border-radius:999px!important;background:var(--surface-2)!important;color:var(--text)!important;padding:7px 14px!important;margin:0!important;min-height:0!important;box-shadow:none!important}
+.v979Seg button.on{background:#0b1b35!important;color:#fff!important}
+.v979Ck{display:flex;align-items:center;gap:6px;font-size:13px;margin:0}.v979Ck input{width:auto;margin:0}
+.v979How{margin:6px 0 10px;font-size:13px}.v979How summary{cursor:pointer;color:#2563eb}.v979How p{margin:6px 0 0;color:var(--text-muted)}
+.v979Sum{font-size:13px;margin:8px 2px}
+.v979Z{position:relative;background:var(--surface-2);border-radius:10px;padding:9px 10px 9px 18px;margin:6px 0}
+.v979Z::before{content:'';position:absolute;left:7px;top:9px;bottom:9px;width:4px;border-radius:2px;background:var(--zc)}
+.v979ZH{display:flex;align-items:center;gap:8px}.v979K{font-size:11.5px;font-weight:800;border-radius:6px;padding:2px 6px;color:var(--zc);background:color-mix(in srgb,var(--zc) 14%,transparent)}
+.v979ZN{flex:1;font-size:15px}.v979ZR{font-size:15px;font-weight:600;white-space:nowrap}
+.v979ZT{font-size:13px;margin-top:3px;line-height:1.35}
+.v979Btns{display:flex;gap:8px;margin-top:10px}.v979Btns button{flex:1}
+.v979Link{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:0 0 10px;font-size:13px;flex-wrap:wrap}.v979Link button{border:0!important;background:#16a34a!important;color:#fff!important;border-radius:10px!important;padding:8px 12px!important;margin:0!important;min-height:0!important;box-shadow:none!important;font-weight:600!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3824,7 +3841,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="977";
+const APP_VERSION="980";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5217,9 +5234,11 @@ async function staffResourcesView(){
   if(!F){
     const row=(key,ic,name,cnt)=>`<button type="button" class="v882Fold v885Li" data-f="${esc(key)}"><span class="v885I">${ic}</span><span class="v885N">${esc(name)}</span>${cnt===''?'':`<span class="v885C">${cnt}</span>`}<span class="v885Ch">›</span></button>`;
     const lbl=c=>c==='Regatas ART · Liga de Jábegas'?'Regatas ART · Jábegas':c;
-    content.innerHTML=topBar('',true)+'<div class="v885Sec">Herramientas</div><div class="card v885Grp">'+row('__prev','🌊','Previsión','')+row('__gps','📍','Grabadora GPS',recMissing?'':recs.length)+'</div><div class="v885Sec">Archivos</div>'+fbar+'<div class="card v885Grp">'+allC.map(c=>row(c,V882_ICONS[c]||'📁',lbl(c),rows.filter(r=>(r.category||'General')===c).length)).join('')+'</div>';
+    content.innerHTML=topBar('',true)+'<div class="v885Sec">Herramientas</div><div class="card v885Grp">'+row('__prev','🌊','Previsión','')+row('__fc','❤️','Zonas de FC','')+row('__gps','📍','Grabadora GPS',recMissing?'':recs.length)+'</div><div class="v885Sec">Archivos</div>'+fbar+'<div class="card v885Grp">'+allC.map(c=>row(c,V882_ICONS[c]||'📁',lbl(c),rows.filter(r=>(r.category||'General')===c).length)).join('')+'</div>';
   }else if(F==='__prev'){
     content.innerHTML=topBar('🌊 Previsión para entrenar',false)+'<div class="card" id="v864Card"><p class="muted">Mira cómo estará el mar a una hora, o qué día de la semana sale mejor.</p><div id="v864Box"></div></div>';
+  }else if(F==='__fc'){
+    content.innerHTML=topBar('❤️ Zonas de FC',false)+'<div class="card" id="v979Card"><div id="v979Box"></div></div>';
   }else if(F==='__gps'){
     content.innerHTML=topBar('📍 Grabadora GPS',false)+fbar+v690Card;
   }else{
@@ -5269,6 +5288,7 @@ async function staffResourcesView(){
     };
   }
   try{V696.planner(document.getElementById('v864Box'))}catch(e){}
+  try{if(window.v979FcTool)window.v979FcTool(document.getElementById('v979Box'))}catch(e){}
   const v690New=document.getElementById('v690New');
   if(v690New)v690New.onclick=()=>V689UI.open({standalone:true,onDone:async log=>{
     const d=(log.date&&/^\d{4}-\d{2}-\d{2}$/.test(log.date))?new Date(log.date+'T12:00:00'):new Date(),title='Grabación '+(log.date?d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})+' (importada)':d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}));
@@ -18462,5 +18482,88 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
   paint();
  }
  window.v976AssignDay=assignDay;window.v976Replan=replan;
+})();
+
+/* V978 · la app comprueba si hay versión nueva cada minuto mientras está abierta (antes solo al abrirla o al volver
+   a ella), y Ajustes enseña la versión que tienes ("Versión 978 · al día" / "hay una nueva"). */
+(function(){
+ setInterval(function(){if(document.visibilityState!=='visible')return;try{lastAppUpdateCheck=0}catch(_){}try{window.checkForAppUpdate()}catch(e){}},60000);
+ var latest=null;
+ async function peek(){try{var r=await fetch('/version.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var v=await r.json();latest=String(v&&v.version||'')}}catch(e){}}
+ function label(){var me=String(typeof APP_VERSION!=='undefined'?APP_VERSION:'');return 'Versión '+me+(latest&&Number(latest)>Number(me)?' · hay una nueva ('+latest+')':latest?' · al día':'')}
+ new MutationObserver(function(){
+  var card=document.querySelector('.v300SettingsMenuBack .modalCard');if(!card||card.querySelector('.v978Ver'))return;
+  var d=document.createElement('div');d.className='v978Ver';d.textContent=label();card.appendChild(d);
+  peek().then(function(){d.textContent=label()});
+ }).observe(document.body,{childList:true,subtree:true});
+})();
+
+/* V979 · Recursos › Zonas de FC: calculadora (mismas fórmulas que la ficha del remero: Karvonen y FC máx
+   Whyte/Tanaka) con explicación de cada zona y texto listo para mandar por WhatsApp a quien aún no usa la app. */
+(function(){
+ var Z=[
+  {k:'UT2',lo:.55,hi:.70,c:'#16a34a',name:'Base aeróbica',
+   what:'Ritmo suave y constante. Puedes hablar con frases completas.',
+   why:'Es donde se hace la mayor parte del entrenamiento: construye el motor aeróbico, mejora la recuperación y la técnica sin acumular fatiga.',
+   how:'Sesiones largas y continuas: 30–90 min.'},
+  {k:'UT1',lo:.70,hi:.80,c:'#65a30d',name:'Aeróbico medio',
+   what:'Ritmo firme pero controlado. Solo puedes decir frases cortas.',
+   why:'Sube la capacidad aeróbica y acostumbra al cuerpo a mantener un ritmo exigente durante mucho tiempo.',
+   how:'Bloques de 10–30 min o continuo de 20–40 min.'},
+  {k:'AT',lo:.80,hi:.85,c:'#d97706',name:'Umbral',
+   what:'"Cómodamente duro": aguantarías unos 30–40 min a tope de ese ritmo. Casi no se puede hablar.',
+   why:'Retrasa el momento en que se acumula el ácido láctico: es la base del ritmo de regata larga.',
+   how:'Series de 6–12 min con recuperación corta.'},
+  {k:'TR',lo:.85,hi:.95,c:'#ea580c',name:'Transporte de oxígeno (VO₂máx)',
+   what:'Muy duro. Respiración muy agitada, no se puede hablar.',
+   why:'Aumenta el oxígeno máximo que tu cuerpo puede usar: da potencia para las regatas cortas y los cambios de ritmo.',
+   how:'Series de 2–6 min con recuperación igual o mayor.'},
+  {k:'AN',lo:.95,hi:1,c:'#dc2626',name:'Anaeróbico',
+   what:'Esfuerzo máximo, solo unos segundos o un par de minutos.',
+   why:'Salidas, sprints y finales de regata: potencia y tolerancia al esfuerzo máximo.',
+   how:'Tramos de 15 s – 2 min con recuperación completa.'}
+ ];
+ function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+ function maxHr(age,sex,trained){age=Number(age);if(!age||age<10||age>100)return null;if(trained){if(sex==='f')return Math.round(216-1.09*age);if(sex==='m')return Math.round(202-0.55*age)}return Math.round(208-0.7*age)}
+ window.v979FcTool=function(box){
+  if(!box)return;
+  box.innerHTML=
+   '<p class="muted" style="margin:0 0 10px">Calcula las zonas de pulsaciones de un remero (aunque aún no esté en la app) y mándaselas por WhatsApp.</p>'+
+   '<div class="v979G">'+
+    '<label>Nombre (opcional)<input id="v979N" placeholder="Ej.: Antonio"></label>'+
+    '<label>FC en reposo<input id="v979R" inputmode="numeric" placeholder="Ej.: 55"></label>'+
+    '<label>FC máxima (si la conoce)<input id="v979M" inputmode="numeric" placeholder="Ej.: 182"></label>'+
+    '<label>Edad (si no sabe la FC máx)<input id="v979A" inputmode="numeric" placeholder="Ej.: 52"></label>'+
+   '</div>'+
+   '<div class="v979Row"><div class="v979Seg" id="v979S"><button type="button" data-s="f">Mujer</button><button type="button" data-s="m">Hombre</button></div>'+
+   '<label class="v979Ck"><input type="checkbox" id="v979T" checked> Entrena habitualmente</label></div>'+
+   '<details class="v979How"><summary>¿Cómo medir la FC en reposo?</summary><p>Al despertar, antes de levantarse, tumbado y tranquilo: contar las pulsaciones durante 1 minuto (o usar el reloj/pulsómetro). Mejor la media de 3 días. La FC máxima medida en un test o una regata es más fiable que la estimada por edad.</p></details>'+
+   '<div id="v979Out"></div>';
+  if(!/zonas\.html/.test(location.pathname)){var u=location.origin+'/zonas.html';var ln=document.createElement('div');ln.className='v979Link';ln.innerHTML='<span>Que cada uno meta sus datos:</span><button type="button">🔗 Compartir la calculadora</button>';box.insertBefore(ln,box.firstChild);
+   ln.querySelector('button').onclick=function(){var t='Calcula tus zonas de pulsaciones para remo (FC en reposo + edad o FC máxima) y mándame el resultado: '+u;if(navigator.share){navigator.share({title:'Zonas de FC',text:t}).catch(function(){})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}}
+  var sex='f';
+  var segs=box.querySelectorAll('#v979S button');
+  function paintSeg(){segs.forEach(function(b){b.classList.toggle('on',b.dataset.s===sex)})}
+  segs.forEach(function(b){b.onclick=function(){sex=b.dataset.s;paintSeg();calc()}});paintSeg();
+  function calc(){
+   var out=box.querySelector('#v979Out');
+   var rest=Number(box.querySelector('#v979R').value),mx=Number(box.querySelector('#v979M').value),age=Number(box.querySelector('#v979A').value),trained=box.querySelector('#v979T').checked,name=(box.querySelector('#v979N').value||'').trim();
+   var est=false;if(!mx&&age){mx=maxHr(age,sex,trained);est=true}
+   if(!rest||!mx){out.innerHTML='<div class="v959Note">Pon la FC en reposo y la FC máxima (o la edad para estimarla).</div>';return}
+   if(mx-rest<40||rest<30||mx>230){out.innerHTML='<div class="v959Note">Revisa los datos: la FC máxima debe ser bastante mayor que la de reposo.</div>';return}
+   var res=mx-rest,zs=Z.map(function(z){return {z:z,min:Math.round(rest+res*z.lo),max:Math.round(rest+res*z.hi)}});
+   out.innerHTML='<div class="v979Sum">FC reposo <b>'+rest+'</b> · FC máx <b>'+mx+'</b>'+(est?' <span class="muted">(estimada por edad)</span>':'')+'</div>'+
+    zs.map(function(x){return '<div class="v979Z" style="--zc:'+x.z.c+'"><div class="v979ZH"><span class="v979K">'+x.z.k+'</span><span class="v979ZN">'+E(x.z.name)+'</span><span class="v979ZR">'+x.min+'–'+x.max+' lpm</span></div><div class="v979ZT">'+E(x.z.what)+'</div><div class="v979ZT muted">'+E(x.z.why)+'</div><div class="v979ZT muted">⏱ '+E(x.z.how)+'</div></div>'}).join('')+
+    '<div class="v979Btns"><button type="button" class="primary" id="v979Share">Enviar por WhatsApp</button><button type="button" id="v979Copy">Copiar texto</button></div>';
+   var txt=(name?'Hola '+name+', estas son tus zonas de pulsaciones 🚣\n\n':'Tus zonas de pulsaciones 🚣\n\n')+
+    'FC reposo: '+rest+' · FC máx: '+mx+(est?' (estimada por edad)':'')+'\n\n'+
+    zs.map(function(x){return '*'+x.z.k+' · '+x.z.name+': '+x.min+'–'+x.max+' pulsaciones*\n'+x.z.what+' '+x.z.why+' '+x.z.how}).join('\n\n')+
+    '\n\nLa mayor parte del entrenamiento va en UT2. Si tu reloj marca más de lo que toca, baja el ritmo.\n— Club de Remo Pedregalejo · Row Training';
+   box.querySelector('#v979Share').onclick=function(){window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')};
+   box.querySelector('#v979Copy').onclick=async function(){var b=this;try{await navigator.clipboard.writeText(txt);b.textContent='Copiado ✓'}catch(e){prompt('Copia el texto:',txt)}};
+  }
+  box.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);i.addEventListener('change',calc)});
+  calc();
+ };
 })();
 </script></body></html>

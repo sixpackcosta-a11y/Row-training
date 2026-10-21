@@ -19,8 +19,9 @@ self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('rowtraining-app-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
 
+// V980 · solo la app (/ o /index.html) pasa por aquí; otras páginas (p. ej. /zonas.html) van directas a internet
 function isAppPage(req,url){
-  return req.mode==='navigate'||(url.origin===self.location.origin&&(url.pathname==='/'||url.pathname==='/index.html'));
+  return url.origin===self.location.origin&&(url.pathname==='/'||url.pathname==='/index.html');
 }
 
 async function appPage(req,url,event){
