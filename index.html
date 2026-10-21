@@ -3844,7 +3844,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="982";
+const APP_VERSION="983";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -9219,7 +9219,8 @@ function v124OCRRows(text){
         const hrs=rest.filter(n=>n!==spm&&n>=70&&n<=230);
         avgHr=hrs[0]||'';maxHr=hrs.length>1?Math.max(...hrs):'';
       }
-      parsed={distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:avgHr,max_hr:maxHr,rest_text:''};
+      const v983Idx=(line.match(/^\s*(\d{1,2})\s+\d{1,3}:\d{2}/)||[])[1];
+      parsed={idx:v983Idx?Number(v983Idx):null,distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:avgHr,max_hr:maxHr,rest_text:''};
       break;
     }
     if(parsed) rows.push(parsed);
@@ -9586,6 +9587,8 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
   }
   function v265AutoMapErgoRows(rows,targets){
     const mapping=new Array(rows.length).fill('');if(!rows.length)return mapping;
+    // V983 · si las filas traen su número de parcial, se asignan directamente (y el total, al resultado principal)
+    if(rows.some(r=>r.idx!=null)){const big=rows.reduce((m,r,i)=>r.idx==null&&(m<0||(Number(r.distance_m)||0)>(Number(rows[m].distance_m)||0))?i:m,-1);rows.forEach((r,i)=>{if(r.idx!=null&&targets.some(t=>t.id==='split'+(r.idx-1)))mapping[i]='split'+(r.idx-1);else if(i===big)mapping[i]='main'});return mapping}
     const scored=rows.map((r,i)=>({i,score:(timeTextToSeconds(r.time_text)||0)+(Number(r.distance_m)||0)/10})).sort((a,b)=>b.score-a.score);
     const splitSlots=targets.length-1,looksLikeSummary=rows.length>splitSlots;
     const used=new Set();
@@ -9595,7 +9598,7 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
     return mapping;
   }
   function v265ShowErgoOcrMap(rows,st){
-    const targets=v265ErgoOcrTargets(Math.max(0,rows.length-1)),auto=v265AutoMapErgoRows(rows,targets),options=t=>`<option value="${t.id}">${esc(t.name)}${t.create?' (nuevo)':''}</option>`;
+    const targets=v265ErgoOcrTargets(Math.max(rows.length-1,...rows.map(r=>Number(r.idx)||0))),auto=v265AutoMapErgoRows(rows,targets),options=t=>`<option value="${t.id}">${esc(t.name)}${t.create?' (nuevo)':''}</option>`;
     const rowsHtml=rows.map((r,i)=>{
       const debugLine=`dist=${r.distance_m??'–'} tiempo=${r.time_text||'–'} ritmo=${r.pace_text||'–'} ppm=${r.spm||'–'} fc media=${r.avg_hr||'–'} fc máx=${r.max_hr||'–'}`;
       return `<div class="last v265ErgoMapRow" data-index="${i}" style="padding:10px 0"><div><b>Fila ${i+1}</b></div><div class="muted"><small>${esc(debugLine)}</small></div><label style="display:block;margin-top:4px">Asignar a<select class="v265ErgoTarget" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div>`;
@@ -9626,6 +9629,12 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
     // a la de al lado, ambas con los mismos números). v124ApplyOCR (la lectura del propio remero) ya
     // quitaba estos duplicados por distancia+tiempo+ritmo; aquí faltaba el mismo filtro.
     const seenRows=new Set();rows=rows.filter(x=>{const k=`${x.distance_m}|${x.time_text}|${x.pace_text}`;if(seenRows.has(k))return false;seenRows.add(k);return true});
+    // V983 · varias fotos: cada parcial se reconoce por su número (1, 2, 3…) y solo se queda una vez aunque
+    // salga en dos fotos; el total (sin número) también una sola vez; y se ordenan por número de parcial.
+    {const seenIdx=new Set();rows=rows.filter(x=>{if(x.idx==null)return true;if(seenIdx.has(x.idx))return false;seenIdx.add(x.idx);return true});
+     const tot=rows.filter(x=>x.idx==null),spl=rows.filter(x=>x.idx!=null).sort((a,b)=>a.idx-b.idx);
+     const big=tot.slice().sort((a,b)=>(Number(b.distance_m)||0)-(Number(a.distance_m)||0))[0];
+     const seenT=new Set();rows=(big?[big]:[]).concat(tot.filter(x=>x!==big&&!(Number(x.distance_m)===Number(big&&big.distance_m)))).filter(x=>{const k=x.distance_m+'|'+x.time_text;if(seenT.has(k))return false;seenT.add(k);return true}).concat(spl)}
     if(!rows.length)throw new Error('No se detectaron filas válidas.');v265ShowErgoOcrMap(rows,st)}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
   const v748Init={d:layer.querySelector('#v154Dist').value,t:layer.querySelector('#v154Time').value,p:layer.querySelector('#v154Pace').value,s:layer.querySelector('#v154Spm').value};
   layer.querySelector('#v154Save').onclick=async()=>{
