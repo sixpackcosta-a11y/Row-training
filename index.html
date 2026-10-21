@@ -1924,6 +1924,21 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
 .v394DayModalBack .v974InModal :is(.card,.coachWeekDay){border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
 .v394DayModalBack .modalCard{padding:16px!important}
 .v959InSheet.v974Bar{padding-left:0!important}.v959InSheet.v974Bar::before{display:none!important}
+/* V976 · cambio de plan */
+.v976F{font-size:11.5px;font-weight:700;letter-spacing:.4px;color:var(--text-muted);margin:12px 0 5px}
+.v976Seg{display:flex;gap:6px}.v976Seg button{flex:1;border:0!important;border-radius:10px!important;background:var(--surface-2)!important;color:var(--text)!important;padding:10px 0!important;font-weight:600!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v976Seg button.on{background:var(--tc-erg)!important;color:#fff!important}
+.v976In{width:100%;box-sizing:border-box;margin:0!important}
+.v976List{display:flex;flex-direction:column;margin-top:8px}
+.v976R{display:flex!important;align-items:center;gap:10px;width:100%;text-align:left;border:0!important;border-top:1px solid var(--border)!important;border-radius:0!important;background:transparent!important;padding:11px 2px!important;margin:0!important;box-shadow:none!important;color:var(--text)!important;min-height:0!important}
+.v976R .ck{width:20px;height:20px;border-radius:6px;border:2px solid #cbd5e1;flex:none}.v976R .ck.on{background:#16a34a;border-color:#16a34a}
+.v976R .n{flex:1;min-width:0;font-size:15px}.v976R .v{font-size:13px;color:var(--text-muted);white-space:nowrap}
+.v976R.wu{opacity:.6}.v976R.done .ck{background:#94a3b8;border-color:#94a3b8}
+.v959Menu button.v976Hl{color:#2563eb!important;font-weight:600!important;background:var(--accent-tint,#eef4ff)!important}
+/* V976 · el botón ↻ de versión nueva "respira" (crece y encoge) */
+#refreshAppV159.v969Upd{animation:v976Breath 1.8s ease-in-out infinite}
+#refreshAppV159.v969Upd.spin{animation:none}
+@keyframes v976Breath{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(34,197,94,0)}50%{transform:scale(1.18);box-shadow:0 0 0 6px rgba(34,197,94,.25)}}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3809,7 +3824,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="974";
+const APP_VERSION="976";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -12715,7 +12730,11 @@ function v833Dots(xs,cs,doneMap){
  ['ERG','GYM','MAR'].forEach(t=>{const g=xs.filter(x=>String(x.session_type||'').toUpperCase()===t);if(!g.length)return;const pend=!!doneMap&&t!=='MAR'&&g.some(x=>!(doneMap.get(String(x.id))||{}).done);h+=`<i class="${V833_TYPES[t]}${pend?' p':''}"></i>`});
  return h;
 }
-function v833MonthHtml(ym,sessions,comps,doneMap){
+// V975 · el entrenamiento vinculado a una competición (p. ej. la "REGATA · …" de tipo MAR) no se pinta aparte:
+// ese día se ve una sola cosa, la regata.
+function v975Linked(comps){const ids=new Set();(comps||[]).forEach(c=>(c.session_ids||[]).forEach(id=>ids.add(String(id))));return ids}
+function v975Dedupe(sessions,comps){const ids=v975Linked(comps),days=new Set((comps||[]).map(c=>c.competition_date));return (sessions||[]).filter(x=>!ids.has(String(x.id))&&!(days.has(x.session_date)&&/^\s*REGATA\b/i.test(String(x.title||''))))}
+function v833MonthHtml(ym,sessions,comps,doneMap){ sessions=v975Dedupe(sessions,comps);
  const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),first=(new Date(Date.UTC(y,m-1,1)).getUTCDay()+6)%7,today=v833Today();
  let cells='';for(let i=0;i<first;i++)cells+='<span></span>';
  for(let d=1;d<=days;d++){const ds=`${ym}-${String(d).padStart(2,'0')}`,xs=sessions.filter(x=>x.session_date===ds),cs=comps.filter(x=>x.competition_date===ds);
@@ -12723,14 +12742,36 @@ function v833MonthHtml(ym,sessions,comps,doneMap){
  const leg=`<div class="v833Leg"><span class="erg"><i></i>ERGO</span><span class="gym"><i></i>GYM</span><span class="mar"><i></i>MAR</span>${doneMap?`<span class="neu"><i></i>${v311T('mes_hecha')}</span><span class="neu"><i class="p"></i>${v311T('mes_pendiente')}</span>`:''}</div>`;
  return `<div class="v833Mes"><div class="v833Cal">${v311T('dias_semana_letra').map(x=>`<div class="v833Dow">${x}</div>`).join('')}${cells}</div>${leg}<div class="v833Day"></div></div>`;
 }
-function v833BindMonth(box,ym,sessions,comps,doneMap,canOpen,onOpen,onOpenDay){
+// V975 · Mes del entrenador: tocar una sesión abre SOLO esa sesión en el panel de abajo (Editar, Registrar MAR y ⋯).
+function v975OpenCoachSession(x,ds,team,goDay){
+  if(!window.v959Sheet)return goDay(ds);
+  const t=String(x.session_type||'').toUpperCase(),k={MAR:'mar',GYM:'gym',ERG:'erg'}[t]||'mix',lab=t==='ERG'?'ERGO':t;
+  const S=window.v959Sheet({});
+  const title=String(x.title||'').replace(/^(ERGO|ERG|GYM|MAR)\s*·\s*/i,'');
+  const d=new Date(ds+'T12:00:00'),when=d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'numeric'});
+  S.body.innerHTML=`<div class="v959RHead"><span class="v959Pill k-${k}">${esc(lab)} · ${esc(when)}</span><div class="v964T">${esc(title)}</div></div><div class="v962Full"></div>`;
+  const tmp=document.createElement('div');tmp.innerHTML=`<div class="workoutReadable">${trainingContentHtml(x.content||'')}</div>`;
+  const rd=tmp.querySelector('.workoutReadable .workoutReadable')||tmp.querySelector('.workoutReadable');
+  S.body.querySelector('.v962Full').innerHTML=(window.v962Blocks&&rd.querySelector('.workoutRow'))?window.v962Blocks(rd,true):(x.content?tmp.innerHTML:'<div class="v959Note">Sin contenido.</div>');
+  const btn=(txt,cls,fn)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=txt;b.onclick=()=>{S.close();setTimeout(fn,230)};return b};
+  if(t==='MAR')S.foot.appendChild(btn('Registrar MAR','v959Btn p wide',()=>staffSeaResultForm(x.id,team,ds,()=>{try{render()}catch(e){}})));
+  S.foot.appendChild(btn('Editar',t==='MAR'?'v959Btn wide':'v959Btn p wide',()=>openCoachPlanner(team,ds,x.id)));
+  const more=document.createElement('button');more.type='button';more.className='v959Btn more';more.textContent='⋯';S.foot.appendChild(more);
+  more.onclick=()=>{const ex=S.sheet.querySelector('.v959Menu');if(ex){ex.remove();return}const m=document.createElement('div');m.className='v959Menu';m.appendChild(btn('Ver el día completo (mover, duplicar, eliminar)','',()=>goDay(ds)));if(window.v976Items)window.v976Items(m,{id:x.id,date:ds,team},S.close);S.sheet.appendChild(m)};
+}
+// en lugar de "Abrir día", un enlace "+ Añadir" para crear en el día elegido
+function v975AddLink(box,team){
+  const put=()=>{const day=box.querySelector('.v833Day');if(!day)return;day.querySelectorAll('.v833More').forEach(x=>x.remove());if(day.querySelector('.v975Add'))return;const sel=box.querySelector('.v833D.sel');const ds=sel&&sel.dataset.date;if(!ds)return;const a=document.createElement('button');a.type='button';a.className='v959Add v975Add';a.textContent='+ Añadir';a.onclick=()=>openCoachPlanner(team,ds);day.appendChild(a)};
+  put();new MutationObserver(put).observe(box.querySelector('.v833Day')||box,{childList:true});
+}
+function v833BindMonth(box,ym,sessions,comps,doneMap,canOpen,onOpen,onOpenDay){ sessions=v975Dedupe(sessions,comps);
  const dayBox=box.querySelector('.v833Day');if(!dayBox)return;
  const loc=currentLocale==='en'?'en-GB':currentLocale==='nl'?'nl-NL':'es-ES';
  const show=ds=>{
   box.querySelectorAll('.v833D').forEach(b=>b.classList.toggle('sel',b.dataset.date===ds));
   const xs=sessions.filter(x=>x.session_date===ds),cs=comps.filter(x=>x.competition_date===ds),[yy,mm,dd]=ds.split('-').map(Number);
   const cap=new Intl.DateTimeFormat(loc,{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(yy,mm-1,dd)));
-  let rows=cs.map(c=>`<div class="v833Row race"><div><div class="v833T">${esc(c.name||v311T('competicion_generico'))}</div><div class="v833S"><span class="v833Ty">🏁 ${v311T('competicion_generico')}</span></div></div></div>`).join('');
+  let rows=cs.map(c=>`<button type="button" class="v833Row race open" data-comp="${esc(String(c.id))}"><div><div class="v833T">${esc(c.name||v311T('competicion_generico'))}</div><div class="v833S"><span class="v833Ty">🏁 ${v311T('competicion_generico')}</span></div></div></button>`).join('');
   rows+=xs.map(x=>{
    const t=String(x.session_type||'').toUpperCase(),k=V833_TYPES[t]||'oth',isMar=t==='MAR',isTest=/test/i.test(String(x.title||'')),op=!!canOpen(x),st=doneMap&&!isMar?doneMap.get(String(x.id)):null;
    const sub=st?(st.done?'✓ '+v311T('mes_hecha'):st.due?'⚠ '+v311T('mes_sin_hacer'):v311T('mes_pendiente')):'';
@@ -12740,6 +12781,7 @@ function v833BindMonth(box,ym,sessions,comps,doneMap,canOpen,onOpen,onOpenDay){
   }).join('');
   dayBox.innerHTML=`<div class="v833Cap">${cap}</div>${rows?`<div class="v833List">${rows}</div>`:`<p class="muted">${v311T('mes_dia_libre')}</p>`}${onOpenDay?`<button type="button" class="v833More" data-day="${ds}">${v311T('mes_abrir_dia')}</button>`:''}`;
   dayBox.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const x=sessions.find(s=>String(s.id)===b.dataset.open);if(x)onOpen(x,ds)});
+  dayBox.querySelectorAll('[data-comp]').forEach(b=>b.onclick=()=>{try{const tm=(typeof coachSelectedTeam!=='undefined'&&currentMode==='staff'?coachSelectedTeam:currentTeamCode)||'';v952RouteUrl('/?tab=eventos&eid='+b.dataset.comp+'&ek=competition&et='+encodeURIComponent(tm)+(currentMode==='staff'?'&mode=staff':''))}catch(e){}});
   const mb=dayBox.querySelector('[data-day]');if(mb)mb.onclick=()=>onOpenDay(ds);
  };
  box.querySelectorAll('.v833D').forEach(b=>b.onclick=()=>show(b.dataset.date));
@@ -12817,7 +12859,7 @@ async function renderCoachMonth(){
   // detalle/Editar/Mover/Duplicar/Eliminar/Registrar MAR), no la semana completa ni Planificación.
   // V392 · sin cambiar de pestaña: se queda en "Mes" (tab no se toca), solo se sustituye el
   // contenido por la tarjeta de ese día; el botón Volver reconstruye el calendario de Mes.
-  {const v833Go=ds=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(ds);coachWeekFocusDate=ds;coachDayModalV394=true;coachWeekView()};v833BindMonth(monthArea,ym,sessions,comps,null,()=>true,(x,ds)=>v833Go(ds),v833Go)}
+  {const v833Go=ds=>{coachSelectedTeam=team;coachWeekStart=mondayOfISO(ds);coachWeekFocusDate=ds;coachDayModalV394=true;coachWeekView()};v833BindMonth(monthArea,ym,sessions,comps,null,()=>true,(x,ds)=>v975OpenCoachSession(x,ds,team,v833Go),null);v975AddLink(monthArea,team)}
   // V390 · quitado el listado de "Resultados MAR del equipo": duplicaba lo que ya hace Análisis MAR,
   // y en Mes no aportaba nada que no estuviera ya ahí.
   // V396 · mismo aviso explícito que en Semana: el contenido final va en el div interno #monthArea,
@@ -17810,7 +17852,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
       main.forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p':'v959Btn';x.textContent=b.textContent;x.onclick=function(){S.close();setTimeout(function(){b.click()},60)};S.foot.appendChild(x)});
       var others=[].slice.call(acts.querySelectorAll('button')).filter(function(b){return more.some(function(c){return b.classList.contains(c)})});
       if(others.length){var m=document.createElement('button');m.type='button';m.className='v959Btn more';m.textContent='⋯';S.foot.appendChild(m);
-        m.onclick=function(e){e.stopPropagation();var old=S.sheet.querySelector('.v959Menu');if(old){old.remove();return}var mn=document.createElement('div');mn.className='v959Menu';others.forEach(function(b){var x=document.createElement('button');x.type='button';x.textContent=b.textContent;if(b.classList.contains('weekDelSession'))x.className='red';x.onclick=function(){S.close();setTimeout(function(){b.click()},60)};mn.appendChild(x)});S.sheet.appendChild(mn)}}
+        m.onclick=function(e){e.stopPropagation();var old=S.sheet.querySelector('.v959Menu');if(old){old.remove();return}var mn=document.createElement('div');mn.className='v959Menu';(function(){var eb=ws.querySelector('[data-id][data-date]');if(eb&&window.v976Items)window.v976Items(mn,{id:eb.dataset.id,date:eb.dataset.date,team:(typeof coachSelectedTeam!=='undefined'?coachSelectedTeam:'')},S.close)})();others.forEach(function(b){var x=document.createElement('button');x.type='button';x.textContent=b.textContent;if(b.classList.contains('weekDelSession'))x.className='red';x.onclick=function(){S.close();setTimeout(function(){b.click()},60)};mn.appendChild(x)});S.sheet.appendChild(mn)}}
     }
   }
 
@@ -17842,6 +17884,8 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     var d=c._d,id=c.dataset.id,type=c.dataset.type;
     var sub=rwSub(id,type);c.querySelector('.d2').textContent=sub;c.querySelector('.d2').style.display=sub?'':'none';
     c.querySelector('.st').innerHTML=rwStatus(id,d);
+    // V975 · el entrenamiento vinculado a la regata no se enseña aparte: ya está la ficha de la REGATA ese día
+    var inf2=RW.info[id]||{},day=c.closest('.athleteWeekDayV123');if(/^\s*REGATA\b/i.test(inf2.title||'')&&day&&day.querySelector('.v964Chip.k-reg'))c.classList.add('v963Hid');
   }
   function loadRowerInfo(root){
     var ids=[].slice.call(root.querySelectorAll('details.athleteWeekSessionV123')).map(function(d){return d.dataset.id}).filter(function(id){return id&&!(id in RW.info)&&!RW.loading[id]});
@@ -17849,7 +17893,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     ids.forEach(function(id){RW.loading[id]=1});
     var uid=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:null;
     Promise.all([
-      sb.from('training_sessions').select('id,team_code,session_type,is_event,event_time,meet_time,location,content,cancelled_at').in('id',ids.map(Number)),
+      sb.from('training_sessions').select('id,team_code,session_type,title,is_event,event_time,meet_time,location,content,cancelled_at').in('id',ids.map(Number)),
       uid?sb.from('session_rsvp').select('training_session_id,status').eq('user_id',uid).in('training_session_id',ids.map(Number)):Promise.resolve({data:[]})
     ]).then(function(r){
       (r[0].data||[]).forEach(function(x){RW.info[String(x.id)]=x});
@@ -17895,7 +17939,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
       d._v964=1;
       var type=(d.dataset.type||'').toUpperCase(),id=d.dataset.id;
       var tagEl=d.querySelector('.athleteWeekTypeV123'),tag=tagEl?tagEl.textContent.trim():type;
-      if(tag==='ERG')tag='ERGO';
+      if(tag==='ERG'||tag==='TEST')tag='ERGO';
       var k=type==='MAR'?'mar':type==='GYM'?'gym':type==='ERG'?'erg':'mix';
       var title=type==='MAR'?'Sesión de mar':((d.querySelector('.athleteWeekSessionTitleV123')||{}).textContent||tag).replace(/^\s*(GYM|ERGO?|MIX|MAR)\s*·\s*/i,'');
       var ds=d.dataset.date||'',dd=ds?new Date(ds+'T12:00:00'):null,day=dd?dayNames[dd.getDay()]+' '+dd.getDate()+'/'+(dd.getMonth()+1):'';
@@ -18236,6 +18280,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
   host.querySelectorAll('.workoutReadable').forEach(function(rd){if(rd.querySelector('.athGymPreviewExerciseV119,details,img'))return;var f=document.createElement('div');f.className='v962Full v964Tmp';f.innerHTML=rowsToBlocks(rd,true);rd.parentNode.insertBefore(f,rd);rd.classList.add('v963Hid')});
   S.body.appendChild(host);
   if(acts){[].slice.call(acts.querySelectorAll('button,a.btn')).forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p wide':'v959Btn wide';x.textContent=b.textContent.trim();x.onclick=function(){S.close();setTimeout(function(){b.click()},230)};S.foot.appendChild(x)});acts.classList.add('v963Hid')}
+  var ed=host.querySelector('.staffEditToday[data-id]');if(ed&&window.v976Items){var mb=document.createElement('button');mb.type='button';mb.className='v959Btn more';mb.textContent='⋯';S.foot.appendChild(mb);mb.onclick=function(){var ex=S.sheet.querySelector('.v959Menu');if(ex){ex.remove();return}var mn=document.createElement('div');mn.className='v959Menu';window.v976Items(mn,{id:ed.dataset.id,date:ed.dataset.date,team:(typeof coachSelectedTeam!=='undefined'?coachSelectedTeam:'')},S.close);S.sheet.appendChild(mn)}}
  }
  // Hoy (entrenador y remero): cada sesión del día = pieza C
  function enhanceDay(root){
@@ -18312,5 +18357,96 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
  function scanModals(){document.querySelectorAll('.v394DayModalBack #coachWeekArea, .v394DayModalBack .coachWeekGrid').forEach(function(a){var area=a.id==='coachWeekArea'?a:(a.closest('#coachWeekArea')||a.parentElement);if(area&&area.querySelector('.coachWeekGrid')&&window.v974EnhanceWeek)window.v974EnhanceWeek(area)})}
  var t=null;new MutationObserver(function(){if(t)return;t=requestAnimationFrame(function(){t=null;try{paint(document.body);scanModals()}catch(e){console.warn('v974',e)}})}).observe(document.body,{childList:true,subtree:true,characterData:true});
  try{paint(document.body)}catch(e){}
+})();
+
+/* V976 · CAMBIO DE PLAN: "Se hizo otra cosa…" (cambia la MISMA sesión, sin borrar) y "Asignar resultados del día"
+   (resultados de Concept2 del equipo ese día, sin asignar, marcados los de la distancia; se asignan de una vez). */
+(function(){
+ var sheet=function(o){return window.v959Sheet(o)};
+ function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+ function toast(m){try{v300ShowToast(m)}catch(e){alert(m)}}
+ function refresh(){try{draw();render()}catch(e){}}
+ function fmtDay(ds){var d=new Date(ds+'T12:00:00');return d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'numeric'})}
+ function tshort(t){try{return teamShort(t)}catch(e){return t}}
+ window.v976Items=function(menu,ctx,close){
+  if(!ctx||!ctx.id)return;
+  var a=document.createElement('button');a.type='button';a.className='v976Hl';a.textContent='↺ Se hizo otra cosa…';
+  a.onclick=function(e){e.stopPropagation();close&&close();setTimeout(function(){replan(ctx)},240)};
+  var b=document.createElement('button');b.type='button';b.textContent='Asignar resultados del día';
+  b.onclick=function(e){e.stopPropagation();close&&close();setTimeout(function(){assignDay(ctx)},240)};
+  menu.insertBefore(b,menu.firstChild);menu.insertBefore(a,menu.firstChild);
+ };
+ async function loadSession(id){var q=await sb.from('training_sessions').select('*').eq('id',Number(id)).maybeSingle();if(q.error)throw q.error;return q.data}
+ async function replan(ctx){
+  var x;try{x=await loadSession(ctx.id)}catch(e){return alert('No se pudo cargar la sesión: '+(e.message||e))}
+  if(!x)return alert('La sesión ya no existe.');
+  var team=x.team_code||ctx.team,ds=x.session_date||ctx.date,oldT=String(x.session_type||'').toUpperCase(),oldTitle=String(x.title||'').replace(/^(ERGO|ERG|GYM|MAR)\s*·\s*/i,'');
+  var S=sheet({});S.sheet.classList.add('v959Tall');
+  var type=oldT==='MAR'?'ERG':oldT;
+  S.body.innerHTML='<div class="v959PH">¿Qué se hizo el '+E(fmtDay(ds))+'?</div>'+
+   '<div class="v976F">TIPO</div><div class="v976Seg">'+[['MAR','MAR'],['GYM','GYM'],['ERG','ERGO'],['DESC','Descanso']].map(function(t){return '<button type="button" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div>'+
+   '<div class="v976F">TÍTULO</div><input class="v976In" id="v976Title" placeholder="Ej.: Simulación 3000 m">'+
+   '<div class="v976F v976Dist">DISTANCIA EN METROS (para encontrar los resultados de Concept2)</div><input class="v976In v976Dist" id="v976Dist" inputmode="numeric" placeholder="Ej.: 3000">'+
+   '<div class="v976F">DETALLE (opcional)</div><textarea class="v976In" id="v976Txt" rows="2" placeholder="Ej.: 3000 m a ritmo de regata"></textarea>'+
+   '<div class="v959Note">Queda apuntado lo planificado: <s>'+E(oldT==='ERG'?'ERGO':oldT)+' · '+E(oldTitle)+'</s>. La sesión conserva día, equipo, convocatoria y respuestas.</div>';
+  var paint=function(){S.body.querySelectorAll('.v976Seg button').forEach(function(b){b.classList.toggle('on',b.dataset.t===type)});S.body.querySelectorAll('.v976Dist').forEach(function(el){el.style.display=type==='ERG'?'':'none'})};
+  S.body.querySelectorAll('.v976Seg button').forEach(function(b){b.onclick=function(){type=b.dataset.t;paint()}});paint();
+  var go=document.createElement('button');go.type='button';go.className='v959Btn p wide';go.textContent='Guardar';S.foot.appendChild(go);
+  go.onclick=async function(){
+   var t=(S.body.querySelector('#v976Title').value||'').trim(),dist=(S.body.querySelector('#v976Dist').value||'').replace(/\D/g,''),txt=(S.body.querySelector('#v976Txt').value||'').trim();
+   if(!t&&type!=='DESC'){S.body.querySelector('#v976Title').focus();return}
+   if(type==='DESC'&&!t)t='Descanso';
+   var lab=type==='ERG'?'ERGO':type;
+   var lines=[];if(txt)lines.push('TRABAJO · '+txt);else if(dist)lines.push('TRABAJO · '+dist+' m');
+   lines.push('NOTA · Planificado: '+(oldT==='ERG'?'ERGO':oldT)+' · '+oldTitle+' (no se pudo hacer)');
+   go.disabled=true;go.textContent='Guardando…';
+   var q=await sb.from('training_sessions').update({session_type:type,title:lab+' · '+t,content:lines.join('\n'),updated_at:new Date().toISOString()}).eq('id',x.id).select('id');
+   if(q.error||!(q.data||[]).length){go.disabled=false;go.textContent='Guardar';return alert('No se pudo guardar: '+((q.error&&q.error.message)||'sin permiso'))}
+   S.close();refresh();
+   if(type==='ERG')setTimeout(function(){assignDay({id:x.id,date:ds,team:team,dist:Number(dist)||0})},300);else toast('Sesión cambiada');
+  };
+ }
+ async function assignDay(ctx){
+  var x;try{x=await loadSession(ctx.id)}catch(e){return alert('No se pudo cargar la sesión: '+(e.message||e))}
+  if(!x)return;
+  var team=x.team_code||ctx.team,ds=x.session_date||ctx.date;
+  var mm=(String(x.title||'')+' '+String(x.content||'')).match(/(\d{3,5})\s*m\b/i);
+  var dist=ctx.dist||Number(mm?mm[1]:0);
+  var S=sheet({});S.sheet.classList.add('v959Tall');
+  var head='<div class="v959PH">Resultados del '+E(fmtDay(ds))+' · '+E(tshort(team))+'</div>';
+  S.body.innerHTML=head+'<div class="v965Sk"><i style="height:40px"></i><i style="height:40px"></i><i style="height:40px"></i></div>';
+  var roster=[];try{roster=await staffAthletesForTeam(team)}catch(e){}
+  var names={};(roster||[]).forEach(function(r){names[r.user_id]=r.full_name});var ids=Object.keys(names);
+  if(!ids.length){S.body.innerHTML=head+'<div class="v959Note">No hay remeros en este equipo.</div>';return}
+  var d1=new Date(ds+'T00:00:00'),d0=new Date(d1.getTime()-3*3600e3),d2=new Date(d1.getTime()+27*3600e3);
+  var q=await sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,hidden,raw_result').in('user_id',ids).gte('workout_date',d0.toISOString()).lt('workout_date',d2.toISOString());
+  if(q.error){S.body.innerHTML=head+'<div class="v959Note">No se pudieron cargar los resultados: '+E(q.error.message)+'</div>';return}
+  var rows=(q.data||[]).filter(function(r){var w=new Date(r.workout_date);var loc=w.getFullYear()+'-'+String(w.getMonth()+1).padStart(2,'0')+'-'+String(w.getDate()).padStart(2,'0');return loc===ds&&!r.hidden&&(!r.training_session_id||String(r.training_session_id)===String(x.id))});
+  rows.forEach(function(r){var rr=r.raw_result||{};r._d=Number(rr.distance||0);r._t=rr.time_formatted||'';r._done=String(r.training_session_id)===String(x.id)});
+  rows.sort(function(a,b){return (names[a.user_id]||'').localeCompare(names[b.user_id]||'','es')||b._d-a._d});
+  var near=function(r){return dist?Math.abs(r._d-dist)<=Math.max(120,dist*0.05):r._d>=1000};
+  var sel={};rows.forEach(function(r){if(!r._done&&near(r))sel[r.id]=1});
+  var paint=function(){
+   S.body.innerHTML=head+'<div class="v964S">'+(dist?dist+' m · ':'')+E(String(x.title||''))+'</div>'+
+    (rows.length?'<div class="v976List">'+rows.map(function(r){var on=r._done||sel[r.id];var wu=!r._done&&!near(r);return '<button type="button" class="v976R'+(r._done?' done':'')+(wu?' wu':'')+'" data-id="'+r.id+'"><span class="ck'+(on?' on':'')+'"></span><span class="n">'+E(names[r.user_id]||'—')+'</span><span class="v">'+(r._d?r._d+' m':'')+(r._t?' · '+E(r._t):'')+(r._done?' · asignado':wu?' · calentamiento':'')+'</span></button>'}).join('')+'</div>':'<div class="v959Note">No hay resultados de Concept2 sin asignar ese día.</div>')+
+    '<div class="v959Note">Al asignar dejan de ser “adicionales” y cuentan como hechos en esta sesión.</div>';
+   S.body.querySelectorAll('.v976R:not(.done)').forEach(function(b){b.onclick=function(){var id=b.dataset.id;if(sel[id])delete sel[id];else sel[id]=1;paint()}});
+   var n=Object.keys(sel).length;S.foot.innerHTML='';var go=document.createElement('button');go.type='button';go.className='v959Btn p wide';go.textContent=n?('Asignar '+n+' resultado'+(n>1?'s':'')):'Cerrar';S.foot.appendChild(go);
+   go.onclick=async function(){
+    if(!n){S.close();return}
+    go.disabled=true;go.textContent='Asignando…';
+    var tok=(((await sb.auth.getSession()).data||{}).session||{}).access_token||'',ok=0,bad=[];
+    for(var i=0;i<rows.length;i++){var r=rows[i];if(!sel[r.id])continue;
+     var call=function(action){return fetch('/api/workout-assign',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({kind:'concept2',source_id:r.id,training_session_id:x.id,athlete_user_id:r.user_id,action:action})}).then(function(res){return res.json().catch(function(){return {}}).then(function(j){if(!res.ok)throw new Error(j.error||('error '+res.status));return j})})};
+     try{await call('assign');try{await call('unadditional')}catch(_){}ok++;r._done=true;delete sel[r.id]}
+     catch(e){bad.push((names[r.user_id]||'')+': '+(e.message||e))}
+    }
+    if(bad.length)alert('Asignados '+ok+'. No se pudieron asignar:\n'+bad.join('\n'));else toast('Asignados '+ok+' resultados');
+    paint();refresh();
+   };
+  };
+  paint();
+ }
+ window.v976AssignDay=assignDay;window.v976Replan=replan;
 })();
 </script></body></html>
