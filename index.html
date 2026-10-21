@@ -1956,6 +1956,9 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
 .v979ZT{font-size:13px;margin-top:3px;line-height:1.35}
 .v979Btns{display:flex;gap:8px;margin-top:10px}.v979Btns button{flex:1}
 .v979Link{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:0 0 10px;font-size:13px;flex-wrap:wrap}.v979Link button{border:0!important;background:#16a34a!important;color:#fff!important;border-radius:10px!important;padding:8px 12px!important;margin:0!important;min-height:0!important;box-shadow:none!important;font-weight:600!important}
+/* V981 · panel de emojis que se queda abierto (como WhatsApp) */
+.v583EmojiSheet.v981Keep{max-height:40vh}
+.v583EmojiTop .v981Bk{margin-left:auto;margin-right:8px;border:0!important;background:var(--surface-2)!important;border-radius:10px!important;padding:6px 12px!important;font-size:18px!important;min-height:0!important;box-shadow:none!important;color:var(--text)!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3841,7 +3844,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="980";
+const APP_VERSION="982";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -9568,11 +9571,15 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
   // v265: misma idea que en las capturas de Rowing Coach — asignación sugerida (no volcado ciego
   // a la fila N-ésima) que se puede reasignar antes de aplicar, más lo que se leyó realmente
   // visible en pantalla en vez de perderse tras un simple "X filas detectadas".
-  function v265ErgoOcrTargets(){
+  function v265ErgoOcrTargets(minSplits){
     const out=[{id:'main',name:'Resultado principal',row:null}];
-    [...layer.querySelectorAll('.v154EditSplit')].forEach((row,i)=>out.push({id:`split${i}`,name:`Parcial ${i+1}`,row}));
+    const ex=[...layer.querySelectorAll('.v154EditSplit')];
+    ex.forEach((row,i)=>out.push({id:`split${i}`,name:`Parcial ${i+1}`,row}));
+    // V982 · si el resultado aún no tiene parciales, se ofrecen igual (se crean al aplicar)
+    for(let i=ex.length;i<(minSplits||0);i++)out.push({id:`split${i}`,name:`Parcial ${i+1}`,row:null,create:true});
     return out;
   }
+  function v982EnsureSplits(n){const add=layer.querySelector('#v193AddSplit');let guard=0;while(add&&layer.querySelectorAll('.v154EditSplit').length<n&&guard++<40)add.click()}
   function v265FillErgoTarget(target,x){
     const set=(sel,v)=>{const el=(target.row||layer).querySelector(target.row?sel:`#v154${sel==='.esDist'?'Dist':sel==='.esTime'?'Time':sel==='.esPace'?'Pace':sel==='.esSpm'?'Spm':sel==='.esAvg'?'Avg':'Max'}`);if(el)el.value=v||''};
     set('.esDist',x.distance_m);set('.esTime',x.time_text);set('.esPace',x.pace_text);set('.esSpm',x.spm);set('.esAvg',x.avg_hr);set('.esMax',x.max_hr);
@@ -9584,11 +9591,11 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
     const used=new Set();
     if(looksLikeSummary){mapping[scored[0].i]='main';used.add(scored[0].i)}
     let splitPos=0;
-    rows.forEach((r,i)=>{if(used.has(i))return;const target=targets[1+splitPos];if(target){mapping[i]=target.id;splitPos++}});
+    rows.forEach((r,i)=>{if(used.has(i))return;if(!Number(r.distance_m)&&!timeTextToSeconds(r.time_text||''))return;if(!Number(r.distance_m)&&rows.filter(x=>Number(x.distance_m)).length>=2)return;const target=targets[1+splitPos];if(target){mapping[i]=target.id;splitPos++}});
     return mapping;
   }
   function v265ShowErgoOcrMap(rows,st){
-    const targets=v265ErgoOcrTargets(),auto=v265AutoMapErgoRows(rows,targets),options=t=>`<option value="${t.id}">${esc(t.name)}</option>`;
+    const targets=v265ErgoOcrTargets(Math.max(0,rows.length-1)),auto=v265AutoMapErgoRows(rows,targets),options=t=>`<option value="${t.id}">${esc(t.name)}${t.create?' (nuevo)':''}</option>`;
     const rowsHtml=rows.map((r,i)=>{
       const debugLine=`dist=${r.distance_m??'–'} tiempo=${r.time_text||'–'} ritmo=${r.pace_text||'–'} ppm=${r.spm||'–'} fc media=${r.avg_hr||'–'} fc máx=${r.max_hr||'–'}`;
       return `<div class="last v265ErgoMapRow" data-index="${i}" style="padding:10px 0"><div><b>Fila ${i+1}</b></div><div class="muted"><small>${esc(debugLine)}</small></div><label style="display:block;margin-top:4px">Asignar a<select class="v265ErgoTarget" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div>`;
@@ -9599,7 +9606,7 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
     st.querySelector('#v265ApplyErgoMap').onclick=()=>{
       const rowsEl=[...st.querySelectorAll('.v265ErgoMapRow')],chosen=rowsEl.map(r=>r.querySelector('.v265ErgoTarget')?.value||'').filter(Boolean);
       if(new Set(chosen).size!==chosen.length)return alert('Hay dos filas asignadas al mismo destino. Elige destinos distintos.');
-      let applied=0;const currentTargets=v265ErgoOcrTargets();
+      let applied=0;const need=Math.max(0,...chosen.filter(x=>/^split\d+$/.test(x)).map(x=>Number(x.slice(5))+1));v982EnsureSplits(need);const currentTargets=v265ErgoOcrTargets();
       rowsEl.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.v265ErgoTarget')?.value;if(!targetId)return;const target=currentTargets.find(t=>t.id===targetId);if(!target)return;v265FillErgoTarget(target,rows[i]);applied++});
       if(!applied)return alert('Elige al menos una fila para asignar.');
       st.innerHTML=`<span class="ocrDetectedV124">${applied} fila${applied===1?'':'s'} aplicada${applied===1?'':'s'}.</span> <small class="muted">Revisa los campos antes de guardar.</small>`;
@@ -10087,16 +10094,20 @@ async function v583Compress(file){
 function v583Recents(){try{return JSON.parse(localStorage.getItem('rowtraining_v583_emoji')||'[]').slice(0,12)}catch(e){return[]}}
 function v583PushRecent(e){try{const r=[e,...v583Recents().filter(x=>x!==e)].slice(0,12);localStorage.setItem('rowtraining_v583_emoji',JSON.stringify(r))}catch(_){}}
 function v583CloseEmoji(){document.getElementById('v583Emoji')?.remove()}
-function v583OpenEmoji(onPick){
-  v583CloseEmoji();
+function v583OpenEmoji(onPick,opts){
+  opts=opts||{};v583CloseEmoji();
   const rec=v583Recents();
   const el=document.createElement('div');el.id='v583Emoji';el.className='v583EmojiSheet';
   const grid=(arr)=>arr.map(e=>`<button type="button" class="v583E" data-e="${e}">${e}</button>`).join('');
   el.innerHTML=`<div class="v583EmojiTop"><b>Emojis</b><button type="button" class="v583EClose" aria-label="Cerrar">✕</button></div>${rec.length?`<div class="v583EGroup"><small>Recientes</small><div class="v583EGrid">${grid(rec)}</div></div>`:''}${V583_EMOJI_GROUPS.map(([n,a])=>`<div class="v583EGroup"><small>${n}</small><div class="v583EGrid">${grid(a)}</div></div>`).join('')}`;
   document.body.appendChild(el);
   el.querySelector('.v583EClose').onclick=v583CloseEmoji;
-  el.onclick=e=>{const b=e.target.closest('.v583E');if(!b)return;const em=b.dataset.e;v583PushRecent(em);v583CloseEmoji();onPick(em)};
-  setTimeout(()=>{const off=ev=>{if(!document.getElementById('v583Emoji')){document.removeEventListener('pointerdown',off,true);return}if(!ev.target.closest('#v583Emoji')){v583CloseEmoji();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
+  // V981 · como en WhatsApp: en el cuadro de escribir el panel se queda abierto y cada toque añade un emoji
+  el.onclick=e=>{const b=e.target.closest('.v583E');if(!b)return;const em=b.dataset.e;v583PushRecent(em);if(!opts.keep)v583CloseEmoji();onPick(em);if(opts.keep&&navigator.vibrate)try{navigator.vibrate(5)}catch(_){}};
+  if(opts.keep){el.classList.add('v981Keep');const top=el.querySelector('.v583EmojiTop');if(top&&opts.onBack){const bk=document.createElement('button');bk.type='button';bk.className='v981Bk';bk.setAttribute('aria-label','Borrar');bk.textContent='⌫';bk.onclick=ev=>{ev.stopPropagation();opts.onBack()};top.insertBefore(bk,top.querySelector('.v583EClose'))}
+    requestAnimationFrame(()=>{try{opts.onOpen&&opts.onOpen(el.getBoundingClientRect().height)}catch(_){}})}
+  if(opts.onClose){const ob=new MutationObserver(()=>{if(!el.isConnected){ob.disconnect();opts.onClose()}});ob.observe(document.body,{childList:true})}
+  setTimeout(()=>{const off=ev=>{if(!document.getElementById('v583Emoji')){document.removeEventListener('pointerdown',off,true);return}if(!ev.target.closest('#v583Emoji')&&!(opts.keep&&ev.target.closest('.v583Send,.v583EmojiBtn'))){v583CloseEmoji();document.removeEventListener('pointerdown',off,true)}};document.addEventListener('pointerdown',off,true)},0);
 }
 // V631 · extras de chat: fijar, editar, reenviar, encuestas, destacados, buscar, escribiendo…, silenciar.
 const V631_X=()=>window._v631NoX?'':',pinned_at,edited_at,fwd';
@@ -10377,7 +10388,7 @@ async function v583Chat(anchor,cfg){
       layer.classList.add('v803Kb');
       // V806 · si estabas al final de la conversación, al cambiar el tamaño (teclado, cabecera) sigues al final sin saltos
       const bx0=layer.querySelector('[id$="ChatScroll"]'),atEnd=!!bx0&&bx0.scrollHeight-bx0.scrollTop-bx0.clientHeight<90;
-      layer.style.top=(off+top2)+'px';layer.style.height=Math.max(180,vh-top2-bottom)+'px';
+      layer.style.top=(off+top2)+'px';layer.style.height=Math.max(180,vh-top2-bottom-(layer._v981H||0))+'px';
       if(bx0&&atEnd)bx0.scrollTop=bx0.scrollHeight;
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
@@ -10669,7 +10680,17 @@ async function v583Chat(anchor,cfg){
   }
   if(cfg.attach&&window._v800Share){const sh=window._v800Share;window._v800Share=null;setTimeout(()=>{try{if(sh.file)setPend(sh.file);if(sh.text){input.textContent=sh.text;input.dispatchEvent(new Event('input'))}}catch(_){}},350)}
   input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
-  container.querySelector('.v583EmojiBtn').onclick=()=>v583OpenEmoji(em=>{input.focus();let ok=false;try{ok=document.execCommand('insertText',false,em)}catch(_){}if(!ok){input.textContent+=em}});
+  container.querySelector('.v583EmojiBtn').onclick=()=>{
+    // V981 · el panel se queda abierto; los emojis se añaden donde estaba el cursor sin abrir el teclado
+    let rng=null;try{const sl=getSelection();if(sl.rangeCount&&input.contains(sl.getRangeAt(0).startContainer))rng=sl.getRangeAt(0).cloneRange()}catch(_){}
+    if(document.activeElement===input)input.blur();
+    const lay=input.closest('.v583Full');
+    const ins=em=>{try{if(rng&&input.contains(rng.startContainer)){const tn=document.createTextNode(em);rng.deleteContents();rng.insertNode(tn);rng.setStartAfter(tn);rng.collapse(true)}else{input.appendChild(document.createTextNode(em));rng=document.createRange();rng.selectNodeContents(input);rng.collapse(false)}}catch(_){input.textContent+=em}input.dispatchEvent(new Event('input',{bubbles:true}))};
+    const back=()=>{const arr=Array.from(input.textContent||'');if(!arr.length)return;arr.pop();input.textContent=arr.join('');rng=null;input.dispatchEvent(new Event('input',{bubbles:true}))};
+    v583OpenEmoji(ins,{keep:true,onBack:back,
+      onOpen:h=>{if(lay){lay._v981H=h;window.dispatchEvent(new Event('resize'));setTimeout(()=>{const bx=lay.querySelector('[id$="ChatScroll"]');if(bx)bx.scrollTop=bx.scrollHeight},80)}},
+      onClose:()=>{if(lay){lay._v981H=0;window.dispatchEvent(new Event('resize'))}}});
+  };
   if(cfg.attach){
     const fin=container.querySelector('.v583AttIn');
     container.querySelector('.v583AttBtn').onclick=e=>{
