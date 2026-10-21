@@ -1797,6 +1797,43 @@ html[data-theme="dark"] .v961Grid button{background:#1f2c40!important}
 .v961Row .n{font-weight:600!important}.v961Row .d{font-weight:400!important}
 .v959LibCard details.libraryAccordion>summary>span:first-child{flex:none!important}.v961Row .n{font-weight:700!important}
 .v959LibCard details.libraryAccordion>summary{justify-content:flex-start!important}.v959LibCard details.libraryAccordion>summary .sectionCount{width:auto!important;min-width:0!important}
+
+/* V962 · panel con la sesión completa */
+.v959SheetBody .v959InSheet,.v959SheetBody .weekKey{overflow:visible!important;max-height:none!important}.v959SheetBody *{-webkit-line-clamp:unset!important;line-clamp:none!important}
+.v959SheetBody .weekKey.v962Hide{display:none!important}
+.v962Full{margin-top:8px}
+.v959Blk.v962Ic{display:flex;gap:10px;align-items:center}.v959Blk.v962Ic>i{flex:none;display:flex}.v959Blk.v962Ic>i svg{width:16px!important;height:24px!important}
+.v959Blk.v962Ic>div{min-width:0}
+.v962Full .zoneBase{fill:#d6dde7}.v962Full .zoneHi{fill:#f59e0b}
+/* V963 · barra de color recta dentro de la ficha (sin curva de paréntesis) */
+.v959Chip{border-left:0!important;position:relative;padding-left:16px!important}
+.v959Chip::before{content:'';position:absolute;left:6px;top:7px;bottom:7px;width:4px;border-radius:2px;background:#0ea5b7}
+.v959Chip.k-gym::before{background:#8b5cf6}.v959Chip.k-erg::before{background:#f59e0b}.v959Chip.k-mix::before{background:#ec4899}.v959Chip.k-reg::before{background:#ef4444}
+
+/* V964 · Semana del remero con la agenda del entrenador */
+.v963Hid{display:none!important}
+:is(#content,#v555Freeze) .v964Week .athleteWeekItemsV123{display:flex;flex-direction:column;gap:6px;padding:6px 0!important}
+:is(#content,#v555Freeze) .v964Week .athleteWeekRestV123{padding:10px 0!important;color:var(--text-muted)!important;font-size:14px!important}
+.v964Chip{min-height:0}
+.v964Chip i{font-style:normal;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 6px;flex:none;background:#dff5f7;color:#0e7490}
+.v964Chip.k-gym i{background:#ede9fe;color:#6d28d9}.v964Chip.k-erg i{background:#fef3c7;color:#b45309}.v964Chip.k-reg i{background:#fee2e2;color:#b91c1c}.v964Chip.k-mix i{background:#fce7f3;color:#be185d}
+html[data-theme="dark"] .v964Chip i{background:#1f2c40;color:#e5ecf6}
+.v964M{flex:1;min-width:0;display:flex;flex-direction:column}
+.v964M .t{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v964M .d2{font-size:12px;color:var(--text-muted)}
+.v964Chip .st{flex:none}.v964Chip .st:empty{display:none}
+.v964St{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 8px;white-space:nowrap}
+.v964St.ok{background:#dcfce7;color:#15803d}.v964St.no{background:#fee2e2;color:#b91c1c}.v964St.pd{background:#fef3c7;color:#b45309}
+html[data-theme="dark"] .v964St.ok{background:#123625;color:#7ee2a8}html[data-theme="dark"] .v964St.no{background:#3a1414;color:#f5a9a2}html[data-theme="dark"] .v964St.pd{background:#3a2a10;color:#f2c579}
+.v964Go{flex:none;color:#cbd5e1;font-size:18px;line-height:1}
+.v964T{font-size:18px;font-weight:600;margin:6px 0 2px}
+.v964S{font-size:13.5px;color:var(--text-muted)}
+.v964Conv{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef3c7;color:#92400e;border-radius:10px;padding:8px 10px;font-size:13.5px;margin:8px 0}
+html[data-theme="dark"] .v964Conv{background:#3a2a10;color:#f2c579}
+.v964Conv button{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700;padding:0!important;margin:0!important;min-height:0!important;box-shadow:none!important;white-space:nowrap}
+.v959Pill{display:inline-block;font-size:12px;font-weight:700;border-radius:8px;padding:3px 8px;background:#dff5f7;color:#0e7490}
+.v959Pill.k-gym{background:#ede9fe;color:#6d28d9}.v959Pill.k-erg{background:#fef3c7;color:#b45309}
+.v959SheetBody .athleteWeekDetailV123{padding:0!important;margin:0!important;border:0!important;background:transparent!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3682,7 +3719,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="961";
+const APP_VERSION="964";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -17574,13 +17611,41 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     });
     grid.style.display='none';grid.parentNode.insertBefore(list,grid);
   }
+  function rowsToBlocks(rd,keepTop){
+    var out='';
+    rd.querySelectorAll('.workoutRow').forEach(function(r){
+      var l=r.querySelector('.workoutLabel'),v=r.querySelector('.workoutValue');
+      var lt=(l?l.textContent:'').replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9]+/,'').trim(),vt=v?v.textContent.trim():'';
+      var ic=l&&l.querySelector('svg')?l.querySelector('svg').outerHTML:'';
+      if(/^(OBJETIVO|CARGA|DURACI)/i.test(lt)){if(!keepTop)return;out+='<div class="v959Note"><b>'+esc(lt.charAt(0)+lt.slice(1).toLowerCase())+':</b> '+esc(vt)+'</div>';return}
+      if(/^(DESCARGA|NOTA|PROGRESI)/i.test(lt)){out+='<div class="v959Note"><b>'+esc(lt.charAt(0)+lt.slice(1).toLowerCase())+':</b> '+esc(vt)+'</div>';return}
+      var nm=lt===lt.toUpperCase()?lt.charAt(0)+lt.slice(1).toLowerCase():lt;
+      out+='<div class="v959Blk'+(ic?' v962Ic':'')+'">'+(ic?'<i>'+ic+'</i>':'')+'<div><b>'+esc(nm)+'</b>'+(vt?(/^https?:\/\/\S+$/.test(vt)?'<span><a href="'+esc(vt)+'" target="_blank" rel="noopener">Abrir enlace ↗</a></span>':'<span>'+esc(vt)+'</span>'):'')+'</div></div>';
+    });
+    return out||rd.innerHTML;
+  }
+  // contenido completo de una sesión: se pide al botón "Ver detalle" de la app y se quita su ventana al momento
+  function fullSessionHtml(ws){
+    var b=ws.querySelector('.weekDetailSession');if(!b)return '';
+    var before=document.querySelectorAll('.modalBack').length;
+    try{b.click()}catch(e){return ''}
+    var ms=document.querySelectorAll('.modalBack');if(ms.length<=before)return '';
+    var m=ms[ms.length-1],rd=m.querySelector('.workoutReadable');var out='';
+    if(rd)out=rowsToBlocks(rd);
+    else{var c=m.querySelector('.modalCard');if(c){c.querySelectorAll('.modalTitle,.actions').forEach(function(x){x.remove()});out=c.innerHTML}}
+    m.remove();
+    return out;
+  }
   function openCoachSheet(ws,lab,kind,day){
     var parent=ws.parentNode,next=ws.nextSibling;
     var key=ws.querySelector('.weekKey'),keyHtml=key?key.innerHTML:null;
-    var S=sheet({onClose:function(){if(key&&keyHtml!=null)key.innerHTML=keyHtml;ws.classList.remove('v959InSheet');parent.insertBefore(ws,next)}});
+    var S=sheet({onClose:function(){var f=ws.querySelector('.v962Full');if(f)f.remove();if(key)key.classList.remove('v962Hide');if(key&&keyHtml!=null)key.innerHTML=keyHtml;ws.classList.remove('v959InSheet');parent.insertBefore(ws,next)}});
     S.body.innerHTML='<div class="v959SHead"><span class="v959Pill k-'+kind+'">'+esc(lab)+' · '+esc(day)+'</span></div>';
     S.body.appendChild(ws);ws.classList.add('v959InSheet');
-    if(key&&keyHtml)key.innerHTML=blocksHtml(keyHtml);
+    // V962 · la ficha de la semana solo trae 2 líneas: en el panel se pone la sesión COMPLETA
+    var full=fullSessionHtml(ws);
+    if(full){var fb=document.createElement('div');fb.className='v962Full';fb.innerHTML=full;if(key)key.classList.add('v962Hide');var meta=ws.querySelector('.weekMeta');var anchor=key||meta;if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(fb,anchor.nextSibling);else ws.appendChild(fb)}
+    else if(key&&keyHtml)key.innerHTML=blocksHtml(keyHtml);
     // botones: los principales abajo, el resto en ⋯
     var acts=ws.querySelector('.actions');
     if(acts){
@@ -17594,18 +17659,119 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
   }
 
   // ---------- Semana del remero: el detalle se abre en panel ----------
+  // V964 · Semana del remero = misma agenda que el entrenador (barra recta + etiqueta Voy/No voy)
+  //  · GYM/ERGO → panel de abajo con el entrenamiento y Registrar (si es convocatoria, línea arriba con "Ver en Eventos ›")
+  //  · MAR y REGATA → directos a la convocatoria en Eventos (el contenido de MAR es solo del entrenador)
+  var RW={info:{},rsvp:{},comp:{},loading:{}};window.__v964RW=RW;
+  function goEvent(kind,id,team){try{v952RouteUrl('/?tab=eventos&eid='+encodeURIComponent(id)+'&ek='+kind+'&et='+encodeURIComponent(team||''))}catch(e){console.warn('v964 evento',e)}}
+  function rwStatus(id,d){
+    var st=RW.rsvp[id],inf=RW.info[id]||{};
+    var isEv=inf.is_event||(d&&d.querySelector('.v493RsvpRow'));
+    if(st==='in')return '<span class="v964St ok">Voy ✓</span>';
+    if(st==='waitlist')return '<span class="v964St pd">En espera</span>';
+    if(st==='out')return '<span class="v964St no">No voy</span>';
+    if(isEv)return '<span class="v964St pd">¿Vas?</span>';
+    if(d&&d.classList.contains('is-done'))return '<span class="v964St ok">Hecho ✓</span>';
+    return '';
+  }
+  function rwSub(id,type){
+    var inf=RW.info[id];if(!inf)return type==='MAR'?'':'';
+    var p=[];
+    if(inf.event_time)p.push(String(inf.event_time).slice(0,5));
+    if(type==='MAR'){if(inf.location&&!/^https?:/i.test(inf.location))p.push(inf.location)}
+    else{var m=String(inf.content||'').match(/DURACI[ÓO]N[^\n·]*·\s*([^\n]+)/i);if(m)p.push(m[1].trim())}
+    return p.join(' · ');
+  }
+  function paintRowerChip(c){
+    var d=c._d,id=c.dataset.id,type=c.dataset.type;
+    var sub=rwSub(id,type);c.querySelector('.d2').textContent=sub;c.querySelector('.d2').style.display=sub?'':'none';
+    c.querySelector('.st').innerHTML=rwStatus(id,d);
+  }
+  function loadRowerInfo(root){
+    var ids=[].slice.call(root.querySelectorAll('details.athleteWeekSessionV123')).map(function(d){return d.dataset.id}).filter(function(id){return id&&!(id in RW.info)&&!RW.loading[id]});
+    if(!ids.length||typeof sb==='undefined')return;
+    ids.forEach(function(id){RW.loading[id]=1});
+    var uid=(typeof currentUser!=='undefined'&&currentUser)?currentUser.id:null;
+    Promise.all([
+      sb.from('training_sessions').select('id,team_code,session_type,is_event,event_time,meet_time,location,content,cancelled_at').in('id',ids.map(Number)),
+      uid?sb.from('session_rsvp').select('training_session_id,status').eq('user_id',uid).in('training_session_id',ids.map(Number)):Promise.resolve({data:[]})
+    ]).then(function(r){
+      (r[0].data||[]).forEach(function(x){RW.info[String(x.id)]=x});
+      ids.forEach(function(id){if(!(id in RW.info))RW.info[id]={}});
+      (r[1].data||[]).forEach(function(x){RW.rsvp[String(x.training_session_id)]=x.status});
+      document.querySelectorAll('.v964Chip[data-id]').forEach(paintRowerChip);
+    }).catch(function(e){console.warn('v964',e)});
+  }
+  function openRowerSheet(d,c){
+    var sum=d.querySelector(':scope > summary'),det=d.querySelector(':scope > .athleteWeekDetailV123');if(!det)return;
+    if(!d.open)d.open=true; // la app carga ayudas ERGO al abrir
+    var acts=null;
+    var S=sheet({onClose:function(){if(acts)acts.classList.remove('v963Hid');det.querySelectorAll('.v964Tmp').forEach(function(x){x.remove()});det.querySelectorAll(':scope > .workoutReadable.v963Hid').forEach(function(x){x.classList.remove('v963Hid')});d.appendChild(det);d.open=false}});
+    var id=c.dataset.id,type=c.dataset.type,inf=RW.info[id]||{};
+    var head=document.createElement('div');head.className='v959RHead';
+    head.innerHTML='<span class="v959Pill k-'+c.dataset.k+'">'+esc(c.dataset.tag)+' · '+esc(c.dataset.day)+'</span><div class="v964T"></div><div class="v964S"></div>';
+    head.querySelector('.v964T').textContent=c.querySelector('.t').textContent;
+    var sub=rwSub(id,type);head.querySelector('.v964S').textContent=sub;if(!sub)head.querySelector('.v964S').remove();
+    S.body.appendChild(head);
+    if(inf.is_event&&type!=='MAR'){
+      var cv=document.createElement('div');cv.className='v964Conv';
+      cv.innerHTML='<span><b>Convocatoria:</b> '+(rwStatus(id,d).replace(/<[^>]+>/g,'')||'¿Vas?')+'</span><button type="button">Ver en Eventos ›</button>';
+      cv.querySelector('button').onclick=function(){S.close();setTimeout(function(){goEvent('session',id,inf.team_code||d.dataset.team||'')},220)};
+      S.body.appendChild(cv);
+    }
+    S.body.appendChild(det);
+    var rds=[].slice.call(det.querySelectorAll(':scope > .workoutReadable'));
+    rds.forEach(function(rd){var f=document.createElement('div');f.className='v962Full v964Tmp';f.innerHTML=rowsToBlocks(rd,true);rd.parentNode.insertBefore(f,rd);rd.classList.add('v963Hid')});
+    // los botones Registrar pasan abajo, fijos
+    acts=det.querySelector(':scope > .staffActions');
+    if(acts){[].slice.call(acts.querySelectorAll('button')).forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p wide':'v959Btn wide';x.textContent=b.textContent;x.onclick=function(){S.close();setTimeout(function(){b.click()},220)};S.foot.appendChild(x)});acts.classList.add('v963Hid')}
+  }
   function enhanceRowerWeek(root){
+    var card=root.closest('.athleteWeekV123')||root.parentNode;
+    // caja "Sin sesiones GYM/ERGO" fuera; la barra de cumplimiento se queda si hay algo que cumplir
+    var comp=card&&card.querySelector('#rowerWeekComplianceV123');
+    if(comp){var empty=!comp.querySelector('.athleteWeekProgressBarV123')&&/—/.test(comp.textContent);comp.classList.toggle('v963Hid',empty)}
+    root.classList.add('v964Week');
+    root.querySelectorAll('.athleteWeekRestV123').forEach(function(r){if(r.textContent!=='Descanso')r.textContent='Descanso'});
+    var dayNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     root.querySelectorAll('details.athleteWeekSessionV123').forEach(function(d){
-      if(d._v959)return;d._v959=1;
-      var sum=d.querySelector(':scope > summary');if(!sum)return;
-      sum.addEventListener('click',function(e){
-        var det=d.querySelector(':scope > .athleteWeekDetailV123');if(!det)return;
-        e.preventDefault();
-        var S=sheet({onClose:function(){d.appendChild(det)}});
-        var head=document.createElement('div');head.className='v959RHead';head.innerHTML=(sum.querySelector('.athleteWeekSessionMainV123')||sum).innerHTML;
-        S.body.appendChild(head);S.body.appendChild(det);
-      });
+      if(d._v964){if(d._v964c&&d._v964c.isConnected)paintRowerChip(d._v964c);return}
+      d._v964=1;
+      var type=(d.dataset.type||'').toUpperCase(),id=d.dataset.id;
+      var tagEl=d.querySelector('.athleteWeekTypeV123'),tag=tagEl?tagEl.textContent.trim():type;
+      if(tag==='ERG')tag='ERGO';
+      var k=type==='MAR'?'mar':type==='GYM'?'gym':type==='ERG'?'erg':'mix';
+      var title=type==='MAR'?'Sesión de mar':((d.querySelector('.athleteWeekSessionTitleV123')||{}).textContent||tag).replace(/^\s*(GYM|ERGO?|MIX|MAR)\s*·\s*/i,'');
+      var ds=d.dataset.date||'',dd=ds?new Date(ds+'T12:00:00'):null,day=dd?dayNames[dd.getDay()]+' '+dd.getDate()+'/'+(dd.getMonth()+1):'';
+      var c=document.createElement('button');c.type='button';c.className='v959Chip v964Chip k-'+k;c.dataset.id=id;c.dataset.type=type;c.dataset.k=k;c.dataset.tag=tag;c.dataset.day=day;
+      c.innerHTML='<i>'+esc(tag)+'</i><span class="v964M"><span class="t"></span><span class="d2"></span></span><span class="st"></span><span class="v964Go">›</span>';
+      c.querySelector('.t').textContent=title;
+      c._d=d;d._v964c=c;
+      d.parentNode.insertBefore(c,d);d.classList.add('v963Hid');
+      c.onclick=function(){
+        var inf=RW.info[id]||{};
+        if(type==='MAR'&&inf.is_event&&!inf.cancelled_at){goEvent('session',id,inf.team_code||'');return}
+        openRowerSheet(d,c);
+      };
+      paintRowerChip(c);
     });
+    // regatas (competiciones)
+    root.querySelectorAll('.athleteWeekRaceV123').forEach(function(rc){
+      if(rc._v964)return;rc._v964=1;
+      var name=rc.textContent.replace(/^\s*🏁\s*/,'').trim();
+      var day=rc.closest('.athleteWeekDayV123');
+      var c=document.createElement('button');c.type='button';c.className='v959Chip v964Chip k-reg';
+      c.innerHTML='<i>REGATA</i><span class="v964M"><span class="t"></span><span class="d2" style="display:none"></span></span><span class="st"></span><span class="v964Go">›</span>';
+      c.querySelector('.t').textContent=name;
+      rc.parentNode.insertBefore(c,rc);rc.classList.add('v963Hid');
+      c.onclick=function(){
+        var team=(typeof currentTeamCode!=='undefined'&&currentTeamCode)||'';
+        var go=function(cid){if(cid)goEvent('competition',cid,team);else{try{tab='eventos';draw();render()}catch(e){}}};
+        if(RW.comp[name]){go(RW.comp[name]);return}
+        sb.from('competitions').select('id,name').eq('name',name).limit(1).then(function(r){var x=(r.data||[])[0];if(x)RW.comp[name]=x.id;go(x&&x.id)}).catch(function(){go(null)});
+      };
+    });
+    loadRowerInfo(root);
   }
 
   // ---------- Biblioteca GYM: 6 categorías + muñeco ----------
