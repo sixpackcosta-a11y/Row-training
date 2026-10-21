@@ -3551,7 +3551,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="956";
+const APP_VERSION="957";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -7054,7 +7054,7 @@ function v307CrewBoatHtml(rawCrew,sessionId,readOnly=false,teamCode=null){
   }
   const configControls=readOnly?'':`<div class="v307CrewConfig"><label>Embarcación<select class="v307SeatsSelect" data-session="${sessionId}"><option value="8" ${crew.seats===8?'selected':''}>Barca (Jábega)</option><option value="10" ${crew.seats===10?'selected':''}>Llaüt</option></select></label></div>`;
   const hasRegisteredCrew=crew.assignments.some(c=>c.user_id);
-  return `<div class="v307CrewSection"><b>🚣 Tripulación</b>${configControls}<div class="v307CrewPopa">▲ Popa</div><div class="v307CrewLabels"><span>Estribor</span><span>Babor</span></div><div class="v307CrewBoatWrap"><div class="v307HullShape"></div><div class="v307CrewBoat" data-session="${sessionId}" style="grid-template-rows:repeat(${maxRow},1fr)">${seatsHtml}</div></div><div class="v307CrewProa">Proa</div>${hasRegisteredCrew?`<div class="v307CrewSummary" data-session="${sessionId}"><span class="muted">${v316Loading('Cargando peso/W-kg…')}</span></div>`:''}</div>`;
+  return `<div class="v307CrewSection"><b>🚣 Tripulación</b>${configControls}<div class="v307CrewPopa">▲ Popa</div><div class="v307CrewLabels"><span>Estribor</span><span>Babor</span></div><div class="v307CrewBoatWrap"><div class="v307HullShape"></div><div class="v307CrewBoat" data-session="${sessionId}" style="grid-template-rows:repeat(${maxRow},1fr)">${seatsHtml}</div></div><div class="v307CrewProa">Proa</div>${hasRegisteredCrew?`<div class="v307CrewSummary" data-session="${sessionId}"><span class="muted"></span></div>`:''}</div>`;
 }
 function v307BindCrewBoat(container,session,teamCode,afterSave){
   container.querySelectorAll('.v307SeatBtn').forEach(btn=>{
