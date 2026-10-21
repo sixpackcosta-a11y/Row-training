@@ -5,6 +5,7 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
+// V973 · al abrir: primero internet (máx. 2,5 s) y si no, la copia guardada; así una versión subida con la app cerrada se abre directamente.
 // V952 · al pulsar una notificación con la app ya abierta, ya no se recarga la página (salía otra vez la
 //  pantalla de inicio): se le pasa el enlace a la app y ella abre la pantalla que toca.
 const CACHE='rowtraining-app-v565';
@@ -24,15 +25,23 @@ function isAppPage(req,url){
 
 async function appPage(req,url,event){
   const cache=await caches.open(CACHE);
-  const net=fetch(req,{cache:'no-store'}).then(res=>{
+  // V973 · se pide por la dirección (no con la petición de navegación tal cual: algunos navegadores no dejan
+  // reutilizarla con opciones y entonces nunca se bajaba la versión nueva al abrir).
+  const net=fetch(new Request(url.href,{cache:'no-store',credentials:'include',redirect:'follow'})).then(res=>{
     if(res&&res.ok)cache.put('/index.html',res.clone()).catch(()=>{});
     return res;
   });
-  // V801 · abrir al instante: si ya hay una copia guardada se enseña esa y la nueva se baja por detrás
-  // (la app comprueba sola si hay versión más nueva y recarga). Con ?appv=… se sigue esperando a la red.
+  // V973 · al abrir la app se intenta primero la versión de internet (como mucho 2,5 s, mientras sale la
+  // pantalla de inicio). Así, si has subido una versión con la app cerrada, se abre ya la nueva y no hace
+  // falta el aviso. Sin cobertura o con red lenta se abre al momento la copia guardada, como antes.
   if(!url.searchParams.has('appv')){
     const hit=await cache.match('/index.html')||await cache.match('/');
-    if(hit){if(event)event.waitUntil(net.catch(()=>{}));else net.catch(()=>{});return hit}
+    if(hit){
+      const quick=await Promise.race([net.catch(()=>null),new Promise(r=>setTimeout(()=>r(null),2500))]);
+      if(quick&&quick.ok)return quick;
+      if(event)event.waitUntil(net.catch(()=>{}));else net.catch(()=>{});
+      return hit;
+    }
   }
   // tras avisar de una versión nueva (?appv=…) se espera más a la red para no abrir la vieja
   const timeout=new Promise(resolve=>setTimeout(()=>resolve(null),url.searchParams.has('appv')?15000:4000));
