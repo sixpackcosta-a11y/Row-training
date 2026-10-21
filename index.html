@@ -1666,7 +1666,96 @@ html,body{touch-action:pan-x pan-y;max-width:100%;overflow-x:hidden}
 .v887Re{padding:5px 12px;font-size:13px}
 .v905Bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}.v905Bar select{flex:1 1 140px;min-width:0}.v905Chk{display:flex;gap:8px;align-items:center;margin:4px 0 10px;font-size:12px}.v905Chk input{width:auto}.v905Row{cursor:pointer}.v905Val{flex:0 0 auto;text-align:right;font-weight:500;font-size:16px}.v905Val small{display:block;font-size:12px;opacity:.6}.v905Detail{padding:2px 0 8px 46px}.v905Line{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:12px}.v905Line.me,.v905Row.me{font-weight:500}.v905Pos{flex:0 0 18px;opacity:.6}.v905Nm{flex:1;min-width:0}.v905Rt{flex:0 0 auto;min-width:52px;text-align:right;white-space:nowrap}.v905Pc{flex:0 0 58px;text-align:right;opacity:.6}.v905Note{margin:4px 0 8px}.v905Seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;height:34px;background:var(--surface)}:is(#content,#v555Freeze) .v905Seg button{flex:1 1 0;min-width:0;border:0!important;border-radius:0!important;background:transparent!important;color:var(--text)!important;font-size:12px!important;padding:0 2px!important;line-height:1.1!important;margin:0!important;min-height:0!important;height:100%!important;box-shadow:none!important;font-weight:500}:is(#content,#v555Freeze) .v905Seg button.on{background:#2563eb!important;color:#fff!important;font-weight:600}:is(#content,#v555Freeze) .v905Seg button+button{border-left:1px solid var(--border)!important}.v905Ord{display:flex;align-items:center;gap:8px;margin:4px 0 2px;font-size:12px}.v905Ord .v905Seg{width:130px;height:28px}.v905Val.best{color:#2563eb;font-weight:700}.v905Fb{height:34px;border:1px solid #2563eb;background:#fff;color:#2563eb;border-radius:10px;font-size:12.5px;font-weight:600;padding:0}.v905Fb.on{background:#eff6ff}.v905Badge{background:#2563eb;color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px}.v905Sum{background:#eff6ff;border-radius:10px;padding:8px 10px;font-size:12px;color:#1e3a8a;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px}.v905Sum b{cursor:pointer;padding:0 4px}:is(#content,#v555Freeze) .v905Bar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:8px 0 6px}:is(#content,#v555Freeze) .v905Bar select{width:100%;min-width:0;height:34px!important;min-height:0!important;margin:0!important;padding:0 22px 0 9px!important;font-size:12.5px!important;background-position:right 7px center;text-overflow:ellipsis}:is(#content,#v555Freeze) .v905Bar .v905Chk{grid-column:span 2;margin:0;font-size:12px;white-space:nowrap}.v905T{font-weight:700;font-size:.88rem;line-height:1.28}.v905Win{font-size:.82rem;font-weight:500;margin-top:2px}.v905Sub{font-size:.76rem;color:var(--text-muted);margin-top:2px;line-height:1.3}.v905Hd{opacity:.6;font-size:11px}.v905Hd .v905Pc{white-space:normal;text-align:right;line-height:1.1}.v905Pc{flex:0 0 74px}
 .v330SubTabs{overflow-x:visible;gap:5px}.v330SubTab{flex:1 1 auto;min-width:0;padding:0 8px;justify-content:center;white-space:nowrap;font-size:13px}
-</style><style>/* V943 · Análisis: separación entre la pestaña MAR/Remeros y los selectores, y todas las secciones con el mismo ancho */.v576Seg+.v573Top,.v576Seg+.athleteSelectorBar{margin-top:12px!important}@media(max-width:700px){.coachAnalysisSectionV123{padding-left:0!important;padding-right:0!important}.coachAnalysisSectionV123>summary{padding-left:2px!important;padding-right:2px!important}.coachAnalysisSectionBodyV123{padding-left:0!important;padding-right:0!important}}</style><style>/* V944 · Remeros con la misma estructura que MAR · Equipo (sin salto al cambiar) y aviso de carga */.v943Body{background:var(--surface);border:2px solid #dbe7f5;border-radius:10px;padding:15px;margin-top:10px;box-shadow:0 2px 8px #0b183014}html[data-theme="dark"] .v943Body{border-color:var(--border)}.v943Load{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:9000;background:#0b1b35;color:#fff;font-weight:600;font-size:.9rem;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25);pointer-events:none}@media(max-width:700px){.v943Body{padding:6px}}</style><style>/* V947 · GYM: elegir otro ejercicio */.v947Other{margin:8px 0 6px}.v947Pick{font-size:.85rem;padding:6px 12px}.v947Other .variantStatus{margin-bottom:6px}</style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
+</style><style>/* V943 · Análisis: separación entre la pestaña MAR/Remeros y los selectores, y todas las secciones con el mismo ancho */.v576Seg+.v573Top,.v576Seg+.athleteSelectorBar{margin-top:12px!important}@media(max-width:700px){.coachAnalysisSectionV123{padding-left:0!important;padding-right:0!important}.coachAnalysisSectionV123>summary{padding-left:2px!important;padding-right:2px!important}.coachAnalysisSectionBodyV123{padding-left:0!important;padding-right:0!important}}</style><style>/* V944 · Remeros con la misma estructura que MAR · Equipo (sin salto al cambiar) y aviso de carga */.v943Body{background:var(--surface);border:2px solid #dbe7f5;border-radius:10px;padding:15px;margin-top:10px;box-shadow:0 2px 8px #0b183014}html[data-theme="dark"] .v943Body{border-color:var(--border)}.v943Load{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:9000;background:#0b1b35;color:#fff;font-weight:600;font-size:.9rem;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25);pointer-events:none}@media(max-width:700px){.v943Body{padding:6px}}</style><style>/* V947 · GYM: elegir otro ejercicio */.v947Other{margin:8px 0 6px}.v947Pick{font-size:.85rem;padding:6px 12px}.v947Other .variantStatus{margin-bottom:6px}</style><style>/* V959 · escala de letra */
+#content .v503Title{font-size:15.5px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+#content .v503Sub,#content .v516Opens{font-size:13px!important}
+#content .v503Month{font-size:11px!important}
+#content .v503Day{font-size:20px!important}
+#content .v503Counts{font-size:13.5px!important}
+.v583Msg{font-size:16.5px!important}
+.v583Msg>div:last-child{font-size:11.5px!important}
+.v583Day span{font-size:12px!important}
+.v583In{font-size:16px!important}
+#content .workoutLabel{font-size:12.5px!important}
+#content .v766S{font-size:13px!important}
+#content .athleteOpenErgoV113,#content .athleteManualErgoV113,#content .athleteLogGymV113{font-size:14px!important}
+/* tres niveles: Pequeña / Normal / Grande */
+html[data-fs="s"] #content,html[data-fs="s"] .v583Body,html[data-fs="s"] .v503DetailBody,html[data-fs="s"] .v959Sheet{zoom:.92}
+html[data-fs="l"] #content,html[data-fs="l"] .v583Body,html[data-fs="l"] .v503DetailBody,html[data-fs="l"] .v959Sheet{zoom:1.12}
+.v959FsRow{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:500}
+.v959FsSeg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.v959FsSeg button{flex:1;border:0!important;border-radius:0!important;background:transparent!important;color:var(--text)!important;padding:8px 2px!important;margin:0!important;box-shadow:none!important}
+.v959FsSeg button[data-fs="s"]{font-size:12.5px!important}.v959FsSeg button[data-fs="n"]{font-size:14px!important}.v959FsSeg button[data-fs="l"]{font-size:16px!important}
+.v959FsSeg button.on{background:#2563eb!important;color:#fff!important;font-weight:700}
+/* panel desde abajo */
+.v959SheetBack{position:fixed;inset:0;z-index:9500;background:rgba(7,22,47,0);transition:background .2s}
+.v959SheetBack.in{background:rgba(7,22,47,.45)}
+.v959SheetBack.out{background:rgba(7,22,47,0)}
+.v959Sheet{position:absolute;left:0;right:0;bottom:0;max-height:86vh;display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--text);border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(100%);transition:transform .24s cubic-bezier(.2,.85,.25,1)}
+.v959SheetBack.in .v959Sheet{transform:none}.v959SheetBack.out .v959Sheet{transform:translateY(100%)}
+.v959Sheet.v959Tall{max-height:92vh}
+.v959Grab{width:42px;height:5px;border-radius:3px;background:#cbd5e1;margin:10px auto 6px;flex:none}
+.v959SheetBody{overflow:auto;padding:4px 16px 12px;-webkit-overflow-scrolling:touch}
+.v959SheetFoot{display:flex;gap:8px;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--border);position:relative;flex:none}
+.v959SheetFoot:empty{display:none}
+.v959Btn{border:0;border-radius:12px;padding:11px 14px;font-size:14.5px;font-weight:600;background:#eef2f7;color:#0b1b35}
+html[data-theme="dark"] .v959Btn{background:#263449;color:#e5ecf6}
+.v959Btn.p{background:#0b1b35;color:#fff;font-weight:700}html[data-theme="dark"] .v959Btn.p{background:#2563eb}
+.v959Btn.more{margin-left:auto;font-size:18px;font-weight:800;padding:8px 14px}
+.v959Btn.wide{flex:1}
+.v959Menu{position:absolute;right:16px;bottom:74px;background:var(--surface,#fff);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);overflow:hidden;min-width:190px;z-index:2}
+.v959Menu button{display:block;width:100%;text-align:left;border:0!important;border-radius:0!important;background:transparent!important;padding:13px 16px!important;font-size:15px!important;color:var(--text)!important;border-bottom:1px solid var(--border)!important;margin:0!important;box-shadow:none!important}
+.v959Menu button.red{color:#dc2626!important;border-bottom:0!important}
+.v959SHead{margin:2px 0 6px}
+.v959Pill{display:inline-block;font-size:11.5px;font-weight:800;border-radius:6px;padding:3px 8px}
+.k-mar.v959Pill,.k-mar i{color:#0e7490;background:#cffafe}.k-gym.v959Pill,.k-gym i{color:#6d28d9;background:#ede9fe}.k-erg.v959Pill,.k-erg i{color:#b45309;background:#fef3c7}.k-mix.v959Pill,.k-mix i{color:#be185d;background:#fce7f3}.k-reg.v959Pill,.k-reg i{color:#b91c1c;background:#fee2e2}
+.v959InSheet{border:0!important;background:transparent!important;padding:0!important;margin:0!important;box-shadow:none!important}
+.v959InSheet .weekSessTitle .tag:first-child{display:none}
+.v959InSheet .weekSessTitle b{font-size:18px;display:block;margin:4px 0}
+.v959InSheet .weekMeta{display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:var(--text-muted)}
+.v959InSheet .weekKey{margin-top:8px;font-size:14px}
+.v959InSheet>.actions{display:none!important}
+.v959Blk{border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin:6px 0;background:var(--surface-2,#fbfcfe)}
+.v959Blk b{display:block;font-size:15px;color:var(--text)}.v959Blk span{display:block;font-size:13.5px;color:var(--text-muted);margin-top:2px}
+.v959Note{font-size:12.5px;color:var(--text-muted);background:var(--surface-2,#f1f5f9);border-radius:10px;padding:8px 10px;margin:6px 0}
+.v959RHead{font-size:16px;font-weight:700;margin:0 0 8px}
+.v959RHead .athleteWeekChevronV123{display:none}
+/* semana agenda (entrenador) */
+.v959Week{border-top:1px solid var(--border);margin-top:6px}
+.v959Day{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--border)}
+.v959D{width:40px;text-align:center;flex:none}.v959D span{display:block;font-size:11px;font-weight:700;color:var(--text-muted)}.v959D b{font-size:20px;color:var(--text)}
+.v959D.today b{display:inline-block;width:32px;height:32px;line-height:32px;border-radius:50%;background:#2563eb;color:#fff;font-size:17px}
+.v959Items{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.v959Chip{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0!important;border-left:4px solid #0ea5b7!important;border-radius:10px!important;background:var(--surface-2,#f5f8fc)!important;padding:8px 10px!important;margin:0!important;box-shadow:none!important;color:var(--text)!important;min-height:0!important}
+.v959Chip i{font-style:normal;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 6px;flex:none}
+.v959Chip .t{font-size:14.5px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v959Chip .d{font-size:12px;color:var(--text-muted);flex:none}
+.v959Chip.k-gym{border-left-color:#8b5cf6!important}.v959Chip.k-erg{border-left-color:#f59e0b!important}.v959Chip.k-mix{border-left-color:#ec4899!important}.v959Chip.k-reg{border-left-color:#ef4444!important}
+.v959Empty{font-size:13.5px;color:var(--text-muted);padding:6px 0}
+.v959Empty button,.v959Add{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700!important;font-size:13.5px!important;padding:0!important;margin:0!important;box-shadow:none!important;min-height:0!important;text-align:left}
+.v959Add{padding:2px 0!important}
+/* biblioteca GYM */
+.v959Search{width:100%;box-sizing:border-box;margin:4px 0 8px}
+.v959Lib .v959Mini{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:6px 8px 18px;position:relative;cursor:pointer;background:var(--surface)}
+.v959MiniB{display:flex;gap:2px;flex:none}.v959MiniB svg.v959Mini{width:44px;height:96px}
+.v959Chips{display:flex;flex-wrap:wrap;gap:6px}
+.v959Chips button{border:1px solid var(--border)!important;border-radius:999px!important;padding:5px 10px!important;font-size:12.5px!important;font-weight:700;background:var(--surface-2,#f1f5f9)!important;color:var(--text)!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v959Chips button.on{background:#f59e0b!important;border-color:#f59e0b!important;color:#fff!important}
+.v959Hint{position:absolute;left:10px;bottom:3px;font-size:11px;color:#2563eb;font-weight:700}
+.v959Quick{display:flex;gap:6px;margin:8px 0}
+.v959Quick button{border:0!important;border-radius:10px!important;background:#eef2ff!important;color:#2563eb!important;font-weight:700;font-size:13px!important;padding:7px 10px!important;margin:0!important;box-shadow:none!important}
+.v959Quick button.on{background:#2563eb!important;color:#fff!important}
+.v959MoreF{margin:4px 0 8px}.v959MoreF>summary{cursor:pointer;font-size:13.5px;color:var(--text-muted);padding:4px 2px}
+.v959Sel{display:flex;justify-content:space-between;align-items:center;margin:8px 2px;font-size:13.5px}
+.v959Sel button{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700;padding:0!important;margin:0!important;box-shadow:none!important}
+.v959PH{margin:2px 0 6px;font-size:17px}
+.v959Bodies{display:flex;justify-content:space-around}.v959Bodies>div{text-align:center}.v959Bodies small{font-weight:800;color:var(--text-muted);font-size:11px}
+.v959Bodies svg.v959Big{width:140px;height:308px}
+.v959Z{cursor:pointer}
+.v959Tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.v959Tags button{border:0!important;border-radius:999px!important;padding:6px 11px!important;font-size:13px!important;font-weight:700;background:#fef3c7!important;color:#92400e!important;margin:0!important;box-shadow:none!important}
+.v959Extra button{background:var(--surface-2,#f1f5f9)!important;color:var(--text)!important}.v959Extra button.on{background:#f59e0b!important;color:#fff!important}
+</style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
 // pasado un rato, ofrece reintentar en lugar de quedarse en blanco.
@@ -3551,7 +3640,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="958";
+const APP_VERSION="959";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -17364,4 +17453,251 @@ if(vv){vv.addEventListener('resize',function(){setTimeout(fix,120)});vv.addEvent
 function reset(){if(busy||!mt)return;busy=1;mt.setAttribute('content','width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover');setTimeout(function(){mt.setAttribute('content',base);try{window.scrollTo(0,document.getElementById('v347Scroll')?0:window.scrollY)}catch(e){}busy=0},120)}
 var tm=0;function chk(){clearTimeout(tm);tm=setTimeout(function(){if(vv.scale>1.02)reset()},350)}
 vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true);document.addEventListener('touchend',chk,{passive:true})}catch(e){}})();
+</script><script>/* V959 · Semana en formato agenda + panel desde abajo, escala de letra con 3 niveles, Biblioteca GYM con muñeco */
+(function(){
+  // ---------- Tamaño de letra (Pequeña / Normal / Grande) ----------
+  function fsGet(){try{return localStorage.getItem('rowtraining_fs_v959')||'n'}catch(e){return 'n'}}
+  function fsApply(v){document.documentElement.setAttribute('data-fs',v||'n')}
+  window.v959SetFs=function(v){try{localStorage.setItem('rowtraining_fs_v959',v)}catch(e){}fsApply(v)};
+  fsApply(fsGet());
+  // fila en Ajustes
+  new MutationObserver(function(){
+    var m=document.querySelector('.v300SettingsMenuBack .modalCard');if(!m||m.querySelector('.v959FsRow'))return;
+    var col=m.querySelector(':scope > div:nth-of-type(2)');if(!col)return;
+    var cur=fsGet();
+    var row=document.createElement('div');row.className='v959FsRow';
+    row.innerHTML='<span>🔠 Tamaño de letra</span><div class="v959FsSeg">'+[['s','Pequeña'],['n','Normal'],['l','Grande']].map(function(o){return '<button type="button" data-fs="'+o[0]+'" class="'+(o[0]===cur?'on':'')+'">'+o[1]+'</button>'}).join('')+'</div>';
+    col.insertBefore(row,col.children[1]||null);
+    row.querySelectorAll('button').forEach(function(b){b.onclick=function(e){e.stopPropagation();window.v959SetFs(b.dataset.fs);row.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)})}});
+  }).observe(document.body,{childList:true});
+
+  // ---------- Panel desde abajo (común) ----------
+  function sheet(opts){
+    var bg=document.createElement('div');bg.className='v959SheetBack';
+    var sh=document.createElement('div');sh.className='v959Sheet';
+    sh.innerHTML='<div class="v959Grab"></div><div class="v959SheetBody"></div><div class="v959SheetFoot"></div>';
+    bg.appendChild(sh);document.body.appendChild(bg);
+    var body=sh.querySelector('.v959SheetBody'),foot=sh.querySelector('.v959SheetFoot');
+    var closed=false;
+    function close(){if(closed)return;closed=true;try{opts.onClose&&opts.onClose()}catch(e){}bg.classList.add('out');setTimeout(function(){bg.remove()},200)}
+    bg.addEventListener('click',function(e){if(e.target===bg)close()});
+    // deslizar hacia abajo para cerrar
+    var y0=null;sh.querySelector('.v959Grab').addEventListener('touchstart',function(e){y0=e.touches[0].clientY},{passive:true});
+    sh.addEventListener('touchmove',function(e){if(y0==null)return;var d=e.touches[0].clientY-y0;if(d>0)sh.style.transform='translateY('+d+'px)'},{passive:true});
+    sh.addEventListener('touchend',function(e){if(y0==null)return;var d=(e.changedTouches[0].clientY-y0);y0=null;if(d>90)close();else sh.style.transform=''},{passive:true});
+    requestAnimationFrame(function(){bg.classList.add('in')});
+    return {bg:bg,sheet:sh,body:body,foot:foot,close:close};
+  }
+  window.v959Sheet=sheet;
+  // texto de una sesión → tarjetas (una por línea "Nombre · detalle")
+  function blocksHtml(html){
+    var lines=String(html||'').split(/<br\s*\/?>|\n/i).map(function(s){return s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').trim()}).filter(Boolean);
+    if(!lines.length)return '';
+    return lines.map(function(l){
+      var p=l.split(/\s+·\s+/);var n=p.shift();var d=p.join(' · ');
+      if(/^(PROGRESI|OBJETIVO|NOTA)/i.test(n))return '<div class="v959Note"><b>'+esc(n.charAt(0)+n.slice(1).toLowerCase())+':</b> '+esc(d)+'</div>';
+      return '<div class="v959Blk"><b>'+esc(n.charAt(0)+(n===n.toUpperCase()?n.slice(1).toLowerCase():n.slice(1)))+'</b>'+(d?'<span>'+esc(d)+'</span>':'')+'</div>';
+    }).join('');
+  }
+
+  // ---------- Semana del entrenador: agenda compacta ----------
+  var TYPE={MAR:'mar',GYM:'gym',ERG:'erg',ERGO:'erg',MIX:'mix',REGATA:'reg'};
+  function enhanceCoachWeek(area){
+    var grid=area.querySelector('.coachWeekGrid');if(!grid||grid._v959)return;grid._v959=1;
+    if(area.closest('.v394DayModalBack'))return; // el popup de un día desde Mes se queda como estaba
+    var list=document.createElement('div');list.className='v959Week';
+    var today=(typeof localISODate==='function')?localISODate():'';
+    grid.querySelectorAll(':scope > section.coachWeekDay').forEach(function(sec){
+      var dn=(sec.querySelector('.coachWeekDayHead b')||{}).textContent||'',dd=(sec.querySelector('.coachWeekDayHead strong')||{}).textContent||'';
+      var isToday=today&&dd&&today.slice(8,10)+'/'+today.slice(5,7)===dd.trim();
+      var row=document.createElement('div');row.className='v959Day';
+      row.innerHTML='<div class="v959D'+(isToday?' today':'')+'"><span>'+esc(dn.toUpperCase())+'</span><b>'+esc(dd.split('/')[0])+'</b></div><div class="v959Items"></div>';
+      var items=row.querySelector('.v959Items');
+      var sess=sec.querySelectorAll(':scope > .weekSess');
+      sess.forEach(function(ws){
+        var tag=(ws.querySelector('.weekSessTitle .tag')||{}).textContent||'';tag=tag.trim().toUpperCase();
+        var title=((ws.querySelector('.weekSessTitle b')||{}).textContent||'').trim();
+        var isReg=/^REGATA/i.test(title);var kind=isReg?'reg':(TYPE[tag]||'mar');var lab=isReg?'REGATA':(tag==='ERG'?'ERGO':(tag||'SESIÓN'));
+        var t=title.replace(/^(MAR|GYM|ERGO|ERG|MIX|REGATA)\s*·\s*/i,'');
+        var meta=((ws.querySelector('.weekMeta span')||{}).textContent||'').replace(/^⏱\s*/,'').trim();
+        var c=document.createElement('button');c.type='button';c.className='v959Chip k-'+kind;
+        c.innerHTML='<i>'+esc(lab)+'</i><span class="t">'+esc(t)+'</span>'+(meta&&meta.length<14?'<span class="d">'+esc(meta)+'</span>':'');
+        c.onclick=function(){openCoachSheet(ws,lab,kind,dn+' '+dd)};
+        items.appendChild(c);
+      });
+      var add=sec.querySelector(':scope > button.weekEdit');
+      if(!sess.length){var e=document.createElement('div');e.className='v959Empty';e.innerHTML='Sin sesión'+(add?' · <button type="button">+ Añadir</button>':'');items.appendChild(e);if(add)e.querySelector('button').onclick=function(){add.click()}}
+      else if(add){var a=document.createElement('button');a.type='button';a.className='v959Add';a.textContent='+ Añadir';a.onclick=function(){add.click()};items.appendChild(a)}
+      list.appendChild(row);
+    });
+    grid.style.display='none';grid.parentNode.insertBefore(list,grid);
+  }
+  function openCoachSheet(ws,lab,kind,day){
+    var parent=ws.parentNode,next=ws.nextSibling;
+    var key=ws.querySelector('.weekKey'),keyHtml=key?key.innerHTML:null;
+    var S=sheet({onClose:function(){if(key&&keyHtml!=null)key.innerHTML=keyHtml;ws.classList.remove('v959InSheet');parent.insertBefore(ws,next)}});
+    S.body.innerHTML='<div class="v959SHead"><span class="v959Pill k-'+kind+'">'+esc(lab)+' · '+esc(day)+'</span></div>';
+    S.body.appendChild(ws);ws.classList.add('v959InSheet');
+    if(key&&keyHtml)key.innerHTML=blocksHtml(keyHtml);
+    // botones: los principales abajo, el resto en ⋯
+    var acts=ws.querySelector('.actions');
+    if(acts){
+      var more=['weekDetailSession','weekMoveSession','weekDupSession','weekDelSession'];
+      var main=[].slice.call(acts.querySelectorAll('button')).filter(function(b){return !more.some(function(c){return b.classList.contains(c)})});
+      main.forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p':'v959Btn';x.textContent=b.textContent;x.onclick=function(){S.close();setTimeout(function(){b.click()},60)};S.foot.appendChild(x)});
+      var others=[].slice.call(acts.querySelectorAll('button')).filter(function(b){return more.some(function(c){return b.classList.contains(c)})});
+      if(others.length){var m=document.createElement('button');m.type='button';m.className='v959Btn more';m.textContent='⋯';S.foot.appendChild(m);
+        m.onclick=function(e){e.stopPropagation();var old=S.sheet.querySelector('.v959Menu');if(old){old.remove();return}var mn=document.createElement('div');mn.className='v959Menu';others.forEach(function(b){var x=document.createElement('button');x.type='button';x.textContent=b.textContent;if(b.classList.contains('weekDelSession'))x.className='red';x.onclick=function(){S.close();setTimeout(function(){b.click()},60)};mn.appendChild(x)});S.sheet.appendChild(mn)}}
+    }
+  }
+
+  // ---------- Semana del remero: el detalle se abre en panel ----------
+  function enhanceRowerWeek(root){
+    root.querySelectorAll('details.athleteWeekSessionV123').forEach(function(d){
+      if(d._v959)return;d._v959=1;
+      var sum=d.querySelector(':scope > summary');if(!sum)return;
+      sum.addEventListener('click',function(e){
+        var det=d.querySelector(':scope > .athleteWeekDetailV123');if(!det)return;
+        e.preventDefault();
+        var S=sheet({onClose:function(){d.appendChild(det)}});
+        var head=document.createElement('div');head.className='v959RHead';head.innerHTML=(sum.querySelector('.athleteWeekSessionMainV123')||sum).innerHTML;
+        S.body.appendChild(head);S.body.appendChild(det);
+      });
+    });
+  }
+
+  // ---------- Biblioteca GYM: 6 categorías + muñeco ----------
+  var CATS=[['piernas','🦵 Piernas'],['gluteos','🍑 Glúteos y femoral'],['espalda','↩ Espalda'],['pecho','↗ Pecho y hombros'],['core','◎ Abdomen y core'],['saltos','⚡ Saltos y explosivos']];
+  function catOf(name){
+    var n=String(name||'').toLowerCase();
+    if(/salto|burpee|escalera|jumping|comba|box jump|skipping|carrera|correr|bici|cardio/.test(n))return 'saltos';
+    if(/hang|suspensi|toalla|isom[eé]trica|pinch|pinza|dedos|mu[ñn]eca|agarre/.test(n))return 'core';
+    if(/rumano|hip thrust|gl[uú]te|puente|femoral|buenos d[ií]as|peso muerto|good morning|swing|isquio/.test(n))return 'gluteos';
+    if(/pallof|dead ?bug|plancha|bird ?dog|crunch|abdomin|rodilla|farmer|carry|rueda|hollow|escalador|core|movilidad|lumbar|superman|anti/.test(n))return 'core';
+    if(/remo|jal[oó]n|face ?pull|dominada|pull|tir[oó]n|curl|b[ií]ceps/.test(n))return 'espalda';
+    if(/prensa|sentadilla|zancada|step|gemel|cu[aá]driceps|lunge|bulgar|pierna|squat/.test(n))return 'piernas';
+    if(/press|flexi|elevaci|apertura|fondo|tr[ií]ceps|hombro|pecho|push/.test(n))return 'pecho';
+    return 'otros';
+  }
+  window.v959CatOf=catOf;
+  var ZONE2CAT={hombro:'pecho',pecho:'pecho',brazoF:'pecho',core:'core',cadera:'piernas',cuadriceps:'piernas',gemelo:'piernas',gemeloB:'piernas',espalda:'espalda',brazoB:'espalda',lumbar:'core',gluteo:'gluteos',isquios:'gluteos'};
+  function bodySvg(view,on,big){
+    var O='#f59e0b',B='#d5dde8',S='#9aa8bb';
+    function c(z){return on.indexOf(ZONE2CAT[z])>=0?O:B}
+    var st=' stroke="'+S+'" stroke-width="1.2"',dz=function(z){return big?' data-z="'+z+'" class="v959Z"':''};
+    var s='<svg viewBox="0 0 150 330"'+(big?' class="v959Big"':' class="v959Mini"')+'><ellipse cx="75" cy="24" rx="15" ry="18" fill="#e8edf3"'+st+'/>';
+    s+='<path'+dz('hombro')+' d="M44 52 q-14 4 -16 22 q10 0 18 -8z" fill="'+c('hombro')+'"'+st+'/><path'+dz('hombro')+' d="M106 52 q14 4 16 22 q-10 0 -18 -8z" fill="'+c('hombro')+'"'+st+'/>';
+    if(view==='f'){
+      s+='<path'+dz('pecho')+' d="M46 52 q29 -8 58 0 l-2 32 q-27 8 -54 0z" fill="'+c('pecho')+'"'+st+'/>';
+      s+='<path'+dz('core')+' d="M50 86 q25 6 50 0 l-3 52 q-22 6 -44 0z" fill="'+c('core')+'"'+st+'/>';
+      s+='<path'+dz('cadera')+' d="M53 138 q22 6 44 0 l2 16 q-24 8 -48 0z" fill="'+c('cadera')+'"'+st+'/>';
+    }else{
+      s+='<path'+dz('espalda')+' d="M46 52 q29 -8 58 0 l-4 58 q-25 8 -50 0z" fill="'+c('espalda')+'"'+st+'/>';
+      s+='<path'+dz('lumbar')+' d="M51 112 q24 6 48 0 l-2 26 q-22 5 -44 0z" fill="'+c('lumbar')+'"'+st+'/>';
+      s+='<path'+dz('gluteo')+' d="M51 138 q24 8 48 0 q4 20 -24 24 q-28 -4 -24 -24z" fill="'+c('gluteo')+'"'+st+'/>';
+    }
+    var arm=view==='f'?'brazoF':'brazoB';
+    [[27,1],[123,-1]].forEach(function(a){var x=a[0],d=a[1];
+      s+='<path'+dz(arm)+' d="M'+x+' 74 q'+(-2*d)+' 22 '+(2*d)+' 40 l'+(10*d)+' 0 q'+(4*d)+' -20 '+(2*d)+' -42z" fill="'+c(arm)+'"'+st+'/>';
+      s+='<path'+dz(arm)+' d="M'+(x+2*d)+' 116 q'+(-4*d)+' 22 0 44 l'+(9*d)+' 0 q'+(4*d)+' -22 '+(1*d)+' -44z" fill="'+c(arm)+'"'+st+'/>';});
+    var th=view==='f'?'cuadriceps':'isquios',ge=view==='f'?'gemelo':'gemeloB';
+    s+='<path'+dz(th)+' d="M51 156 q12 6 23 4 l-2 74 q-10 4 -18 0 q-6 -40 -3 -78z" fill="'+c(th)+'"'+st+'/><path'+dz(th)+' d="M99 156 q-12 6 -23 4 l2 74 q10 4 18 0 q6 -40 3 -78z" fill="'+c(th)+'"'+st+'/>';
+    s+='<path'+dz(ge)+' d="M55 238 q8 4 16 0 q2 36 -2 64 h-11 q-6 -30 -3 -64z" fill="'+c(ge)+'"'+st+'/><path'+dz(ge)+' d="M95 238 q-8 4 -16 0 q-2 36 2 64 h11 q6 -30 3 -64z" fill="'+c(ge)+'"'+st+'/></svg>';
+    return s;
+  }
+  var libSel=[];
+  function enhanceGymLib(card){
+    var body=card.querySelector('#gymLibraryBody');if(!body)return;
+    if(!card._v959){
+      card._v959=1;card._v959Body=body;
+      card.querySelectorAll('.gymLegend').forEach(function(l){l.style.setProperty('display','none','important')});
+      var tb=card.querySelector('.libraryToolbar');
+      var panel=document.createElement('div');panel.className='v959Lib';
+      panel.innerHTML='<div class="v959Mini" role="button" aria-label="Elegir zonas del cuerpo"><div class="v959MiniB"></div><div class="v959Chips"></div><span class="v959Hint">👆 Toca el muñeco</span></div><div class="v959Quick"></div>';
+      if(tb){tb.parentNode.insertBefore(panel,tb);
+        // buscador arriba; el resto de filtros, plegados
+        var srch=tb.querySelector('#gymLibSearch');if(srch){panel.parentNode.insertBefore(srch,panel);srch.classList.add('v959Search');srch.placeholder='🔍 Buscar ejercicio o sesión…'}
+        var obj=tb.querySelector('#gymLibObjective');if(obj)obj.style.display='none';
+        var more=document.createElement('details');more.className='v959MoreF';more.innerHTML='<summary>⚙ Más filtros</summary>';tb.parentNode.insertBefore(more,tb);more.appendChild(tb);
+      }
+      var fav=card.querySelector('#gymFavOnly');
+      var q=panel.querySelector('.v959Quick');
+      q.innerHTML='<button type="button" data-q="fav">⭐ Favoritas</button><button type="button" data-q="ses">📋 Sesiones completas</button>';
+      q.querySelector('[data-q="fav"]').onclick=function(){if(fav){fav.checked=!fav.checked;fav.dispatchEvent(new Event('change',{bubbles:true}));this.classList.toggle('on',fav.checked)}};
+      q.querySelector('[data-q="ses"]').onclick=function(){var d=body.querySelector('details.libraryAccordion');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}};
+      panel.querySelector('.v959Mini').addEventListener('click',function(e){if(e.target.closest('.v959Chips button'))return;openBodyPicker(card)});
+      paintMini(card);
+      new MutationObserver(function(){if(body._v959Busy)return;regroup(card)}).observe(body,{childList:true});
+      regroup(card);
+    }else if(card._v959Body!==body){card._v959Body=body;new MutationObserver(function(){if(body._v959Busy)return;regroup(card)}).observe(body,{childList:true});regroup(card)}
+  }
+  function paintMini(card){
+    var p=card.querySelector('.v959Lib');if(!p)return;
+    p.querySelector('.v959MiniB').innerHTML=bodySvg('f',libSel,false)+bodySvg('b',libSel,false);
+    var ch=p.querySelector('.v959Chips');
+    ch.innerHTML=CATS.map(function(c){return '<button type="button" data-c="'+c[0]+'" class="'+(libSel.indexOf(c[0])>=0?'on':'')+'">'+c[1]+'</button>'}).join('');
+    ch.querySelectorAll('button').forEach(function(b){b.onclick=function(e){e.stopPropagation();var k=b.dataset.c,i=libSel.indexOf(k);if(i>=0)libSel.splice(i,1);else libSel.push(k);paintMini(card);regroup(card)}});
+  }
+  function regroup(card){
+    var body=card.querySelector('#gymLibraryBody');if(!body)return;
+    body._v959Busy=true;
+    try{
+      var accs=[].slice.call(body.querySelectorAll(':scope > details.libraryAccordion'));
+      var exCards=[];
+      accs.forEach(function(a,i){
+        var isSes=/Sesiones completas/i.test((a.querySelector('summary')||{}).textContent||'');
+        if(isSes){a.classList.add('v959Ses');a.style.display=libSel.length?'none':'';return}
+        if(a.classList.contains('v959Grp'))return;
+        a.querySelectorAll('article.libraryCard').forEach(function(c){exCards.push(c)});
+        a.style.display='none';a.classList.add('v959Old');
+      });
+      body.querySelectorAll(':scope > details.v959Grp').forEach(function(g){g.querySelectorAll('article.libraryCard').forEach(function(c){exCards.push(c)})});
+      // dedupe
+      var seen=new Set();exCards=exCards.filter(function(c){var k=(c.querySelector('h3')||{}).textContent||'';if(seen.has(c))return false;seen.add(c);return true});
+      var byCat={},names=new Set();exCards.forEach(function(c){var nm=((c.querySelector('h3')||{}).textContent||'').trim().toLowerCase();if(names.has(nm)){c.style.display='none';c.classList.add('v959Dup');return}names.add(nm);var k=catOf(nm);(byCat[k]=byCat[k]||[]).push(c)});
+      var cats=CATS.concat([['otros','Otros']]);
+      cats.forEach(function(cc){
+        var k=cc[0],g=body.querySelector(':scope > details.v959Grp[data-c="'+k+'"]');
+        var list=byCat[k]||[];
+        if(!g){g=document.createElement('details');g.className='libraryAccordion v959Grp';g.dataset.c=k;g.innerHTML='<summary><span>'+cc[1]+'</span><span class="sectionCount"></span></summary><div class="libraryCards"></div>';body.appendChild(g)}
+        var box=g.querySelector('.libraryCards');list.forEach(function(c){if(c.parentNode!==box)box.appendChild(c)});
+        var sc=g.querySelector('.sectionCount');if(sc.textContent!==String(list.length))sc.textContent=list.length;
+        var show=list.length&&(!libSel.length||libSel.indexOf(k)>=0);
+        g.style.display=show?'':'none';
+        if(libSel.length&&show)g.open=true;
+      });
+      var info=card.querySelector('.v959Sel');
+      var tot=libSel.reduce(function(a,k){return a+((byCat[k]||[]).length)},0);
+      if(libSel.length){if(!info){info=document.createElement('div');info.className='v959Sel';body.parentNode.insertBefore(info,body)}info.innerHTML='<b>'+libSel.map(function(k){return CATS.filter(function(c){return c[0]===k})[0][1].replace(/^\S+\s/,'')}).join(', ')+' · '+tot+'</b><button type="button">Quitar ✕</button>';info.querySelector('button').onclick=function(){libSel=[];paintMini(card);regroup(card)}}
+      else if(info)info.remove();
+    }finally{setTimeout(function(){body._v959Busy=false},0)}
+  }
+  function openBodyPicker(card){
+    var tmp=libSel.slice();
+    var S=sheet({});
+    S.sheet.classList.add('v959Tall');
+    var draw=function(){
+      var body=card.querySelector('#gymLibraryBody');var n=0;
+      if(body){body.querySelectorAll('article.libraryCard').forEach(function(c){if(c.closest('.v959Ses'))return;var k=catOf((c.querySelector('h3')||{}).textContent);if(!tmp.length||tmp.indexOf(k)>=0)n++})}
+      S.body.innerHTML='<h3 class="v959PH">Toca las zonas que quieras</h3><div class="v959Bodies"><div><small>DELANTE</small>'+bodySvg('f',tmp,true)+'</div><div><small>DETRÁS</small>'+bodySvg('b',tmp,true)+'</div></div><div class="v959Tags">'+tmp.map(function(k){return '<button type="button" data-c="'+k+'">'+CATS.filter(function(c){return c[0]===k})[0][1]+' ✕</button>'}).join('')+'</div><div class="v959Tags v959Extra"><button type="button" data-x="saltos" class="'+(tmp.indexOf('saltos')>=0?'on':'')+'">⚡ Saltos y explosivos</button></div>';
+      S.foot.innerHTML='<button type="button" class="v959Btn p wide">'+(tmp.length?'Ver '+n+' ejercicios':'Ver todos los ejercicios')+'</button>';
+      S.foot.querySelector('button').onclick=function(){libSel=tmp.slice();S.close();paintMini(card);regroup(card)};
+      S.body.querySelectorAll('.v959Z').forEach(function(z){z.addEventListener('click',function(){var k=ZONE2CAT[z.dataset.z],i=tmp.indexOf(k);if(i>=0)tmp.splice(i,1);else tmp.push(k);draw()})});
+      S.body.querySelectorAll('.v959Tags button[data-c]').forEach(function(b){b.onclick=function(){tmp.splice(tmp.indexOf(b.dataset.c),1);draw()}});
+      var x=S.body.querySelector('[data-x="saltos"]');if(x)x.onclick=function(){var i=tmp.indexOf('saltos');if(i>=0)tmp.splice(i,1);else tmp.push('saltos');draw()};
+    };
+    draw();
+  }
+
+  // ---------- Observador: aplica las mejoras cuando aparecen esas pantallas ----------
+  var t=null;
+  function scan(){
+    var c=document.getElementById('content');if(!c)return;
+    var a=c.querySelector('#coachWeekArea');if(a&&a.querySelector('.coachWeekGrid'))enhanceCoachWeek(a);
+    var w=c.querySelector('.athleteWeekDaysV123');if(w)enhanceRowerWeek(w);
+    var lb=c.querySelector('#gymLibraryBody');if(lb)enhanceGymLib(lb.closest('.card'));
+  }
+  function start(){var c=document.getElementById('content');if(!c){setTimeout(start,300);return}new MutationObserver(function(){if(t)return;t=requestAnimationFrame(function(){t=null;try{scan()}catch(e){console.warn('v959',e)}})}).observe(c,{childList:true,subtree:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
 </script></body></html>
