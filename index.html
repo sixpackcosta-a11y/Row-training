@@ -3545,7 +3545,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="949";
+const APP_VERSION="950";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -9849,7 +9849,7 @@ async function v631ForwardSend(dest,m){
     if(m._srcBucket&&m._srcBucket!=='chat-files'){ // V681 · recurso de entrenadores: se baja del almacén de recursos y se sube al chat
       const dl=await sb.storage.from(m._srcBucket).download(m.att_path);
       if(dl.error)return{error:dl.error};
-      if(dl.data.size>12*1048576)return{error:{message:'El archivo pesa más de 12 MB y no cabe en un chat. Comparte mejor un enlace.'}};
+      if(dl.data.size>25*1048576)return{error:{message:'El archivo pesa más de 25 MB y no cabe en un chat. Comparte mejor un enlace.'}};
       const upl=await sb.storage.from('chat-files').upload(np,dl.data,{contentType:m.att_type||dl.data.type||'application/octet-stream',cacheControl:'3600'});
       if(upl.error)return{error:upl.error};
     }else{
@@ -10290,7 +10290,7 @@ async function v583Chat(anchor,cfg){
       let f=files[0];
       if(!f.name||f.name==='image.png'||/^image\./.test(f.name)){try{f=new File([f],'captura-'+Date.now()+'.'+((f.type||'image/png').split('/')[1]||'png').replace('jpeg','jpg'),{type:f.type||'image/png'})}catch(_){}}
       try{f=await v583Compress(f)}catch(_){}
-      if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+      if(f.size>25*1048576){v300ShowToast('El archivo pesa más de 25 MB');return}
       setPend(f);
       return;
     }
@@ -10340,7 +10340,7 @@ async function v583Chat(anchor,cfg){
         for(const it of its){
           const ty=it.types.find(t=>/^image\//.test(t));
           if(ty){let f=new File([await it.getType(ty)],'captura-'+Date.now()+'.'+(ty.split('/')[1]||'png').replace('jpeg','jpg'),{type:ty});try{f=await v583Compress(f)}catch(_){}
-            if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+            if(f.size>25*1048576){v300ShowToast('El archivo pesa más de 25 MB');return}
             setPend(f);return}
         }
         const t=await navigator.clipboard.readText();
@@ -10369,7 +10369,7 @@ async function v583Chat(anchor,cfg){
     fin.onchange=async()=>{
       let f=fin.files&&fin.files[0];fin.value='';if(!f)return;
       f=await v583Compress(f);
-      if(f.size>10*1048576){v300ShowToast('El archivo pesa más de 10 MB');return}
+      if(f.size>25*1048576){v300ShowToast('El archivo pesa más de 25 MB');return}
       const text=input.value.trim();input.textContent='';
       queueFile(f,text);
     };
@@ -16073,7 +16073,7 @@ const V605_EXACT={
 'Escribe al equipo…':['Write to the team…','Schrijf naar het team…'],
 'Enviar':['Send','Versturen'],'Adjuntar':['Attach','Bijvoegen'],'Hoy':['Today','Vandaag'],'Ayer':['Yesterday','Gisteren'],
 'enviando…':['sending…','versturen…'],'⚠️ no enviado · toca para reintentar':['⚠️ not sent · tap to retry','⚠️ niet verzonden · tik om opnieuw te proberen'],
-'El archivo pesa más de 10 MB':['The file is larger than 10 MB','Het bestand is groter dan 10 MB'],
+'El archivo pesa más de 25 MB':['The file is larger than 25 MB','Het bestand is groter dan 25 MB'],
 'Cargando…':['Loading…','Laden…'],
 '🔒 Las respuestas de este evento solo las ven los organizadores.':['🔒 Only the organizers can see the responses to this event.','🔒 Alleen de organisatoren zien de reacties op dit evenement.'],
 'Cancelado':['Cancelled','Geannuleerd'],'Ver ubicación en el mapa':['View location on map','Bekijk locatie op de kaart'],
@@ -17247,7 +17247,7 @@ function showResult(blob,previewUrl,name,title,team){
 
 
 async function sendToChat(dest,blob,name,caption){
-  if(blob.size>12*1048576)return{error:{message:'El archivo pesa más de 12 MB.'}};
+  if(blob.size>25*1048576)return{error:{message:'El archivo pesa más de 25 MB.'}};
   const me=currentUser.id,safe=String(name).replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-60);
   const np=(dest.kind==='team'?'team/'+dest.team:dest.kind==='dm'?'chat/'+me:'chat/'+dest.rower)+'/'+Date.now()+'-'+safe;
   const up=await sb.storage.from('chat-files').upload(np,blob,{contentType:blob.type,cacheControl:'3600'});
