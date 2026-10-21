@@ -1734,20 +1734,55 @@ html[data-theme="dark"] .v959Btn{background:#263449;color:#e5ecf6}
 .v959Empty{font-size:13.5px;color:var(--text-muted);padding:6px 0}
 .v959Empty button,.v959Add{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700!important;font-size:13.5px!important;padding:0!important;margin:0!important;box-shadow:none!important;min-height:0!important;text-align:left}
 .v959Add{padding:2px 0!important}
-/* biblioteca GYM */
-.v959Search{width:100%;box-sizing:border-box;margin:4px 0 8px}
-.v959Lib .v959Mini{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:14px;padding:6px 8px 18px;position:relative;cursor:pointer;background:var(--surface)}
-.v959MiniB{display:flex;gap:2px;flex:none}.v959MiniB svg.v959Mini{width:44px;height:96px}
-.v959Chips{display:flex;flex-wrap:wrap;gap:6px}
-.v959Chips button{border:1px solid var(--border)!important;border-radius:999px!important;padding:5px 10px!important;font-size:12.5px!important;font-weight:700;background:var(--surface-2,#f1f5f9)!important;color:var(--text)!important;margin:0!important;box-shadow:none!important;min-height:0!important}
-.v959Chips button.on{background:#f59e0b!important;border-color:#f59e0b!important;color:#fff!important}
-.v959Hint{position:absolute;left:10px;bottom:3px;font-size:11px;color:#2563eb;font-weight:700}
-.v959Quick{display:flex;gap:6px;margin:8px 0}
-.v959Quick button{border:0!important;border-radius:10px!important;background:#eef2ff!important;color:#2563eb!important;font-weight:700;font-size:13px!important;padding:7px 10px!important;margin:0!important;box-shadow:none!important}
-.v959Quick button.on{background:#2563eb!important;color:#fff!important}
-.v959MoreF{margin:4px 0 8px}.v959MoreF>summary{cursor:pointer;font-size:13.5px;color:var(--text-muted);padding:4px 2px}
-.v959Sel{display:flex;justify-content:space-between;align-items:center;margin:8px 2px;font-size:13.5px}
-.v959Sel button{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700;padding:0!important;margin:0!important;box-shadow:none!important}
+/* biblioteca GYM · v961 (opción A2) */
+.v961Top{margin:0 0 4px}
+.v961SR{display:flex;gap:6px;align-items:center}
+.v961S{flex:1;min-width:0}.v961S input{width:100%;box-sizing:border-box;margin:0!important}
+.v961Fig,.v961Plus{flex:none;width:44px;height:44px;border-radius:12px!important;display:flex;align-items:center;justify-content:center;padding:0!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v961Fig{border:1px solid var(--border)!important;background:var(--surface)!important}.v961Fig svg{width:18px;height:40px}
+.v961Plus{border:0!important;background:#0b1b35!important;color:#fff!important;font-size:26px!important;font-weight:500!important;line-height:1!important}
+html[data-theme="dark"] .v961Plus{background:#2563eb!important}
+.v961Grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 2px}
+.v961Grid button{border:0!important;border-radius:10px!important;background:var(--surface-2,#f1f5f9)!important;color:var(--text)!important;font-size:14px!important;font-weight:600!important;padding:9px 0!important;margin:0!important;box-shadow:none!important;min-height:0!important;text-align:center}
+html[data-theme="dark"] .v961Grid button{background:#1f2c40!important}
+.v961Grid button.on{background:#0b1b35!important;color:#fff!important}html[data-theme="dark"] .v961Grid button.on{background:#f59e0b!important;color:#0b1b35!important}
+.v961Links{display:flex;justify-content:flex-end;gap:14px;margin:6px 2px 0}
+.v961Links button{border:0!important;background:transparent!important;color:#2563eb!important;font-size:13.5px!important;font-weight:600!important;padding:2px 0!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v961Links button.on{color:#d97706!important}
+.v959MoreF:not([open]){display:none!important}.v959MoreF{margin:6px 0!important;background:transparent!important;border:0!important;padding:0!important}.v959MoreF>summary{display:none}
+.v959Sel{display:flex;justify-content:space-between;align-items:center;margin:10px 4px 0;font-size:13.5px}
+.v959Sel button{border:0!important;background:transparent!important;color:#2563eb!important;font-weight:700;padding:0!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v959LibCard #gymLibraryBody{display:flex;flex-direction:column}
+.v959LibCard .v959Ses{order:99}
+/* secciones sin cajas */
+.v959LibCard details.libraryAccordion{margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.v959LibCard details.libraryAccordion>summary{display:flex!important;align-items:center;gap:6px;list-style:none;padding:16px 4px 4px!important;margin:0!important;background:transparent!important;border:0!important;font-size:11.5px!important;font-weight:800!important;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted)!important;cursor:default}
+.v959LibCard details.libraryAccordion>summary::-webkit-details-marker{display:none}
+.v959LibCard details.libraryAccordion>summary::after{display:none!important}
+.v959LibCard details.libraryAccordion>summary .sectionCount{background:transparent!important;padding:0!important;font-size:11.5px!important;font-weight:800!important;color:var(--text-muted)!important}
+.v959LibCard details.libraryAccordion>summary .sectionCount::before{content:'· '}
+.v959LibCard details.v959Ses>summary{cursor:pointer}
+.v959LibCard details.v959Ses>summary::after{content:'Ver ›'!important;display:inline!important;margin-left:auto;color:#2563eb;letter-spacing:0;text-transform:none;font-size:13px;border:0!important;transform:none!important;position:static!important;width:auto!important;height:auto!important}
+.v959LibCard details.v959Ses[open]>summary::after{content:'Ocultar'!important}
+.v959LibCard .libraryCards{display:block!important;padding:0!important;margin:0!important;gap:0!important;border:0!important;background:transparent!important}
+.v959LibCard article.libraryCard{margin:0!important;border:0!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;box-shadow:none!important;padding:0!important;background:transparent!important}
+.v959LibCard article.libraryCard>*:not(.v961Row){display:none!important}
+.v959LibCard article.libraryCard.isHidden .v961Row,.v959LibCard article.libraryCard.isArchived .v961Row{opacity:.5}
+.v959LibCard .v959Hid{display:none!important}
+.v961Row{display:flex!important;align-items:center;gap:8px;width:100%;text-align:left;border:0!important;background:transparent!important;padding:12px 4px!important;margin:0!important;box-shadow:none!important;border-radius:0!important;min-height:0!important;color:var(--text)!important}
+.v961Row .n{flex:1;min-width:0;font-size:15.5px;font-weight:600;line-height:1.25}
+.v961Row .n i{font-style:normal;color:#f59e0b;font-size:13px}
+.v961Row .d{flex:none;font-size:13px;color:var(--text-muted)}
+.v961Row .c{flex:none;color:#cbd5e1;font-size:20px;line-height:1}
+.v961Sub{font-size:14px;color:var(--text-muted);margin:2px 0 10px}
+.v961Txt p{font-size:14px;margin:0 0 6px;color:var(--text)}
+.v961Uses{background:var(--surface-2,#f8fafc);border-radius:12px;padding:10px 12px;margin:6px 0 4px}
+.v961UT{font-size:14px;font-weight:600}
+.v961Chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.v961Chips button{border:0!important;border-radius:999px!important;background:var(--surface,#fff)!important;color:var(--text)!important;font-size:12.5px!important;padding:5px 10px!important;margin:0!important;box-shadow:none!important;min-height:0!important}
+.v959List{display:flex;flex-direction:column;margin-top:6px}
+.v959List button{text-align:left;border:0!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;background:transparent!important;padding:14px 4px!important;font-size:16px!important;color:var(--text)!important;margin:0!important;box-shadow:none!important}
+.v959List button.red{color:#dc2626!important}
 .v959PH{margin:2px 0 6px;font-size:17px}
 .v959Bodies{display:flex;justify-content:space-around}.v959Bodies>div{text-align:center}.v959Bodies small{font-weight:800;color:var(--text-muted);font-size:11px}
 .v959Bodies svg.v959Big{width:140px;height:308px}
@@ -1755,6 +1790,13 @@ html[data-theme="dark"] .v959Btn{background:#263449;color:#e5ecf6}
 .v959Tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .v959Tags button{border:0!important;border-radius:999px!important;padding:6px 11px!important;font-size:13px!important;font-weight:700;background:#fef3c7!important;color:#92400e!important;margin:0!important;box-shadow:none!important}
 .v959Extra button{background:var(--surface-2,#f1f5f9)!important;color:var(--text)!important}.v959Extra button.on{background:#f59e0b!important;color:#fff!important}
+.v959LibCard{padding:10px 8px!important}
+.v959MoreF:not([open]){display:none!important}.v959MoreF{background:transparent!important;border:0!important;padding:0!important}.v959PH{font-weight:800}
+.v959LibCard details.libraryAccordion>summary .sectionCount{margin:0!important;position:static!important}
+.v959Sheet .v959PH{font-weight:800!important;font-size:19px!important;color:var(--text)}
+.v961Row .n{font-weight:600!important}.v961Row .d{font-weight:400!important}
+.v959LibCard details.libraryAccordion>summary>span:first-child{flex:none!important}.v961Row .n{font-weight:700!important}
+.v959LibCard details.libraryAccordion>summary{justify-content:flex-start!important}.v959LibCard details.libraryAccordion>summary .sectionCount{width:auto!important;min-width:0!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3640,7 +3682,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="959";
+const APP_VERSION="961";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -17606,37 +17648,42 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     return s;
   }
   var libSel=[];
+  var SHORT={piernas:'Piernas',gluteos:'Glúteos',espalda:'Espalda',pecho:'Pecho',core:'Core',saltos:'Saltos',otros:'Otros'};
+  function catName(k){var c=CATS.filter(function(x){return x[0]===k})[0];return c?c[1].replace(/^\S+\s/,''):'Otros'}
+  function proxyBtn(label,orig,cls,S){var x=document.createElement('button');x.type='button';x.textContent=label;if(cls)x.className=cls;x.onclick=function(){S.close();setTimeout(function(){orig.click()},220)};return x}
   function enhanceGymLib(card){
     var body=card.querySelector('#gymLibraryBody');if(!body)return;
     if(!card._v959){
-      card._v959=1;card._v959Body=body;
+      card._v959=1;card._v959Body=body;card.classList.add('v959LibCard');
       card.querySelectorAll('.gymLegend').forEach(function(l){l.style.setProperty('display','none','important')});
+      var nS=card.querySelector('#newGymSession'),nE=card.querySelector('#newGymExercise');
+      var na=(nS||nE)&&(nS||nE).closest('.actions');if(na)na.classList.add('v959Hid');
       var tb=card.querySelector('.libraryToolbar');
-      var panel=document.createElement('div');panel.className='v959Lib';
-      panel.innerHTML='<div class="v959Mini" role="button" aria-label="Elegir zonas del cuerpo"><div class="v959MiniB"></div><div class="v959Chips"></div><span class="v959Hint">👆 Toca el muñeco</span></div><div class="v959Quick"></div>';
-      if(tb){tb.parentNode.insertBefore(panel,tb);
-        // buscador arriba; el resto de filtros, plegados
-        var srch=tb.querySelector('#gymLibSearch');if(srch){panel.parentNode.insertBefore(srch,panel);srch.classList.add('v959Search');srch.placeholder='🔍 Buscar ejercicio o sesión…'}
+      var top=document.createElement('div');top.className='v961Top';
+      top.innerHTML='<div class="v961SR"><div class="v961S"></div><button type="button" class="v961Fig" aria-label="Elegir zonas del cuerpo"></button><button type="button" class="v961Plus" aria-label="Crear">+</button></div><div class="v961Grid"></div><div class="v961Links"><button type="button" data-q="fav">☆ Favoritas</button><button type="button" data-q="more">Filtros ▾</button></div>';
+      if(tb){tb.parentNode.insertBefore(top,tb);
+        var srch=tb.querySelector('#gymLibSearch');if(srch){top.querySelector('.v961S').appendChild(srch);srch.classList.add('v959Search');srch.placeholder='🔍 Buscar ejercicio o sesión'}
         var obj=tb.querySelector('#gymLibObjective');if(obj)obj.style.display='none';
-        var more=document.createElement('details');more.className='v959MoreF';more.innerHTML='<summary>⚙ Más filtros</summary>';tb.parentNode.insertBefore(more,tb);more.appendChild(tb);
-      }
-      var fav=card.querySelector('#gymFavOnly');
-      var q=panel.querySelector('.v959Quick');
-      q.innerHTML='<button type="button" data-q="fav">⭐ Favoritas</button><button type="button" data-q="ses">📋 Sesiones completas</button>';
-      q.querySelector('[data-q="fav"]').onclick=function(){if(fav){fav.checked=!fav.checked;fav.dispatchEvent(new Event('change',{bubbles:true}));this.classList.toggle('on',fav.checked)}};
-      q.querySelector('[data-q="ses"]').onclick=function(){var d=body.querySelector('details.libraryAccordion');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}};
-      panel.querySelector('.v959Mini').addEventListener('click',function(e){if(e.target.closest('.v959Chips button'))return;openBodyPicker(card)});
+        var more=document.createElement('details');more.className='v959MoreF';more.innerHTML='<summary>Filtros</summary>';tb.parentNode.insertBefore(more,tb);more.appendChild(tb);
+      }else{card.insertBefore(top,body)}
+      var fav=card.querySelector('#gymFavOnly');var fb=top.querySelector('[data-q="fav"]');
+      if(fav){fb.classList.toggle('on',fav.checked);fb.onclick=function(){fav.checked=!fav.checked;fav.dispatchEvent(new Event('change',{bubbles:true}));fb.classList.toggle('on',fav.checked);fb.textContent=(fav.checked?'★':'☆')+' Favoritas'}}else fb.remove();
+      var mf=card.querySelector('.v959MoreF'),mb=top.querySelector('[data-q="more"]');
+      if(mf)mb.onclick=function(){mf.open=!mf.open;mb.classList.toggle('on',mf.open);mb.textContent=mf.open?'Filtros ▴':'Filtros ▾'};else mb.remove();
+      top.querySelector('.v961Fig').onclick=function(){openBodyPicker(card)};
+      var plus=top.querySelector('.v961Plus');
+      if(nS||nE){plus.onclick=function(){var S=sheet({});S.body.innerHTML='<div class="v959PH">Crear</div><div class="v959List"></div>';var L=S.body.querySelector('.v959List');if(nE)L.appendChild(proxyBtn('Nuevo ejercicio GYM',nE,'',S));if(nS)L.appendChild(proxyBtn('Nueva sesión GYM',nS,'',S))}}else plus.remove();
       paintMini(card);
       new MutationObserver(function(){if(body._v959Busy)return;regroup(card)}).observe(body,{childList:true});
       regroup(card);
     }else if(card._v959Body!==body){card._v959Body=body;new MutationObserver(function(){if(body._v959Busy)return;regroup(card)}).observe(body,{childList:true});regroup(card)}
   }
   function paintMini(card){
-    var p=card.querySelector('.v959Lib');if(!p)return;
-    p.querySelector('.v959MiniB').innerHTML=bodySvg('f',libSel,false)+bodySvg('b',libSel,false);
-    var ch=p.querySelector('.v959Chips');
-    ch.innerHTML=CATS.map(function(c){return '<button type="button" data-c="'+c[0]+'" class="'+(libSel.indexOf(c[0])>=0?'on':'')+'">'+c[1]+'</button>'}).join('');
-    ch.querySelectorAll('button').forEach(function(b){b.onclick=function(e){e.stopPropagation();var k=b.dataset.c,i=libSel.indexOf(k);if(i>=0)libSel.splice(i,1);else libSel.push(k);paintMini(card);regroup(card)}});
+    var p=card.querySelector('.v961Top');if(!p)return;
+    p.querySelector('.v961Fig').innerHTML=bodySvg('f',libSel,false);
+    var g=p.querySelector('.v961Grid');
+    g.innerHTML=CATS.map(function(c){return '<button type="button" data-c="'+c[0]+'" class="'+(libSel.indexOf(c[0])>=0?'on':'')+'">'+SHORT[c[0]]+'</button>'}).join('');
+    g.querySelectorAll('button').forEach(function(b){b.onclick=function(){var k=b.dataset.c,i=libSel.indexOf(k);if(i>=0)libSel.splice(i,1);else libSel.push(k);paintMini(card);regroup(card)}});
   }
   function regroup(card){
     var body=card.querySelector('#gymLibraryBody');if(!body)return;
@@ -17644,33 +17691,69 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     try{
       var accs=[].slice.call(body.querySelectorAll(':scope > details.libraryAccordion'));
       var exCards=[];
-      accs.forEach(function(a,i){
-        var isSes=/Sesiones completas/i.test((a.querySelector('summary')||{}).textContent||'');
+      accs.forEach(function(a){
+        var isSes=a.classList.contains('v959Ses')||/Sesiones completas/i.test((a.querySelector('summary')||{}).textContent||'');
         if(isSes){a.classList.add('v959Ses');a.style.display=libSel.length?'none':'';return}
         if(a.classList.contains('v959Grp'))return;
         a.querySelectorAll('article.libraryCard').forEach(function(c){exCards.push(c)});
         a.style.display='none';a.classList.add('v959Old');
       });
       body.querySelectorAll(':scope > details.v959Grp').forEach(function(g){g.querySelectorAll('article.libraryCard').forEach(function(c){exCards.push(c)})});
-      // dedupe
-      var seen=new Set();exCards=exCards.filter(function(c){var k=(c.querySelector('h3')||{}).textContent||'';if(seen.has(c))return false;seen.add(c);return true});
-      var byCat={},names=new Set();exCards.forEach(function(c){var nm=((c.querySelector('h3')||{}).textContent||'').trim().toLowerCase();if(names.has(nm)){c.style.display='none';c.classList.add('v959Dup');return}names.add(nm);var k=catOf(nm);(byCat[k]=byCat[k]||[]).push(c)});
-      var cats=CATS.concat([['otros','Otros']]);
-      cats.forEach(function(cc){
+      var byCat={},names=new Set(),seen=new Set();
+      exCards.forEach(function(c){if(seen.has(c))return;seen.add(c);var nm=((c.querySelector('h3')||{}).textContent||'').trim().toLowerCase();if(names.has(nm)){c.style.display='none';c.classList.add('v959Dup');return}names.add(nm);var k=catOf(nm);c.dataset.v961c=k;(byCat[k]=byCat[k]||[]).push(c)});
+      CATS.concat([['otros','Otros']]).forEach(function(cc){
         var k=cc[0],g=body.querySelector(':scope > details.v959Grp[data-c="'+k+'"]');
         var list=byCat[k]||[];
-        if(!g){g=document.createElement('details');g.className='libraryAccordion v959Grp';g.dataset.c=k;g.innerHTML='<summary><span>'+cc[1]+'</span><span class="sectionCount"></span></summary><div class="libraryCards"></div>';body.appendChild(g)}
+        if(!g){g=document.createElement('details');g.className='libraryAccordion v959Grp';g.dataset.c=k;g.open=true;g.innerHTML='<summary><span>'+catName(k)+'</span><span class="sectionCount"></span></summary><div class="libraryCards"></div>';g.querySelector('summary').addEventListener('click',function(e){e.preventDefault()});body.appendChild(g)}
         var box=g.querySelector('.libraryCards');list.forEach(function(c){if(c.parentNode!==box)box.appendChild(c)});
         var sc=g.querySelector('.sectionCount');if(sc.textContent!==String(list.length))sc.textContent=list.length;
-        var show=list.length&&(!libSel.length||libSel.indexOf(k)>=0);
-        g.style.display=show?'':'none';
-        if(libSel.length&&show)g.open=true;
+        g.style.display=(list.length&&(!libSel.length||libSel.indexOf(k)>=0))?'':'none';g.open=true;
       });
+      body.querySelectorAll('article.libraryCard').forEach(compactCard);
       var info=card.querySelector('.v959Sel');
       var tot=libSel.reduce(function(a,k){return a+((byCat[k]||[]).length)},0);
-      if(libSel.length){if(!info){info=document.createElement('div');info.className='v959Sel';body.parentNode.insertBefore(info,body)}info.innerHTML='<b>'+libSel.map(function(k){return CATS.filter(function(c){return c[0]===k})[0][1].replace(/^\S+\s/,'')}).join(', ')+' · '+tot+'</b><button type="button">Quitar ✕</button>';info.querySelector('button').onclick=function(){libSel=[];paintMini(card);regroup(card)}}
+      if(libSel.length){if(!info){info=document.createElement('div');info.className='v959Sel';body.parentNode.insertBefore(info,body)}info.innerHTML='<b>'+libSel.map(catName).join(', ')+' · '+tot+'</b><button type="button">Quitar ✕</button>';info.querySelector('button').onclick=function(){libSel=[];paintMini(card);regroup(card)}}
       else if(info)info.remove();
     }finally{setTimeout(function(){body._v959Busy=false},0)}
+  }
+  // cada ejercicio = una fila: nombre (★) · dosis · ›   → al tocar, detalle y acciones en el panel
+  function cardInfo(c){
+    var h=c.querySelector('h3'),name=h?h.textContent.trim():'';
+    var txt=[].slice.call(c.querySelectorAll(':scope > p')).map(function(p){return p.textContent.replace(/\s+/g,' ').trim()});
+    var dp=txt.filter(function(t){return /Dosis/i.test(t)})[0]||'';
+    var dose=((dp.match(/Dosis:\s*([^·]+)/i)||[])[1]||'').trim(),rest=((dp.match(/Descanso:\s*([^·]+)/i)||[])[1]||'').trim();
+    if(!dose){var m=c.textContent.match(/(\d+\s*[–-]\s*\d+\s*min|\d+\s*min)/);if(m)dose=m[1].replace(/\s+/g,'')}
+    var fb=c.querySelector('.libFav');var isFav=!!(fb&&/★/.test(fb.textContent));
+    return {name:name,dose:dose,rest:rest,fav:isFav,favBtn:fb,txt:txt.filter(function(t){return !/Dosis/i.test(t)})};
+  }
+  function compactCard(c){
+    var r=c.querySelector(':scope > .v961Row');
+    var I=cardInfo(c);
+    if(!r){r=document.createElement('button');r.type='button';r.className='v961Row';c.insertBefore(r,c.firstChild);r.onclick=function(e){e.stopPropagation();openCardSheet(c)}}
+    var key=I.name+'|'+I.dose+'|'+I.fav;if(r._k===key)return;r._k=key;
+    r.innerHTML='<span class="n"></span><span class="d"></span><span class="c">›</span>';
+    r.querySelector('.n').textContent=I.name;if(I.fav){var st=document.createElement('i');st.textContent=' ★';r.querySelector('.n').appendChild(st)}
+    r.querySelector('.d').textContent=I.dose;
+    c.classList.add('v959Ex');
+  }
+  function openCardSheet(c){
+    var I=cardInfo(c),S=sheet({});
+    var sub=[c.closest('.v959Ses')?'Sesión completa':catName(c.dataset.v961c||'otros'),I.dose,I.rest?('descanso '+I.rest):''].filter(Boolean).join(' · ');
+    S.body.innerHTML='<div class="v959PH"></div><div class="v961Sub"></div><div class="v961Txt"></div><div class="v961Uses"></div>';
+    S.body.querySelector('.v959PH').textContent=I.name+(I.fav?' ★':'');S.body.querySelector('.v961Sub').textContent=sub;
+    var tx=S.body.querySelector('.v961Txt');I.txt.forEach(function(t){var p=document.createElement('p');p.textContent=t;tx.appendChild(p)});
+    var us=S.body.querySelector('.v961Uses'),ut=c.querySelector('.v202UseTitle');
+    if(ut){var t=ut.textContent.replace(/Incluido en planificación/i,'📅 En el plan');var d=document.createElement('div');d.className='v961UT';d.textContent=t;us.appendChild(d);
+      var chips=document.createElement('div');chips.className='v961Chips';
+      c.querySelectorAll('.v202UseChip').forEach(function(b){chips.appendChild(proxyBtn(b.textContent.trim(),b,'',S))});
+      if(chips.childNodes.length)us.appendChild(chips)}else us.remove();
+    var acts=[].slice.call(c.querySelectorAll('.actions button'));
+    var ed=acts.filter(function(b){return /Editar/i.test(b.textContent)})[0];
+    var others=acts.filter(function(b){return b!==ed&&b!==I.favBtn});
+    if(ed)S.foot.appendChild(proxyBtn('Editar',ed,'v959Btn p wide',S));
+    if(I.favBtn)S.foot.appendChild(proxyBtn(I.fav?'★ Quitar favorita':'☆ Favorita',I.favBtn,'v959Btn wide',S));
+    if(others.length){var m=document.createElement('button');m.type='button';m.className='v959Btn more';m.textContent='⋯';S.foot.appendChild(m);
+      m.onclick=function(){var ex=S.sheet.querySelector('.v959Menu');if(ex){ex.remove();return}var mn=document.createElement('div');mn.className='v959Menu';others.forEach(function(b){mn.appendChild(proxyBtn(b.textContent.trim(),b,/archiv|elimin|borrar/i.test(b.textContent)&&!/Desarch/i.test(b.textContent)?'red':'',S))});S.sheet.appendChild(mn)}}
   }
   function openBodyPicker(card){
     var tmp=libSel.slice();
