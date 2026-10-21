@@ -3017,7 +3017,7 @@ function syncExistingPushV109(opts){
 // de que el sistema cambió la suscripción
 function v890Resync(force){try{const last=Number(localStorage.getItem('rowtraining_push_sync_v890')||0);if(force||Date.now()-last>20*60*1000)syncExistingPushV109()}catch(e){}}
 try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')v890Resync(false)});window.addEventListener('online',()=>v890Resync(true));
-  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e&&e.data&&e.data.type==='push-resubscribe')v890Resync(true)})}catch(e){}
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e&&e.data&&e.data.type==='push-resubscribe')v890Resync(true);if(e&&e.data&&e.data.type==='open-url'&&currentUser){try{document.querySelectorAll('.modalBack,.v503DetailBack').forEach(x=>x.remove())}catch(_){}v952RouteUrl(e.data.url)}})}catch(e){}
 // botón "Reparar": borra la suscripción de este dispositivo, crea una nueva, la registra y manda una prueba
 async function repairPushV890(){
   try{
@@ -3321,14 +3321,20 @@ async function openNotificationsV104(){
    const q=await sb.from('app_notifications').update({is_read:true}).eq('user_id',currentUser.id).eq('id',id);
    if(q.error){console.warn('No se pudo marcar la notificación como leída',q.error)}
    const u=el.dataset.url||'';panel.remove();await loadNotificationsV104();
+   v952RouteUrl(u);
+ }));
+}
+
+// V952 · abrir un enlace interno de la app (avisos) sin recargar la página: lo usan la lista de notificaciones
+// y el service worker al pulsar una notificación del móvil con la app ya abierta.
+function v952RouteUrl(u){
+  u=String(u||'');try{const dm=new URL(u,location.origin).searchParams.get('dm');if(dm)window._v952Dm=dm}catch(_){}
    if(u.includes('tab=altas')&&hasAnyCoachTeam()){tab='equipo';draw();render();return}
    if(u.includes('tab=result')&&hasAnyCoachTeam()){const q2=new URL(u,location.origin).searchParams;currentMode='staff';r='coach';coachTeams=staffViewTeamCodes();coachSelectedTeam=q2.get('team')||coachSelectedTeam;workoutNotificationAthleteV129=q2.get('athlete')||null;tab='result';draw();render();return}
    if(u.includes('tab=mensajes')){const q2=new URL(u,location.origin).searchParams;if(q2.get('rower')&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}renderIdentityHeaderV73()}tab='mensajes';v801ChatParam(q2);if(currentMode==='staff'){if(q2.get('team'))coachSelectedTeam=q2.get('team');if(q2.get('rower'))v300PendingMessageRower=q2.get('rower')}draw();render();return}
    if(u.includes('tab=hist')&&currentMode==='athlete'){const q2=new URL(u,location.origin).searchParams;tab='hist';if(q2.get('ergoComment')==='1')v300PendingCommentOpen={kind:q2.get('kind'),id:q2.get('rid')};draw();render();if(v300PendingCommentOpen)setTimeout(()=>v300OpenPendingComment(),700);return}
    if(u.includes('tab=eventos')){const q2=new URL(u,location.origin).searchParams;if(q2.get('mode')==='staff'&&hasStaffMode()&&currentMode!=='staff'){currentMode='staff';r='coach';try{coachTeams=staffViewTeamCodes()}catch(e){}if(q2.get('et'))coachSelectedTeam=q2.get('et');renderIdentityHeaderV73()}tab='eventos';if(q2.get('eid'))v530PendingEvent={kind:q2.get('ek')||'club_event',id:Number(q2.get('eid')),team:q2.get('et')||'',chat:q2.get('echat')==='1'};draw();render();if(v530PendingEvent)setTimeout(()=>v530OpenPendingEvent(),600);return}
- }));
 }
-
 let baseAccountRole="athlete",isGlobalCoach=false,staffRoles=[],rowerTeamCodes=[],currentMode="athlete";
 let plannerJumpDate=null,plannerJumpTeam=null,plannerAutoEdit=false,plannerTargetSessionId=null;
 let coachSelectedTeam=null,coachWeekStart="2026-08-31",coachWeekFocusDate=null,coachDayModalV394=false;
@@ -3545,7 +3551,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="950";
+const APP_VERSION="952";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -11071,7 +11077,7 @@ async function v946DmOnlyView(){
   const bind=()=>box.querySelectorAll('.v946DmRow').forEach(b=>b.onclick=()=>open(b.dataset.user,b.dataset.name));
   findIn.oninput=()=>{const q=v631Norm(findIn.value.trim());box.querySelectorAll('.v946DmRow').forEach(b=>{if(!q||v631Norm(b.dataset.name).includes(q))b.style.removeProperty('display');else b.style.setProperty('display','none','important')})};
   await load();
-  const dm=new URLSearchParams(location.search).get('dm');if(dm){const b=box.querySelector(`.v946DmRow[data-user="${CSS.escape(dm)}"]`);if(b)b.click()}
+  const dm=window._v952Dm||new URLSearchParams(location.search).get('dm');window._v952Dm=null;if(dm){const b=box.querySelector(`.v946DmRow[data-user="${CSS.escape(dm)}"]`);if(b)b.click()}
 }
 async function coachMessagesView(){
   if(!hasAnyCoachTeam())return v946DmOnlyView(); // V946 · ayudantes: solo chats del equipo técnico
@@ -11170,7 +11176,7 @@ async function coachMessagesView(){
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
   await loadInbox();
-  {const dm=new URLSearchParams(location.search).get('dm');if(dm){const b=box.querySelector(`.v946DmRow[data-user="${CSS.escape(dm)}"]`);if(b){const dd=b.closest('details');if(dd)dd.open=true;b.click()}}}
+  {const dm=window._v952Dm||new URLSearchParams(location.search).get('dm');window._v952Dm=null;if(dm){const b=box.querySelector(`.v946DmRow[data-user="${CSS.escape(dm)}"]`);if(b){const dd=b.closest('details');if(dd)dd.open=true;b.click()}}}
   if(window._v800PendingTeam){const t800=window._v800PendingTeam;window._v800PendingTeam=null;if(teams.includes(t800))openTeamThread(t800)}
   if(v300PendingMessageRower){
     const rowerId=v300PendingMessageRower;v300PendingMessageRower=null;
@@ -11836,6 +11842,13 @@ async function autoSyncConcept2({refreshHistory=false,force=false}={}){
   }catch(e){return null;}
 }
 
+function v952UpdatePill(target){
+  if(document.getElementById('v952Upd'))return;
+  const b=document.createElement('button');b.type='button';b.id='v952Upd';b.textContent='🔄 Nueva versión · Actualizar';
+  b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 64px);z-index:9000;background:#2563eb;color:#fff;border:0;border-radius:999px;padding:8px 16px;font:600 .85rem inherit;box-shadow:0 6px 18px rgba(0,0,0,.25)';
+  b.onclick=()=>{b.remove();window._v952Force=true;lastAppUpdateCheck=0;checkForAppUpdate()};
+  document.body.appendChild(b);
+}
 async function checkForAppUpdate(){
   if(Date.now()-lastAppUpdateCheck<30000) return;
   lastAppUpdateCheck=Date.now();
@@ -11853,6 +11866,9 @@ async function checkForAppUpdate(){
       if(sessionStorage.getItem(key)==="1") return;
       const busy=(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))||document.querySelector('.modalBack');
       if(busy){lastAppUpdateCheck=0;return}
+      // V952 · con la app ya abierta no se recarga de golpe (salía otra vez la pantalla de inicio): se ofrece
+      // una píldora "Nueva versión" y se aplica al tocarla o la próxima vez que se abra la app desde cero.
+      if(!document.getElementById('v547Splash')&&!window._v952Force){v952UpdatePill(target);return}
       sessionStorage.setItem(key,"1");
       try{sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab,currentMode,coachSelectedTeam,workoutNotificationAthleteV129,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}
       const u=new URL(location.href);
@@ -12282,7 +12298,15 @@ function metricSeconds(v){
   return a.length===2?a[0]*60+a[1]:a.length===3?a[0]*3600+a[1]*60+a[2]:Number(v)||null;
 }
 function fmtMetricSeconds(v){if(v==null||!isFinite(v))return "—"; const m=Math.floor(v/60),sec=v-m*60;return `${m}:${sec.toFixed(1).padStart(4,'0')}`;}
+// V951 · la vista MAR · Equipo precarga los datos antes de pintarse y luego los volvía a pedir (se veía un momento la
+// pantalla vacía). Ahora esa precarga se reutiliza una vez, así se pinta todo de golpe.
 async function getSeaResultsForTeam(team,start,end){
+  const k=team+'|'+start+'|'+end,pre=window._v951Pre;
+  if(pre&&pre.k===k&&Date.now()-pre.t<20000){window._v951Pre=null;return pre.p}
+  if(window._v951Want){window._v951Want=false;const p=v951GetSea(team,start,end);window._v951Pre={k,t:Date.now(),p};return p}
+  return v951GetSea(team,start,end);
+}
+async function v951GetSea(team,start,end){
   const ss=await sb.from('training_sessions').select('id,session_date,session_type,title,content').eq('team_code',team).eq('session_type','MAR').gte('session_date',start).lte('session_date',end).order('session_date');
   if(ss.error||!ss.data?.length)return {sessions:ss.data||[],results:[]};
   const ids=ss.data.map(x=>x.id);
@@ -13826,10 +13850,10 @@ async function coachSeaResultsView(){
   // arriba, sin ese hueco de por medio).
   // V422 · se quita también el <h2> "Análisis MAR · Equipo": duplicaba el botón "MAR · Equipo" que
   // ya está activo justo encima. Menos margen entre el toggle y el primer control.
-  try{const preTeam=(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))?coachSelectedTeam:(allowed[0]&&allowed[0][0]);if(preTeam)await getSeaResultsForTeam(preTeam,'2026-09-01','2027-05-31')}catch(e){}
+  try{const preTeam=(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))?coachSelectedTeam:(allowed[0]&&allowed[0][0]);if(preTeam){window._v951Want=true;await getSeaResultsForTeam(preTeam,'2026-09-01','2027-05-31')}}catch(e){}
   if(r!=="coach")return;
   content.innerHTML=`<div class="card v849"><div class="v569Seg viewToggle v576Seg"><button class="active" type="button">MAR · Equipo</button><button id="analysisAthletes" type="button">Remeros</button></div><div class="v573Top v576Eq"><label><span class="v833Sr">Equipo</span><select id="seaResTeam">${allowed.map(x=>`<option value="${x[0]}">${esc(teamShort(x[0]))}</option>`).join('')}</select></label><label><span class="v833Sr">Periodo</span><select id="seaPeriod">${monthOptions(monthFilter)}<option value="all" ${monthFilter==='all'?'selected':''}>Toda la temporada</option></select></label></div><div class="v576Sel"><span id="seaSelectionInfo" class="muted"></span><button id="clearSeaSelection" type="button" class="v576Link">Limpiar selección</button></div><div id="seaCal"></div><h3 style="margin:14px 0 6px">Comparación seleccionada</h3><div id="seaCompare"></div><h3 style="margin:14px 0 6px">Evolución automática de ejercicios repetidos</h3><div id="seaAuto"></div></div>`;
-  const dimV943=sg=>{try{const c=sg.parentElement;[...c.children].forEach(x=>{if(x!==sg){x.style.transition='opacity .15s';x.style.opacity='.35';x.style.pointerEvents='none'}});}catch(_){}};document.getElementById('analysisAthletes').onclick=e=>{window._v949Fast=true;const sg=e.currentTarget.closest('.v576Seg');if(sg){sg.classList.add('segR','segGoR');sg.classList.remove('segGoL');dimV943(sg)}setTimeout(()=>results(),230)};
+  const dimV943=sg=>{try{const c=sg.parentElement;[...c.children].forEach(x=>{if(x!==sg){x.style.pointerEvents='none'}});}catch(_){}};document.getElementById('analysisAthletes').onclick=e=>{window._v949Fast=true;const sg=e.currentTarget.closest('.v576Seg');if(sg){sg.classList.add('segR','segGoR');sg.classList.remove('segGoL');dimV943(sg)}setTimeout(()=>results(),230)};
   const teamSel=document.getElementById('seaResTeam'),periodSel=document.getElementById('seaPeriod'),cal=document.getElementById('seaCal'),cmp=document.getElementById('seaCompare'),auto=document.getElementById('seaAuto'),info=document.getElementById('seaSelectionInfo');
   if(coachSelectedTeam&&allowed.some(x=>x[0]===coachSelectedTeam))teamSel.value=coachSelectedTeam;
   async function load(){
@@ -13977,7 +14001,7 @@ async function results(){
   const teamAthletes=()=>profiles.filter(p=>belongs(p,team)).sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'es'));
   content.innerHTML=`<div class="card v849"><div class="v569Seg viewToggle v576Seg segR"><button id="analysisSea" type="button">MAR · Equipo</button><button class="active" type="button">Remeros</button></div><div class="athleteSelectorBar v573Top v576Eq"><label><span class="v833Sr">Equipo</span><select id="analysisTeam">${visibleTeams.map(t=>`<option value="${t}">${esc(teamShort(t))}</option>`).join('')}</select></label><label><span class="v833Sr">Remero</span><select id="analysisAthlete"></select></label></div><div class="v943Body"><div id="v150CoachPending"></div><div class="coachAnalysisSectionsV123"><details id="athleteSectionV123" class="coachAnalysisSectionV123"><summary><span><b>Análisis individual</b><small id="athleteSectionNameV123">Selecciona un remero</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="athleteDetail" class="coachAnalysisSectionBodyV123"></div></details><details id="profileSectionV123" class="coachAnalysisSectionV123"><summary><span><b>Perfiles y zonas de FC</b><small>Datos físicos de todo el equipo</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="profileComparison" class="coachAnalysisSectionBodyV123"></div></details><details id="v269RankSectionV269" class="coachAnalysisSectionV123"><summary><span><b>Ranking del test ERGO</b><small>Por resultado o por W/kg</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="v269TestRanking" class="coachAnalysisSectionBodyV123"></div></details><details id="v417ErgoSectionV417" class="coachAnalysisSectionV123"><summary><span><b>Comparativa de ERGO</b><small>Ritmo por ejercicio, entre remeros</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="v417ErgoCompare" class="coachAnalysisSectionBodyV123"></div></details><details id="v416GymSectionV416" class="coachAnalysisSectionV123"><summary><span><b>Comparativa de GYM</b><small>Peso por ejercicio, entre remeros</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="v416GymCompare" class="coachAnalysisSectionBodyV123"></div></details><details id="v480TeamAssessmentsSection" class="coachAnalysisSectionV123"><summary><span><b>Valoraciones del equipo</b><small>Resumen automático de cada remera, todo junto</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div id="v480TeamAssessments" class="coachAnalysisSectionBodyV123"></div></details><details id="complianceSectionV123" class="coachAnalysisSectionV123"><summary><span><b>Cumplimiento</b><small>Vista semanal o mensual del equipo</small></span><span class="coachAnalysisChevronV123" aria-hidden="true">⌄</span></summary><div class="coachAnalysisSectionBodyV123"><div class="analysisModeV151"><button id="analysisModeWeekV151" class="active">Semana</button><button id="analysisModeMonthV151">Mes</button></div><div class="analysisWeekNav"><button id="analysisPrevPeriodV151">←</button><strong id="analysisWeekLabel"></strong><button id="analysisNextPeriodV151">→</button></div><div id="teamCompliance"></div></div></details></div></div></div>`;
   const teamSel=document.getElementById('analysisTeam'),athSel=document.getElementById('analysisAthlete'),pendingBox=document.getElementById('v150CoachPending'),compare=document.getElementById('profileComparison'),teamBox=document.getElementById('teamCompliance'),detail=document.getElementById('athleteDetail'),weekLabel=document.getElementById('analysisWeekLabel'),athleteSection=document.getElementById('athleteSectionV123'),athleteSectionName=document.getElementById('athleteSectionNameV123');teamSel.value=team;
-  const dimV943=sg=>{try{const c=sg.parentElement;[...c.children].forEach(x=>{if(x!==sg){x.style.transition='opacity .15s';x.style.opacity='.35';x.style.pointerEvents='none'}});}catch(_){}};document.getElementById('analysisSea').onclick=e=>{const sg=e.currentTarget.closest('.v576Seg');if(sg){sg.classList.remove('segR','segGoR');sg.classList.add('segGoL');dimV943(sg)}setTimeout(()=>coachSeaResultsView(),230)};
+  const dimV943=sg=>{try{const c=sg.parentElement;[...c.children].forEach(x=>{if(x!==sg){x.style.pointerEvents='none'}});}catch(_){}};document.getElementById('analysisSea').onclick=e=>{const sg=e.currentTarget.closest('.v576Seg');if(sg){sg.classList.remove('segR','segGoR');sg.classList.add('segGoL');dimV943(sg)}setTimeout(()=>coachSeaResultsView(),230)};
   function pendingCountForAthleteV150(uid){
     const teamPlans=sessions.filter(s=>s.team_code===team),uw=workouts.filter(w=>String(w.user_id)===String(uid)&&!w.hidden),uc=c2rows.filter(x=>String(x.user_id)===String(uid)&&!v161Concept2EffectiveHidden(x));
     const pendingWorkouts=uw.filter(w=>!w.training_session_id&&!w.is_additional&&['gym','ergo','erg'].includes(String(w.session_type||'').toLowerCase())&&!v153IsLegacyResolvedResult(w,'workout',teamPlans,uw,uc)).length;

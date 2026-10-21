@@ -5,6 +5,8 @@
 //    red o tarda, abre la última guardada. Así las actualizaciones siguen llegando con normalidad.
 //  - Librerías externas, fuentes, logo e imágenes: se sirven de lo guardado y se refrescan por detrás.
 //  - Los datos (Supabase), /api/ y version.json NO pasan por aquí: siempre van directos a internet.
+// V952 · al pulsar una notificación con la app ya abierta, ya no se recarga la página (salía otra vez la
+//  pantalla de inicio): se le pasa el enlace a la app y ella abre la pantalla que toca.
 const CACHE='rowtraining-app-v565';
 const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
@@ -120,7 +122,13 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   const target=new URL(event.notification.data?.url||'/',self.location.origin).href;
   event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
-    for(const c of list){ if('focus' in c){ c.navigate(target); return c.focus(); } }
+    // V952 · si la app ya está abierta: se enfoca y se le pasa el enlace (sin recargar). Si no, se abre.
+    for(const c of list){
+      if('focus' in c){
+        try{c.postMessage({type:'open-url',url:target})}catch(e){}
+        return c.focus().catch(()=>null);
+      }
+    }
     return clients.openWindow?clients.openWindow(target):null;
   }));
 });
