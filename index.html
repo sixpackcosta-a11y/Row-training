@@ -1908,6 +1908,22 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
 
 :is(#content,#v555Freeze) .v225PendingList:has(.v972Host){border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important;overflow:visible!important}
 :is(#content,#v555Freeze) :is(.v225PendingList,.v766List)>.v972Host{border:0!important;border-top:0!important;padding:0!important;margin:0 0 6px!important;background:transparent!important}
+/* V973 · Pendientes al mismo ancho que las sesiones de Hoy (sin sangría extra) */
+:is(#content,#v555Freeze) .v225PendingSection:has(.v972Host){padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important}
+
+/* V974 · etiquetas de tipo con el color de la guía en toda la app */
+.v974k{color:var(--k)!important;background:color-mix(in srgb,var(--k) 14%,transparent)!important;border-color:transparent!important;font-weight:500!important}
+/* barras rectas del color del tipo en las fichas antiguas que quedan (Planificación) */
+.weekSess.v974Bar{border-left:0!important;position:relative;padding-left:18px!important}
+.weekSess.v974Bar::before{content:'';position:absolute;left:7px;top:10px;bottom:10px;width:4px;border-radius:2px;background:var(--k)}
+/* popup del día: sin cajas dentro de cajas, fichas como en Semana, panel por encima del popup */
+.v959SheetBack{z-index:10060!important}
+.v394DayModalBack .v974InModal .v959Week{border-top:0!important;margin-top:0!important}
+.v394DayModalBack .v974InModal .v959Day{border:0!important;padding:4px 0!important}
+.v394DayModalBack .v974InModal .v959D{display:none!important}
+.v394DayModalBack .v974InModal :is(.card,.coachWeekDay){border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.v394DayModalBack .modalCard{padding:16px!important}
+.v959InSheet.v974Bar{padding-left:0!important}.v959InSheet.v974Bar::before{display:none!important}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3793,7 +3809,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="972";
+const APP_VERSION="974";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3822,9 +3838,26 @@ let lastAppUpdateCheck=0;
 const PASSWORD_RECOVERY_HINT=location.hash.includes("type=recovery")||new URLSearchParams(location.search).get("reset")==="1";
 // V547 · ninguna petición puede quedarse colgada para siempre con mala cobertura.
 function v547Fetch(url,opts){
-  opts=opts||{};if(opts.signal||typeof AbortController==='undefined')return fetch(url,opts);
-  const u=String(url),c=new AbortController(),t=setTimeout(()=>c.abort(),u.includes('/storage/')?90000:u.includes('/functions/')?30000:15000);
-  return fetch(url,Object.assign({},opts,{signal:c.signal})).finally(()=>clearTimeout(t));
+  opts=opts||{};
+  // V973 · club_events: la columna extra_team_codes no existe en la base; cada lista de eventos hacía la consulta
+  // dos veces (la primera daba error 400). Tras el primer 400 se pide directamente la consulta simple.
+  let u=String(url);
+  if(window._v973NoExtra&&u.includes('/club_events')&&u.includes('extra_team_codes')){
+    try{const x=new URL(u),o=x.searchParams.get('or')||'',m=o.match(/team_code\.eq\.([^,)]+)/);if(m){x.searchParams.delete('or');x.searchParams.set('team_code','eq.'+m[1]);u=x.toString();url=u}}catch(_){}
+  }
+  const method=String(opts.method||'GET').toUpperCase();
+  // V973 · un corte de un segundo (cambio de antena, 5G que va y viene) daba "TypeError: Load failed" y no se guardaba.
+  // Las lecturas y las modificaciones que se pueden repetir sin duplicar (GET, HEAD, PATCH, DELETE) se reintentan
+  // solas dos veces. Las altas (POST) no, para no crear nada repetido.
+  const canRetry=/^(GET|HEAD|PATCH|DELETE|PUT)$/.test(method)&&!u.includes('/storage/');
+  const once=()=>{
+    if(opts.signal||typeof AbortController==='undefined')return fetch(url,opts);
+    const c=new AbortController(),t=setTimeout(()=>c.abort(),u.includes('/storage/')?90000:u.includes('/functions/')?30000:15000);
+    return fetch(url,Object.assign({},opts,{signal:c.signal})).finally(()=>clearTimeout(t));
+  };
+  const isNet=e=>e&&e.name!=='AbortError'&&/load failed|failed to fetch|network/i.test(String(e.message||e));
+  const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
+  return run(0);
 }
 function v547IsNetErr(e){if(!e)return false;const m=[e.message,e.details,e.name,e.hint].filter(Boolean).join(' ');return !e.code&&/failed to fetch|load failed|network|abort|timeout|timed out/i.test(m)}
 function v547StoredUser(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^sb-.*-auth-token$/.test(k)){const o=JSON.parse(localStorage.getItem(k)||'null');const u=o?.user||o?.currentSession?.user;if(u?.id)return u}}}catch(e){}return null}
@@ -17702,9 +17735,10 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
 
   // ---------- Semana del entrenador: agenda compacta ----------
   var TYPE={MAR:'mar',GYM:'gym',ERG:'erg',ERGO:'erg',MIX:'mix',REGATA:'reg'};
+  window.v974EnhanceWeek=function(a){try{enhanceCoachWeek(a)}catch(e){console.warn(e)}};
   function enhanceCoachWeek(area){
     var grid=area.querySelector('.coachWeekGrid');if(!grid||grid._v959)return;grid._v959=1;
-    if(area.closest('.v394DayModalBack'))return; // el popup de un día desde Mes se queda como estaba
+    var inModal=!!area.closest('.v394DayModalBack');if(inModal)area.classList.add('v974InModal');
     var list=document.createElement('div');list.className='v959Week';
     var today=(typeof localISODate==='function')?localISODate():'';
     grid.querySelectorAll(':scope > section.coachWeekDay').forEach(function(sec){
@@ -18245,5 +18279,38 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
  }
  var t=null;new MutationObserver(function(){if(t)return;t=requestAnimationFrame(function(){t=null;try{var c=document.getElementById('content');if(c)enhanceDay(c)}catch(e){console.warn('v972',e)}})}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true});
  try{enhanceDay(document.getElementById('content')||document.body)}catch(e){}
+})();
+
+/* V973 · un corte de conexión ya no muestra "TypeError: Load failed": se explica qué ha pasado y que los cambios siguen en pantalla */
+(function(){
+ var A=window.alert.bind(window);
+ window.alert=function(m){
+  var s=String(m==null?'':m);
+  if(/(TypeError:\s*)?(Load failed|Failed to fetch|NetworkError|network connection was lost)/i.test(s)&&s.length<160){
+   s='Se ha cortado la conexión un momento y no se ha podido guardar.\n\nTus cambios siguen en pantalla: vuelve a pulsar Guardar.';
+  }
+  return A(s);
+ };
+})();
+
+/* V974 · colores por TIPO iguales en toda la app (etiquetas MAR/GYM/ERGO/REGATA y barras), y el popup del día
+   (Mes/Planificación) con las mismas fichas que Semana, sin cajas dentro de cajas */
+(function(){
+ function kind(t){t=String(t||'').replace(/^[^A-Za-zÁÉÍÓÚ]+/,'').trim().toUpperCase();
+  if(/^MAR\b/.test(t))return 'mar';if(/^GYM\b/.test(t))return 'gym';if(/^(ERGO?|TEST)\b/.test(t))return 'erg';if(/^(REGATA|COMPETICI)/.test(t))return 'reg';if(/^MIX\b/.test(t))return 'mix';return ''}
+ var SEL='.tag,.athleteWeekTypeV123,.v833Ty,.libraryBadge,.miniBadge.v974T';
+ function paint(root){
+  (root||document).querySelectorAll(SEL).forEach(function(el){
+   if(el._v974===el.textContent)return;el._v974=el.textContent;
+   var k=kind(el.textContent);el.classList.remove('v974k','k-mar','k-gym','k-erg','k-reg','k-mix');if(k)el.classList.add('v974k','k-'+k);
+  });
+  (root||document).querySelectorAll('.weekSess').forEach(function(ws){
+   if(ws._v974)return;var tg=ws.querySelector('.weekSessTitle .tag'),b=ws.querySelector('.weekSessTitle b');
+   var k=kind(tg&&tg.textContent)||kind(b&&b.textContent);if(!k)return;ws._v974=1;ws.classList.add('v974Bar','k-'+k);
+  });
+ }
+ function scanModals(){document.querySelectorAll('.v394DayModalBack #coachWeekArea, .v394DayModalBack .coachWeekGrid').forEach(function(a){var area=a.id==='coachWeekArea'?a:(a.closest('#coachWeekArea')||a.parentElement);if(area&&area.querySelector('.coachWeekGrid')&&window.v974EnhanceWeek)window.v974EnhanceWeek(area)})}
+ var t=null;new MutationObserver(function(){if(t)return;t=requestAnimationFrame(function(){t=null;try{paint(document.body);scanModals()}catch(e){console.warn('v974',e)}})}).observe(document.body,{childList:true,subtree:true,characterData:true});
+ try{paint(document.body)}catch(e){}
 })();
 </script></body></html>
