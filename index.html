@@ -1871,6 +1871,18 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
 .v967NPush.out .notifyCardV104{transform:translateX(110%);transition:transform .24s ease-in}
 .v967NPush{transition:background-color .26s ease}
 .v967NPush.out{background:rgba(7,22,47,0)!important}
+
+/* V969 · botón de nueva versión en la cabecera */
+#refreshAppV159.v969Upd{position:relative;width:34px;height:34px;border-radius:50%!important;display:inline-flex!important;align-items:center;justify-content:center;padding:0!important;background:rgba(255,255,255,.12)!important;color:#fff!important;border:0!important;box-shadow:none!important}
+#refreshAppV159.v969Upd .v969Dot{position:absolute;top:3px;right:3px;width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px #0b1b35}
+#refreshAppV159.v969Upd.spin svg{animation:v969s 1s linear infinite}
+@keyframes v969s{to{transform:rotate(360deg)}}
+
+/* V970 · barras de color rectas también en Mes (lista del día) y en Eventos: sin la curva de las esquinas */
+:is(#content,#v555Freeze) .v833Row{border-left:0!important;position:relative;padding-left:22px!important}
+:is(#content,#v555Freeze) .v833Row::before{content:'';position:absolute;left:8px;top:10px;bottom:10px;width:4px;border-radius:2px;background:var(--c,var(--tc-oth))}
+:is(#content,#v555Freeze) .v503EventRow.v970Bar:not(.v905Row){border-left:0!important;position:relative;padding-left:14px!important}
+:is(#content,#v555Freeze) .v503EventRow.v970Bar:not(.v905Row)::before{content:'';position:absolute;left:6px;top:10px;bottom:10px;width:4px;border-radius:2px;background:var(--v970c,#94a3b8)}
 </style></head><body><div id="v547Splash"><div class="v547In"><img class="v549SplashLogo" src="assets/brand/logo-login-oscuro.png" alt="Row Training" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="v547Name" style="display:none">Row Training</div><div class="v547Bar"><span></span></div><div id="v547Msg" class="v547Msg"></div><button id="v547Retry" type="button" style="display:none">Reintentar</button></div></div>
 <script>
 // V547 · pantalla de inicio: se pinta antes de descargar nada. Si la conexión es mala lo dice y,
@@ -3756,7 +3768,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="968";
+const APP_VERSION="970";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -18054,7 +18066,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
 
 /* V966 · filas de Eventos: los contadores pasan dentro de la ficha, flotando arriba a la derecha */
 (function(){
- function fix(root){(root||document).querySelectorAll('.v503EventRow:not(.v905Row)').forEach(function(r){if(r._v966)return;var c=r.querySelector(':scope > .v503Counts'),inf=r.querySelector(':scope > .v503Info');if(!c||!inf){return}r._v966=1;c.classList.add('v966Fl');inf.insertBefore(c,inf.firstChild)})}
+ function fix(root){(root||document).querySelectorAll('.v503EventRow:not(.v905Row)').forEach(function(r){if(!r._v970){var bc=r.style.borderLeftColor;if(bc){r._v970=1;r.style.setProperty('--v970c',bc);r.classList.add('v970Bar')}}if(r._v966)return;var c=r.querySelector(':scope > .v503Counts'),inf=r.querySelector(':scope > .v503Info');if(!c||!inf){return}r._v966=1;c.classList.add('v966Fl');inf.insertBefore(c,inf.firstChild)})}
  var t=null;new MutationObserver(function(){if(t)return;t=requestAnimationFrame(function(){t=null;try{fix(document.getElementById('content'))}catch(e){}})}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true});
  fix(document);
 })();
@@ -18092,5 +18104,45 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
   panel.remove=function(){if(panel._gone)return;panel._gone=1;panel.classList.add('out');panel.classList.remove('in');setTimeout(real,260)};
  }
  new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType!==1)return;if(n.classList.contains('v583Full'))chatSetup(n);else if(n.id==='notifyPanelV104')notifSetup(n)});m.removedNodes.forEach(function(n){if(n.nodeType===1&&n.classList&&n.classList.contains('v583Full')&&!anyOpen())document.body.classList.remove('v965Under')})})}).observe(document.body,{childList:true});
+})();
+
+/* V969 · actualizaciones: al abrir la app (o volver a ella tras un buen rato) se pone sola la versión nueva,
+   sin cartel. Si la app está en uso, en vez de la píldora sale el botón ↻ a la izquierda de la campana. */
+(function(){
+ var t0=Date.now(),touched=false,hidAt=null;
+ ['pointerdown','keydown','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){touched=true},{capture:true,passive:true})});
+ document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')hidAt=Date.now();else setTimeout(function(){hidAt=null},0)});
+ function fresh(){
+  if(document.getElementById('v547Splash'))return true;
+  if(hidAt&&Date.now()-hidAt>10*60*1000){t0=Date.now();touched=false;return true}   // vuelve tras más de 10 min fuera
+  return !touched&&Date.now()-t0<30000;                                              // recién abierta y sin tocar nada
+ }
+ function showBtn(target){
+  var b=document.getElementById('refreshAppV159');
+  if(!b){return}
+  b.style.display='';b.classList.add('v969Upd');b.title='Nueva versión '+target+' · tocar para actualizar';b.setAttribute('aria-label','Nueva versión · actualizar');
+  b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><i class="v969Dot"></i>';
+  b.onclick=function(e){e.preventDefault();e.stopPropagation();b.classList.add('spin');window._v952Force=true;try{lastAppUpdateCheck=0}catch(_){}window.checkForAppUpdate()};
+  var old=document.getElementById('v952Upd');if(old)old.remove();
+ }
+ window.v952UpdatePill=showBtn;
+ window.checkForAppUpdate=async function(){
+  try{if(Date.now()-lastAppUpdateCheck<30000&&!window._v952Force)return;lastAppUpdateCheck=Date.now()}catch(_){}
+  try{
+   var r=await fetch('/version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+   var v=await r.json(),target=String(v&&v.version||'');
+   if(!target||!(Number(target)>Number(APP_VERSION)))return;
+   var key='rowtraining_reload_'+target,tried=sessionStorage.getItem(key)==='1';
+   var busy=(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))||(document.activeElement&&document.activeElement.isContentEditable)||document.querySelector('.modalBack,.v583Full,.v959SheetBack');
+   var go=window._v952Force||(!tried&&!busy&&fresh());
+   if(!go){showBtn(target);return}
+   sessionStorage.setItem(key,'1');window._v952Force=false;
+   try{sessionStorage.setItem('rowtraining_resume_v300',JSON.stringify({tab:tab,currentMode:currentMode,coachSelectedTeam:coachSelectedTeam,workoutNotificationAthleteV129:workoutNotificationAthleteV129,scrollY:v347ScrollTop(),ts:Date.now()}))}catch(e){}
+   var u=new URL(location.href);u.searchParams.set('appv',target);
+   setTimeout(function(){location.replace(u.toString())},150);
+  }catch(e){}
+ };
+ // se comprueba nada más arrancar (mientras sale la pantalla de inicio), sin esperar al inicio de sesión
+ setTimeout(function(){try{window.checkForAppUpdate()}catch(e){}},50);
 })();
 </script></body></html>
