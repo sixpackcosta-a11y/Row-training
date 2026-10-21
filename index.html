@@ -3824,7 +3824,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="976";
+const APP_VERSION="977";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -11373,6 +11373,7 @@ async function v946DmOnlyView(){
 }
 // V968 · al abrir una conversación la lista no se borra: se guarda escondida y al volver se enseña tal cual
 // (sin volver a dibujarla, así no saltan las filas ni parpadean las fotos). Luego solo se retoca lo que cambie.
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>{try{window._v977Reload&&window._v977Reload()}catch(_){}},700)});
 function v968Stash(box){let k=box.querySelector(':scope > .v968Keep');if(!k){k=document.createElement('div');k.className='v968Keep';k.hidden=true;k.dataset.key=box.dataset.v968Key||'';[...box.childNodes].forEach(n=>k.appendChild(n));box.appendChild(k)}else{[...box.childNodes].forEach(n=>{if(n!==k)n.remove()})}return k}
 function v968Restore(box,key){const k=box.querySelector(':scope > .v968Keep');if(!k)return false;if(k.dataset.key!==key){k.remove();return false}[...box.childNodes].forEach(n=>{if(n!==k)n.remove()});while(k.firstChild)box.insertBefore(k.firstChild,k);k.remove();return true}
 function v968Merge(box,html){
@@ -11450,8 +11451,8 @@ async function coachMessagesView(){
     const activeTeams=teams.filter(t=>selTeams.has(t));
     const v872Key=activeTeams.join(',');window._v872Inbox=window._v872Inbox||{};
     const v872Bind=()=>{box.querySelectorAll('.v946DmRow').forEach(btn=>btn.onclick=()=>openDm(btn.dataset.user,btn.dataset.name));box.querySelectorAll('.v300InboxRow').forEach(btn=>btn.onclick=()=>openThread(btn.dataset.user,btn.dataset.team,btn.dataset.name));box.querySelectorAll('.v617TeamRow').forEach(btn=>btn.onclick=()=>openTeamThread(btn.dataset.team));applyFind()};
-    box.dataset.v968Key=v872Key;if(v968Restore(box,v872Key))v872Bind();else if(window._v872Inbox[v872Key]){box.innerHTML=window._v872Inbox[v872Key];v872Bind()}
-    else box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
+    box.dataset.v968Key=v872Key;if((box.querySelector('#v300ChatContainer')&&document.querySelector('.v583Full:not(.out)'))){/* V977 · chat abierto: la lista se actualiza por detrás */const k=box.querySelector(':scope > .v968Keep');if(k)k.dataset.key=v872Key}else if(v968Restore(box,v872Key))v872Bind();else if(window._v872Inbox[v872Key]){box.innerHTML=window._v872Inbox[v872Key];v872Bind()}
+    else if(!(box.querySelector('#v300ChatContainer')&&document.querySelector('.v583Full:not(.out)')))box.innerHTML=`<p class="muted">${v316Loading('Cargando conversaciones…')}</p>`;
     if(activeTeams.length===1)coachSelectedTeam=activeTeams[0];
     const v946P=v946InboxRows().catch(()=>[]);
     // V967 · al llegar desde un aviso la lista guardada salía con la vista previa vieja hasta que cargaban
@@ -11484,7 +11485,10 @@ async function coachMessagesView(){
         <small class="muted v791Tm" style="flex-shrink:0">${time}${unread?'<br><span class="v791Dot"></span>':''}</small>
       </button>`;
     }).join('');
-    if(window._v872Inbox[v872Key]!==v872Html||!box.querySelector('.v300InboxRow')||box.querySelector(':scope > .v968Keep')){if(!v968Merge(box,v872Html))box.innerHTML=v872Html;v872Bind()}
+    // V977 · si hay una conversación abierta, la lista nueva va a la copia escondida (no se cierra el chat)
+    const v977Keep=box.querySelector(':scope > .v968Keep');
+    if(v977Keep&&(box.querySelector('#v300ChatContainer')&&document.querySelector('.v583Full:not(.out)'))){if(!v968Merge(v977Keep,v872Html))v977Keep.innerHTML=v872Html;v872Bind()}
+    else if(window._v872Inbox[v872Key]!==v872Html||!box.querySelector('.v300InboxRow')||v977Keep){if(!v968Merge(box,v872Html))box.innerHTML=v872Html;v872Bind()}
     window._v872Inbox[v872Key]=v872Html;
     // V682 · la lista manda: si no enseña ninguna conversación en azul, lo que haya hasta ahora cuenta como visto
     // y el globo de Mensajes se pone a cero (no puede quedar un número que la lista no justifica).
@@ -11514,7 +11518,17 @@ async function coachMessagesView(){
     v617RenderTeamChat(_c,team);
     if(typeof v360FinishLoad==='function')v360FinishLoad();
   };
-  await loadInbox();
+  // V977 · al tocar el aviso de un mensaje se abre YA la conversación de ese remero (antes esperaba a que cargara
+  // toda la lista; con la app recién despertada eso fallaba y te quedabas en la lista vieja).
+  if(v300PendingMessageRower){
+    const rowerId=v300PendingMessageRower;v300PendingMessageRower=null;
+    const row=box.querySelector(`.v300InboxRow[data-user="${rowerId}"]`);
+    let nm=row?row.dataset.name:'',tm=row?row.dataset.team:(coachSelectedTeam||teams[0]);
+    if(!nm){try{const pq=await sb.from('profiles').select('full_name').eq('user_id',rowerId).maybeSingle();nm=pq.data?.full_name||'Remero'}catch(_){nm='Remero'}}
+    openThread(rowerId,tm,nm);
+  }
+  window._v977Reload=()=>{if(tab==='mensajes'&&box.isConnected)loadInbox().catch(()=>{})};
+  for(let v977i=0;v977i<3;v977i++){try{await loadInbox();break}catch(e){console.warn('Mensajes: reintento',e);await new Promise(r=>setTimeout(r,1500))}}
   {const dm=window._v952Dm||new URLSearchParams(location.search).get('dm');window._v952Dm=null;if(dm){const b=box.querySelector(`.v946DmRow[data-user="${CSS.escape(dm)}"]`);if(b){const dd=b.closest('details');if(dd)dd.open=true;b.click()}}}
   if(window._v800PendingTeam){const t800=window._v800PendingTeam;window._v800PendingTeam=null;if(teams.includes(t800))openTeamThread(t800)}
   if(v300PendingMessageRower){
