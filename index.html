@@ -3477,9 +3477,15 @@ function v530EventUrl(kind,id,team,staff){return `/?tab=eventos&ek=${encodeURICo
 // V722 · textos de aviso cortos: nombre recortado y fecha corta
 function v722Sh(x,n=34){x=String(x||'').replace(/\s+/g,' ').trim();return x.length>n?x.slice(0,n-1).trimEnd()+'…':x}
 function v722Date(ds,time){if(!ds)return'';try{return new Intl.DateTimeFormat('es-ES',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(ds+'T12:00:00')).replace(/\./g,'')+(time?' '+String(time).slice(0,5):'')}catch(e){return ds}}
+// V991 · un mismo aviso (mismos destinatarios, título y texto) no se manda dos veces seguidas desde el mismo móvil:
+// el 22 oct un solo mensaje del chat generó dos avisos a 9 s de diferencia (dos llamadas con distinto source_id).
+const v991Recent=new Map();
+function v991Key(p){try{const a=Object.assign({},p&&p.audience);delete a.source_id;return JSON.stringify([a,p&&p.title,p&&p.body,p&&p.url,p&&p.type,p&&p.category])}catch(e){return null}}
 async function sendNotificationV110(payload){
   payload=await v530FilterAudience(payload);
   if(!payload)return {ok:true,skipped:true};
+  {const k=v991Key(payload),now=Date.now();for(const [kk,t] of v991Recent)if(now-t>60000)v991Recent.delete(kk);
+   if(k){const last=v991Recent.get(k);if(last&&now-last<20000){console.warn('Aviso repetido ignorado');return {ok:true,deduped:true,recipients:0,push_sent:0}}v991Recent.set(k,now)}}
   const {data:{session}}=await sb.auth.getSession();
   if(!session?.access_token)throw new Error('Sesión no disponible');
   const r=await fetch('/api/push-send',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify(payload)});
@@ -3844,7 +3850,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="989";
+const APP_VERSION="992";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -18427,7 +18433,9 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
  // Hoy (entrenador y remero): cada sesión del día = pieza C
  function enhanceDay(root){
   root.querySelectorAll('.staffDayCard').forEach(function(card){
-   if(card._v972||card.closest('.modalBack,.v959Sheet'))return;card._v972=1;
+   if(card._v972||card.closest('.modalBack,.v959Sheet'))return;
+   // V992 · los bloques del Registro MAR (SALIDAS, TÉCNICA…) son formularios de edición, no fichas del día: se dejan tal cual
+   if(card.classList.contains('seaResultBlock')||card.closest('.seaCard'))return;card._v972=1;
    var tagTxt=(card.querySelector(':scope > .tag')||{}).textContent||'',h=(card.querySelector(':scope > h3')||{}).textContent||'';
    var tag=tagOf(tagTxt);if(/TEST/.test(tagTxt)||/TEST/i.test(h))tag=/ERGO|ERG/i.test(h)?'ERGO':tag;
    var k=card.classList.contains('mar')?'mar':(KT[tag]||'mix');if(k==='mar')tag='MAR';
