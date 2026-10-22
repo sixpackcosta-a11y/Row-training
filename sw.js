@@ -32,13 +32,16 @@ async function appPage(req,url,event){
     if(res&&res.ok)cache.put('/index.html',res.clone()).catch(()=>{});
     return res;
   });
-  // V973 · al abrir la app se intenta primero la versión de internet (como mucho 2,5 s, mientras sale la
+  // V973 · al abrir la app se intenta primero la versión de internet (como mucho 1,5 s, mientras sale la
   // pantalla de inicio). Así, si has subido una versión con la app cerrada, se abre ya la nueva y no hace
   // falta el aviso. Sin cobertura o con red lenta se abre al momento la copia guardada, como antes.
   if(!url.searchParams.has('appv')){
     const hit=await cache.match('/index.html')||await cache.match('/');
     if(hit){
-      const quick=await Promise.race([net.catch(()=>null),new Promise(r=>setTimeout(()=>r(null),2500))]);
+      // V997 · antes bastaba con que llegaran las cabeceras en 2,5 s: con poca cobertura el resto (la app pesa ~2 MB) seguía
+      // bajando lento y la pantalla se quedaba en blanco. Ahora la versión de internet solo se usa si llega ENTERA en 1,5 s.
+      const full=net.then(async res=>{if(!res||!res.ok)return null;const buf=await res.clone().arrayBuffer();return new Response(buf,{status:200,headers:res.headers})}).catch(()=>null);
+      const quick=await Promise.race([full,new Promise(r=>setTimeout(()=>r(null),1500))]);
       if(quick&&quick.ok)return quick;
       if(event)event.waitUntil(net.catch(()=>{}));else net.catch(()=>{});
       return hit;
@@ -108,8 +111,11 @@ self.addEventListener('push', event => {
     const GROUP='rowtraining-group';
     let prev=[],old=[];
     try{old=await self.registration.getNotifications({tag:GROUP});old.sort((x,y)=>(y.timestamp||0)-(x.timestamp||0));prev=old[0]?.data?.items||[]}catch(e){}
-    const item={title:data.title||'Row Training',body:data.body||'',url:data.url||'/'};
-    const items=[item,...prev].slice(0,8);
+    const item={title:data.title||'Row Training',body:data.body||'',url:data.url||'/',ts:Date.now()};
+    // V990 · el servidor a veces manda el mismo aviso dos veces (un solo mensaje → dos pushes): si ya hay uno idéntico
+    // de hace menos de 45 segundos no se añade otra vez a la lista.
+    const dup=prev.some(p=>p&&p.title===item.title&&p.body===item.body&&p.url===item.url&&(item.ts-(p.ts||0))<45000);
+    const items=(dup?prev:[item,...prev]).slice(0,8);
     const n=items.length;
     const one=n===1;
     try{if(typeof data.badge==='number'&&self.navigator&&self.navigator.setAppBadge){if(data.badge>0)await self.navigator.setAppBadge(data.badge);else await self.navigator.clearAppBadge()}}catch(e){} // V731 · globo del icono
