@@ -3850,7 +3850,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="992";
+const APP_VERSION="997";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -7571,6 +7571,8 @@ function fillSeaSeriesRowV137(row,series={}){if(!row)return;const t=row.querySel
   if(m&&!v250HasOcrValue(series.distance_m)&&series.distance_raw)m.placeholder=`m (leyó ${series.distance_raw}, revisa)`;
   if(s&&!v250HasOcrValue(series.average_spm)&&series.spm_raw)s.placeholder=`ppm (leyó ${series.spm_raw}, revisa)`;
   updateSeaRowPaceV137(row)}
+// V994 · un valor que es solo el del plan (3:00, 200 m) NO es un resultado: sin esto se guardaban filas "a cero" y luego el importador las daba por ya guardadas
+function v994RowReal(row){if(!row)return false;const q=c=>row.querySelector(c),t=q('.seaTimeV137'),m=q('.seaMetersV137'),sp=q('.seaSpmV137'),pc=q('.seaPaceV137');return Boolean((t&&t.value&&t.value!==(row.dataset.defaultTime||''))||(m&&m.value&&m.value!==(row.dataset.defaultMeters||''))||(sp&&sp.value)||(pc&&pc.value))}
 function seaRowHasEnteredDataV137(t,m,s){if(t?.readOnly)return Boolean(m?.value||s?.value);if(m?.readOnly)return Boolean(t?.value||s?.value);return Boolean(t?.value||m?.value||s?.value)}
 function v252PaceInRange(str){return [...String(str||'').matchAll(/\b(\d{1,2})[:;](\d{2})\b/g)].map(m=>Number(m[1])*60+Number(m[2])).filter(s=>s>=60&&s<=600)}
 function v253ParsePaceDigits(txt){
@@ -7828,9 +7830,29 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
         const timeIsReal=Boolean(time&&time.value&&time.value!==(row.dataset.defaultTime||'')),
               metersIsReal=Boolean(meters&&meters.value&&meters.value!==(row.dataset.defaultMeters||''));
         const v819Dm=Number(row.dataset.defaultMeters)||0,v819Vm=String(b.value||'').match(/(\d{3,5})\s*m(?:etros)?\b/i),expectedM=v819Dm||(v819Vm?Number(v819Vm[1]):null);
-        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,expectedM,existing:Boolean(row.dataset.existingId),hasData:Boolean(timeIsReal||metersIsReal||spm?.value),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
+        out.push({id:row.dataset.v190Target,row,bi,order:order++,expected,expectedM,existing:Boolean(row.dataset.existingId)&&v994RowReal(row),hasData:Boolean(timeIsReal||metersIsReal||spm?.value),name:`${b.label}${b.value?` · ${b.value}`:''} · ${label}`});
       });
     });
+    return out;
+  }
+  // V993 · cada bloque ofrece "➕ Nueva serie": si el log/las capturas traen más series que filas (p. ej. se hicieron 4×200 en vez
+  // de 3×200), se crea la fila al asignar. Antes había que añadirla a mano antes de importar.
+  function seaNewOptionsV993(){
+    let h='';document.querySelectorAll('.seaResultBlock').forEach(sec=>{const bi=Number(sec.dataset.blockIndex),b=blocks[bi];if(!b||b._deleted)return;h+=`<option value="new:${bi}">➕ Nueva serie · ${esc(b.label)}${b.value?` · ${esc(b.value)}`:''}</option>`});return h;
+  }
+  function seaResolveTargetV993(id){
+    if(/^new:\d+$/.test(String(id||''))){const row=addSeaSeriesRowV137(Number(String(id).slice(4)));return row?{row,created:true}:null}
+    return seaVisibleTargetsV191().find(t=>t.id===id)||null;
+  }
+  // series del log sin destino libre → "nueva serie" en el bloque cuya distancia/duración encaja (o el último usado)
+  function seaFillExtrasV993(auto,series,targets){
+    const out=auto.slice();let last=null;
+    out.forEach((id,i)=>{if(id){const t=targets.find(x=>x.id===id);if(t)last=t.bi}});
+    out.forEach((id,i)=>{if(id)return;const s=series[i];if(!s||s.suggested===false||!(Number(s.distance_m)>0||Number(s.duration_seconds)>0))return;
+      const dm=Number(s.distance_m)||0;let bi=null;
+      if(dm){const m=targets.filter(t=>t.expectedM>0&&Math.abs(t.expectedM-dm)/t.expectedM<=0.12);if(m.length)bi=m[m.length-1].bi}
+      if(bi==null)bi=last;
+      if(bi!=null&&document.querySelector(`.seaResultBlock[data-block-index="${bi}"]`))out[i]='new:'+bi;});
     return out;
   }
   function seaAutoMapLogV191(series,targets){
@@ -7841,27 +7863,29 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
       const available=targets.filter(t=>!used.has(t.id)&&!t.existing&&!t.hasData);if(!available.length){mapping.push('');return}
       const dur=Number(s.duration_seconds)||null,dm=Number(s.distance_m)||null;
       let chosen=null;
+      const v993Match=Boolean(dm&&targets.some(t=>t.expectedM>0&&Math.abs(t.expectedM-dm)/t.expectedM<=0.12));
       // v819: primero por distancia (3000 m -> bloque de 3000 m), luego salidas cortas -> bloques de salidas
       if(dm){const byM=available.filter(t=>t.expectedM>0&&Math.abs(t.expectedM-dm)/t.expectedM<=0.12);if(byM.length){byM.sort((a,b)=>Math.abs(a.expectedM-dm)-Math.abs(b.expectedM-dm)||a.order-b.order);chosen=byM[0]}}
-      if(!chosen&&dur&&dur<90){const sal=available.filter(t=>/salida|arrancad|palad/i.test(t.name)&&!(t.expectedM>300));if(sal.length)chosen=sal[0]}
-      if(!chosen&&dur&&dur>=90){const nos=available.filter(t=>!/salida|arrancad|palad/i.test(t.name)&&!Number.isFinite(t.expected));const wm=nos.filter(t=>t.expectedM>0);if(wm.length&&dm){}else if(nos.length&&!available.some(t=>t.expectedM>0&&Math.abs(t.expectedM-(dm||0))/t.expectedM<=0.5))chosen=nos[0]}
-      if(!chosen&&dur){const timed=available.filter(t=>Number.isFinite(t.expected));if(timed.length){timed.sort((a,b)=>Math.abs(a.expected-dur)-Math.abs(b.expected-dur)||a.order-b.order);if(Math.abs(timed[0].expected-dur)<=90)chosen=timed[0]}}
-      if(!chosen){const flexible=available.filter(t=>!Number.isFinite(t.expected));chosen=flexible[0]||available[0]}
+      if(!chosen&&!v993Match&&dur&&dur<90){const sal=available.filter(t=>/salida|arrancad|palad/i.test(t.name)&&!(t.expectedM>300));if(sal.length)chosen=sal[0]}
+      if(!chosen&&!v993Match&&dur&&dur>=90){const nos=available.filter(t=>!/salida|arrancad|palad/i.test(t.name)&&!Number.isFinite(t.expected));const wm=nos.filter(t=>t.expectedM>0);if(wm.length&&dm){}else if(nos.length&&!available.some(t=>t.expectedM>0&&Math.abs(t.expectedM-(dm||0))/t.expectedM<=0.5))chosen=nos[0]}
+      if(!chosen&&!v993Match&&dur){const timed=available.filter(t=>Number.isFinite(t.expected));if(timed.length){timed.sort((a,b)=>Math.abs(a.expected-dur)-Math.abs(b.expected-dur)||a.order-b.order);if(Math.abs(timed[0].expected-dur)<=90)chosen=timed[0]}}
+      // V993 · si hay un bloque de esa distancia (p. ej. 200 m) pero ya no le quedan filas libres, NO se manda la serie a otro bloque cualquiera (antes caía en SALIDAS): se deja para crear una nueva fila
+      if(!chosen&&!v993Match){const flexible=available.filter(t=>!Number.isFinite(t.expected));chosen=flexible[0]||available[0]}
       if(chosen){used.add(chosen.id);mapping.push(chosen.id)}else mapping.push('');
     });
     return mapping;
   }
   function showRowingCoachMapV191(log){
     const targets=seaVisibleTargetsV191();if(!targets.length){seaLogInboxV191.insertAdjacentHTML('beforeend','<div class="info">No quedan series visibles a las que asignar el log. Añade una serie o bloque si hace falta.</div>');return}
-    const series=Array.isArray(log?.series)?log.series:[],auto=seaAutoMapLogV191(series,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
-    seaLogInboxV191.innerHTML=`<div class="info"><b>${esc(log?.filename||'Log de Rowing Coach')}</b><br>La importación no recarga la sesión: respeta los bloques/series que hayas eliminado o añadido. La asignación sugerida usa duración y orden; puedes cambiar cada destino.</div><div id="seaLogMapRowsV191">${series.map((s,i)=>`<div class="last seaLogMapRowV191" data-index="${i}"><div><b>Log ${i+1}</b> · ${fmtMetricSeconds(s.duration_seconds)} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm ${s.suggested?'':'<span class="muted">· no sugerido</span>'}</div><label>Asignar a<select class="seaLogTargetV191"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div>`).join('')}</div><div class="actions"><button type="button" id="seaApplyLogMapV191" class="primary">Aplicar asignación</button><button type="button" id="seaApplySaveV191" class="primary">Aplicar y guardar todo</button><button type="button" id="seaCancelLogMapV191">Cancelar</button></div>`;
+    const series=Array.isArray(log?.series)?log.series:[],auto=seaFillExtrasV993(seaAutoMapLogV191(series,targets),series,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
+    seaLogInboxV191.innerHTML=`<div class="info"><b>${esc(log?.filename||'Log de Rowing Coach')}</b><br>La importación no recarga la sesión: respeta los bloques/series que hayas eliminado o añadido. La asignación sugerida usa duración y orden; puedes cambiar cada destino.</div><div id="seaLogMapRowsV191">${series.map((s,i)=>`<div class="last seaLogMapRowV191" data-index="${i}"><div><b>Log ${i+1}</b> · ${fmtMetricSeconds(s.duration_seconds)} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm ${s.suggested?'':'<span class="muted">· no sugerido</span>'}</div><label>Asignar a<select class="seaLogTargetV191"><option value="">— No importar —</option>${targets.map(options).join('')}${seaNewOptionsV993()}</select></label></div>`).join('')}</div><div class="actions"><button type="button" id="seaApplyLogMapV191" class="primary">Aplicar asignación</button><button type="button" id="seaApplySaveV191" class="primary">Aplicar y guardar todo</button><button type="button" id="seaCancelLogMapV191">Cancelar</button></div>`;
     seaLogInboxV191.querySelectorAll('.seaLogMapRowV191').forEach((row,i)=>{const sel=row.querySelector('.seaLogTargetV191');if(sel)sel.value=auto[i]||''});
     document.getElementById('seaCancelLogMapV191').onclick=()=>{seaLogInboxV191.innerHTML=''};
     document.getElementById('seaApplySaveV191').onclick=()=>{document.getElementById('seaApplyLogMapV191').click();setTimeout(()=>{const b=document.getElementById('v77SaveSeaAll');if(b&&!b.disabled&&/aplicada/.test(seaLogInboxV191.textContent||''))b.click()},150)};
     document.getElementById('seaApplyLogMapV191').onclick=()=>{
-      const rows=[...seaLogInboxV191.querySelectorAll('.seaLogMapRowV191')],chosen=rows.map(r=>r.querySelector('.seaLogTargetV191')?.value||'').filter(Boolean);if(new Set(chosen).size!==chosen.length)return alert('Hay dos bloques del log asignados a la misma serie. Elige destinos distintos.');let applied=0;
-      rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaLogTargetV191')?.value;if(!targetId)return;const target=seaVisibleTargetsV191().find(t=>t.id===targetId);if(!target)return;fillSeaSeriesRowV137(target.row,series[i]);applied++});
-      if(!applied)return alert('Elige al menos una serie del entrenamiento como destino.');const observations=document.getElementById('v85SeaObservations');if(observations&&!observations.value.trim())observations.value=`Importado de Rowing Coach · ${applied} serie${applied===1?'':'s'} asignada${applied===1?'':'s'} por el entrenador.`;seaLogInboxV191.innerHTML=`<div class="info"><b>${applied} serie${applied===1?'':'s'} del log aplicada${applied===1?'':'s'}.</b><br>Revisa los datos y guarda cuando termines de editar la sesión realizada.</div>`;
+      const rows=[...seaLogInboxV191.querySelectorAll('.seaLogMapRowV191')],chosen=rows.map(r=>r.querySelector('.seaLogTargetV191')?.value||'').filter(Boolean);if(new Set(chosen.filter(x=>!/^new:/.test(x))).size!==chosen.filter(x=>!/^new:/.test(x)).length)return alert('Hay dos bloques del log asignados a la misma serie. Elige destinos distintos.');let applied=0;
+      rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaLogTargetV191')?.value;if(!targetId)return;const target=seaResolveTargetV993(targetId);if(!target)return;fillSeaSeriesRowV137(target.row,series[i]);applied++});
+      if(!applied)return alert('Elige al menos una serie del entrenamiento como destino.');try{const hk='rowtraining_rec689_m_hist',h=JSON.parse(localStorage.getItem(hk)||'[]');h.forEach(e=>e.imported=true);localStorage.setItem(hk,JSON.stringify(h))}catch(e){}const observations=document.getElementById('v85SeaObservations');if(observations&&!observations.value.trim())observations.value=`Importado de Rowing Coach · ${applied} serie${applied===1?'':'s'} asignada${applied===1?'':'s'} por el entrenador.`;seaLogInboxV191.innerHTML=`<div class="info"><b>${applied} serie${applied===1?'':'s'} del log aplicada${applied===1?'':'s'}.</b><br>Revisa los datos y guarda cuando termines de editar la sesión realizada.</div>`;
     };
   }
   const v818Btn=document.getElementById('v818RawBtn'),v818File=document.getElementById('v818RawFile');
@@ -7946,19 +7970,19 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   function showRowingCoachPhotoMapV258(detected,files){
     const targets=seaVisibleTargetsV191();
     if(!targets.length){photoStatus.innerHTML='<div class="info">No quedan series visibles a las que asignar las capturas. Añade una serie o bloque si hace falta.</div>';return}
-    const auto=seaAutoMapPhotosV258(detected,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
+    const auto=seaFillExtrasV993(seaAutoMapPhotosV258(detected,targets),detected,targets),options=t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.existing?' · YA GUARDADO':''}${t.hasData?' · con datos':''}</option>`;
     const rowsHtml=detected.map((s,i)=>{
       const f=files[i],debugLine=`${esc(s.ocr_text||'(vacío)')} → dist=${s.distance_m??'–'} spm=${s.average_spm??'–'} ritmo=${s.pace_500_seconds??'–'}`,thumbSrc=f?URL.createObjectURL(f):'';
-      return `<div class="last seaPhotoMapRowV258" data-index="${i}" style="padding:12px 0"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="display:flex;gap:8px;align-items:center;flex-shrink:0">${f?`<img src="${thumbSrc}" alt="Captura ${i+1}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:zoom-in" onclick="seaOpenPhotoLightboxV262('${thumbSrc}')">`:''}<b>Captura ${i+1}</b></div><div style="flex:1;min-width:220px"><div class="muted"><small>${s.duration_seconds?fmtMetricSeconds(s.duration_seconds):'sin tiempo'} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm</small></div><details style="margin:4px 0"><summary style="cursor:pointer;color:#8a94a6;font-size:11px">Detalle técnico</summary><div class="muted" style="font-family:monospace;font-size:11px;word-break:break-all;margin-top:4px">${debugLine}</div></details><label style="display:block;margin-top:4px">Asignar a<select class="seaPhotoTargetV258" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}</select></label></div></div></div>`;
+      return `<div class="last seaPhotoMapRowV258" data-index="${i}" style="padding:12px 0"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="display:flex;gap:8px;align-items:center;flex-shrink:0">${f?`<img src="${thumbSrc}" alt="Captura ${i+1}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:zoom-in" onclick="seaOpenPhotoLightboxV262('${thumbSrc}')">`:''}<b>Captura ${i+1}</b></div><div style="flex:1;min-width:220px"><div class="muted"><small>${s.duration_seconds?fmtMetricSeconds(s.duration_seconds):'sin tiempo'} · ${s.distance_m??'—'} m · ${s.average_spm??'—'} ppm</small></div><details style="margin:4px 0"><summary style="cursor:pointer;color:#8a94a6;font-size:11px">Detalle técnico</summary><div class="muted" style="font-family:monospace;font-size:11px;word-break:break-all;margin-top:4px">${debugLine}</div></details><label style="display:block;margin-top:4px">Asignar a<select class="seaPhotoTargetV258" style="width:100%;display:block;margin-top:2px"><option value="">— No importar —</option>${targets.map(options).join('')}${seaNewOptionsV993()}</select></label></div></div></div>`;
     }).join('');
     photoStatus.innerHTML=`<div class="info">Asignación sugerida por orden y duración. Cambia el destino de cualquier captura antes de aplicar.</div><div id="seaPhotoMapRowsV258">${rowsHtml}</div><div class="actions"><button type="button" id="seaApplyPhotoMapV258" class="primary">Aplicar asignación</button><button type="button" id="seaCancelPhotoMapV258">Cancelar</button></div>`;
     photoStatus.querySelectorAll('.seaPhotoMapRowV258').forEach((row,i)=>{const sel=row.querySelector('.seaPhotoTargetV258');if(sel)sel.value=auto[i]||''});
     document.getElementById('seaCancelPhotoMapV258').onclick=()=>{photoStatus.innerHTML=''};
     document.getElementById('seaApplyPhotoMapV258').onclick=()=>{
       const rows=[...photoStatus.querySelectorAll('.seaPhotoMapRowV258')],chosen=rows.map(r=>r.querySelector('.seaPhotoTargetV258')?.value||'').filter(Boolean);
-      if(new Set(chosen).size!==chosen.length)return alert('Hay dos capturas asignadas a la misma serie. Elige destinos distintos.');
-      let applied=0;const currentTargets=seaVisibleTargetsV191();
-      rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaPhotoTargetV258')?.value;if(!targetId)return;const target=currentTargets.find(t=>t.id===targetId);if(!target)return;fillSeaSeriesRowV137(target.row,detected[i]);applied++});
+      {const cc=chosen.filter(x=>!/^new:/.test(x));if(new Set(cc).size!==cc.length)return alert('Hay dos capturas asignadas a la misma serie. Elige destinos distintos.')}
+      let applied=0;
+      rows.forEach(r=>{const i=Number(r.dataset.index),targetId=r.querySelector('.seaPhotoTargetV258')?.value;if(!targetId)return;const target=seaResolveTargetV993(targetId);if(!target)return;fillSeaSeriesRowV137(target.row,detected[i]);applied++});
       if(!applied)return alert('Elige al menos una captura para asignar.');
       photoStatus.innerHTML=`<span class="ocrDetectedV124">${applied} captura${applied===1?'':'s'} aplicada${applied===1?'':'s'}.</span> <small class="muted">Revisa las filas antes de guardar.</small>`;
     };
@@ -7995,7 +8019,9 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
   v77SaveSeaAll.onclick=async()=>{
     v77SaveSeaAll.disabled=true;v77SaveSeaAll.textContent='Guardando…';
     const rows=[],sessionNotes=document.getElementById('v85SeaObservations').value.trim();
-    document.querySelectorAll('.seaSeriesInputRowV137').forEach(row=>{const bi=Number(row.dataset.blockIndex),b=blocks[bi],timeEl=row.querySelector('.seaTimeV137'),metersEl=row.querySelector('.seaMetersV137'),spmEl=row.querySelector('.seaSpmV137'),paceEl=row.querySelector('.seaPaceV137'),noteEl=row.querySelector('.seaSeriesNoteV308'),label=row.dataset.seriesLabel||'Serie';if(!b||!timeEl||!metersEl||!spmEl||!paceEl)return;const existingId=row.dataset.existingId||null;if(!existingId&&!seaRowHasEnteredDataV137(timeEl,metersEl,spmEl))return;const blockRows=document.querySelectorAll(`.seaSeriesBodyV137[data-block-index="${bi}"] .seaSeriesInputRowV137`).length;const blockNoteEl=document.querySelector(`.seaBlockNoteV308[data-block-index="${bi}"]`);rows.push({existingId,training_session_id:Number(sessionId),exercise_name:blockRows>1?`${b.line} · ${label}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value&&isFinite(Number(String(spmEl.value).replace(',','.')))?Math.round(Number(String(spmEl.value).replace(',','.'))):null,rpe:null,notes:noteEl?.value.trim()||null,block_notes:blockNoteEl?.value.trim()||null,session_notes:sessionNotes||null,...(()=>{try{const g=row.dataset.gpsExtra?JSON.parse(row.dataset.gpsExtra):null;return g?{spm_trace:g.spm_trace,spm_max:g.spm_max,spm_min:g.spm_min,stroke_length_m:g.stroke_length_m}:{}}catch(e){return {}}})()})});
+    document.querySelectorAll('.seaSeriesInputRowV137').forEach(row=>{const bi=Number(row.dataset.blockIndex),b=blocks[bi],timeEl=row.querySelector('.seaTimeV137'),metersEl=row.querySelector('.seaMetersV137'),spmEl=row.querySelector('.seaSpmV137'),paceEl=row.querySelector('.seaPaceV137'),noteEl=row.querySelector('.seaSeriesNoteV308'),label=row.dataset.seriesLabel||'Serie';if(!b||!timeEl||!metersEl||!spmEl||!paceEl)return;const existingId=row.dataset.existingId||null;if(!existingId&&!v994RowReal(row))return;const blockRows=document.querySelectorAll(`.seaSeriesBodyV137[data-block-index="${bi}"] .seaSeriesInputRowV137`).length;const blockNoteEl=document.querySelector(`.seaBlockNoteV308[data-block-index="${bi}"]`);rows.push({existingId,training_session_id:Number(sessionId),exercise_name:blockRows>1?`${b.line} · ${label}`:b.line,distance_m:metersEl.value?Number(metersEl.value):null,time_text:timeEl.value.trim()||null,pace_500_text:paceEl.value.trim()||null,spm:spmEl.value&&isFinite(Number(String(spmEl.value).replace(',','.')))?Math.round(Number(String(spmEl.value).replace(',','.'))):null,rpe:null,notes:noteEl?.value.trim()||null,block_notes:blockNoteEl?.value.trim()||null,session_notes:sessionNotes||null,...(()=>{try{const g=row.dataset.gpsExtra?JSON.parse(row.dataset.gpsExtra):null;return g?{spm_trace:g.spm_trace,spm_max:g.spm_max,spm_min:g.spm_min,stroke_length_m:g.stroke_length_m}:{}}catch(e){return {}}})()})});
+    try{const h=JSON.parse(localStorage.getItem('rowtraining_rec689_m_hist')||'[]'),pend=h.find(e=>e&&e.imported===false&&Date.now()-e.ts<10*3600e3);
+      if(pend&&!confirm(`OJO: tienes una grabación del GPS (${pend.series.length} series, ${new Date(pend.ts).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}) que NO has importado a este formulario.\n\nAceptar = guardar igualmente sin ella (seguirá en la grabadora → Recuperar).\nCancelar = volver y importarla.`)){v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}}catch(e){}
     if(!rows.length&&!seaDeletedExistingIdsV188.size){alert('Introduce al menos un resultado antes de guardar.');v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}
     if(seaDeletedExistingIdsV188.size){for(const id of seaDeletedExistingIdsV188){const d=await sb.from('sea_results').delete().eq('id',id);if(d.error){alert('No se pudo eliminar una serie guardada: '+d.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}}}
     const existingRows=rows.filter(x=>x.existingId&&!seaDeletedExistingIdsV188.has(String(x.existingId))),newRows=rows.filter(x=>!x.existingId);
@@ -8003,7 +8029,8 @@ async function staffSeaResultForm(sessionId,team,date,backFn,importedSeries=[]){
     for(const x of existingRows){const id=x.existingId,payload={training_session_id:x.training_session_id,exercise_name:x.exercise_name,distance_m:x.distance_m,time_text:x.time_text,pace_500_text:x.pace_500_text,spm:x.spm,rpe:x.rpe,notes:x.notes,block_notes:x.block_notes,session_notes:x.session_notes};if(x.spm_trace){payload.spm_trace=x.spm_trace;payload.spm_max=x.spm_max;payload.spm_min=x.spm_min;payload.stroke_length_m=x.stroke_length_m}let u=await sb.from('sea_results').update(payload).eq('id',id);if(u.error&&x.spm_trace&&/spm_trace|spm_max|spm_min|stroke_length_m/.test(u.error.message||'')){v693NoCols=true;delete payload.spm_trace;delete payload.spm_max;delete payload.spm_min;delete payload.stroke_length_m;u=await sb.from('sea_results').update(payload).eq('id',id)}if(u.error){alert('No se pudo actualizar un resultado ya guardado: '+u.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}}
     let inserted=[];if(newRows.length){const payload=newRows.map(({existingId,...x})=>x);let q=await sb.from('sea_results').insert(payload).select('id');if(q.error&&/spm_trace|spm_max|spm_min|stroke_length_m/.test(q.error.message||'')){v693NoCols=true;q=await sb.from('sea_results').insert(payload.map(({spm_trace,spm_max,spm_min,stroke_length_m,...r})=>r)).select('id')}if(q.error){alert(q.error.message);v77SaveSeaAll.disabled=false;v77SaveSeaAll.textContent='Guardar resultados MAR';return}inserted=q.data||[]}
     let photoWarning='';const photoTarget=inserted?.[0]?.id||existingRows?.[0]?.existingId;if(seaPhotoFilesV137.length&&photoTarget){try{const paths=await uploadSeaPhotosV137(seaPhotoFilesV137,sessionId,team),u=await sb.from('sea_results').update({photo_paths:paths}).eq('id',photoTarget);if(u.error)throw u.error}catch(e){photoWarning=' Los resultados se guardaron, pero las capturas no pudieron subirse: '+(e.message||e)}}
-    alert(`Resultados MAR guardados: ${existingRows.length} actualizado${existingRows.length===1?'':'s'}, ${newRows.length} nuevo${newRows.length===1?'':'s'} y ${seaDeletedExistingIdsV188.size} eliminado${seaDeletedExistingIdsV188.size===1?'':'s'}.${photoWarning}${v693NoCols?' Las palas instantáneas no se guardaron: falta ejecutar 71_palas_instantaneas.sql en Supabase.':''}`);goBack();
+    let v994Warn='';try{const chk=await sb.from('sea_results').select('exercise_name,time_text,distance_m').eq('training_session_id',Number(sessionId)),got=chk.data||[];if(!chk.error){const miss=rows.filter(x=>!seaDeletedExistingIdsV188.has(String(x.existingId||''))).filter(x=>!got.some(g=>g.exercise_name===x.exercise_name&&(g.time_text||null)===(x.time_text||null)&&(g.distance_m==null?null:Number(g.distance_m))===(x.distance_m==null?null:Number(x.distance_m))));if(miss.length)v994Warn=`\n\n⚠️ ATENCIÓN: ${miss.length} serie${miss.length===1?'':'s'} no se ha podido verificar en la base de datos (${miss.slice(0,3).map(m=>m.exercise_name.split(' · ').pop()).join(', ')}). Vuelve a abrir el registro y compruébalo antes de borrar nada.`}}catch(e){}
+    alert(`Resultados MAR guardados: ${existingRows.length} actualizado${existingRows.length===1?'':'s'}, ${newRows.length} nuevo${newRows.length===1?'':'s'} y ${seaDeletedExistingIdsV188.size} eliminado${seaDeletedExistingIdsV188.size===1?'':'s'}.${photoWarning}${v693NoCols?' Las palas instantáneas no se guardaron: falta ejecutar 71_palas_instantaneas.sql en Supabase.':''}${v994Warn}`);goBack();
   };
 }
 async function systemView(){
@@ -17019,7 +17046,7 @@ function open(cfg){
   <div class="v689Btns"><button type="button" id="v689Go" class="v689Play" aria-label="Empezar">▶</button></div></div>
   <div class="v689Util"><button type="button" id="v689Reset" class="v689ResetBtn">RESET</button></div>
   <div class="v689List" id="v689List"></div>
-  <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw" checked> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button></div></div>`;
+  <div class="v689Foot"><label class="v689Chk"><input type="checkbox" id="v689Raw" checked> Guardar datos en bruto (para ajustar)</label><div class="v689Msg" id="v689Msg"></div><div class="actions"><button type="button" id="v689Use" class="primary">Terminar y usar series</button><button type="button" id="v689Raw2" hidden>Descargar datos en bruto</button><button type="button" id="v995RawBtn">Brutos guardados</button></div><div id="v995RawPanel" class="v689Hint" hidden style="margin-top:10px"></div></div>`;
   document.body.appendChild(ov);
   const $=id=>ov.querySelector('#'+id);
   const msg=t=>{$('v689Msg').textContent=t||''};
@@ -17039,9 +17066,11 @@ function open(cfg){
   }
   function renderList(){
     $('v689N').textContent=st.series.length;
-    if(!st.series.length){let bk=null;try{bk=JSON.parse(localStorage.getItem(KEY+'_last')||'null')}catch(e){}
-      if(bk&&bk.series&&bk.series.length){$('v689List').innerHTML=`<div class="v689Ser"><span>Últimas series enviadas: ${bk.series.length} (${new Date(bk.ts).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})})</span><button type="button" id="v821Rec">Recuperar</button></div>`;
-        $('v821Rec').onclick=()=>{st.series=bk.series.map(x=>Object.assign({},x));delete bk.series;save({series:st.series});renderList();fillSel();draw()};return}}
+    if(!st.series.length){let hist=[];try{hist=JSON.parse(localStorage.getItem(KEY+'_hist')||'[]')}catch(e){}
+      if(!hist.length){try{const bk=JSON.parse(localStorage.getItem(KEY+'_last')||'null');if(bk&&bk.series&&bk.series.length)hist=[bk]}catch(e){}}
+      hist=hist.filter(b=>b&&b.series&&b.series.length).slice(0,5);
+      if(hist.length){$('v689List').innerHTML=hist.map((b,i)=>`<div class="v689Ser"><span>${i?'':'Últimas '}series enviadas: ${b.series.length} (${new Date(b.ts).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})})${b.imported===false?' · sin importar':''}</span><button type="button" class="v821RecB" ${i?'':'id="v821Rec"'} data-i="${i}">Recuperar</button></div>`).join('');
+        ov.querySelectorAll('.v821RecB').forEach(btn=>btn.onclick=()=>{const b=hist[Number(btn.dataset.i)];st.series=b.series.map(x=>Object.assign({},x));save({series:st.series});renderList();fillSel();draw()});return}}
     $('v689List').innerHTML=st.series.map((x,i)=>`<div class="v689Ser"><span><b>${x.label?String(x.label).replace(/</g,'&lt;'):'Serie '+(i+1)}</b><br>${mmss(x.duration_seconds)} · ${x.distance_m} m · ${x.pace_500_seconds?mmss(x.pace_500_seconds)+'/500':'—'} · ${x.average_spm!=null?x.average_spm+' ppm'+(x.spm_max!=null?` (${x.spm_min}–${x.spm_max})`:''):'sin ppm'}</span><button type="button" class="v689Del" data-i="${i}" aria-label="Borrar">🗑</button></div>`).join('');
     ov.querySelectorAll('.v689Del').forEach(b=>b.onclick=()=>{if(!confirm('¿Borrar esta serie?'))return;st.series.splice(Number(b.dataset.i),1);save({series:st.series});renderList();fillSel()});
   }
@@ -17154,8 +17183,41 @@ function open(cfg){
     try{const f=new File([csv],name,{type:'text/csv'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
     const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
   };
+
+  // V994/995 · Brutos guardados solos en este móvil (IndexedDB, comprimidos) hasta que el entrenador los borre
+  const v995DB=()=>new Promise((res,rej)=>{try{const q=indexedDB.open('rowtraining_raw',1);q.onupgradeneeded=()=>q.result.createObjectStore('raw',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}});
+  const v995Tx=async(mode,fn)=>{const db=await v995DB();return new Promise((res,rej)=>{const tx=db.transaction('raw',mode),os=tx.objectStore('raw'),r=fn(os);tx.oncomplete=()=>{db.close();res(r&&r.result)};tx.onerror=()=>{db.close();rej(tx.error)}})};
+  const v995Gz=async(txt)=>{try{if(typeof CompressionStream==='undefined')throw 0;const bl=await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).blob();return {gz:true,data:bl}}catch(e){return {gz:false,data:new Blob([txt])}}};
+  const v995Un=async(rec)=>{if(!rec.gz)return await rec.data.text();return await new Response(rec.data.stream().pipeThrough(new DecompressionStream('gzip'))).text()};
+  let v995Last=0;
+  async function v995Put(force){
+    try{if(!st.rawLines.length||(!force&&st.rawLines.length===v995Last))return;if(!st.rawKey)st.rawKey=Date.now();v995Last=st.rawLines.length;
+      const csv='tipo,t_ms,a,b,c,d,e\n'+st.rawLines.join('\n'),z=await v995Gz(csv);
+      await v995Tx('readwrite',os=>os.put({id:st.rawKey,ts:st.rawKey,upd:Date.now(),date:cfg.date||null,lines:st.rawLines.length,size:z.data.size,gz:z.gz,data:z.data}));
+      // nube: copia en el almacén privado de staff (misma que Recursos); se sube cada ~2 min y siempre al terminar
+      if(z.gz&&(force||Date.now()-(st.rawCloudAt||0)>110000)){st.rawCloudAt=Date.now();v995Up(st.rawKey,z.data)}
+    }catch(e){}
+  }
+  async function v995Uid(){try{const _sb=(typeof sb!=='undefined'?sb:window.sb),u=await _sb.auth.getUser();return u?.data?.user?.id||null}catch(e){return null}}
+  async function v995Rm(ids){try{const _sb=(typeof sb!=='undefined'?sb:window.sb),uid=await v995Uid();if(_sb&&uid&&ids.length)await _sb.storage.from('staff-resources').remove(ids.map(i=>`gps-bruto/${uid}/${i}.csv.gz`))}catch(e){}}
+  async function v995Up(id,blob){try{const _sb=(typeof sb!=='undefined'?sb:window.sb),uid=await v995Uid();if(!_sb||!uid)return false;const r=await _sb.storage.from('staff-resources').upload(`gps-bruto/${uid}/${id}.csv.gz`,blob,{contentType:'application/gzip',upsert:true,cacheControl:'3600'});st.rawCloudOk=!r.error;return !r.error}catch(e){return false}}
+  st.rawTimer=setInterval(()=>v995Put(false),40000);
+  async function v995Render(){
+    const P=$('v995RawPanel');let all=[];try{all=await v995Tx('readonly',os=>os.getAll())||[]}catch(e){P.innerHTML='No se pueden guardar brutos en este navegador.';return}
+    let cloud=[];try{const _sb=(typeof sb!=='undefined'?sb:window.sb),uid=await v995Uid();if(_sb&&uid){const l=await _sb.storage.from('staff-resources').list(`gps-bruto/${uid}`,{limit:200,sortBy:{column:'name',order:'desc'}});cloud=(l.data||[]).filter(f=>/^\d+\.csv\.gz$/.test(f.name)).map(f=>({id:Number(f.name.split('.')[0]),size:f.metadata&&f.metadata.size||0,uid}))}}catch(e){}
+    const cloudIds=new Set(cloud.map(c=>c.id));cloud.forEach(c=>{if(!all.some(x=>x.id===c.id))all.push({id:c.id,ts:c.id,size:c.size,only:'cloud',uid:c.uid})});
+    all.sort((a,b)=>b.ts-a.ts);const tot=all.reduce((n,x)=>n+(x.size||0),0),mb=n=>(n/1048576).toFixed(1).replace('.',',')+' MB';
+    P.innerHTML=`<b>Brutos guardados: ${all.length} · ${mb(tot)}</b><br>Se guardan solos mientras grabas, en el móvil y en la nube, y se quedan hasta que los borres.`+(all.length?all.map(x=>`<div class="v689Ser"><span>${new Date(x.ts).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · ${mb(x.size||0)}${x.date?' · '+x.date:''} · ${x.only==='cloud'?'☁ solo nube':(cloudIds.has(x.id)?'📱☁':'📱 solo móvil')}</span><span><button type="button" data-d="${x.id}">Descargar</button> <button type="button" data-x="${x.id}" aria-label="Borrar">🗑</button></span></div>`).join(''):'<div>No hay ninguno todavía.</div>')+(all.length?`<div class="actions"><button type="button" id="v995Old">Borrar antiguos (más de 14 días)</button><button type="button" id="v995All">Borrar todos</button></div>`:'');
+    P.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{const x=all.find(y=>String(y.id)===b.dataset.d);if(!x)return;let csv;if(x.only==='cloud'){try{const _sb=(typeof sb!=='undefined'?sb:window.sb),d=await _sb.storage.from('staff-resources').download(`gps-bruto/${x.uid}/${x.id}.csv.gz`);if(d.error)throw d.error;csv=await v995Un({gz:true,data:d.data})}catch(e){return alert('No se pudo descargar de la nube: '+(e.message||e))}}else csv=await v995Un(x);const name0=csv,name='rowtraining-bruto-'+new Date(x.ts).toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
+      try{const f=new File([csv],name,{type:'text/csv'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
+      const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)});
+    P.querySelectorAll('[data-x]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Borrar este bruto? No se puede recuperar.'))return;await v995Tx('readwrite',os=>os.delete(Number(b.dataset.x)));await v995Rm([Number(b.dataset.x)]);v995Render()});
+    const o=P.querySelector('#v995Old');if(o)o.onclick=async()=>{const lim=Date.now()-14*864e5,old=all.filter(x=>x.ts<lim);if(!old.length)return alert('No hay brutos de más de 14 días.');if(!confirm(`¿Borrar ${old.length} bruto${old.length===1?'':'s'} de más de 14 días?`))return;await v995Tx('readwrite',os=>{old.forEach(x=>os.delete(x.id))});await v995Rm(old.map(x=>x.id));v995Render()};
+    const a=P.querySelector('#v995All');if(a)a.onclick=async()=>{if(!confirm('¿Borrar TODOS los brutos (móvil y nube)? No se puede recuperar.'))return;await v995Tx('readwrite',os=>os.clear());await v995Rm(all.map(x=>x.id));v995Render()};
+  }
+  $('v995RawBtn').onclick=()=>{const P=$('v995RawPanel');if(!P.hidden){P.hidden=true;return}P.hidden=false;v995Render()};
   function close(){
-    clearInterval(st.timer);if(st.watch!=null)navigator.geolocation.clearWatch(st.watch);
+    v995Put(true);clearInterval(st.rawTimer);clearInterval(st.timer);if(st.watch!=null)navigator.geolocation.clearWatch(st.watch);
     window.removeEventListener('devicemotion',onMotion);document.removeEventListener('visibilitychange',onVis);
     try{st.wake&&st.wake.release()}catch(e){}try{st.ac&&st.ac.close()}catch(e){}ov.remove();
   }
@@ -17167,7 +17229,11 @@ function open(cfg){
     if(eng.running()){const s=eng.stop(Date.now());if(s&&s.duration_seconds>=5){if(st.cur){if(st.cur.label)s.label=st.cur.label;if(st.cur.target)s._target=st.cur.target}st.series.push(s)}}
     if(!st.series.length)return msg('Todavía no hay ninguna serie grabada.');
     const btn=$('v689Use');btn.disabled=true;
+    await v995Put(true);
     const series=st.series.map(x=>Object.assign({},x));
+    // V994 · red de seguridad: antes la grabación solo vivía en el móvil y se sobrescribía con la siguiente. Ahora se guarda historial local (10) y copia en la nube ANTES de entregarla al formulario
+    try{const hk=KEY+'_hist';let h=[];try{h=JSON.parse(localStorage.getItem(hk)||'[]')}catch(e){}h.unshift({ts:Date.now(),date:cfg.date||null,series,imported:false});localStorage.setItem(hk,JSON.stringify(h.slice(0,10)))}catch(e){}
+    try{const _sb=(typeof sb!=='undefined'?sb:window.sb);if(_sb&&!cfg.standalone){const d0=cfg.date||new Date().toLocaleDateString('sv-SE');_sb.from('sea_recordings').insert({title:'Auto · '+d0+' '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),rec_date:d0,series:series.map(x=>{const y=Object.assign({},x);delete y._target;return y})}).then(()=>{},()=>{})}}catch(e){}
     let r;try{r=cfg.onDone&&await cfg.onDone({filename:'Grabación GPS de Row Training',date:cfg.date||null,series})}catch(e){r=false;msg('No se pudo guardar: '+(e&&e.message||e))}
     btn.disabled=false;
     if(r===false){save({series:st.series});return}
