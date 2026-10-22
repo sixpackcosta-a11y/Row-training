@@ -3844,7 +3844,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="984";
+const APP_VERSION="989";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -9169,6 +9169,38 @@ function v427PreprocessOcrImage(url){
   });
 }
 function v124OCRTimeSeconds(v){return timeTextToSeconds(String(v||'').replace(',','.'))}
+// V987 · limpieza final de las filas leídas de varias fotos: si hay filas con el patrón completo de la tabla
+// (tiempo · metros · ritmo) se descartan las lecturas dudosas; y si los parciales suman más que el total, se
+// quitan los que no tienen la distancia habitual y los repetidos hasta que cuadre.
+function v987CleanOcrRows(rows){
+  if(rows.some(r=>r.anch))rows=rows.filter(r=>r.anch);
+  const tot=rows.slice().sort((a,b)=>(Number(b.distance_m)||0)-(Number(a.distance_m)||0))[0];if(!tot)return rows;
+  const T=Number(tot.distance_m)||0;let spl=rows.filter(r=>r!==tot&&!(Number(r.distance_m)===T&&r.idx==null));
+  const sum=a=>a.reduce((n,r)=>n+(Number(r.distance_m)||0),0),over=a=>T&&sum(a)>T*1.02+30;
+  if(over(spl)){
+    const seen=new Set();spl=spl.filter(r=>{const k=r.distance_m+'|'+r.time_text;if(seen.has(k)&&r.idx==null)return false;seen.add(k);return true});
+    if(over(spl)){const cnt={};spl.forEach(r=>{cnt[r.distance_m]=(cnt[r.distance_m]||0)+1});const mode=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];spl=spl.filter(r=>Math.abs(Number(r.distance_m)-Number(mode))<=Number(mode)*0.06)}
+    while(over(spl)&&spl.length>1)spl.pop();
+  }
+  return [tot].concat(spl);
+}
+// V986 · el número de parcial que lee el OCR falla a veces (1→4, total→0). Dentro de una foto: el total es la fila sin número
+// (o 0); si los parciales visibles suman el total, se numeran 1..n; si su numeración no es correlativa se descarta.
+function v986FixPhotoRows(rows){
+  if(rows.some(r=>r.anch))rows=rows.filter(r=>r.anch);
+  rows=rows.map(r=>Object.assign({},r,{idx:(r.idx==null||Number(r.idx)<1)?null:Number(r.idx)}));
+  const noIdx=rows.filter(r=>r.idx==null),withIdx=rows.filter(r=>r.idx!=null);
+  const big=noIdx.slice().sort((a,b)=>(Number(b.distance_m)||0)-(Number(a.distance_m)||0))[0];
+  const spl=rows.filter(r=>r!==big);
+  if(big&&spl.length){
+    const sum=spl.reduce((n,r)=>n+(Number(r.distance_m)||0),0),tot=Number(big.distance_m)||0;
+    if(tot&&Math.abs(sum-tot)<=Math.max(30,tot*0.02)){spl.forEach((r,i)=>{r.idx=i+1});return rows}
+  }
+  // numeración no correlativa (un número mal leído): se rehace correlativa a partir del primer parcial numerado
+  const ids=withIdx.map(r=>r.idx),ok=ids.every((v,i)=>i===0||v===ids[i-1]+1);
+  if(!ok&&spl.length){const first=spl.find(r=>r.idx!=null);if(first){const base=first.idx-spl.indexOf(first);spl.forEach((r,i)=>{r.idx=base+i>=1?base+i:null})}}
+  return rows;
+}
 function v124OCRRows(text){
   // V176: parser tolerante para pantallas Concept2 PM3/PM5. OCR suele confundir : , . y separar columnas.
   const normalized=String(text||'')
@@ -9181,11 +9213,16 @@ function v124OCRRows(text){
   // distancia, y si se dejan en la lista se pueden fundir con la fila del siguiente parcial al unir
   // líneas más abajo: el "tiempo" de esa fila fantasma acababa siendo el del descanso (p.ej. "3:00")
   // en vez del tiempo real del parcial. Se quitan aquí, antes de intentar detectar filas.
-  const lines=normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean).filter(x=>!/repos|descanso/i.test(x));
+  // V986 · en una captura completa de ErgData/PM5 la columna de la izquierda (ritmo, metros acumulados, s/m) se
+  // colaba en la misma línea que la fila de la tabla ("2:06 1500 2 4:11.9 1000 2:05.9 25 154"). Si en la línea hay
+  // el patrón tiempo · metros · ritmo, se queda solo con eso (más el número de parcial justo delante).
+  const v986Re=/(?:\b(\d{1,2})\s+)?(\d{1,3}:\d{2}\.\d)\s+(\d{3,5})\s+(\d{1,2}:\d{2}\.\d)((?:\s+\d{1,3}){0,6})/;
+  const lines=normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean).filter(x=>!/repos|descanso/i.test(x)).map(x=>{const m=x.match(v986Re);return m?m[0].trim():x});
+  const v986A=normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean).filter(x=>!/repos|descanso/i.test(x)).map(x=>v986Re.test(x));
   const timeRe=/\b\d{1,3}:\d{2}(?:\.\d)?\b/g;
   for(let i=0;i<lines.length;i++){
     // Une hasta 2 líneas: Tesseract a veces parte una fila del PM5 en dos.
-    const candidates=[lines[i], lines[i]+' '+(lines[i+1]||''), lines[i]+' '+(lines[i+1]||'')+' '+(lines[i+2]||'')];
+    const candidates=v986A[i]?[lines[i]]:[lines[i], lines[i]+' '+(v986A[i+1]?'':(lines[i+1]||'')), lines[i]+' '+(v986A[i+1]?'':(lines[i+1]||''))+' '+((v986A[i+1]||v986A[i+2])?'':(lines[i+2]||''))];
     let parsed=null;
     for(const line of candidates){
       const times=[...line.matchAll(timeRe)].map(x=>x[0]);
@@ -9220,7 +9257,7 @@ function v124OCRRows(text){
         avgHr=hrs[0]||'';maxHr=hrs.length>1?Math.max(...hrs):'';
       }
       const v983Idx=(line.match(/^\s*(\d{1,2})\s+\d{1,3}:\d{2}/)||[])[1];
-      parsed={idx:v983Idx?Number(v983Idx):null,distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:avgHr,max_hr:maxHr,rest_text:''};
+      parsed={idx:v983Idx?Number(v983Idx):null,distance_m:distance,time_text:time,pace_text:pace,spm,avg_hr:avgHr,max_hr:maxHr,rest_text:'',anch:!!(v986A[i]&&line===lines[i])};
       break;
     }
     if(parsed) rows.push(parsed);
@@ -9562,7 +9599,7 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
   if(!workout||!ergoRow)return alert('No se encontró el resultado manual.');
   const splits=v124ErgoSplitsArray(ergoRow);
   const layer=document.createElement('div');layer.className='modalBack';
-  layer.innerHTML=`<div class="modalCard v154EditModal"><h2>Editar ERGO manual</h2><p class="muted">Corrige el resultado introducido manualmente. ErgData/Concept2 no se modifica.</p><div class="v154EditGrid"><label>Metros<input id="v154Dist" inputmode="numeric" value="${ergoRow.distance_m??''}"></label><label>Tiempo total<input id="v154Time" inputmode="numeric" placeholder="1000 → 10:00" value="${v159EditTimeRaw(ergoRow.time_seconds)}"></label><label>Ritmo /500<input id="v154Pace" inputmode="numeric" placeholder="2247 → 2:24.7" value="${v159EditTimeRaw(ergoRow.pace_500_seconds)}"></label><label>PPM<input id="v154Spm" inputmode="numeric" value="${ergoRow.spm??''}"></label><label>FC media<input id="v154Avg" inputmode="numeric" value="${ergoRow.avg_hr??''}"></label><label>FC máxima<input id="v154Max" inputmode="numeric" value="${ergoRow.max_hr??''}"></label></div><label>Notas<textarea id="v154Notes" rows="3">${esc(ergoRow.notes||workout.notes||'')}</textarea></label><div class="ergoSplitEditorHeadV124" style="margin-top:14px"><h3 style="margin:0">Parciales</h3><button id="v193AddSplit" type="button">+ Añadir parcial</button></div><div id="v154Splits">${splits.map((p,i)=>`<div class="v154EditSplit" data-i="${i}"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b class="v193SplitTitle">Parcial ${i+1}</b><button type="button" class="v193DeleteSplit">Eliminar parcial</button></div><div class="v154EditGrid"><label>Metros<input class="esDist" inputmode="numeric" value="${p.distance_m??''}"></label><label>Tiempo<input class="esTime" inputmode="numeric" value="${v159EditTimeRaw(p.time_seconds)}"></label><label>Ritmo /500<input class="esPace" inputmode="numeric" value="${v159EditTimeRaw(p.pace_500_seconds)}"></label><label>PPM<input class="esSpm" inputmode="numeric" value="${p.spm??''}"></label><label>FC media<input class="esAvg" inputmode="numeric" value="${p.avg_hr??''}"></label><label>FC máxima<input class="esMax" inputmode="numeric" value="${p.max_hr??''}"></label><label>Descanso<input class="esRest" inputmode="numeric" value="${v159EditTimeRaw(p.rest_seconds)}"></label></div></div>`).join('')}</div><div class="info" style="margin-top:10px">Puedes añadir o eliminar parciales. Los totales se recalculan automáticamente con los parciales que queden al guardar.</div>${((ergoRow._photo_urls||[]).length||(ergoRow.photo_paths||[]).length)?`<div class="v154EditActions"><button id="v174OCR" type="button">📷 Leer foto del ergómetro</button><span id="v174OCRStatus" class="muted"></span></div>`:''}<div class="v154EditActions"><button id="v154Cancel">Cancelar</button><button id="v154Save" class="primary">Guardar cambios</button></div></div>`;
+  layer.innerHTML=`<div class="modalCard v154EditModal"><h2>Editar ERGO manual</h2><p class="muted">Corrige el resultado introducido manualmente. ErgData/Concept2 no se modifica.</p><div class="v154EditGrid"><label>Metros<input id="v154Dist" inputmode="numeric" value="${ergoRow.distance_m??''}"></label><label>Tiempo total<input id="v154Time" inputmode="numeric" placeholder="1000 → 10:00" value="${v159EditTimeRaw(ergoRow.time_seconds)}"></label><label>Ritmo /500<input id="v154Pace" inputmode="numeric" placeholder="2247 → 2:24.7" value="${v159EditTimeRaw(ergoRow.pace_500_seconds)}"></label><label>PPM<input id="v154Spm" inputmode="numeric" value="${ergoRow.spm??''}"></label><label>FC media<input id="v154Avg" inputmode="numeric" value="${ergoRow.avg_hr??''}"></label><label>FC máxima<input id="v154Max" inputmode="numeric" value="${ergoRow.max_hr??''}"></label></div><label>Notas<textarea id="v154Notes" rows="3">${esc(ergoRow.notes||workout.notes||'')}</textarea></label><div class="ergoSplitEditorHeadV124" style="margin-top:14px"><h3 style="margin:0">Parciales</h3><button id="v193AddSplit" type="button">+ Añadir parcial</button></div><div id="v154Splits">${splits.map((p,i)=>`<div class="v154EditSplit" data-i="${i}"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b class="v193SplitTitle">Parcial ${i+1}</b><button type="button" class="v193DeleteSplit">Eliminar parcial</button></div><div class="v154EditGrid"><label>Metros<input class="esDist" inputmode="numeric" value="${p.distance_m??''}"></label><label>Tiempo<input class="esTime" inputmode="numeric" value="${v159EditTimeRaw(p.time_seconds)}"></label><label>Ritmo /500<input class="esPace" inputmode="numeric" value="${v159EditTimeRaw(p.pace_500_seconds)}"></label><label>PPM<input class="esSpm" inputmode="numeric" value="${p.spm??''}"></label><label>FC media<input class="esAvg" inputmode="numeric" value="${p.avg_hr??''}"></label><label>FC máxima<input class="esMax" inputmode="numeric" value="${p.max_hr??''}"></label><label>Descanso<input class="esRest" inputmode="numeric" value="${v159EditTimeRaw(p.rest_seconds)}"></label></div></div>`).join('')}</div><div class="info" style="margin-top:10px">Puedes añadir o eliminar parciales. Los totales se recalculan automáticamente con los parciales que queden al guardar.</div><div class="v154EditActions" style="position:static"><button id="v174OCR" type="button"${((ergoRow._photo_urls||[]).length||(ergoRow.photo_paths||[]).length)?'':' style="display:none"'}>📷 Leer foto del ergómetro</button><span id="v174OCRStatus" class="muted"></span></div><div class="v984Ph" style="margin-top:10px"><label class="muted" style="display:block;margin-bottom:4px">Fotos del ergómetro</label><input type="file" id="v984PhotoIn" accept="image/*" multiple style="width:100%"><div id="v984PhotoSt" class="muted"><small>${(ergoRow.photo_paths||[]).length?(ergoRow.photo_paths||[]).length+' foto'+((ergoRow.photo_paths||[]).length===1?'':'s')+' guardada'+((ergoRow.photo_paths||[]).length===1?'':'s'):'Sin fotos'}</small></div></div><div class="v154EditActions"><button id="v154Cancel">Cancelar</button><button id="v154Save" class="primary">Guardar cambios</button></div></div>`;
   document.body.appendChild(layer);layer.querySelector('#v154Cancel').onclick=()=>layer.remove();layer.onclick=e=>{if(e.target===layer)layer.remove()};
   const v193RenumberSplits=()=>{[...layer.querySelectorAll('.v154EditSplit')].forEach((row,i)=>{row.dataset.i=String(i);const t=row.querySelector('.v193SplitTitle');if(t)t.textContent=`Parcial ${i+1}`})};
   const v193WireSplitRow=row=>{const del=row.querySelector('.v193DeleteSplit');if(del)del.onclick=()=>{if(confirm('¿Eliminar este parcial del resultado?')){row.remove();v193RenumberSplits()}};const ti=row.querySelector('.esTime'),re=row.querySelector('.esRest'),pa=row.querySelector('.esPace');if(ti)ti.addEventListener('blur',()=>v158FormatTimeField(ti));if(re)re.addEventListener('blur',()=>v158FormatTimeField(re));if(pa)pa.addEventListener('blur',()=>v175FormatPaceField(pa))};
@@ -9628,7 +9665,7 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
       // resaltado (menos contraste que el resto en la pantalla de intervalos) no se pierda entera.
       const pre=await v427PreprocessOcrImage(url);
       const r=await Tesseract.recognize(pre,'eng',{tessedit_pageseg_mode:6,preserve_interword_spaces:'1',tessedit_char_whitelist:'0123456789:.,- '});
-      const rawText=r?.data?.text||'';rows.push(...v124OCRRows(rawText))}
+      const rawText=r?.data?.text||'';rows.push(...v986FixPhotoRows(v124OCRRows(rawText)))}
     // V425 · v124OCRRows prueba a unir cada línea con hasta 2 siguientes antes de acertar con una,
     // así que la misma fila de la foto podía colar dos veces (una sola línea Y esa misma línea unida
     // a la de al lado, ambas con los mismos números). v124ApplyOCR (la lectura del propio remero) ya
@@ -9640,7 +9677,22 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
      const tot=rows.filter(x=>x.idx==null),spl=rows.filter(x=>x.idx!=null).sort((a,b)=>a.idx-b.idx);
      const big=tot.slice().sort((a,b)=>(Number(b.distance_m)||0)-(Number(a.distance_m)||0))[0];
      const seenT=new Set();rows=(big?[big]:[]).concat(tot.filter(x=>x!==big&&!(Number(x.distance_m)===Number(big&&big.distance_m)))).filter(x=>{const k=x.distance_m+'|'+x.time_text;if(seenT.has(k))return false;seenT.add(k);return true}).concat(spl)}
+    rows=v987CleanOcrRows(rows);
     if(!rows.length)throw new Error('No se detectaron filas válidas.');v265ShowErgoOcrMap(rows,st)}catch(e){st.textContent='No se pudo leer: '+(e.message||e)}finally{ocrBtn.disabled=false}};
+  // V988 · añadir fotos a un ERGO manual ya registrado (antes solo se podían subir al registrarlo el propio remero)
+  {const inp=layer.querySelector('#v984PhotoIn'),pst=layer.querySelector('#v984PhotoSt');if(inp)inp.onchange=async()=>{
+    const files=[...(inp.files||[])];if(!files.length)return;
+    try{
+      pst.innerHTML='<small>Subiendo '+files.length+' foto'+(files.length===1?'':'s')+'…</small>';
+      const folder=athleteUserId||ergoRow.user_id||currentUser.id,added=[];
+      for(let i=0;i<files.length;i++){const f=files[i],ext=(String(f.name||'').split('.').pop()||String(f.type||'image/jpeg').split('/').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'jpg',path=`${folder}/${ergoRow.id}/${Date.now()}-${i+1}.${ext}`,up=await sb.storage.from('ergo-media').upload(path,f,{cacheControl:'3600',upsert:false});if(up.error)throw up.error;added.push(path)}
+      const all=[...(ergoRow.photo_paths||[]),...added],q=await sb.from('ergo_results').update({photo_paths:all}).eq('id',ergoRow.id).select('id');
+      if(q.error||!(q.data||[]).length)throw new Error((q.error&&q.error.message)||'la base de datos no deja guardar las fotos (permisos)');
+      ergoRow.photo_paths=all;ergoRow._photo_urls=[];try{await v124HydrateErgoPhotos([ergoRow])}catch(_){}
+      const ob=layer.querySelector('#v174OCR');if(ob)ob.style.display='';
+      pst.innerHTML='<small>'+all.length+' foto'+(all.length===1?'':'s')+' guardada'+(all.length===1?'':'s')+' ✓</small>';inp.value='';
+    }catch(e){pst.innerHTML='<small style="color:#b91c1c">No se pudo subir: '+esc(e.message||String(e))+'</small>'}
+  }}
   const v748Init={d:layer.querySelector('#v154Dist').value,t:layer.querySelector('#v154Time').value,p:layer.querySelector('#v154Pace').value,s:layer.querySelector('#v154Spm').value};
   layer.querySelector('#v154Save').onclick=async()=>{
     const b=layer.querySelector('#v154Save');b.disabled=true;b.textContent='Guardando…';
@@ -9654,9 +9706,12 @@ function v154EditManualErgo(workout,ergoRow,athleteUserId,teamCode,onDone){
       const {data:{session}}=await sb.auth.getSession(),response=await fetch('/api/manual-ergo-edit',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`},body:JSON.stringify({ergo_result_id:ergoRow.id,workout_id:workout.id,athlete_user_id:athleteUserId,team_code:teamCode||null,manual:payload.manual})}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.detail||data.error||'No se pudo editar el resultado.');
       // V747 · comprobación: si el servidor responde bien pero el dato no cambia en la base, se guarda directamente y, si tampoco, se avisa
       try{
-        const pm=payload.manual,chk=await sb.from('ergo_results').select('distance_m,time_seconds,avg_hr,max_hr,spm').eq('id',ergoRow.id).maybeSingle(),d=chk&&chk.data;
-        if(d&&(Number(d.distance_m||0)!==Number(pm.distance_m||0)||Math.abs(Number(d.time_seconds||0)-Number(pm.time_seconds||0))>0.2||Number(d.avg_hr||0)!==Number(pm.avg_hr||0)||Number(d.max_hr||0)!==Number(pm.max_hr||0)||Number(d.spm||0)!==Number(pm.spm||0))){
-          const up=await sb.from('ergo_results').update({distance_m:pm.distance_m,time_seconds:pm.time_seconds,pace_500_seconds:pm.pace_500_seconds,spm:pm.spm,avg_hr:pm.avg_hr,max_hr:pm.max_hr}).eq('id',ergoRow.id).select('id');
+        const pm=payload.manual,chk=await sb.from('ergo_results').select('distance_m,time_seconds,avg_hr,max_hr,spm,splits').eq('id',ergoRow.id).maybeSingle(),d=chk&&chk.data;
+        // V988 · la comprobación miraba solo los totales: si el servidor guardaba los totales pero no los parciales, la edición parecía guardada y al recargar volvían los parciales antiguos
+        const v988Sig=a=>(Array.isArray(a)?a:(()=>{try{return JSON.parse(a||'[]')}catch(e){return[]}})()).map(x=>[Number(x.distance_m)||0,Math.round((Number(x.time_seconds)||0)*10),Number(x.spm)||0,Number(x.avg_hr)||0,Number(x.max_hr)||0].join(',')).join(';');
+        const v988SplitsBad=!!d&&v988Sig(d.splits)!==v988Sig(pm.splits||[]);
+        if(d&&(v988SplitsBad||Number(d.distance_m||0)!==Number(pm.distance_m||0)||Math.abs(Number(d.time_seconds||0)-Number(pm.time_seconds||0))>0.2||Number(d.avg_hr||0)!==Number(pm.avg_hr||0)||Number(d.max_hr||0)!==Number(pm.max_hr||0)||Number(d.spm||0)!==Number(pm.spm||0))){
+          const up=await sb.from('ergo_results').update({distance_m:pm.distance_m,time_seconds:pm.time_seconds,pace_500_seconds:pm.pace_500_seconds,spm:pm.spm,avg_hr:pm.avg_hr,max_hr:pm.max_hr,splits:pm.splits||[],notes:pm.notes||null}).eq('id',ergoRow.id).select('id');
           if(up.error)throw new Error('V747NOSAVE: '+(up.error.message||up.error));
           if(!(up.data||[]).length)throw new Error('V747NOSAVE: la base de datos no deja modificar este resultado (permisos).');
         }
@@ -17971,6 +18026,24 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
       document.querySelectorAll('.v964Chip[data-id]').forEach(paintRowerChip);
     }).catch(function(e){console.warn('v964',e)});
   }
+
+  // V984 · los botones Registrar del panel se vuelven a copiar si la tarjeta los pinta después de abrir
+  // (en algunos móviles el panel se abría sin ningún botón y no se podía registrar).
+  window.v984Foot=function(S,host,setActs){
+    var BTN='.staffActions button,.staffActions a.btn,.athleteManualErgoV113,.athleteOpenErgoV113,.athleteManualGymV113,.athleteOpenGymV113,.athleteRegisterGymV113';
+    function sync(){
+      var bs=[].slice.call(host.querySelectorAll(BTN)).filter(function(b,i,a){return a.indexOf(b)===i&&!b.closest('.v959SheetFoot')});
+      var have=[].slice.call(S.foot.querySelectorAll('.v984A')).map(function(x){return x._src});
+      var same=bs.length===have.length&&bs.every(function(b,i){return b===have[i]});
+      if(same)return;
+      S.foot.querySelectorAll('.v984A').forEach(function(x){x.remove()});
+      var more=S.foot.querySelector('.more');
+      bs.forEach(function(b){var x=document.createElement('button');x.type='button';x._src=b;x.className='v984A '+(b.classList.contains('primary')?'v959Btn p wide':'v959Btn wide');x.textContent=b.textContent.trim();x.onclick=function(){S.close();setTimeout(function(){b.click()},230)};if(more)S.foot.insertBefore(x,more);else S.foot.appendChild(x)});
+      var a=host.querySelector('.staffActions');if(a){a.classList.add('v963Hid');setActs(a)}
+    }
+    sync();
+    try{var mo=new MutationObserver(sync);mo.observe(host,{childList:true,subtree:true});var t=setInterval(function(){if(!S.bg.isConnected){clearInterval(t);mo.disconnect()}else sync()},700)}catch(e){}
+  };
   function openRowerSheet(d,c){
     var sum=d.querySelector(':scope > summary'),det=d.querySelector(':scope > .athleteWeekDetailV123');if(!det)return;
     if(!d.open)d.open=true; // la app carga ayudas ERGO al abrir
@@ -17993,7 +18066,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
     rds.forEach(function(rd){var f=document.createElement('div');f.className='v962Full v964Tmp';f.innerHTML=rowsToBlocks(rd,true);rd.parentNode.insertBefore(f,rd);rd.classList.add('v963Hid')});
     // los botones Registrar pasan abajo, fijos
     acts=det.querySelector(':scope > .staffActions');
-    if(acts){[].slice.call(acts.querySelectorAll('button')).forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p wide':'v959Btn wide';x.textContent=b.textContent;x.onclick=function(){S.close();setTimeout(function(){b.click()},220)};S.foot.appendChild(x)});acts.classList.add('v963Hid')}
+    window.v984Foot(S,det,function(a){acts=a});
   }
   function enhanceRowerWeek(root){
     var card=root.closest('.athleteWeekV123')||root.parentNode;
@@ -18348,7 +18421,7 @@ vv.addEventListener('resize',chk);document.addEventListener('focusout',chk,true)
   // contenido en tarjetas (salvo GYM del remero con alternativas/vídeos, que se deja tal cual)
   host.querySelectorAll('.workoutReadable').forEach(function(rd){if(rd.querySelector('.athGymPreviewExerciseV119,details,img'))return;var f=document.createElement('div');f.className='v962Full v964Tmp';f.innerHTML=rowsToBlocks(rd,true);rd.parentNode.insertBefore(f,rd);rd.classList.add('v963Hid')});
   S.body.appendChild(host);
-  if(acts){[].slice.call(acts.querySelectorAll('button,a.btn')).forEach(function(b){var x=document.createElement('button');x.type='button';x.className=b.classList.contains('primary')?'v959Btn p wide':'v959Btn wide';x.textContent=b.textContent.trim();x.onclick=function(){S.close();setTimeout(function(){b.click()},230)};S.foot.appendChild(x)});acts.classList.add('v963Hid')}
+  window.v984Foot(S,host,function(a){acts=a});
   var ed=host.querySelector('.staffEditToday[data-id]');if(ed&&window.v976Items){var mb=document.createElement('button');mb.type='button';mb.className='v959Btn more';mb.textContent='⋯';S.foot.appendChild(mb);mb.onclick=function(){var ex=S.sheet.querySelector('.v959Menu');if(ex){ex.remove();return}var mn=document.createElement('div');mn.className='v959Menu';window.v976Items(mn,{id:ed.dataset.id,date:ed.dataset.date,team:(typeof coachSelectedTeam!=='undefined'?coachSelectedTeam:'')},S.close);S.sheet.appendChild(mn)}}
  }
  // Hoy (entrenador y remero): cada sesión del día = pieza C
