@@ -220,7 +220,7 @@ button.coachDay{width:100%;font:inherit;color:inherit}
 .coachWeekGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-top:16px}.coachWeekDay{border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}.coachWeekDayHead{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.weekSess{padding:9px;border-radius:6px;background:var(--surface);margin:7px 0;font-size:.86rem;overflow-wrap:anywhere}.weekSess p{font-size:.78rem;white-space:pre-line;margin:6px 0 0}.weekEdit{width:100%;margin-top:8px}.coachWeekDay .seaCard{border-left:4px solid #18a5b8;background:#eefbfc;color:#0b1830}@media(max-width:900px){.coachWeekGrid{grid-template-columns:1fr}.coachWeekDay{display:grid;grid-template-columns:90px 1fr auto;align-items:start;gap:8px}.coachWeekDayHead{display:block}.coachWeekDay .weekEdit{width:auto;margin:0}.weekSess{margin:0}.coachWeekDay>p{margin:0}}
 
 /* V49 · editor diario prioritario */
-#planArea{margin:16px 0 22px}#planArea>.card{border:2px solid #dbe7f5}#planArea .seaCard{border-left:6px solid var(--sea)}
+#planArea:empty{min-height:22px}#planCalendar:empty{min-height:305px}.v1003W #planArea,.v1003W #planCalendar{visibility:hidden}#planArea{margin:16px 0 22px}#planArea>.card{border:2px solid #dbe7f5}#planArea .seaCard{border-left:6px solid var(--sea)}
 
 /* V60 · registro, altas y guía */
 .loginActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1002";
+const APP_VERSION="1003";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13252,7 +13252,7 @@ async function coachPlanner(){
  const exportExcelBtn=document.getElementById('exportSeasonExcelV170'),exportPdfBtn=document.getElementById('exportSeasonPdfV170'),importExcelInput=document.getElementById('importSeasonExcelV170');
  if(exportExcelBtn)exportExcelBtn.onclick=()=>exportSeasonExcelV170();if(exportPdfBtn)exportPdfBtn.onclick=()=>exportSeasonPdfV170();if(importExcelInput)importExcelInput.onchange=e=>{const f=e.target.files?.[0];if(f)importSeasonExcelV170(f);e.target.value=''};
  seasonTeam.innerHTML=[...planTeam.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('');seasonTeam.value=planTeam.value;
- planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;seasonTeam.value=planTeam.value;drawCalendar();renderPlanDay();renderCoachSeason()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};await drawCalendar();await renderPlanDay();await renderCoachSeason();
+ planTeam.onchange=()=>{coachSelectedTeam=planTeam.value;seasonTeam.value=planTeam.value;drawCalendar();renderPlanDay();renderCoachSeason()};planDate.onchange=()=>{ym=planDate.value.slice(0,7);drawCalendar();renderPlanDay()};content.classList.add('v1003W');try{await Promise.all([drawCalendar(),renderPlanDay(),renderCoachSeason()])}finally{content.classList.remove('v1003W')} // V1003 · a la vez (antes uno tras otro y cada uno empujaba al siguiente)
  if(plannerAutoNewV536){plannerAutoNewV536=false;plannerAutoEdit=false;plannerTargetSessionId=null;sessionEditor()}
  if(plannerTargetSessionId!=null || plannerAutoEdit){
    const data=await loadCoachCalendar(planTeam.value,planDate.value);
