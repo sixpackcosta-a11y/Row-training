@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1003";
+const APP_VERSION="1004";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5119,7 +5119,15 @@ function v330InjectSubTabs(){
   bar.querySelectorAll('.v330SubTab').forEach(btn=>btn.onclick=()=>{coachWeekFocusDate=null;tab=btn.dataset.t;draw();render()});
 }
 function title(x){if(x[2]==="MIX")return "MIX · GYM + ERGO";if(x[2]==="GYM")return `GYM-${x[3]} · ${gyms[x[3]].name}`;if(x[2]==="ERG")return x[4]||"UT2 · 3×10 min @20 ppm";if(x[2]==="MAR")return "🚣 Sesión de mar";return "Descanso / movilidad"}
+// V1004 · Planificación: al salir se guarda la pantalla ya dibujada y al volver se reutiliza al instante
+// (en vez de redibujarla desde cero) mientras se refresca en silencio por detrás.
+function v1004Stash(){
+  try{const c=document.getElementById('content');
+    if(c&&tab!=='planificar'&&c.querySelector('#planTeam')&&c.querySelector('#planCalendar')&&!c.querySelector('#planArea input,#planArea select,#planArea textarea')&&typeof window.__planRefresh==='function'){
+      window.__planKeep={nodes:[...c.childNodes],ts:Date.now(),uid:currentUser&&currentUser.id,mode:currentMode,refresh:window.__planRefresh}}}catch(e){}
+}
 function render(){
+  v1004Stash();
   refreshTeamSchedule();
   if(tab==="pendiente")return pendingRegistrationView();if(tab==="ayuda")return helpView();
   if(currentMode==="athlete"&&tab==="mes")return athleteMonthViewV96();
@@ -5128,7 +5136,12 @@ function render(){
     // V379 · "Mes" se activa para el entrenador (antes solo el remero la tenía), dentro del grupo Trabajo.
     if(tab==="mes"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachMonthView();}
     if(tab==="recursos"&&hasStaffMode())return staffResourcesView();if(tab==="equipo"&&hasAnyCoachTeam())return teamStaffAdminView();if(tab==="sistema"&&isGlobalCoach)return systemView();if(tab==="altas"&&hasAnyCoachTeam())return teamStaffAdminView();
-    if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachPlanner();}
+    if(tab==="planificar"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;
+      {const k=window.__planKeep;
+       if(k&&k.uid===(currentUser&&currentUser.id)&&k.mode===currentMode&&Date.now()-k.ts<1800000&&!plannerJumpTeam&&!plannerJumpDate&&!plannerAutoEdit&&!plannerAutoNewV536&&plannerTargetSessionId==null){
+         window.__planKeep=null;const c=document.getElementById('content');
+         if(c){c.replaceChildren(...k.nodes);try{k.refresh()}catch(e){}return}}}
+      return coachPlanner();}
     if(tab==="temporada"){const edits=editableTeamCodes();if(!edits.length){tab="registro";draw();return staffRegisterView()}coachTeams=edits;return coachSeasonView();}
     if(tab==="result"){coachTeams=editableTeamCodes();if(!coachTeams.length){tab="registro";draw();return staffRegisterView()}return workoutNotificationAthleteV129?results():coachSeaResultsView();}
     if(tab==="regatas"&&hasStaffMode())return v905RegattaView(); /* V937 · también ayudantes */if(tab==="biblioteca"&&hasAnyCoachTeam())return coachLibraryView();if(tab==="eventos"&&hasAnyCoachTeam()&&v534EventsUI())return coachEventsView();if(tab==="perfil")return staffProfileViewV167();if(tab==="mensajes"&&hasStaffMode())return coachMessagesView();return staffTodayView();
@@ -5209,6 +5222,7 @@ function render(){
     if(window._v547AppShown&&window.v547HideSplash)setTimeout(window.v547HideSplash,60);
   }
   render=function(){
+    v1004Stash();
     var el=document.getElementById("content"),overlay=document.getElementById("v366LoadOverlay");
     if(v316ReduceMotion||!el||window._v554Preloading){v316OrigRender();return}
     // V558 · cada pestaña recuerda dónde estabas (como en iPhone); si se recarga la misma, no se mueve.
@@ -13245,7 +13259,7 @@ async function coachPlanner(){
     day.addEventListener('drop',async e=>{if(!draggedSessionId)return;e.preventDefault();e.stopPropagation();day.classList.remove('dragOver');const targetDate=day.dataset.date;const before=(sessions||[]).find(x=>String(x.id)===String(draggedSessionId));const q=await sb.from('training_sessions').update({session_date:targetDate,updated_at:new Date().toISOString()}).eq('id',draggedSessionId);if(q.error)alert('No se pudo mover: '+q.error.message);else{if(before&&confirm('Entrenamiento movido. ¿Quieres avisar a los remeros del cambio de día?'))await notifyTeamChangeV110(planTeam.value,'Entrenamiento cambiado de día',`${v829PubName(before)} · ${shortDateES(before.session_date)} → ${shortDateES(targetDate)}`,'/');planDate.value=targetDate;ym=targetDate.slice(0,7);await drawCalendar();await renderPlanDay();}});
   });
  }
- loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);v863Open=ym;drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newIndividualPlanV249.onclick=()=>individualPlanEditorV249(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
+ window.__planRefresh=()=>{drawCalendar();renderPlanDay()}; loadPlan.onclick=()=>{ym=planDate.value.slice(0,7);v863Open=ym;drawCalendar();renderPlanDay()}; newSession.onclick=()=>sessionEditor(); newIndividualPlanV249.onclick=()=>individualPlanEditorV249(); planBBtn.onclick=()=>planBPicker(); newRace.onclick=()=>raceEditor();
  planPrev.onclick=()=>{ym=monthShift(ym,-1);if(!SEASON_MONTHS.includes(ym))ym='2026-09';drawCalendar()};planNext.onclick=()=>{ym=monthShift(ym,1);if(!SEASON_MONTHS.includes(ym))ym='2027-05';drawCalendar()};
  planMonthPick.onchange=()=>{ym=planMonthPick.value;view='month';drawCalendar()};planViewSeason.onclick=()=>{view='season';drawCalendar()};planViewMonth.onclick=()=>{view='month';drawCalendar()};
  { const tb=document.getElementById('v570TrashBtn');if(tb)tb.onclick=()=>v570OpenTrash(()=>{try{render()}catch(e){}}); }
