@@ -3953,6 +3953,52 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
       },2000)}catch(e){}
     }
     function oget(k){var e=oload()[k];return e?{data:e.d,error:null,count:e.c,status:200,v547Offline:true}:(pget(k)?Object.assign(pget(k),{v547Offline:true}):null)}
+    // V1000 · "paquete sin cobertura": los entrenamientos de hoy y de los próximos días se guardan en el móvil mientras hay cobertura;
+    // sin ella, cualquier pantalla que pida training_sessions los saca de ahí (hoy, semana, registro MAR, grabadora con su plan).
+    var PACKK='rowtraining_pack_v1000',packMem=null;
+    function packLoad(){if(!packMem){try{packMem=JSON.parse(localStorage.getItem(PACKK)||'null')}catch(e){packMem=null}}return packMem}
+    function packDay(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+    var packBusy=false;
+    window.v1000PackRefresh=async function(){
+      if(packBusy||navigator.onLine===false)return;packBusy=true;
+      try{
+        var teams=[];try{teams=[].concat(typeof staffViewTeamCodes==='function'?staffViewTeamCodes():[],typeof rowerTeamCodes!=='undefined'?rowerTeamCodes:[])}catch(e){}
+        teams=Array.from(new Set(teams.filter(Boolean)));if(!teams.length)return;
+        var from=packDay(-3),to=packDay(14);
+        var q=await sb.from('training_sessions').select('*').in('team_code',teams).gte('session_date',from).lte('session_date',to).order('session_date').limit(1500);
+        if(q.error||!q.data)return;
+        var rows=q.data,js=JSON.stringify(rows);
+        while(js.length>1300000&&to>from){to=(function(d){var x=new Date(d+'T12:00:00');x.setDate(x.getDate()-2);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')})(to);rows=rows.filter(function(r){return r.session_date<=to});js=JSON.stringify(rows)}
+        packMem={t:Date.now(),from:from,to:to,teams:teams,rows:rows};
+        try{localStorage.setItem(PACKK,JSON.stringify(packMem))}catch(e){try{localStorage.removeItem(PACKK)}catch(_){}}
+      }catch(e){}finally{packBusy=false}
+    };
+    function packGet(table,rec){
+      if(table!=='training_sessions')return null;var P=packLoad();if(!P||!P.rows||Date.now()-P.t>10*864e5)return null;
+      var rows=P.rows.slice(),orders=[],mode='list',lim=null,hasDate=false,ok=true;
+      try{rec.forEach(function(c){
+        var m=c[0],a=c[1]||[];
+        if(m==='select'){if(a[1])ok=false;return}
+        if(m==='eq'||m==='neq'||m==='gt'||m==='gte'||m==='lt'||m==='lte'){
+          var col=a[0],v=a[1];
+          if(col==='session_date'){hasDate=true;if((m==='eq'||m==='gte'||m==='gt')&&v<P.from)ok=false;if((m==='eq'||m==='lte'||m==='lt')&&v>P.to)ok=false;if(m==='gte'&&v>P.to)ok=false}
+          rows=rows.filter(function(r){var x=r[col];if(m==='eq')return String(x)===String(v);if(m==='neq')return String(x)!==String(v);if(x==null)return false;return m==='gt'?x>v:m==='gte'?x>=v:m==='lt'?x<v:x<=v});return}
+        if(m==='in'){var set=(a[1]||[]).map(String);rows=rows.filter(function(r){return set.indexOf(String(r[a[0]]))>=0});return}
+        if(m==='is'){rows=rows.filter(function(r){return a[1]===null?r[a[0]]==null:r[a[0]]===a[1]});return}
+        if(m==='order'){orders.push([a[0],!(a[1]&&a[1].ascending===false)]);return}
+        if(m==='limit'){lim=a[0];return}
+        if(m==='single'||m==='maybeSingle'){mode=m;return}
+        ok=false;
+      })}catch(e){ok=false}
+      if(!ok)return null;
+      if(mode!=='list'||!hasDate){if(!rows.length)return null}
+      orders.forEach(function(){});
+      if(orders.length)rows.sort(function(x,y){for(var i=0;i<orders.length;i++){var k=orders[i][0],asc=orders[i][1],a1=x[k],b1=y[k];if(a1===b1)continue;if(a1==null)return 1;if(b1==null)return -1;return (a1<b1?-1:1)*(asc?1:-1)}return 0});
+      if(lim!=null)rows=rows.slice(0,lim);
+      var data=mode==='list'?rows:(rows[0]||null);
+      return {data:data,error:null,count:null,status:200,v547Offline:true};
+    }
+    window.v1000PackGet=packGet;
     function owipe(){ostore={};try{localStorage.removeItem(OKEY)}catch(e){}}
     function pwipe(){pstore={};try{localStorage.removeItem(PKEY)}catch(e){}}
     var cache=new Map();
@@ -4000,6 +4046,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     // V554 · cada 3 minutos (con la app a la vista) se refrescan por detrás los datos de más de
     // 2,5 min: al cambiar de pantalla todo sale al instante y nunca con más de ~3 min de retraso.
     setInterval(function(){if(document.visibilityState==='visible'&&uid())window.v541Warm(0)},180000);
+    setInterval(function(){if(document.visibilityState==='visible'&&uid())window.v1000PackRefresh()},300000);window.addEventListener('online',function(){setTimeout(function(){window.v1000PackRefresh()},2000)});
     var hiddenAt=0;
     document.addEventListener('visibilitychange',function(){
       if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
@@ -4058,13 +4105,13 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
             var ttl=SLOW.has(table)?900000:300000,now=Date.now(),hit=cache.get(key);
             if(!hit||now-hit.t>ttl||(warming&&now-hit.t>150000)){
               var pr=v.call(t,function(x){return x}).then(function(x){
-                if(x&&x.error&&typeof v547IsNetErr==='function'&&v547IsNetErr(x.error)){var fb=oget(key);if(fb){try{v547Offline(true)}catch(e){}return fb}}
+                if(x&&x.error&&typeof v547IsNetErr==='function'&&v547IsNetErr(x.error)){var fb=oget(key)||packGet(table,rec);if(fb){try{v547Offline(true)}catch(e){}return fb}}
                 if(x&&!x.error){try{v547Offline(false)}catch(e){}oset(key,x)}
                 return x;
-              },function(err){var fb=oget(key);if(fb){try{v547Offline(true)}catch(e){}return fb}throw err});
+              },function(err){var fb=oget(key)||packGet(table,rec);if(fb){try{v547Offline(true)}catch(e){}return fb}throw err});
               // con cobertura muy lenta: si en 5 s no ha llegado y hay copia guardada, se usa la copia
               // (la respuesta real, si llega después, se guarda igualmente para la próxima vez)
-              var fb5=oget(key);
+              var fb5=oget(key)||packGet(table,rec);
               if(fb5){var real=pr;pr=Promise.race([real,new Promise(function(r){setTimeout(function(){r(fb5)},5000)})]).then(function(x){if(x===fb5){try{v547Offline(true)}catch(e){}}return x})}
               hit={t:now,p:pr};cache.set(key,hit);
               pr.then(function(x){if(!x||x.error||x.v547Offline){if(cache.get(key)===hit)cache.delete(key)}else if(PERSIST.has(table))pset(key,x)},function(){if(cache.get(key)===hit)cache.delete(key)});
@@ -4320,11 +4367,12 @@ async function v554Preload(){
   try{
     const extra=[];
     if(typeof v543PrefetchEvents==='function')extra.push(v543PrefetchEvents());
-    await Promise.race([Promise.all([typeof v559WarmNow==='function'?v559WarmNow():null,...extra]),new Promise(r=>setTimeout(r,12000))]);
+    await Promise.race([Promise.all([typeof v559WarmNow==='function'?v559WarmNow():null,...extra]),new Promise(r=>setTimeout(r,1800))]); // V1000 · antes esperaba hasta 12 s (en wifi el vídeo mostraba ~13 s de logo); ahora como mucho 1,8 s y el resto se sigue cargando por detrás
   }catch(e){}
 }
 async function startApp(){
   if(appStartingV96)return; appStartingV96=true;
+  setTimeout(()=>{try{window.v1000PackRefresh&&window.v1000PackRefresh()}catch(e){}},6000);
   // V542 · arranque en paralelo: equipos, sesión (local, sin ir a la red), rol, perfil, grupos y
   // estado de alta se piden todos a la vez en lugar de uno tras otro.
   window.__bs='equipos y sesión';const v542TeamsP=loadTeamsV88(false);
@@ -4404,7 +4452,7 @@ async function startApp(){
   // así sus datos quedan cargados y luego cada cambio de pestaña es instantáneo, con su fundido.
   await v554Preload();
   draw();render();
-  window._v547AppShown=true;setTimeout(()=>v547HideSplash(),2500);
+  window._v547AppShown=true;setTimeout(()=>v547HideSplash(),300);
   if(typeof v541Warm==='function')v541Warm(1500);
   if(launchParams.get('share')==='1')setTimeout(v800ShareOpen,900); // V800 · lo compartido desde otra app (Android)
   setTimeout(()=>{if(tab!=='eventos')v543PrefetchEvents()},900);
