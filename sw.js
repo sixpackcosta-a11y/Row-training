@@ -79,6 +79,18 @@ async function supaLib(event){
   return r||new Response('',{status:504});
 }
 
+async function avatarCache(req){
+  const cache=await caches.open('rowtraining-avatars');
+  const hit=await cache.match(req.url);if(hit)return hit;
+  try{
+    const res=await fetch(req.url,{mode:'cors'});
+    if(res&&res.ok){cache.put(req.url,res.clone()).catch(()=>{});
+      // se limita el almacén a las 80 fotos más recientes
+      cache.keys().then(ks=>{if(ks.length>80)ks.slice(0,ks.length-80).forEach(k=>cache.delete(k))}).catch(()=>{})}
+    return res;
+  }catch(e){return fetch(req)}
+}
+
 async function staleWhileRevalidate(req){
   const cache=await caches.open(CACHE);
   const cached=await cache.match(req);
@@ -110,6 +122,8 @@ self.addEventListener('fetch', event => {
   if(req.method!=='GET')return;
   let url;try{url=new URL(req.url)}catch(e){return}
   if(url.protocol!=='https:'&&url.protocol!=='http:')return;
+  // V1001 · fotos de perfil: se guardan en el móvil la primera vez y después salen al instante (la dirección cambia al subir una foto nueva)
+  if(/supabase\.co$/.test(url.hostname)&&url.pathname.includes('/storage/v1/object/public/avatars/')){event.respondWith(avatarCache(req));return}
   // datos y servicios: siempre directos a internet
   if(/supabase\.co$/.test(url.hostname))return;
   if(url.origin===self.location.origin&&(url.pathname.startsWith('/api/')||url.pathname==='/version.json'||url.pathname==='/sw.js'))return;

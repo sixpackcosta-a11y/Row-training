@@ -3712,10 +3712,25 @@ function v505AvatarCircleHtml(p,size){
 // bucket 'avatars' (RLS: cada cual solo puede escribir en su propia carpeta — <user_id>/..., salvo
 // el equipo técnico, que puede escribir en cualquiera). Devuelve la URL pública (con parámetro de
 // caché roto para que se vea el cambio al momento) o lanza si falla.
+// V1001 · la foto original (varios MB) se bajaba entera para dibujarla a 34 px; ahora se reduce a 384 px (~40 KB) antes de subirla
+async function v1001ShrinkAvatar(file,max){
+  max=max||384;
+  try{
+    let bmp=null;
+    if(typeof createImageBitmap==='function'){try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){bmp=null}}
+    if(!bmp){bmp=await new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{res(im);setTimeout(()=>URL.revokeObjectURL(u),3000)};im.onerror=rej;im.src=u})}
+    const w=bmp.width||bmp.naturalWidth,h=bmp.height||bmp.naturalHeight;if(!w||!h)return file;
+    const k=Math.min(1,max/Math.max(w,h)),cw=Math.round(w*k),ch=Math.round(h*k),cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+    const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cw,ch);cx.drawImage(bmp,0,0,cw,ch);
+    const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.86));
+    return blob&&blob.size>0&&blob.size<file.size?blob:file;
+  }catch(e){return file}
+}
 async function v505UploadAvatar(targetUserId,file){
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  file=await v1001ShrinkAvatar(file,384);
+  const ext=(file.type==='image/jpeg'?'jpg':(file.name||'').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
   const path=`${targetUserId}/avatar.${ext}`;
-  const up=await sb.storage.from('avatars').upload(path,file,{upsert:true,cacheControl:'3600'});
+  const up=await sb.storage.from('avatars').upload(path,file,{upsert:true,cacheControl:'31536000',contentType:file.type||'image/jpeg'});
   if(up.error)throw up.error;
   const {data}=sb.storage.from('avatars').getPublicUrl(path);
   const url=data.publicUrl+'?v='+Date.now();
@@ -3851,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1000";
+const APP_VERSION="1001";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
