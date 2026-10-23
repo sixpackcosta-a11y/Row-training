@@ -12,7 +12,7 @@ const CACHE='rowtraining-app-v565';
 const PRECACHE=['/','/index.html','/manifest.json','/assets/club-pedregalejo.png','/assets/brand/logo-login-oscuro.png','/assets/brand/logo-login-claro.png','/assets/brand/icon-cabecera.png','/assets/brand/icon-192.png','/assets/brand/favicon-32.png'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(c=>Promise.all(PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(c=>Promise.all([...PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})),fetchSupa().then(r=>r&&c.put(SUPA,r)).catch(()=>{})])).then(()=>self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
@@ -58,6 +58,27 @@ async function appPage(req,url,event){
   return net; // primera vez sin nada guardado: esperar a la red
 }
 
+// V998 · la librería de Supabase bloquea el arranque de la app: sin ella no pinta nada. Se guarda siempre (también al instalar)
+// y, si todavía no estaba guardada y jsdelivr va lento, a los 3,5 s se pide también a unpkg y gana el primero que conteste.
+const SUPA='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',SUPA_ALT='https://unpkg.com/@supabase/supabase-js@2';
+async function fetchSupa(){
+  const ok=r=>r&&r.ok&&r;
+  return new Promise(resolve=>{
+    let left=2,done=false;
+    const fin=r=>{if(done)return;if(r){done=true;resolve(r)}else if(--left===0){done=true;resolve(null)}};
+    fetch(SUPA,{mode:'cors'}).then(ok).catch(()=>null).then(fin);
+    setTimeout(()=>{if(done){return}fetch(SUPA_ALT,{mode:'cors'}).then(ok).catch(()=>null).then(fin)},3500);
+  });
+}
+async function supaLib(event){
+  const cache=await caches.open(CACHE);
+  const cached=await cache.match(SUPA);
+  const upd=fetchSupa().then(r=>{if(r)cache.put(SUPA,r.clone()).catch(()=>{});return r});
+  if(cached){if(event)event.waitUntil(upd.catch(()=>{}));return cached}
+  const r=await upd;
+  return r||new Response('',{status:504});
+}
+
 async function staleWhileRevalidate(req){
   const cache=await caches.open(CACHE);
   const cached=await cache.match(req);
@@ -93,6 +114,7 @@ self.addEventListener('fetch', event => {
   if(/supabase\.co$/.test(url.hostname))return;
   if(url.origin===self.location.origin&&(url.pathname.startsWith('/api/')||url.pathname==='/version.json'||url.pathname==='/sw.js'))return;
   if(isAppPage(req,url)){event.respondWith(appPage(req,url,event));return}
+  if(url.href===SUPA){event.respondWith(supaLib(event));return}
   const cdn=/(^|\.)cdn\.jsdelivr\.net$|(^|\.)unpkg\.com$|(^|\.)fonts\.googleapis\.com$|(^|\.)fonts\.gstatic\.com$/.test(url.hostname);
   const ownStatic=url.origin===self.location.origin&&(url.pathname.startsWith('/assets/')||url.pathname==='/manifest.json'||/\.(png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(url.pathname));
   if(cdn||ownStatic){event.respondWith(staleWhileRevalidate(req));return}

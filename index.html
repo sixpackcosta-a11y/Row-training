@@ -1967,11 +1967,12 @@ html[data-theme="dark"] .v965Sk i{background:linear-gradient(90deg,#1d2838 0%,#2
   var gone=function(){return !document.getElementById('v547Splash')};
   window.v547HideSplash=function(){var s=document.getElementById('v547Splash');if(!s||s._h)return;s._h=1;s.classList.add('out');setTimeout(function(){s.remove()},400)};
   window.v547SplashFail=function(msg){if(gone())return;var m=document.getElementById('v547Msg'),b=document.getElementById('v547Retry');if(m)m.textContent=msg||'No hay buena conexión ahora mismo.';if(b)b.style.display=''};
-  setTimeout(function(){if(!gone()){var m=document.getElementById('v547Msg');if(m&&!m.textContent)m.textContent='Conexión lenta… seguimos intentándolo'}},5000);
+  setTimeout(function(){if(!gone()){var m=document.getElementById('v547Msg');if(m&&!m.textContent)m.textContent='Conexión lenta… seguimos intentándolo'+(window.__bs?' ('+window.__bs+')':'')}},5000);
+  setInterval(function(){if(gone())return;var m=document.getElementById('v547Msg');if(m&&/^Conexión lenta/.test(m.textContent)&&window.__bs)m.textContent='Conexión lenta… seguimos intentándolo ('+window.__bs+', '+Math.round((Date.now()-(window.__bt||Date.now()))/1000)+' s)'},1000);window.__bt=Date.now();window.__bs='cargando librería';
   setTimeout(function(){window.v547SplashFail()},35000);
   document.getElementById('v547Retry').onclick=function(){location.reload()};
 })();
-</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script><script>if(!window.supabase)window.v547SplashFail('No se ha podido conectar. Comprueba la cobertura y reintenta.')</script><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:10px;min-width:0"><img class="v551Icon" src="assets/brand/icon-cabecera.png" alt=""><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:6px;min-width:0"><span class="v551Word" aria-label="Row Training"><span class="v551Row">ROW</span><span class="v551Tr">TRAINING</span></span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" class="v551Name" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8;line-height:1.35;padding-bottom:4px;margin-bottom:-4px"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159 hidden" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" style="display:none" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button><button id="v740Photo" class="hidden" type="button" aria-label="Mi perfil" title="Mi perfil"></button></div></header><main><script>
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script><script>window.__bs=window.supabase?'librería lista':'sin librería';if(!window.supabase)window.v547SplashFail('No se ha podido conectar. Comprueba la cobertura y reintenta.')</script><div id="v347Scroll"><header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;position:sticky;top:0;z-index:50"><div class="brand" style="display:flex;align-items:center;gap:10px;min-width:0"><img class="v551Icon" src="assets/brand/icon-cabecera.png" alt=""><div style="min-width:0;overflow:hidden"><b style="display:flex;align-items:center;gap:6px;min-width:0"><span class="v551Word" aria-label="Row Training"><span class="v551Row">ROW</span><span class="v551Tr">TRAINING</span></span><span id="seasonBadgeV283" style="flex:0 0 auto;font-size:.65em;font-weight:600;opacity:.7;border:1px solid currentColor;border-radius:6px;padding:1px 5px;vertical-align:middle"></span></b><small id="role" class="v551Name" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8;line-height:1.35;padding-bottom:4px;margin-bottom:-4px"></small></div></div><div id="userHead" style="display:flex;align-items:center;gap:6px;flex:0 0 auto"><b id="userName" style="display:none">Usuario</b><button id="navMenuBtnV300" class="refreshHeadV159 hidden" type="button" aria-label="Menú" title="Menú"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="18" height="2" rx="1" fill="currentColor"/><rect y="12" width="18" height="2" rx="1" fill="currentColor"/></svg><span id="navMenuBadgeV300" class="nBadge hidden">0</span></button><button id="refreshAppV159" class="refreshHeadV159" type="button" style="display:none" aria-label="Actualizar" title="Actualizar">↻</button><button id="notifyBellV104" class="notifyHeadV104 hidden" type="button" aria-label="Notificaciones">🔔<span id="notifyBadgeV104" class="nBadge hidden">0</span></button><button id="v740Photo" class="hidden" type="button" aria-label="Mi perfil" title="Mi perfil"></button></div></header><main><script>
 function applyThemeV299(mode){
   var isDark=mode==='dark';
   document.documentElement.setAttribute('data-theme', isDark?'dark':'light');
@@ -3850,7 +3851,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="997";
+const APP_VERSION="998";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4314,7 +4315,7 @@ async function startApp(){
   if(appStartingV96)return; appStartingV96=true;
   // V542 · arranque en paralelo: equipos, sesión (local, sin ir a la red), rol, perfil, grupos y
   // estado de alta se piden todos a la vez en lugar de uno tras otro.
-  const v542TeamsP=loadTeamsV88(false);
+  window.__bs='equipos y sesión';const v542TeamsP=loadTeamsV88(false);
   let user=v547PreUser||null;v547PreUser=null;
   // V547 · con mala cobertura getSession puede quedarse esperando a renovar el token: como mucho 4 s
   // y, si no, se entra con la sesión guardada en el móvil.
@@ -4322,13 +4323,14 @@ async function startApp(){
   if(!user)user=v547StoredUser();
   if(!user){try{const {data}=await sb.auth.getUser();user=data?.user||null}catch(e){}}
   if(!user){appStartingV96=false;openLogin();return;}currentUser=user;
-  const v542RegP=loadRegistrationState();
+  window.__bs='rol y perfil';const v542RegP=loadRegistrationState();
   const [,,roleRes,profileRes,staffRes,membershipRes]=await Promise.all([v542TeamsP,v542RegP,
     sb.from("user_roles").select("role").eq("user_id",user.id).single(),
     sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle(),
     sb.from("team_staff_roles").select("team_code,staff_role").eq("user_id",user.id),
     sb.from("rower_team_memberships").select("team_code,is_rower").eq("user_id",user.id).eq("is_rower",true)
   ]);
+  window.__bs='pintando pantalla';
   if(roleRes.error){appStartingV96=false;if(v547IsNetErr(roleRes.error)){v547SplashFail('No hay conexión y aún no hay datos guardados en este móvil.');return}alert("Error leyendo rol: "+roleRes.error.message);return}
   baseAccountRole=roleRes.data?.role||"athlete";isGlobalCoach=baseAccountRole==="coach";
   currentUserProfile=profileRes.data||{};rowerTeamCodes=membershipRes?.error?[]:[...new Set((membershipRes.data||[]).map(x=>x.team_code))];if(!rowerTeamCodes.length&&currentUserProfile.team_code)rowerTeamCodes.unshift(currentUserProfile.team_code);const savedRowerTeam=localStorage.getItem(`rowtraining_rower_team_${user.id}`);currentTeamCode=(savedRowerTeam&&rowerTeamCodes.includes(savedRowerTeam))?savedRowerTeam:(rowerTeamCodes[0]||currentUserProfile.team_code||null);
