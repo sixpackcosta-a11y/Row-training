@@ -3851,7 +3851,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="998";
+const APP_VERSION="999";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3900,6 +3900,18 @@ function v547Fetch(url,opts){
   const isNet=e=>e&&e.name!=='AbortError'&&/load failed|failed to fetch|network/i.test(String(e.message||e));
   const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
   return run(0);
+}
+// V999 · un error de red al pedir los entrenamientos se enseñaba como "no hay entrenamientos" (pantalla vacía). Ahora se dice
+// claramente, se reintenta solo unas veces y hay botón.
+function v999Fail(q,retry){
+  if(!q||!q.error)return false;
+  const box=document.getElementById('content');if(!box)return true;
+  const id='v999Fail'+Date.now();window.v999FailTry=(window.v999FailTry||0);
+  box.innerHTML=`<div class="card" id="${id}"><p><b>No se han podido cargar los entrenamientos</b></p><p class="muted">Parece que la cobertura es floja ahora mismo. <b>No significa que no haya entrenamiento</b>; los datos no han llegado. Se reintenta solo.</p><div class="actions"><button type="button" class="primary" id="${id}B">Reintentar ahora</button></div></div>`;
+  const go=()=>{if(!document.getElementById(id))return;try{retry()}catch(e){}};
+  const b=document.getElementById(id+'B');if(b)b.onclick=()=>{window.v999FailTry=0;go()};
+  if(window.v999FailTry<5){window.v999FailTry++;setTimeout(go,4000)}
+  return true;
 }
 function v547IsNetErr(e){if(!e)return false;const m=[e.message,e.details,e.name,e.hint].filter(Boolean).join(' ');return !e.code&&/failed to fetch|load failed|network|abort|timeout|timed out/i.test(m)}
 function v547StoredUser(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^sb-.*-auth-token$/.test(k)){const o=JSON.parse(localStorage.getItem(k)||'null');const u=o?.user||o?.currentSession?.user;if(u?.id)return u}}}catch(e){}return null}
@@ -5165,6 +5177,7 @@ async function staffTodayView(){
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
   const [ss,cc,ee]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team]),v497AttendanceEnabledForTeam(team)&&v534EventsUI()?sb.from('club_events').select('*').eq('team_code',team).eq('event_date',date):Promise.resolve({data:[]})]);
+  if(v999Fail(ss,staffTodayView))return;window.v999FailTry=0;
   const sessions=ss.data||[],comps=cc.data||[],clubEvs=ee.error?[]:(ee.data||[]);
   // V403 · se quita el botón "Ver semana" (la barra Hoy/Semana/Mes/Registro MAR de arriba ya
   // permite ir a Semana, era redundante) y el selector de Equipo sube justo debajo del título,
@@ -8496,6 +8509,7 @@ content.innerHTML=focusDate?`<div class="card"><button type="button" id="coachDa
     else coachMonthView();
   });
   const [ss,cc,auditPlansQ]=await Promise.all([sb.from('training_sessions').select('*').eq('team_code',team).gte('session_date',start).lte('session_date',end).order('session_date').order('created_at'),sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[team]),isDayModal?Promise.resolve({data:[],error:null}):sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content').eq('team_code',team).eq('session_type','ERG').gte('session_date',addDaysISO(start,-42)).lte('session_date',addDaysISO(end,42)).order('session_date')]);
+  if(!isDayModal&&v999Fail(ss,coachWeekView))return;if(!ss.error)window.v999FailTry=0;
   const sessions=ss.error?[]:(ss.data||[]),comps=cc.error?[]:(cc.data||[]);
   let auditPlans=auditPlansQ.error?sessions.filter(x=>x.session_type==='ERG'):(auditPlansQ.data||[]);
   const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],sessionIds=sessions.map(x=>Number(x.id)).filter(Number.isFinite);
@@ -16745,6 +16759,7 @@ async function todayView(){
     sb.from('concept2_results').select('id,user_id,workout_date,training_session_id,match_status,matched_session_code,hidden').eq('user_id',currentUser.id).order('workout_date',{ascending:false}).limit(300)
   ]);
   if(tab!=='hoy'||currentMode!=='athlete')return;
+  if(v999Fail(ss,todayView))return;window.v999FailTry=0;
   const sessions=ss.data||[],comps=cc.error?[]:(cc.data||[]),clubEvs=ee.error?[]:(ee.data||[]),pendErr=pendingSessions.error||ww.error||c2.error;
   const pending=pendErr?null:v225PendingPlansForAthlete(currentUser.id,currentTeamCode,pendingSessions.data||[],ww.data||[],c2.data||[],date);
   const [displaySessions,displayPending,teamLabelDisplay]=await Promise.all([v311TranslateSessions(sessions),v311TranslatePending(pending),v311TranslateContent(teamLabel(currentTeamCode))]);
@@ -16788,7 +16803,7 @@ async function weekly(){
       sb.from('competitions').select('*').gte('competition_date',start).lte('competition_date',end).contains('team_codes',[currentTeamCode])
     ]);
     if(tab!=='semana'||currentMode!=='athlete')return;
-    if(ss?.error)console.warn('Semana remero: sesiones MAR/planificación',ss.error);
+    if(ss?.error){console.warn('Semana remero: sesiones MAR/planificación',ss.error);if(v999Fail(ss,weekly))return}window.v999FailTry=0;
     const sessions=ss?.data||[],comps=cc?.error?[]:(cc?.data||[]),days=Array.from({length:7},(_,i)=>addDaysISO(start,i)),names=v311T('dias_semana'),today=localISODate();
     const marIds=sessions.filter(x=>String(x.session_type||'').toUpperCase()==='MAR').map(x=>x.id);
     const rsvpRows=marIds.length&&currentUser?(await sb.from('session_rsvp').select('training_session_id,status').eq('user_id',currentUser.id).in('training_session_id',marIds)).data||[]:[];
