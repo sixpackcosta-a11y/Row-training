@@ -4078,7 +4078,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
                 remember(skey,table,rec);
                 var old=SWR.get(skey);
                 var fresh=v.call(t,function(x){return x});if(!old)track(fresh);
-                fresh.then(function(x){if(x&&!x.error){var prev=SWR.get(skey),js=JSON.stringify(x.data);SWR.set(skey,{js:js,x:x});if(prev&&prev.js!==js){try{window.dispatchEvent(new CustomEvent('v561fresh',{detail:{table:table}}))}catch(e){}}}},function(){});
+                fresh.then(function(x){if(x&&!x.error){var prev=SWR.get(skey),js=(function(d){try{if(Array.isArray(d)){return d.map(function(r){return JSON.stringify(r)}).sort().join('|')}return JSON.stringify(d)}catch(e){return JSON.stringify(d)}})(x.data); /* V1000 · comparación sin depender del orden de las filas: si no, cada consulta 'cambiaba' y la pantalla se repintaba sin parar (parpadeo en Eventos) */SWR.set(skey,{js:js,x:x});if(prev&&prev.js!==js){try{window.dispatchEvent(new CustomEvent('v561fresh',{detail:{table:table}}))}catch(e){}}}},function(){});
                 if(old)return Promise.resolve(clone(old.x)).then(res,rej);
                 return fresh.then(function(x){return clone(x)}).then(res,rej);
               }
@@ -4278,7 +4278,7 @@ window.addEventListener('v561fresh',e=>{
   try{
     const t=e.detail&&e.detail.table;
     if(document.querySelector('.modalBack')||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))return;
-    if((t==='chat_messages'&&tab==='mensajes')||(t==='session_rsvp'&&(tab==='eventos'||tab==='registro'))){clearTimeout(window._v561T);window._v561T=setTimeout(()=>{try{render()}catch(_){}},60)}
+    if((t==='chat_messages'&&tab==='mensajes')||(t==='session_rsvp'&&(tab==='eventos'||tab==='registro'))){if(Date.now()-(window._v561Last||0)<4000)return;clearTimeout(window._v561T);window._v561T=setTimeout(()=>{window._v561Last=Date.now();try{render()}catch(_){}},60)}
   }catch(_){}
 });
 // V570 · Papelera: todo entrenamiento que se borra se guarda 60 días en training_sessions_trash
