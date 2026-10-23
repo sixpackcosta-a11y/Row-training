@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1001";
+const APP_VERSION="1002";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4382,7 +4382,7 @@ async function v554Preload(){
   try{
     const extra=[];
     if(typeof v543PrefetchEvents==='function')extra.push(v543PrefetchEvents());
-    await Promise.race([Promise.all([typeof v559WarmNow==='function'?v559WarmNow():null,...extra]),new Promise(r=>setTimeout(r,1800))]); // V1000 · antes esperaba hasta 12 s (en wifi el vídeo mostraba ~13 s de logo); ahora como mucho 1,8 s y el resto se sigue cargando por detrás
+    await Promise.race([Promise.all([typeof v559WarmNow==='function'?v559WarmNow():null,...extra]),new Promise(r=>setTimeout(r,900))]); // V1002 (antes 1800; en V1000 bajó de 12000) · antes esperaba hasta 12 s (en wifi el vídeo mostraba ~13 s de logo); ahora como mucho 1,8 s y el resto se sigue cargando por detrás
   }catch(e){}
 }
 async function startApp(){
@@ -5240,6 +5240,7 @@ async function staffTodayView(){
   const team=(coachSelectedTeam&&teams.includes(coachSelectedTeam))?coachSelectedTeam:teams[0];coachSelectedTeam=team;const canEdit=canEditTeamJS(team);
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading()}</p></div>`;
   const [ss,cc,ee]=await Promise.all([sb.from("training_sessions").select("*").eq("team_code",team).eq("session_date",date).order("created_at"),sb.from("competitions").select("*").eq("competition_date",date).contains("team_codes",[team]),v497AttendanceEnabledForTeam(team)&&v534EventsUI()?sb.from('club_events').select('*').eq('team_code',team).eq('event_date',date):Promise.resolve({data:[]})]);
+  if(tab!=='hoy')return; // V1002 · si mientras cargaba cambiaste de pestaña, no pisa la pantalla actual
   if(v999Fail(ss,staffTodayView))return;window.v999FailTry=0;
   const sessions=ss.data||[],comps=cc.data||[],clubEvs=ee.error?[]:(ee.data||[]);
   // V403 · se quita el botón "Ver semana" (la barra Hoy/Semana/Mes/Registro MAR de arriba ya
