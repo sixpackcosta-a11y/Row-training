@@ -600,7 +600,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .v567Btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.v567Btns button{margin:0;padding:9px 4px;font-size:.85em}
 .v567TrBox{margin-top:10px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line,rgba(0,0,0,.08))}
 .v567Item,.v567Opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.06))}.v567Item:last-child,.v567Opt:last-child{border-bottom:0}
-.v567Item button,.v567Opt button{margin:0;flex:0 0 auto}.v567Rm{background:transparent;border:0;color:#c0392b;font-size:1.05em;padding:4px 8px}
+.v567Item button,.v567Opt button{margin:0;flex:0 0 auto}.v567Rm{background:transparent;border:0;color:#c0392b;font-size:1.05em;padding:4px 8px}.v1006Btns{display:flex;align-items:center;gap:0;flex:0 0 auto}.v1006Btns button{margin:0!important;width:auto}.v1006Ed{background:transparent;border:0;font-size:1.05em;padding:4px 8px}
 .v546Sched{margin:14px 0 10px;padding:14px;border-radius:14px;background:var(--surface-2,rgba(0,0,0,.05))}.v546Sched p{margin:6px 0 12px}
 .v546Sched .v546SendNow{width:100%;margin:0;border-radius:999px;padding:12px;font-weight:600}
 .v546Preview{margin:6px 0 4px}.v546Preview h4{margin:6px 0 6px;font-size:1.05em}
@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1004";
+const APP_VERSION="1006";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6366,9 +6366,20 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   // V567 · "crear un evento y asociarle un entrenamiento concreto, de un día de la planificación,
   // de la biblioteca o uno nuevo". Se elige aquí mismo y se guarda junto con el evento.
   let v567Items=[];
+  let v1006Replace=false,v1006Prog=false,v1006Removed=[];
+  const v1006Add=it=>{if(v1006Replace){v1006Removed.push(...v567Items.filter(z=>z.kind==='existing'));v567Items.length=0;v1006Replace=false;const bb=document.getElementById('v1006Hint');if(bb)bb.textContent=''}v567Items.push(it)};
   const v567HadLinks=!isSess&&Array.isArray(x.session_ids)&&x.session_ids.length>0;
   const v567Type=t=>(V536_TYPE_LABEL[String(t||'').toUpperCase()]||t||'');
-  const v567Paint=()=>{const l=$('v567TrList');if(!l)return;l.innerHTML=v567Items.length?v567Items.map((it,i)=>`<div class="v567Item"><span><b>${esc(v567Type(it.stype))}</b> · ${esc(it.title||'Sin título')}<small class="muted"> · ${it.kind==='existing'?esc(it.dateLabel||'de la planificación'):it.kind==='lib'?'de la biblioteca (se crea el día del evento)':'nuevo (se crea el día del evento)'}</small></span><button type="button" class="v567Rm" data-i="${i}" aria-label="Quitar">✕</button></div>`).join(''):'<p class="muted"><small>Sin entrenamiento asociado.</small></p>';l.querySelectorAll('.v567Rm').forEach(b=>b.onclick=()=>{v567Items.splice(Number(b.dataset.i),1);v567Paint()})};
+  const v567Paint=()=>{const l=$('v567TrList');if(!l)return;l.innerHTML=v567Items.length?v567Items.map((it,i)=>`<div class="v567Item"><span><b>${esc(v567Type(it.stype))}</b> · ${esc(it.title||'Sin título')}<small class="muted"> · ${it.kind==='existing'?esc(it.dateLabel||'de la planificación'):it.kind==='lib'?'de la biblioteca (se crea el día del evento)':'nuevo (se crea el día del evento)'}</small></span><span class="v1006Btns"><button type="button" class="v1006Ed" data-i="${i}" aria-label="Editar">✏️</button><button type="button" class="v567Rm" data-i="${i}" aria-label="Quitar">✕</button></span></div>`).join(''):'<p class="muted"><small>Sin entrenamiento asociado.</small></p>';l.querySelectorAll('.v567Rm').forEach(b=>b.onclick=()=>{const rm=v567Items.splice(Number(b.dataset.i),1)[0];if(rm&&rm.kind==='existing')v1006Removed.push(rm);v567Paint()});
+    l.querySelectorAll('.v1006Ed').forEach(b=>b.onclick=async()=>{
+      const it=v567Items[Number(b.dataset.i)],box=$('v567TrBox');if(!it||!box)return;
+      box.dataset.m='edit';box.classList.remove('hidden');
+      if(it.kind==='existing'&&it.content==null){box.innerHTML='<p class="muted"><small>Cargando…</small></p>';try{const r=await sb.from('training_sessions').select('content').eq('id',it.id).maybeSingle();it.content=(r.data&&r.data.content)||''}catch(e){it.content=''}}
+      box.innerHTML='<div class="plannerGrid"><label>Tipo<select id="v1006T"><option value="MAR">🚣 MAR</option><option value="GYM">🏋️ GYM</option><option value="ERG">🚣‍♀️ ERGO</option><option value="MIX">MIX</option></select></label><label>Título<input id="v1006Ti"></label></div><label>Contenido<textarea id="v1006C" rows="7"></textarea></label><div class="actions"><button type="button" id="v1006S" class="primary">Guardar entrenamiento</button></div>';
+      $('v1006T').value=String(it.stype||'MAR').toUpperCase();$('v1006Ti').value=it.title||'';$('v1006C').value=it.content||'';
+      $('v1006S').onclick=async()=>{const t=$('v1006T').value,ti=$('v1006Ti').value.trim()||'Entrenamiento',c=$('v1006C').value;
+        if(it.kind==='existing'){const sv=$('v1006S');sv.disabled=true;sv.textContent='Guardando…';const u=await sb.from('training_sessions').update({session_type:t,title:ti,content:c,updated_at:new Date().toISOString()}).eq('id',it.id);if(u.error){sv.disabled=false;sv.textContent='Guardar entrenamiento';return alert('No se pudo guardar el entrenamiento: '+u.error.message)}}
+        it.stype=t;it.title=ti;it.content=c;v567Paint();box.classList.add('hidden')}})};
   if(v567HadLinks&&existing){
     (async()=>{try{const r=await sb.from('training_sessions').select('id,session_type,title,session_date').in('id',x.session_ids.map(Number));(r.data||[]).forEach(s0=>v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,date:String(s0.session_date||'').slice(0,10),dateLabel:v512DetailDateLabel(s0.session_date)}));v567Paint()}catch(e){}})();
   }
@@ -6384,20 +6395,36 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const load=async()=>{const lst=$('v567PList');lst.innerHTML='<p class="muted"><small>Buscando…</small></p>';const r=await sb.from('training_sessions').select('id,team_code,session_type,title,session_date,target_user_ids').eq('team_code',$('v567PTeam').value).eq('session_date',$('v567PDate').value).order('session_type');
         const opts=(r.data||[]).filter(s0=>!sessionTargetsV249(s0).length&&String(s0.session_type).toUpperCase()!=='DESC'&&!v567Items.some(it=>it.kind==='existing'&&it.id===Number(s0.id)));
         lst.innerHTML=opts.length?opts.map(s0=>`<div class="v567Opt"><span>${esc(v567Type(s0.session_type))} · ${esc(s0.title||'')}</span><button type="button" class="primary" data-id="${s0.id}">Añadir</button></div>`).join(''):'<p class="muted"><small>No hay entrenamientos planificados ese día para ese equipo.</small></p>';
-        lst.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const s0=opts.find(o=>String(o.id)===b.dataset.id);v567Items.push({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,date:String(s0.session_date||'').slice(0,10),dateLabel:v512DetailDateLabel(s0.session_date)});v567Paint();box.classList.add('hidden')});};
+        lst.querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const s0=opts.find(o=>String(o.id)===b.dataset.id);v1006Add({kind:'existing',id:Number(s0.id),stype:s0.session_type,title:s0.title,date:String(s0.session_date||'').slice(0,10),dateLabel:v512DetailDateLabel(s0.session_date)});v567Paint();box.classList.add('hidden')});};
       $('v567PTeam').onchange=load;$('v567PDate').onchange=load;load();
     }else if(btn.dataset.m==='lib'){
       box.innerHTML=`<div class="plannerGrid"><label>Tipo<select id="v567LKind"><option value="MAR">🚣 MAR</option><option value="GYM">🏋️ GYM</option><option value="MIX">🚣‍♀️ ERGO / MIX</option></select></label><label>Buscar<input id="v567LQ" placeholder="Nombre…"></label></div><div id="v567LList"></div>`;
       let rows=[];
       const paint=()=>{const q=($('v567LQ').value||'').toLowerCase().trim();const lst=$('v567LList');const f=rows.filter(r0=>!q||String(r0.name||'').toLowerCase().includes(q)).slice(0,40);lst.innerHTML=f.length?f.map(r0=>`<div class="v567Opt"><span>${esc(r0.name||'Sin nombre')}</span><button type="button" class="primary" data-i="${rows.indexOf(r0)}">Añadir</button></div>`).join(''):'<p class="muted"><small>No hay entrenamientos en la biblioteca con ese nombre.</small></p>';
-        lst.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const r0=rows[Number(b.dataset.i)];const k=$('v567LKind').value;v567Items.push({kind:'lib',stype:k==='MIX'?'ERG':k,title:r0.name||'',content:r0.content||''});v567Paint();box.classList.add('hidden')});};
+        lst.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const r0=rows[Number(b.dataset.i)];const k=$('v567LKind').value;v1006Add({kind:'lib',stype:k==='MIX'?'ERG':k,title:r0.name||'',content:r0.content||''});v567Paint();box.classList.add('hidden')});};
       const load=async()=>{$('v567LList').innerHTML='<p class="muted"><small>Cargando biblioteca…</small></p>';rows=(await getTrainingLibrary($('v567LKind').value)).filter(r0=>!r0._pref||!r0._pref.is_hidden);paint()};
       $('v567LKind').onchange=load;$('v567LQ').oninput=paint;load();
     }else{
       box.innerHTML=`<div class="plannerGrid"><label>Tipo<select id="v567NType"><option value="MAR">🚣 MAR</option><option value="GYM">🏋️ GYM</option><option value="ERG">🚣‍♀️ ERGO</option></select></label><label>Título<input id="v567NTitle" placeholder="Ej. Técnica + base"></label></div><label>Contenido<textarea id="v567NContent" rows="5" placeholder="Calentamiento, bloques, vuelta a la calma…"></textarea></label><div class="actions"><button type="button" id="v567NAdd" class="primary">Añadir</button></div>`;
-      $('v567NAdd').onclick=()=>{const t1=$('v567NTitle').value.trim(),c1=$('v567NContent').value.trim();if(!t1&&!c1)return alert('Escribe al menos un título o el contenido.');v567Items.push({kind:'new',stype:$('v567NType').value,title:t1||'Entrenamiento',content:c1});v567Paint();box.classList.add('hidden')};
+      $('v567NAdd').onclick=()=>{const t1=$('v567NTitle').value.trim(),c1=$('v567NContent').value.trim();if(!t1&&!c1)return alert('Escribe al menos un título o el contenido.');v1006Add({kind:'new',stype:$('v567NType').value,title:t1||'Entrenamiento',content:c1});v567Paint();box.classList.add('hidden')};
     }
   });
+  // V1006 · "Cambiar todo el entrenamiento": sustituye TODOS los entrenamientos del evento por uno nuevo (MAR, GYM, ERGO…)
+  container.querySelectorAll('.v567Btns button').forEach(b=>b.addEventListener('click',()=>{if(!v1006Prog)v1006Replace=false},true));
+  if(!isSess&&$('v567TrList')){
+    const bar=document.createElement('div');bar.id='v1006Bar';bar.style.cssText='margin:8px 0 2px';
+    bar.innerHTML='<button type="button" id="v1006All" style="width:100%;margin:0">🔁 Cambiar todo el entrenamiento…</button><div id="v1006Opts" class="hidden" style="margin-top:8px"><div class="v567Btns" style="grid-template-columns:1fr 1fr 1fr 1fr"><button type="button" data-k="MAR">🚣 MAR</button><button type="button" data-k="GYM">🏋️ GYM</button><button type="button" data-k="MIX">⚡ ERGO</button><button type="button" data-k="NEW">✏️ Nuevo</button></div><label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:.85em"><input type="checkbox" id="v1006Del" checked style="margin-top:3px"><span>Quitar también de la planificación los entrenamientos que se sustituyen (van a la papelera 60 días)</span></label></div><p id="v1006Hint" class="muted" style="margin:6px 0 0"><small></small></p>';
+    $('v567TrList').insertAdjacentElement('afterend',bar);
+    $('v1006All').onclick=()=>{$('v1006Opts').classList.toggle('hidden')};
+    bar.querySelectorAll('#v1006Opts [data-k]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.k,box=$('v567TrBox');if(!box)return;
+      box.classList.add('hidden');delete box.dataset.m;
+      v1006Prog=true;container.querySelector('.v567Btns button[data-m="'+(k==='NEW'?'new':'lib')+'"]').click();v1006Prog=false;
+      v1006Replace=true;
+      if(k!=='NEW'){const sel=$('v567LKind');if(sel){sel.value=k;sel.onchange&&sel.onchange()}}
+      $('v1006Opts').classList.add('hidden');$('v1006Hint').textContent='Elige el nuevo entrenamiento: sustituirá a todo lo que hay ahora.';
+    });
+  }
   // crea (si hace falta) los entrenamientos en el día de cada evento y los asocia
   const v567Link=async(evTable,rowsToLink,teamCode)=>{
     if(isSess)return null;
@@ -6414,6 +6441,10 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const u=await sb.from(evTable).update({session_ids:ids.length?ids:null}).eq('id',row.id);
       if(u.error)throw u.error;
     }
+    // V1006 · los entrenamientos sustituidos se quitan de la planificación (la base de datos los guarda en la papelera)
+    try{const keep=new Set(v567Items.filter(z=>z.kind==='existing').map(z=>z.id));const gone=[...new Set(v1006Removed.map(z=>z.id))].filter(id=>!keep.has(id));
+      const chk=document.getElementById('v1006Del');
+      if(gone.length&&chk&&chk.checked){const d=await sb.from('training_sessions').delete().in('id',gone);if(d.error)console.warn('v1006 delete',d.error);else v1006Removed=[]}}catch(e){console.warn('v1006',e)}
     // los "nuevos"/"de la biblioteca" ya creados pasan a ser existentes (por si se vuelve a guardar)
     return true;
   };
@@ -13451,6 +13482,7 @@ function sessionEditor(x=null){
    document.getElementById('v213AddRow').onclick=()=>{visualRowsV213.push({id:`v213-${Date.now()}`,label:kind==='ERG'?'TRABAJO':'BLOQUE',detail:''});syncVisualToTextV213();drawVisualEditorV213(false)};
  }
  function setSessionContentV213(txt){sessContent.value=txt||'';visualRowsV213=parseVisualRowsV213(sessContent.value);drawVisualEditorV213(false)}
+ window.setSessionContentV213=setSessionContentV213; // V1005 · los botones "Cargar sesión completa" / "Añadir bloque" viven fuera del editor y no la veían
  sessContent.addEventListener('input',()=>{if(document.getElementById('advancedSessionTextV213')?.open){visualRowsV213=parseVisualRowsV213(sessContent.value);drawVisualEditorV213(false)}});
  function normalizeTuesdayMar60V198(content){
   let x=String(content||'');
