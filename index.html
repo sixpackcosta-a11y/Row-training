@@ -600,7 +600,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and
 .v567Btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}.v567Btns button{margin:0;padding:9px 4px;font-size:.85em}
 .v567TrBox{margin-top:10px;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--line,rgba(0,0,0,.08))}
 .v567Item,.v567Opt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.06))}.v567Item:last-child,.v567Opt:last-child{border-bottom:0}
-.v567Item button,.v567Opt button{margin:0;flex:0 0 auto}.v567Rm{background:transparent;border:0;color:#c0392b;font-size:1.05em;padding:4px 8px}.v1006Btns{display:flex;align-items:center;gap:0;flex:0 0 auto}.v1006Btns button{margin:0!important;width:auto}.v1006Ed{background:transparent;border:0;font-size:1.05em;padding:4px 8px}
+.v567Item button,.v567Opt button{margin:0;flex:0 0 auto}.v567Rm{background:transparent;border:0;color:#c0392b;font-size:1.05em;padding:4px 8px}.v1006Btns{display:flex;align-items:center;gap:0;flex:0 0 auto}.v1006Btns button{margin:0!important;width:auto}.v1006Ed{background:transparent;border:0;font-size:1.05em;padding:4px 8px}.v1007Btns{display:flex;gap:6px;align-items:center;flex:0 0 auto}.v1007Btns button{margin:0!important;width:auto}.v1007Det{margin:-2px 0 8px;padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12)}.v1007Det.hidden{display:none}.v1007Det pre{margin:0;white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.9em;max-height:240px;overflow:auto}
 .v546Sched{margin:14px 0 10px;padding:14px;border-radius:14px;background:var(--surface-2,rgba(0,0,0,.05))}.v546Sched p{margin:6px 0 12px}
 .v546Sched .v546SendNow{width:100%;margin:0;border-radius:999px;padding:12px;font-weight:600}
 .v546Preview{margin:6px 0 4px}.v546Preview h4{margin:6px 0 6px;font-size:1.05em}
@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1007";
+const APP_VERSION="1008";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6435,7 +6435,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       const pick=(title,getRows,onPick,skip)=>{
         const box=$('v1007Box');box.classList.remove('hidden');
         box.innerHTML=`<b>${esc(title)}</b><input id="v1007Q" placeholder="Buscar…" style="margin:6px 0"><div id="v1007L"><p class="muted"><small>Cargando biblioteca…</small></p></div>${skip?'<div class="actions"><button type="button" id="v1007Skip">Saltar (sin ERGO)</button></div>':''}`;
-        let rows=[];const paintL=()=>{const f=($('v1007Q').value||'').toLowerCase().trim();const L=rows.filter(r0=>!f||String(r0.name||'').toLowerCase().includes(f)).slice(0,40);$('v1007L').innerHTML=L.length?L.map(r0=>`<div class="v567Opt"><span>${esc(r0.name||'Sin nombre')}</span><button type="button" class="primary" data-i="${rows.indexOf(r0)}">Elegir</button></div>`).join(''):'<p class="muted"><small>No hay nada con ese nombre.</small></p>';$('v1007L').querySelectorAll('button[data-i]').forEach(bb=>bb.onclick=()=>onPick(rows[Number(bb.dataset.i)]))};
+        let rows=[];const paintL=()=>{const f=($('v1007Q').value||'').toLowerCase().trim();const L=rows.filter(r0=>!f||String(r0.name||'').toLowerCase().includes(f)).slice(0,40);$('v1007L').innerHTML=L.length?L.map(r0=>{const i0=rows.indexOf(r0);const det=String(r0.content||[r0.zone,r0.code,r0.url].filter(Boolean).join(' · ')||'').trim();return `<div class="v567Opt"><span>${esc(r0.name||'Sin nombre')}</span><span class="v1007Btns"><button type="button" data-v="${i0}">▸ Ver</button><button type="button" class="primary" data-i="${i0}">Elegir</button></span></div><div class="v1007Det hidden" id="v1007D${i0}"><pre>${det?esc(det):'Sin contenido.'}</pre></div>`}).join(''):'<p class="muted"><small>No hay nada con ese nombre.</small></p>';$('v1007L').querySelectorAll('button[data-i]').forEach(bb=>bb.onclick=()=>onPick(rows[Number(bb.dataset.i)]));$('v1007L').querySelectorAll('button[data-v]').forEach(bb=>bb.onclick=()=>{const d=$('v1007D'+bb.dataset.v);const h=d.classList.toggle('hidden');bb.textContent=h?'▸ Ver':'▾ Ocultar'})};
         getRows().then(r0=>{rows=r0||[];paintL()});$('v1007Q').oninput=paintL;if(skip)$('v1007Skip').onclick=()=>onPick(null);
       };
       const others=()=>day.filter(z=>z.id!==x.id);
