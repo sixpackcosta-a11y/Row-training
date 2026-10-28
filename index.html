@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1008";
+const APP_VERSION="1009";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6421,7 +6421,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
       paint();
     };
     const paint=()=>{
-      host.innerHTML='<div class="v567Btns" style="grid-template-columns:1fr 1fr;margin:0 0 8px"><button type="button" id="v1007ToMar" style="border:1.5px solid var(--tc-mar,#1f6fb2);color:var(--tc-mar,#1f6fb2);background:#fff;font-weight:600">🚣 Pasar el día a MAR</button><button type="button" id="v1007ToGym">🏋️ Pasar a GYM+ERGO</button></div><div id="v1007List"></div><div id="v1007Box" class="v567TrBox hidden"></div><p class="muted" style="margin:6px 0 0"><small>Al cambiar de tipo, si ya había respuestas, elige abajo (al guardar) si quieres avisar o pedir que respondan de nuevo.</small></p>';
+      host.innerHTML='<div class="v567Btns" style="grid-template-columns:1fr 1fr;margin:0 0 8px"><button type="button" id="v1007ToMar" style="border:1.5px solid var(--tc-mar,#1f6fb2);color:var(--tc-mar,#1f6fb2);background:#fff;font-weight:600">🚣 Pasar a MAR</button><button type="button" id="v1007ToBoth">🏋️🚣‍♀️ Pasar a GYM+ERGO</button><button type="button" id="v1007ToGym">🏋️ Pasar solo a GYM</button><button type="button" id="v1007ToErgo">🚣‍♀️ Pasar solo a ERGO</button></div><div id="v1007List"></div><div id="v1007Box" class="v567TrBox hidden"></div><p class="muted" style="margin:6px 0 0"><small>Al cambiar de tipo, si ya había respuestas, elige abajo (al guardar) si quieres avisar o pedir que respondan de nuevo.</small></p>';
       const l=$('v1007List');
       l.innerHTML=day.length?day.map(z=>`<div class="v567Item"><span><b>${esc(v567Type(z.session_type))}</b> · ${esc(z.title||'Sin título')}${z.id===x.id?'<small class="muted"> · lleva el evento</small>':''}</span><span class="v1006Btns"><button type="button" class="v1006Ed" data-id="${z.id}" aria-label="Editar">✏️</button>${z.id===x.id?'':`<button type="button" class="v567Rm" data-id="${z.id}" aria-label="Quitar">✕</button>`}</span></div>`).join(''):'<p class="muted"><small>No hay entrenamientos generales ese día.</small></p>';
       l.querySelectorAll('.v567Rm').forEach(b=>b.onclick=async()=>{const z=day.find(o=>String(o.id)===b.dataset.id);if(!z||!confirm('¿Quitar "'+(z.title||'este entrenamiento')+'" de la planificación? Va a la papelera 60 días.'))return;const d=await sb.from('training_sessions').delete().eq('id',z.id);if(d.error)return alert('No se pudo quitar: '+d.error.message);load()});
@@ -6446,15 +6446,29 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
         if(!confirm('El día quedará solo con "'+(r0.name||'MAR')+'" (MAR).'+(n?' Se quitan de la planificación '+n+' entrenamiento(s) más de ese día (van a la papelera 60 días).':'')+' ¿Seguir?'))return;
         try{await setX('MAR','MAR · '+(r0.name||''),r0.content);const er=await removeOthers();if(er)alert('El evento ya es MAR, pero no se pudo quitar el resto: '+er.message)}catch(e){return alert('No se pudo cambiar: '+(e.message||e))}
         $('v1007Box').classList.add('hidden');load()});
-      $('v1007ToGym').onclick=()=>pick('1/2 · Elige la sesión de GYM',async()=>{const d=await loadGymLibraryData();return d.sessions},g0=>{
+      const ergoPl=e0=>({title:'ERGO · '+(e0.name||''),content:`CALENTAMIENTO · 10 min\nTRABAJO · ${e0.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${e0.url?`\nErgData: ${e0.url}`:''}`});
+      const insErgo=async e0=>{const q=ergoPl(e0);const pl={team_code:x.team_code,session_date:dDate,session_type:'ERG',title:q.title,content:q.content,created_by:currentUser.id,updated_at:new Date().toISOString()};let ins=await sb.from('training_sessions').insert(pl);if(ins.error&&/created_by/.test(ins.error.message||'')){const {created_by,...p2}=pl;ins=await sb.from('training_sessions').insert(p2)}return ins.error||null};
+      const getG=async()=>{const d=await loadGymLibraryData();return d.sessions};
+      const getE=async()=>{const e=await loadErgoLibrary();return e.filter(z=>z.is_active!==false)};
+      const rest=()=>{const n=others().length;return n?' Se quitan de la planificación '+n+' entrenamiento(s) más de ese día (papelera 60 días).':''};
+      const done=()=>{$('v1007Box').classList.add('hidden');load()};
+      // solo GYM
+      $('v1007ToGym').onclick=()=>pick('Elige la sesión de GYM',getG,async g0=>{
+        if(!g0)return;if(!confirm('El día quedará solo con GYM "'+(g0.name||'')+'".'+rest()+' ¿Seguir?'))return;
+        try{await setX('GYM','GYM · '+(g0.name||''),g0.content);const er=await removeOthers();if(er)alert('No se pudo quitar el resto: '+er.message)}catch(e){return alert('No se pudo cambiar: '+(e.message||e))}done()});
+      // solo ERGO
+      $('v1007ToErgo').onclick=()=>pick('Elige el ERGO',getE,async e0=>{
+        if(!e0)return;if(!confirm('El día quedará solo con ERGO "'+(e0.name||'')+'".'+rest()+' ¿Seguir?'))return;
+        try{const q=ergoPl(e0);await setX('ERG',q.title,q.content);const er=await removeOthers();if(er)alert('No se pudo quitar el resto: '+er.message)}catch(e){return alert('No se pudo cambiar: '+(e.message||e))}done()});
+      // GYM + ERGO
+      $('v1007ToBoth').onclick=()=>pick('1/2 · Elige la sesión de GYM',getG,g0=>{
         if(!g0)return;
-        pick('2/2 · Elige el ERGO',async()=>{const e=await loadErgoLibrary();return e.filter(z=>z.is_active!==false)},async e0=>{
-          const n=others().length;
-          if(!confirm('El día quedará con GYM "'+(g0.name||'')+'"'+(e0?' + ERGO "'+(e0.name||'')+'"':'')+'.'+(n?' Se quitan de la planificación '+n+' entrenamiento(s) más de ese día (papelera 60 días).':'')+' ¿Seguir?'))return;
+        pick('2/2 · Elige el ERGO',getE,async e0=>{
+          if(!e0)return;
+          if(!confirm('El día quedará con GYM "'+(g0.name||'')+'" + ERGO "'+(e0.name||'')+'".'+rest()+' ¿Seguir?'))return;
           try{await setX('GYM','GYM · '+(g0.name||''),g0.content);const er=await removeOthers();if(er)alert('No se pudo quitar el resto: '+er.message);
-            if(e0){const pl={team_code:x.team_code,session_date:dDate,session_type:'ERG',title:'ERGO · '+(e0.name||''),content:`CALENTAMIENTO · 10 min\nTRABAJO · ${e0.name}\nRECUPERACIÓN · según sesión\nVUELTA A LA CALMA · 8–10 min${e0.url?`\nErgData: ${e0.url}`:''}`,created_by:currentUser.id,updated_at:new Date().toISOString()};let ins=await sb.from('training_sessions').insert(pl);if(ins.error&&/created_by/.test(ins.error.message||'')){const {created_by,...p2}=pl;ins=await sb.from('training_sessions').insert(p2)}if(ins.error)alert('El GYM está, pero no se pudo crear el ERGO: '+ins.error.message)}
-          }catch(e){return alert('No se pudo cambiar: '+(e.message||e))}
-          $('v1007Box').classList.add('hidden');load()},true)});
+            const e2=await insErgo(e0);if(e2)alert('El GYM está, pero no se pudo crear el ERGO: '+e2.message)
+          }catch(e){return alert('No se pudo cambiar: '+(e.message||e))}done()})});
     };
     load();
   }
