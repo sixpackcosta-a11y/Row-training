@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1009";
+const APP_VERSION="1010";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6127,7 +6127,7 @@ async function v516FullRoster(ev,viewTeam,cache){
     const have=new Set(merged.map(p=>String(p.user_id))),miss=ev.invitee_ids.map(String).filter(id=>!have.has(id)&&(ev.kind==='session'||it[id]===main));
     if(miss.length){
       const key='v903:'+miss.slice().sort().join(',');
-      if(!cache.has(key))cache.set(key,(async()=>{try{let pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',miss);return pr.data||[]}catch(e){return []}})());
+      if(!cache.has(key))cache.set(key,(async()=>{try{let pr=await sb.rpc('list_team_member_names_v597',{p_ids:miss});if(pr.error||!(pr.data||[]).length){pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);if(pr.error)pr=await sb.from('profiles').select('user_id,full_name').in('user_id',miss)}return pr.data||[]}catch(e){return []}})());
       merged=v499MergeRoster([...merged,...await cache.get(key)],[]);
     }
   }
@@ -11264,7 +11264,7 @@ async function v494RenderEventChatThread(container,sessionId,teamCode,kind='sess
     const have=new Set(members.map(p=>String(p.user_id)));
     const miss=(d.invitee_ids||[]).map(String).filter(i=>!have.has(i)&&!exc.has(i)&&(kind!=='competition'||it[i]===teamCode));
     if(miss.length){
-      const pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);
+      let pr=await sb.rpc('list_team_member_names_v597',{p_ids:miss});if(pr.error||!(pr.data||[]).length)pr=await sb.from('profiles').select('user_id,full_name,avatar_url').in('user_id',miss);
       const add=(pr.data||[]).filter(p=>p.full_name);add.forEach(p=>V583_NAMES.set(String(p.user_id),p.full_name));
       members=[...members,...add];v939Extra=add.map(p=>String(p.user_id)).filter(i=>i!==String(currentUser?.id||''));
     }
