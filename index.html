@@ -3866,7 +3866,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1012";
+const APP_VERSION="1013";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -5314,7 +5314,63 @@ window.v1000RecDone=async function(log){
       try{const pk='rowtraining_rec689_pend',q=JSON.parse(localStorage.getItem(pk)||'[]');q.push({title,rec_date:d.toLocaleDateString('sv-SE'),series});localStorage.setItem(pk,JSON.stringify(q))}catch(e){}
       alert('Sin cobertura: la grabación está guardada en el móvil y se subirá sola cuando vuelva.');return}
     if(ins.error){alert('No se pudo guardar la grabación: '+(/does not exist|relation|schema cache/i.test(ins.error.message||'')?'falta ejecutar 70_grabaciones_gps.sql en Supabase.':ins.error.message)+'\n\nLas series siguen guardadas en este móvil.');return false}
-    if(tab==='recursos')setTimeout(staffResourcesView,50);
+    let v1013Went=false;
+    try{if(hasStaffMode())v1013Went=await window.v1013CreateFromRec(series,d.toLocaleDateString('sv-SE'))}catch(e){console.warn('v1013',e)}
+    if(!v1013Went&&tab==='recursos')setTimeout(staffResourcesView,50);
+};
+// v1013 · al terminar una grabación libre: crear el entrenamiento MAR con esas series (o usar el que ya exista ese día) y pasar directo a la revisión
+window.v1013CreateFromRec=function(series,date0){
+  return new Promise(resolve=>{
+    const teams=v640AllTeams();if(!teams.length)return resolve(false);
+    let lastT='';try{lastT=localStorage.getItem('rowtraining_v1013_team')||''}catch(_){}
+    const team0=teams.includes(lastT)?lastT:(staffViewTeamCodes().find(c=>teams.includes(c))||teams[0]);
+    const fmt=sec=>{const m=Math.round(sec/60);return m};
+    const durs=series.map(x=>Number(x.duration_seconds)||0),dists=series.map(x=>Number(x.distance_m)||0);
+    const near=(a,tol)=>a.every(v=>Math.abs(v-a[0])<=tol);
+    const mins=durs.map(fmt),n=series.length;
+    let main,desc;
+    if(n>1&&near(mins,1)){main=`${n}x${Math.round(mins.reduce((a,b)=>a+b,0)/n)} min`;desc=main}
+    else if(n>1&&dists.every(v=>v>0)&&dists.every(v=>Math.abs(v-dists[0])<=Math.max(50,dists[0]*0.05))){const m=Math.round(dists.reduce((a,b)=>a+b,0)/n/50)*50;main=`${n}x${m} m`;desc=main}
+    else if(n===1){main=`${mins[0]} min`;desc=main}
+    else{main=null;desc=`${n} series`}
+    const content0=main?`Principal: ${main}`:series.map((x,i)=>`Serie ${i+1}: ${mins[i]} min`).join('\n');
+    const title0=`Libre ${String(desc).replace(/x/,'×')}`;
+    const ov=document.createElement('div');ov.id='v1013Ov';
+    ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center';
+    ov.innerHTML=`<div style="background:var(--card,#fff);color:var(--text,#222);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 18px 22px;max-height:92vh;overflow:auto;box-shadow:0 -8px 24px rgba(0,0,0,.4)"><h3 style="margin:0 0 4px" id="v1013H">Crear entrenamiento con estas series</h3><p class="muted" style="margin:0 0 10px">${n} serie${n===1?'':'s'} grabada${n===1?'':'s'}</p><label style="display:block">Equipo<select id="v1013T" style="width:100%">${teams.map(c=>`<option value="${esc(c)}" ${c===team0?'selected':''}>${esc(teamLabel(c))}</option>`).join('')}</select></label><label style="display:block">Fecha<input type="date" id="v1013D" style="width:100%" value="${esc(date0)}"></label><div id="v1013New"><label style="display:block">Título<input id="v1013Ti" style="width:100%" value="${esc(title0)}"></label><label style="display:block">Contenido<textarea id="v1013Co" style="width:100%" rows="${Math.min(5,Math.max(2,content0.split('\n').length))}">${esc(content0)}</textarea></label></div><div class="info" id="v1013Ex" hidden></div><p class="muted" style="font-size:13px">Después podrás marcar qué series son de trabajo y completar los datos antes de guardar.</p><div class="actions"><button type="button" class="primary" id="v1013Go">Crear y asignar</button><button type="button" id="v1013No">Solo guardar la grabación</button></div></div>`;
+    document.body.appendChild(ov);
+    const $=id=>ov.querySelector('#'+id);let found=[];let busy=false;
+    const done=v=>{ov.remove();resolve(v)};
+    const refresh=async()=>{
+      const t=$('v1013T').value,d=$('v1013D').value;if(!t||!d)return;
+      const q=await sb.from('training_sessions').select('id,title').eq('team_code',t).eq('session_date',d).eq('session_type','MAR').order('created_at');
+      if(!document.body.contains(ov))return;
+      found=q.error?[]:(q.data||[]);
+      $('v1013New').hidden=found.length>0;
+      $('v1013Ex').hidden=!found.length;
+      if(found.length){$('v1013Ex').innerHTML='Ya hay '+(found.length===1?'un entrenamiento MAR':found.length+' entrenamientos MAR')+' ese día: <b>'+found.map(x=>esc(x.title||'Sesión MAR')).join(' · ')+'</b>. Las series se asignarán a ese entrenamiento (podrás elegir en el siguiente paso).'}
+      $('v1013Go').textContent=found.length?'Asignar a ese entrenamiento':'Crear y asignar';
+      $('v1013H').textContent=found.length?'Asignar series al entrenamiento':'Crear entrenamiento con estas series';
+    };
+    $('v1013T').onchange=refresh;$('v1013D').onchange=refresh;refresh();
+    $('v1013No').onclick=()=>done(false);
+    $('v1013Go').onclick=async()=>{
+      if(busy)return;const t=$('v1013T').value,d=$('v1013D').value;if(!t||!d)return alert('Elige equipo y fecha.');
+      busy=true;const btn=$('v1013Go');btn.disabled=true;
+      try{localStorage.setItem('rowtraining_v1013_team',t)}catch(_){}
+      let sid=null;
+      if(!found.length){
+        const title=$('v1013Ti').value.trim()||title0,content=$('v1013Co').value.trim()||content0;
+        const pl={team_code:t,session_date:d,session_type:'MAR',title,content,created_by:currentUser.id,updated_at:new Date().toISOString()};
+        let q=await sb.from('training_sessions').insert(pl).select('id').single();
+        if(q.error&&/created_by/.test(q.error.message||'')){const {created_by,...p2}=pl;q=await sb.from('training_sessions').insert(p2).select('id').single()}
+        if(q.error){busy=false;btn.disabled=false;return alert('No se pudo crear el entrenamiento: '+q.error.message)}
+        sid=q.data&&q.data.id;
+      }
+      done(true);
+      rowingCoachReviewV135({date:d,filename:'Grabación GPS de Row Training',series:series.map(x=>Object.assign({},x,{suggested:true})),sessionId:sid},t,staffResourcesView);
+    };
+  });
 };
 async function staffResourcesView(){
   content.innerHTML=`<div class="card"><p class="muted">${v316Loading('Cargando recursos…')}</p></div>`;
@@ -5617,6 +5673,7 @@ async function rowingCoachReviewV135(log,team,backFn){
   const sessions=q.data||[];if(q.error)return alert(q.error.message);if(!sessions.length)return alert(`No hay una sesión MAR planificada para ${teamLabel(team)} el ${shortDateES(log.date)}.`);
   content.innerHTML=`<div class="card seaCard"><button id="rowingCoachBackV135">← Volver</button><span class="tag">ROWING COACH</span><h2>Revisar bloques detectados</h2><p><b>${shortDateES(log.date)} · ${teamLabel(team)}</b></p><label>Sesión MAR<select id="rowingCoachSessionV135">${sessions.map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')}</select></label><div class="info">Marca únicamente los bloques de trabajo que quieras trasladar. Los arranques breves, calentamiento y vuelta a la calma pueden dejarse sin marcar.</div><div id="rowingCoachSeriesV135">${log.series.map((s,i)=>`<label class="last" style="display:block"><input class="rowingCoachSeriesCheckV135" type="checkbox" data-index="${i}" ${s.suggested?'checked':''}> <b>Bloque ${i+1}</b> · ${fmtMetricSeconds(s.duration_seconds)} · ${s.distance_m} m · ${fmtMetricSeconds(s.pace_500_seconds)}/500 · ${s.average_spm??'—'} ppm medias <small class="muted">${esc(s.start_time||'')}–${esc(s.end_time||'')}</small></label>`).join('')}</div><button id="rowingCoachApplyV135" class="primary">Aplicar a la sesión</button></div>`;
   rowingCoachBackV135.onclick=backFn;
+  if(log.sessionId){try{rowingCoachSessionV135.value=String(log.sessionId)}catch(_){}}
   rowingCoachApplyV135.onclick=async()=>{
     const selected=[...document.querySelectorAll('.rowingCoachSeriesCheckV135:checked')].map(x=>log.series[Number(x.dataset.index)]),session=sessions.find(x=>String(x.id)===rowingCoachSessionV135.value);if(!selected.length)return alert('Selecciona al menos un bloque.');
     const expected=seaResultBlocksFromContent(session.content).reduce((total,b)=>total+seaPrescription(b.value).count,0);
