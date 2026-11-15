@@ -1554,7 +1554,7 @@ html[data-theme="dark"]{--tc-erg:#b79cf0;--tc-gym:#f0b45c;--tc-mar:#6bb3f0;--tc-
 .v839Layer .v839Pop[hidden]{display:none}
 .v839Layer .v839Pop button{height:44px;width:100%;display:flex;align-items:center;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:15px;color:var(--text)!important;box-shadow:none;margin:0}
 .v839Layer .v839Pop button:active{background:var(--surface-2,#eef1f6)!important}
-.v839Layer .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
+.v839Layer .v839Pop .deleteSeaResults,.v839Layer .v839Pop .delSess{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
 :is(#content,#v555Freeze) .v839Pop button{height:40px;width:100%;justify-content:flex-start;text-align:left;padding:0 12px;background:transparent!important;border:0!important;border-radius:8px;font-size:14px;color:var(--text)!important}
 :is(#content,#v555Freeze) .v839Pop button:hover{background:var(--surface-2,#eef1f6)!important}
 :is(#content,#v555Freeze) .v839Pop .deleteSeaResults{color:#c0392b!important;border-top:1px solid var(--border)!important;border-radius:0 0 8px 8px}
@@ -1580,6 +1580,7 @@ html[data-theme="dark"]{--tc-erg:#b79cf0;--tc-gym:#f0b45c;--tc-mar:#6bb3f0;--tc-
 :is(#content,#v555Freeze) .v840Line .v503Sub{font-weight:500}
 header{padding-top:env(safe-area-inset-top,0px)!important;min-height:calc(64px + env(safe-area-inset-top,0px))!important}
 .v848Act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.v848Act:has(.v869ShareBar) .seaResult{flex:1 1 100%}.v848Act .v869ShareBar{display:contents}.v848Act .v869ShareBar .shareSeaImg{flex:1 1 0}.v848Act .v869ShareBar .shareSeaPdf{flex:0 0 78px}
 .v848Act .v839Menu .v839More{height:40px;width:42px;border-radius:12px}
 :is(#content,#v555Freeze) .card.v849{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
 :is(#content,#v555Freeze) .card.v849 .seaMonthGroup{padding-left:0!important;padding-right:0!important}
@@ -3872,7 +3873,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1014";
+const APP_VERSION="1015";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -13505,7 +13506,7 @@ async function v869AddShare(){
   const q=await sb.from('sea_results').select('training_session_id').in('training_session_id',ids);
   const have=new Set((q.data||[]).map(r=>String(r.training_session_id)));
   btns.forEach(b=>{if(!have.has(String(b.dataset.id))||b.parentNode.querySelector('.shareSeaImg[data-session="'+b.dataset.id+'"]'))return;
-    const w=document.createElement('span');w.className='v869ShareBar';w.innerHTML=`<button type="button" class="shareSeaImg" data-session="${b.dataset.id}">📷 Compartir imagen</button><button type="button" class="shareSeaPdf" data-session="${b.dataset.id}">PDF</button>`;
+    const w=document.createElement('span');w.className='v869ShareBar';w.innerHTML=`<button type="button" class="shareSeaImg" data-session="${b.dataset.id}">📷 Imagen</button><button type="button" class="shareSeaPdf" data-session="${b.dataset.id}">PDF</button>`;
     b.insertAdjacentElement('afterend',w)});
 }
 async function renderPlanDay(){
@@ -13513,7 +13514,7 @@ async function renderPlanDay(){
  const audIdsV249=[...new Set(data.sessions.flatMap(sessionTargetsV249))],audNamesV249=new Map();
  if(audIdsV249.length){try{const nq=await sb.from('profiles').select('user_id,full_name').in('user_id',audIdsV249);(nq.data||[]).forEach(r=>audNamesV249.set(r.user_id,r.full_name||'Sin nombre'))}catch(e){}}
  const audBadgeV249=x=>{const t=sessionTargetsV249(x);return t.length?`<p><span class="tag" style="background:#fff4d6;color:#8a5a00">👤 Solo para: ${esc(t.map(id=>audNamesV249.get(id)||'remero').join(', '))}</span></p>`:''};
- planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p>${v464HandicapSummary(c)?`<p class="muted"><small>${v464HandicapSummary(c)}</small></p>`:''}<button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${audBadgeV249(x)}${x.content?trainingContentHtml(x.content):""}<div class="v848Act">${x.session_type==="MAR"?`<button class="seaResult primary" data-id="${x.id}">Registrar resultado MAR</button>`:""}<button class="editSess" data-id="${x.id}">Editar</button><span class="v839Menu"><button type="button" class="v839More" aria-haspopup="true" aria-expanded="false" aria-label="Más acciones">⋯</button><span class="v839Pop" hidden><button class="moveSess" data-id="${x.id}">Mover</button><button class="dupSess" data-id="${x.id}">Duplicar</button><button class="delSess dangerBtn" data-id="${x.id}">Eliminar</button></span></span></div></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
+ planArea.innerHTML=`${data.competitions.map(c=>`<div class="card raceCard"><span class="tag">🏁 COMPETICIÓN</span><h3>${c.name}</h3><p>${c.priority||"Normal"}${c.notes?` · ${c.notes}`:""}</p>${v464HandicapSummary(c)?`<p class="muted"><small>${v464HandicapSummary(c)}</small></p>`:''}<button class="delRace" data-id="${c.id}">Eliminar</button></div>`).join("")}${data.sessions.map(x=>`<div class="card ${x.session_type==="MAR"?"seaCard":""}"><span class="tag">${x.session_type}</span><h3>${x.title}</h3>${audBadgeV249(x)}${x.content?trainingContentHtml(x.content):""}<div class="v848Act">${x.session_type==="MAR"?`<button class="seaResult primary" data-id="${x.id}">Registrar resultado MAR</button>`:""}<span class="v839Menu"><button type="button" class="v839More" aria-haspopup="true" aria-expanded="false" aria-label="Más acciones">⋯</button><span class="v839Pop" hidden><button class="editSess" data-id="${x.id}">Editar</button><button class="moveSess" data-id="${x.id}">Mover</button><button class="dupSess" data-id="${x.id}">Duplicar</button><button class="delSess dangerBtn" data-id="${x.id}">Eliminar</button></span></span></div></div>`).join("")||'<p class="muted">No hay elementos guardados para este día.</p>'}`;
  document.querySelectorAll('.editSess').forEach(b=>b.onclick=()=>sessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.moveSess').forEach(b=>b.onclick=()=>moveSessionEditor(data.sessions.find(x=>String(x.id)===b.dataset.id)));
  document.querySelectorAll('.dupSess').forEach(b=>b.onclick=async()=>{const src=data.sessions.find(x=>String(x.id)===b.dataset.id);if(!src)return;const d=prompt('Fecha para la copia (AAAA-MM-DD)',addDaysISO(date,1));if(!d)return;const q=await sb.from('training_sessions').insert({team_code:team,session_date:d,session_type:src.session_type,title:src.title+' · copia',content:src.content,created_by:currentUser.id,...(sessionTargetsV249(src).length?{target_user_ids:sessionTargetsV249(src)}:{})});if(q.error)return alert(q.error.message);renderPlanDay()});
