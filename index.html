@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1016";
+const APP_VERSION="1017";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -14941,7 +14941,7 @@ async function results(){
       if(v726Have.has(String(r.p.user_id)))return;
       let pr=[];try{pr=v300BuildPaceRows(c2rows.filter(x=>String(x.user_id)===String(r.p.user_id)&&!(typeof v161Concept2EffectiveHidden==='function'&&v161Concept2EffectiveHidden(x))),ergo.filter(e=>workouts.some(w=>String(w.id)===String(e.workout_id)&&String(w.user_id)===String(r.p.user_id))),workouts.filter(w=>String(w.user_id)===String(r.p.user_id)))}catch(e){}
       // mismo criterio que la Comparativa de ERGO: el resultado cuenta si es del mismo ejercicio (título) aunque esté enlazado a otra sesión igual
-      const cands=pr.filter(x=>x.training_session_id&&x.pace_500_seconds&&Number(x.pace_500_seconds)>=60&&(()=>{const t=v726Titles.get(String(x.training_session_id))||'';return /test/i.test(t)&&(v300NormalizeExerciseKey(t)||t.toLowerCase())===v726Key})()&&(!v726Dist||!x.distance_m||Math.abs(Number(x.distance_m)-v726Dist)/v726Dist<0.06));
+      const cands=pr.filter(x=>x.training_session_id&&x.pace_500_seconds&&(!v726Day||String(x.workout_date||'').slice(0,10)===v726Day)&&Number(x.pace_500_seconds)>=60&&(()=>{const t=v726Titles.get(String(x.training_session_id))||'';return /test/i.test(t)&&(v300NormalizeExerciseKey(t)||t.toLowerCase())===v726Key})()&&(!v726Dist||!x.distance_m||Math.abs(Number(x.distance_m)-v726Dist)/v726Dist<0.06));
       if(!cands.length)return;
       cands.sort((x,y)=>String(y.workout_date||'').localeCompare(String(x.workout_date||''))||Number(x.pace_500_seconds)-Number(y.pace_500_seconds));const x=cands[0];
       const testPower={date:String(x.workout_date||'').slice(0,10),pace:Number(x.pace_500_seconds),distance:x.distance_m,source:x._manual?'Manual':'ErgData',splits:v280NormalizeSplits(x._manual?x._raw:x,x._manual?'Manual':'ErgData'),...v738X(x._raw),_unlinked:true};
