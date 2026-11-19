@@ -832,6 +832,7 @@ button:active:not(:disabled){transform:scale(.97);opacity:.78}
 .v583Light{box-sizing:border-box;padding:calc(64px + env(safe-area-inset-top)) 0 calc(96px + env(safe-area-inset-bottom))}.v583Light img{max-width:96vw;max-height:calc(100vh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom));object-fit:contain;transform-origin:center center;will-change:transform;-webkit-touch-callout:none}
 .v583LBar{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center}.v583Light .v583LBar button{position:static;width:auto;height:42px;padding:0 18px;font-size:15px;font-weight:600;background:#fff3;border-radius:99px}.v583Light button{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;border:0;background:#fff3;color:#fff;font-size:20px;border-radius:99px;width:38px;height:38px}
 
+@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),textarea,select{font-size:max(16px,1em)}}
 .v583Full{position:fixed;left:0;right:0;z-index:55;display:flex;flex-direction:column;background:var(--bg);padding:6px 12px 0;box-sizing:border-box}
 .v583Full .v583Body{flex:1;min-height:0;display:flex;flex-direction:column}
 .v583Full .v583Compose{padding-bottom:6px}
@@ -3873,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1015";
+const APP_VERSION="1016";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -10798,17 +10799,18 @@ async function v583Chat(anchor,cfg){
       layer.classList.add('v803Kb');
       // V806 · si estabas al final de la conversación, al cambiar el tamaño (teclado, cabecera) sigues al final sin saltos
       const bx0=layer.querySelector('[id$="ChatScroll"]'),atEnd=!!bx0&&bx0.scrollHeight-bx0.scrollTop-bx0.clientHeight<90;
-      layer.style.top=(off+top2)+'px';layer.style.height=Math.max(180,vh-top2-bottom-(layer._v981H||0))+'px';
+      layer.style.top=top2+'px';layer.style.transform=off?'translateY('+off+'px)':'';layer.style.height=Math.max(180,vh-top2-bottom-(layer._v981H||0))+'px';
       if(bx0&&atEnd)bx0.scrollTop=bx0.scrollHeight;
       const bx=layer.querySelector('[id$="ChatScroll"]');if(bx&&!kb===false&&document.activeElement&&(document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable))bx.scrollTop=bx.scrollHeight;
     };
-    const onFocus=()=>{window.scrollTo(0,0);setTimeout(fit,60);setTimeout(()=>{window.scrollTo(0,0);fit()},350)};
-    fit();window.scrollTo(0,0);
+    const onFocus=()=>{fit();setTimeout(fit,60);setTimeout(fit,350)};
+    const v1016H=document.documentElement,v1016B=document.body,v1016Prev=[v1016H.style.overflow,v1016B.style.overflow,v1016H.style.overscrollBehavior];v1016H.style.overflow='hidden';v1016B.style.overflow='hidden';v1016H.style.overscrollBehavior='none';
+    fit();window.scrollTo(0,0);window.addEventListener('scroll',fit);
     const vv=window.visualViewport;
     ['resize','scroll'].forEach(ev=>{vv&&vv.addEventListener(ev,fit);});
     window.addEventListener('resize',fit);const onVis=()=>{fit();setTimeout(fit,150);setTimeout(fit,600)};document.addEventListener('visibilitychange',onVis);window.addEventListener('pageshow',onVis);window.addEventListener('orientationchange',onVis);document.addEventListener('focusin',onFocus);document.addEventListener('focusout',onFocus);
     const mo=new MutationObserver(()=>{if(!anchor.isConnected)cleanup()});mo.observe(document.body,{childList:true,subtree:true});
-    const cleanup=()=>{mo.disconnect();['resize','scroll'].forEach(ev=>{vv&&vv.removeEventListener(ev,fit)});window.removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pageshow',onVis);window.removeEventListener('orientationchange',onVis);document.removeEventListener('focusin',onFocus);document.removeEventListener('focusout',onFocus);if(anchor._v583Timer){clearInterval(anchor._v583Timer);anchor._v583Timer=null}layer.remove();if(window._v583Cleanup===cleanup)window._v583Cleanup=null};
+    const cleanup=()=>{mo.disconnect();window.removeEventListener('scroll',fit);v1016H.style.overflow=v1016Prev[0];v1016B.style.overflow=v1016Prev[1];v1016H.style.overscrollBehavior=v1016Prev[2];layer.style.transform='';['resize','scroll'].forEach(ev=>{vv&&vv.removeEventListener(ev,fit)});window.removeEventListener('resize',fit);document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pageshow',onVis);window.removeEventListener('orientationchange',onVis);document.removeEventListener('focusin',onFocus);document.removeEventListener('focusout',onFocus);if(anchor._v583Timer){clearInterval(anchor._v583Timer);anchor._v583Timer=null}layer.remove();if(window._v583Cleanup===cleanup)window._v583Cleanup=null};
     window._v583Cleanup=cleanup;
   }
   const cached=V583_CACHE.get(cfg.key);
@@ -10817,6 +10819,18 @@ async function v583Chat(anchor,cfg){
   container.innerHTML=`<div id="${cfg.boxId}" style="${cfg.full?'flex:1;min-height:0;':'max-height:'+cfg.maxH+';'}overflow-y:auto;overscroll-behavior:contain;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;-webkit-overflow-scrolling:touch"></div><div class="v583Compose" style="display:flex;gap:6px;margin-top:10px;align-items:flex-end">${cfg.attach?'<button type="button" class="v583PlusBtn v583AttBtn" aria-label="Adjuntar">＋</button><input type="file" class="v583AttIn" hidden accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.gpx,.zip,.fit,.tcx">':''}<div class="v583Pill"><div id="${cfg.inputId}" class="v583In" contenteditable="plaintext-only" role="textbox" aria-multiline="true" enterkeyhint="send" autocapitalize="sentences" data-ph="${cfg.placeholder}"></div><button type="button" class="v583EmojiBtn" aria-label="Emojis">😊</button></div><button type="button" id="${cfg.sendId}" class="primary v583Send" aria-label="${cfg.sendLabel}"${cfg.attach?' style="display:none"':''}>➤</button>${cfg.attach?'<button type="button" class="v583Mic" aria-label="Audio"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg></button>':''}<div class="v583Rec"><button type="button" class="v583RecDel" aria-label="Cancelar">🗑️</button><span class="v583RecDot"></span><span class="v583RecT">0:00</span><span class="v583RecHint">${currentLocale==='en'?'Recording…':currentLocale==='nl'?'Opnemen…':'Grabando…'}</span><button type="button" class="primary v583RecSend" aria-label="Enviar audio" style="background:#2563eb!important;color:#fff!important">➤</button></div></div>`;
   const box=container.querySelector('#'+cfg.boxId),input=container.querySelector('#'+cfg.inputId),sendBtn=container.querySelector('#'+cfg.sendId);
   let first=true,X=null,pin=true;
+  // v1016 · iPhone: al tocar la caja de escribir, Safari desplaza la pantalla y la cabecera salta. Se enfoca con la caja fuera de la vista y preventScroll, y vuelve a su sitio a los 150 ms
+  if(cfg.full&&window.matchMedia&&matchMedia('(pointer: coarse)').matches){
+    const v1016Caret=el=>{try{const r=document.createRange();r.selectNodeContents(el);r.collapse(false);const sl=getSelection();sl.removeAllRanges();sl.addRange(r)}catch(_){}};
+    const v1016Focus=el=>{if(document.activeElement===el){el.focus();return}
+      el.style.transform='translateY(-'+(window.innerHeight*2)+'px)';el.style.opacity='0';
+      el.focus({preventScroll:true});v1016Caret(el);
+      setTimeout(()=>{el.style.transform='';el.style.opacity=''},150)};
+    window.v1016FocusNoJump=v1016Focus;
+    let v1016T=null;
+    input.addEventListener('touchstart',e=>{v1016T=document.activeElement===input?null:{x:e.touches[0].clientX,y:e.touches[0].clientY}},{passive:true});
+    input.addEventListener('touchend',e=>{const s0=v1016T;v1016T=null;if(!s0)return;const t=e.changedTouches[0];if(Math.hypot(t.clientX-s0.x,t.clientY-s0.y)>10)return;e.preventDefault();v1016Focus(input)},{passive:false});
+  }
   // V870 · sin saltos al abrir: la lista de mensajes no se ve hasta que la tipografía está lista y se ha pintado (como WhatsApp)
   let v870Shown=!cfg.full;const v870Show=()=>{if(v870Shown)return;v870Shown=true;box.style.opacity='1';box.style.visibility='visible'};
   if(cfg.full){box.style.opacity='0';box.style.visibility='hidden';setTimeout(v870Show,500)}
@@ -10912,7 +10926,7 @@ async function v583Chat(anchor,cfg){
   function setReply(m){
     S.reply=m;const nm=String(m.sender_id)===String(meId)?'Tú':(cfg.names?(cfg.names.get(String(m.sender_id))||'Alguien'):'');
     replyBar.innerHTML=`<div>${nm?`<b>${esc(nm)}</b>`:''}<span>${esc(m.body||'📎 Adjunto')}</span></div><button type="button" aria-label="Quitar">✕</button>`;
-    replyBar.classList.remove('hidden');replyBar.querySelector('button').onclick=clearReply;input.focus();
+    replyBar.classList.remove('hidden');replyBar.querySelector('button').onclick=clearReply;(cfg.full&&window.v1016FocusNoJump?window.v1016FocusNoJump(input):input.focus());
   }
   const showInfo=async m=>{
     const d=await cfg.info(m);if(!d)return;
@@ -10925,7 +10939,7 @@ async function v583Chat(anchor,cfg){
     S.reply=null;S.edit=m;
     replyBar.innerHTML=`<div><b>✏️ Editando mensaje</b><span>${esc(m.body)}</span></div><button type="button" aria-label="Cancelar">✕</button>`;
     replyBar.classList.remove('hidden');replyBar.querySelector('button').onclick=clearReply;
-    input.textContent=m.body;input.focus();
+    input.textContent=m.body;(cfg.full&&window.v1016FocusNoJump?window.v1016FocusNoJump(input):input.focus());
     try{const rg=document.createRange();rg.selectNodeContents(input);rg.collapse(false);const sel=getSelection();sel.removeAllRanges();sel.addRange(rg)}catch(_){}
   };
   const loadVotes=async()=>{
