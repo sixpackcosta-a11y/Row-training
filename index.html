@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1020";
+const APP_VERSION="1021";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -6474,6 +6474,7 @@ function v498RenderClubEventForm(container,team,existing,afterSave,prefill=null)
   $('v497CeTime').onchange=()=>{const st=$('v497CeTime').value;if(st&&(!endTouched||!$('v514End').value)){$('v514End').value=v514ShiftTime(st,60);endTouched=false}};
   if(!existing)$('v497CeRepeat').onchange=()=>{$('v497CeRepeatUntilWrap').style.display=$('v497CeRepeat').value?'block':'none'};
   $('v497CeCancel').onclick=()=>{container.classList.add('hidden');container.innerHTML=''};
+  if(existing&&isSess&&!existing.__convert&&existing.id!=null){try{v1020BringBar(null,existing.team_code,null,{host:container,id:existing.id,onDone:()=>{container.classList.add('hidden');container.innerHTML='';if(typeof afterSave==='function')afterSave()}})}catch(_){}} // V1020 · también desde Eventos
   const missingCols=e=>/column .* does not exist|schema cache|relation .* does not exist|bucket .* not found/i.test(e?.message||'');
   // V567 · "crear un evento y asociarle un entrenamiento concreto, de un día de la planificación,
   // de la biblioteca o uno nuevo". Se elige aquí mismo y se guarda junto con el evento.
@@ -13594,9 +13595,10 @@ async function renderPlanDay(){
 // V1020 · "Traer aquí": si un entrenamiento de este equipo se canceló (±14 días), la barra del día propone traer
 // su CONTENIDO (tipo, título y plan) a este día. Solo se copia el entrenamiento: la hora, la convocatoria, las
 // respuestas, el chat y el nombre del evento del día no se tocan, y el cancelado queda como cancelado con sus respuestas.
-async function v1020BringBar(sessions,team,date){
+async function v1020BringBar(sessions,team,date,opts){
   try{
-    const area=document.getElementById('planArea');if(!area||area.querySelector('#v1020Bar'))return;
+    const host=opts&&opts.host,area=host||document.getElementById('planArea');if(!area||document.getElementById('v1020Bar'))return;
+    if(opts&&opts.id!=null){const rr=await sb.from('training_sessions').select('id,team_code,session_date,session_type,title,content,is_event,target_user_ids').eq('id',opts.id).maybeSingle();if(!rr.data||(Array.isArray(rr.data.target_user_ids)&&rr.data.target_user_ids.length))return;sessions=[rr.data];team=rr.data.team_code;date=String(rr.data.session_date).slice(0,10)}
     const general=(sessions||[]).filter(x=>!sessionTargetsV249(x).length);
     const rank=t=>({MAR:1,GYM:2,ERG:3})[String(t).toUpperCase()]||9;
     const target=general.find(x=>x.is_event)||[...general].sort((a,b)=>rank(a.session_type)-rank(b.session_type))[0]||null;
@@ -13604,8 +13606,8 @@ async function v1020BringBar(sessions,team,date){
     if(q.error)return;
     const same=c=>target&&String(c.session_type)===String(target.session_type)&&(c.title||'')===(target.title||'')&&(c.content||'')===(target.content||'');
     const cands=(q.data||[]).filter(c=>String(c.session_date).slice(0,10)!==date&&!same(c));
-    const cur=document.getElementById('planArea');
-    if(!cands.length||cur!==area||document.getElementById('planDate')?.value!==date||document.getElementById('planTeam')?.value!==team||area.querySelector('#v1020Bar'))return;
+    if(!cands.length||document.getElementById('v1020Bar'))return;
+    if(host){if(!host.isConnected)return}else if(document.getElementById('planArea')!==area||document.getElementById('planDate')?.value!==date||document.getElementById('planTeam')?.value!==team)return;
     cands.sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(date+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(date+'T12:00:00')));
     const dl=ds=>{const l=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(String(ds).slice(0,10)+'T12:00:00'));return l.charAt(0).toUpperCase()+l.slice(1)};
     const nm=c=>String(c.title||c.session_type||'').slice(0,60);
@@ -13615,7 +13617,7 @@ async function v1020BringBar(sessions,team,date){
 ${target?`<label style="display:block;margin:4px 0"><input type="radio" name="v1020M" value="sub" checked> Sustituir «${esc(nm(target))}»</label><label style="display:block;margin:4px 0"><input type="radio" name="v1020M" value="add"> Añadir además (sin convocatoria)</label>`:`<p class="muted" style="margin:4px 0"><small>Este día no tiene entrenamiento: se añadirá.</small></p><input type="radio" name="v1020M" value="add" checked class="hidden">`}
 <p class="muted" style="margin:6px 0"><small>La hora, la convocatoria y las respuestas de este día no cambian. El cancelado se queda como cancelado.</small></p>
 <div class="v531Btns"><button type="button" class="primary" id="v1020Ok">Confirmar</button> <button type="button" id="v1020No">Cancelar</button></div></div>`;
-    const anchor=area.querySelector('.v531Bar');
+    const anchor=host?null:area.querySelector('.v531Bar');
     if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else area.insertAdjacentHTML('afterbegin',html);
     const pick=()=>cands[Number(document.getElementById('v1020Sel')?.value||0)];
     const sel=document.getElementById('v1020Sel');
@@ -13631,7 +13633,7 @@ ${target?`<label style="display:block;margin:4px 0"><input type="radio" name="v1
         else r=await sb.from('training_sessions').insert({team_code:team,session_date:date,session_type:c.session_type,title:c.title,content:c.content||'',created_by:currentUser.id,updated_at:now});
         if(r.error){alert('No se pudo traer: '+r.error.message);ok.disabled=false;ok.textContent='Confirmar';return}
         try{v300ShowToast('Entrenamiento traído a '+dl(date))}catch(_){}
-        if(typeof window.__planRefresh==='function')window.__planRefresh();else renderPlanDay();
+        if(opts&&typeof opts.onDone==='function')opts.onDone();else if(typeof window.__planRefresh==='function')window.__planRefresh();else renderPlanDay();
       }catch(e){alert('No se pudo traer: '+(e&&e.message||e));ok.disabled=false;ok.textContent='Confirmar'}
     };
   }catch(e){}
