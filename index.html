@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1017";
+const APP_VERSION="1020";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -4073,7 +4073,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     var hiddenAt=0;
     document.addEventListener('visibilitychange',function(){
       if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
-      if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800)}
+      if(hiddenAt&&Date.now()-hiddenAt>60000){cache.clear();window.v541Warm(800);if(Date.now()-hiddenAt>120000){try{window.v1018SoftRefresh&&window.v1018SoftRefresh(1500,true)}catch(_){}}}
     });
     // V561 · Eventos y Mensajes: se enseña al instante lo último que se vio y, a la vez, se pide lo
     // nuevo; si ha cambiado algo, la pantalla se actualiza sola (sin esperar). Así son instantáneas y
@@ -4109,7 +4109,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
             if(isWrite||NEVER.has(table)){
               if(isWrite){cache.clear();pdrop(table);SWR.forEach(function(v2,k2){if(k2.indexOf(table+'|')===0)SWR.delete(k2)})}
               var pw=v.call(t,function(x){return x});
-              if(isWrite)pw=pw.then(function(x){cache.clear();pdrop(table);window.v541Warm(2500);return x});
+              if(isWrite)pw=pw.then(function(x){cache.clear();pdrop(table);window.v541Warm(2500);try{if(x&&!x.error&&(table==='training_sessions'||table==='club_events'||table==='competitions')&&window.v1018SoftRefresh)window.v1018SoftRefresh()}catch(_){}return x});
               return track(pw).then(res,rej);
             }
             var key;try{key=table+'|'+JSON.stringify(rec)}catch(e){return v.call(t,res,rej)}
@@ -4586,6 +4586,53 @@ function v347ScrollTop(){const el=document.getElementById('v347Scroll');return e
 function v347ScrollTo(y){const el=document.getElementById('v347Scroll');if(el)el.scrollTop=y;else window.scrollTo(0,y)}
 
 // V159 · actualización manual y gesto de arrastrar hacia abajo.
+// V1018 · al guardar un cambio en entrenamientos/eventos (p.ej. la hora), la pantalla abierta se repinta sola
+// (antes había que arrastrar). Mismo repintado que al cambiar de pestaña: conserva el scroll y no salta.
+// Espera a que no haya ventanas, formularios abiertos ni campos en edición; reintenta unos segundos.
+window.v1018SoftRefresh=function(delay,fromReturn){
+  try{
+    if(!fromReturn&&Date.now()-(window._v1018Last||0)<2500)return; // escrituras provocadas por el propio repintado: no encadenar
+    clearTimeout(window._v1018T);
+    var tries=0;
+    var busy=function(){
+      var a=document.activeElement;
+      if(a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable))return true;
+      var mb=document.querySelectorAll('.modalBack');
+      for(var i=0;i<mb.length;i++){if(getComputedStyle(mb[i]).display!=='none')return true}
+      if(document.querySelector('#v497ClubEventForm:not(:empty),#v531FormHost:not(:empty),#v1007Box:not(.hidden)'))return true;
+      return !!window._v554Preloading;
+    };
+    var go=function(wait){
+      window._v1018T=setTimeout(function(){
+        try{
+          if(typeof currentUser==='undefined'||!currentUser||document.visibilityState!=='visible')return;
+          if(['hoy','semana','mes','eventos'].indexOf(tab)<0)return;
+          if(busy()){if(++tries<14)go(1500);return}
+          window._v1018Last=Date.now();
+          if(typeof v540ClearCache==='function')v540ClearCache();
+          render();
+        }catch(e){}
+      },wait);
+    };
+    go(delay==null?900:delay);
+  }catch(e){}
+};
+// V1019 · en directo: si alguien cambia un entrenamiento o evento (p.ej. la hora), a los demás móviles les llega
+// el aviso y se repinta la pantalla abierta. Solo se usa como señal (no se lee el contenido del aviso).
+(function v1019Live(){
+  var ch=null,lastRt=0,tmr=null;
+  function onChange(){
+    clearTimeout(tmr);
+    var wait=Math.max(700,8000-(Date.now()-lastRt)); // como mucho un repintado cada ~8 s
+    tmr=setTimeout(function(){lastRt=Date.now();try{if(typeof v540ClearCache==='function')v540ClearCache();window.v1018SoftRefresh&&window.v1018SoftRefresh(100,true)}catch(e){}},wait);
+  }
+  function start(){
+    if(ch||!sb||typeof sb.channel!=='function')return;
+    try{ch=sb.channel('v1019-live');['training_sessions','club_events'].forEach(function(t){ch.on('postgres_changes',{event:'*',schema:'public',table:t},onChange)});ch.subscribe()}catch(e){ch=null}
+  }
+  function stop(){try{if(ch)sb.removeChannel(ch)}catch(e){}ch=null}
+  try{sb.auth.onAuthStateChange(function(ev,session){if(session&&session.user)start();else if(ev==='SIGNED_OUT')stop()})}catch(e){}
+})();
 async function refreshAppV159(){
   if(typeof v540ClearCache==='function')v540ClearCache();
   const btn=document.getElementById('refreshAppV159');if(btn){btn.disabled=true;btn.classList.add('is-refreshing')}
@@ -13538,11 +13585,57 @@ async function renderPlanDay(){
    if(confirm('¿Eliminar competición?')){await sb.from('competitions').delete().eq('id',b.dataset.id);renderPlanDay()}});
  document.querySelectorAll('.seaResult').forEach(b=>b.onclick=()=>seaResultEditor(b.dataset.id));
  if(v534EventsUI())v531DayEventBar(data.sessions||[],team,date);
+ try{v1020BringBar(data.sessions||[],team,date)}catch(e){}
  try{v869AddShare()}catch(e){}
 }
 // V531 · "¿cómo convierto en evento un día de GIM+ERGO? me debería dejar editar el día en sí": barra
 // arriba del día con el evento de ESE DÍA (no de cada sesión). El evento se guarda en una de las
 // sesiones del día (MAR si la hay; si no GYM; si no ERGO), pero se gestiona como "el evento del día".
+// V1020 · "Traer aquí": si un entrenamiento de este equipo se canceló (±14 días), la barra del día propone traer
+// su CONTENIDO (tipo, título y plan) a este día. Solo se copia el entrenamiento: la hora, la convocatoria, las
+// respuestas, el chat y el nombre del evento del día no se tocan, y el cancelado queda como cancelado con sus respuestas.
+async function v1020BringBar(sessions,team,date){
+  try{
+    const area=document.getElementById('planArea');if(!area||area.querySelector('#v1020Bar'))return;
+    const general=(sessions||[]).filter(x=>!sessionTargetsV249(x).length);
+    const rank=t=>({MAR:1,GYM:2,ERG:3})[String(t).toUpperCase()]||9;
+    const target=general.find(x=>x.is_event)||[...general].sort((a,b)=>rank(a.session_type)-rank(b.session_type))[0]||null;
+    const q=await sb.from('training_sessions').select('id,session_date,session_type,title,content,cancelled_at').eq('team_code',team).not('cancelled_at','is',null).is('target_user_ids',null).gte('session_date',addDaysISO(date,-14)).lte('session_date',addDaysISO(date,14)).order('session_date',{ascending:false});
+    if(q.error)return;
+    const same=c=>target&&String(c.session_type)===String(target.session_type)&&(c.title||'')===(target.title||'')&&(c.content||'')===(target.content||'');
+    const cands=(q.data||[]).filter(c=>String(c.session_date).slice(0,10)!==date&&!same(c));
+    const cur=document.getElementById('planArea');
+    if(!cands.length||cur!==area||document.getElementById('planDate')?.value!==date||document.getElementById('planTeam')?.value!==team||area.querySelector('#v1020Bar'))return;
+    cands.sort((a,b)=>Math.abs(new Date(a.session_date+'T12:00:00')-new Date(date+'T12:00:00'))-Math.abs(new Date(b.session_date+'T12:00:00')-new Date(date+'T12:00:00')));
+    const dl=ds=>{const l=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(String(ds).slice(0,10)+'T12:00:00'));return l.charAt(0).toUpperCase()+l.slice(1)};
+    const nm=c=>String(c.title||c.session_type||'').slice(0,60);
+    const opt=cands.map((c,i)=>`<option value="${i}">${esc(dl(c.session_date))} · ${esc(nm(c))}</option>`).join('');
+    const html=`<div id="v1020Bar" class="v531Bar v896Bar cancelled" style="flex-wrap:wrap"><div class="v896Txt" style="flex:1;min-width:0"><b>Cancelado · ${esc(dl(cands[0].session_date))}</b><br><small id="v1020Sm">${esc(nm(cands[0]))} · ¿Lo traes a este día?</small>${cands.length>1?`<br><select id="v1020Sel" style="margin-top:4px;max-width:100%">${opt}</select>`:''}</div><div class="v531Btns"><button type="button" class="primary v896Sm" id="v1020Go">Traer aquí</button></div></div>
+<div id="v1020Panel" class="card hidden" style="margin:0 0 8px"><p style="margin:0 0 6px"><b id="v1020Q"></b></p>
+${target?`<label style="display:block;margin:4px 0"><input type="radio" name="v1020M" value="sub" checked> Sustituir «${esc(nm(target))}»</label><label style="display:block;margin:4px 0"><input type="radio" name="v1020M" value="add"> Añadir además (sin convocatoria)</label>`:`<p class="muted" style="margin:4px 0"><small>Este día no tiene entrenamiento: se añadirá.</small></p><input type="radio" name="v1020M" value="add" checked class="hidden">`}
+<p class="muted" style="margin:6px 0"><small>La hora, la convocatoria y las respuestas de este día no cambian. El cancelado se queda como cancelado.</small></p>
+<div class="v531Btns"><button type="button" class="primary" id="v1020Ok">Confirmar</button> <button type="button" id="v1020No">Cancelar</button></div></div>`;
+    const anchor=area.querySelector('.v531Bar');
+    if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else area.insertAdjacentHTML('afterbegin',html);
+    const pick=()=>cands[Number(document.getElementById('v1020Sel')?.value||0)];
+    const sel=document.getElementById('v1020Sel');
+    if(sel)sel.onchange=()=>{const c=pick();const sm=document.getElementById('v1020Sm');if(sm)sm.textContent=nm(c)+' · ¿Lo traes a este día?'};
+    document.getElementById('v1020Go').onclick=()=>{const c=pick();document.getElementById('v1020Q').textContent=`Traer «${nm(c)}» (${dl(c.session_date)}) a ${dl(date)}`;document.getElementById('v1020Panel').classList.remove('hidden')};
+    document.getElementById('v1020No').onclick=()=>document.getElementById('v1020Panel').classList.add('hidden');
+    document.getElementById('v1020Ok').onclick=async()=>{
+      const ok=document.getElementById('v1020Ok');if(ok.disabled)return;ok.disabled=true;ok.textContent='Guardando…';
+      try{
+        const c=pick(),mode=(document.querySelector('input[name="v1020M"]:checked')||{}).value||'add',now=new Date().toISOString();
+        let r;
+        if(mode==='sub'&&target)r=await sb.from('training_sessions').update({session_type:c.session_type,title:c.title,content:c.content||'',updated_at:now}).eq('id',target.id);
+        else r=await sb.from('training_sessions').insert({team_code:team,session_date:date,session_type:c.session_type,title:c.title,content:c.content||'',created_by:currentUser.id,updated_at:now});
+        if(r.error){alert('No se pudo traer: '+r.error.message);ok.disabled=false;ok.textContent='Confirmar';return}
+        try{v300ShowToast('Entrenamiento traído a '+dl(date))}catch(_){}
+        if(typeof window.__planRefresh==='function')window.__planRefresh();else renderPlanDay();
+      }catch(e){alert('No se pudo traer: '+(e&&e.message||e));ok.disabled=false;ok.textContent='Confirmar'}
+    };
+  }catch(e){}
+}
 function v531DayEventBar(sessions,team,date){
   const area=document.getElementById('planArea');if(!area)return;
   // V532 · las sesiones individuales (plan individual de una o varias remeras) no cuentan para el
