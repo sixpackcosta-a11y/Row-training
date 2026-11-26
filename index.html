@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1024";
+const APP_VERSION="1025";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3956,7 +3956,12 @@ function v547Offline(on){
 // V548 · el service worker (sw.js) se registra nada más cargar, para que la app quede guardada en
 // el móvil y abra aunque no haya cobertura.
 try{if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}catch(e){}
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch:v547Fetch}});
+// V1025 · en iPhone, si una copia anterior de la app quedó suspendida con el "cerrojo" de la sesión cogido, TODAS las lecturas se quedan
+// esperando (pantalla de carga con "rol y perfil" más de 10 s) aunque haya cobertura. La app se usa en una sola pestaña, así que el cerrojo
+// se sustituye por uno que no bloquea: las operaciones de sesión se hacen una detrás de otra dentro de esta pestaña.
+const v1025Q={p:Promise.resolve()};
+const v1025Lock=function(name,acquireTimeout,fn){const run=v1025Q.p.then(()=>fn(),()=>fn());v1025Q.p=run.catch(()=>{});return run};
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,lock:v1025Lock},global:{fetch:v547Fetch}});
 // V540 · Velocidad general. Cada pestaña pide sus datos a Supabase cada vez que se abre, aunque
 // sean los mismos de hace unos segundos. Ahora las LECTURAS idénticas se guardan un rato en memoria
 // y al volver a una pestaña los datos salen al instante. Cualquier cambio que hagas tú (guardar,
