@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1025";
+const APP_VERSION="1026";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3922,7 +3922,7 @@ function v547Fetch(url,opts){
     return fetch(url,Object.assign({},opts,{signal:c.signal})).catch(e=>{if(timedOut){const x=new TypeError('Load failed (timeout)');x._to=true;throw x}throw e}).finally(()=>clearTimeout(t));
   };
   const isNet=e=>e&&e.name!=='AbortError'&&/load failed|failed to fetch|network/i.test(String(e.message||e));
-  const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))if(e&&e._to&&n>=1)throw e;return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
+  const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))if(e&&e._to)throw e;return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
   return run(0);
 }
 // V999 · un error de red al pedir los entrenamientos se enseñaba como "no hay entrenamientos" (pantalla vacía). Ahora se dice
@@ -3956,12 +3956,7 @@ function v547Offline(on){
 // V548 · el service worker (sw.js) se registra nada más cargar, para que la app quede guardada en
 // el móvil y abra aunque no haya cobertura.
 try{if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}catch(e){}
-// V1025 · en iPhone, si una copia anterior de la app quedó suspendida con el "cerrojo" de la sesión cogido, TODAS las lecturas se quedan
-// esperando (pantalla de carga con "rol y perfil" más de 10 s) aunque haya cobertura. La app se usa en una sola pestaña, así que el cerrojo
-// se sustituye por uno que no bloquea: las operaciones de sesión se hacen una detrás de otra dentro de esta pestaña.
-const v1025Q={p:Promise.resolve()};
-const v1025Lock=function(name,acquireTimeout,fn){const run=v1025Q.p.then(()=>fn(),()=>fn());v1025Q.p=run.catch(()=>{});return run};
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,lock:v1025Lock},global:{fetch:v547Fetch}});
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch:v547Fetch}});
 // V540 · Velocidad general. Cada pestaña pide sus datos a Supabase cada vez que se abre, aunque
 // sean los mismos de hace unos segundos. Ahora las LECTURAS idénticas se guardan un rato en memoria
 // y al volver a una pestaña los datos salen al instante. Cualquier cambio que hagas tú (guardar,
@@ -4420,12 +4415,23 @@ async function startApp(){
   if(!user){try{const {data}=await sb.auth.getUser();user=data?.user||null}catch(e){}}
   if(!user){appStartingV96=false;openLogin();return;}currentUser=user;
   window.__bs='rol y perfil';const v542RegP=loadRegistrationState();
-  const [,,roleRes,profileRes,staffRes,membershipRes]=await Promise.all([v542TeamsP,v542RegP,
+  let [,,roleRes,profileRes,staffRes,membershipRes]=await Promise.all([v542TeamsP,v542RegP,
     sb.from("user_roles").select("role").eq("user_id",user.id).single(),
     sb.from("profiles").select("*").eq("user_id",user.id).maybeSingle(),
     sb.from("team_staff_roles").select("team_code,staff_role").eq("user_id",user.id),
     sb.from("rower_team_memberships").select("team_code,is_rower").eq("user_id",user.id).eq("is_rower",true)
   ]);
+  // V1026 · con cobertura mala una de estas lecturas fallaba y la app arrancaba como remero (sin ver el modo entrenador). Se guarda lo último
+  // bueno de rol, equipos de staff y pertenencias, y si alguna lectura falla se usa eso en vez de dejarlas vacías.
+  const v1026K='rowtraining_boot_v1026_'+user.id;let v1026S=null;try{v1026S=JSON.parse(localStorage.getItem(v1026K)||'null')}catch(e){}
+  const v1026Ok=!roleRes.error&&!staffRes.error&&!membershipRes?.error&&!profileRes.error;
+  if(v1026S&&!v1026Ok){
+    if(roleRes.error&&v547IsNetErr(roleRes.error)&&v1026S.role)roleRes={data:{role:v1026S.role},error:null};
+    if(staffRes.error)staffRes={data:v1026S.staff||[],error:null};
+    if(membershipRes?.error)membershipRes={data:v1026S.mem||[],error:null};
+    try{v547Offline(true)}catch(e){}
+  }
+  if(v1026Ok){try{localStorage.setItem(v1026K,JSON.stringify({role:roleRes.data?.role||null,staff:staffRes.data||[],mem:membershipRes.data||[]}))}catch(e){}}
   window.__bs='pintando pantalla';
   if(roleRes.error){appStartingV96=false;if(v547IsNetErr(roleRes.error)){v547SplashFail('No hay conexión y aún no hay datos guardados en este móvil.');return}alert("Error leyendo rol: "+roleRes.error.message);return}
   baseAccountRole=roleRes.data?.role||"athlete";isGlobalCoach=baseAccountRole==="coach";
