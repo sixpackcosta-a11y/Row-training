@@ -3874,7 +3874,7 @@ let r="",tab="semana",selected=0; const get=(k,d)=>JSON.parse(localStorage.getIt
 
 const SUPABASE_URL="https://bnvduwjisqosdjqypnvq.supabase.co";
 const SUPABASE_KEY="sb_publishable_H7nlpeJccVutM2iN3-5iHQ_WjFQGAqv";
-const APP_VERSION="1022";
+const APP_VERSION="1024";
 /* V901 · quién/cuándo asignó un resultado (lo rellena la base de datos con disparadores: assigned_via/by/at) */
 function v901TraceHtml(r,kind){
   try{
@@ -3917,11 +3917,12 @@ function v547Fetch(url,opts){
   const canRetry=/^(GET|HEAD|PATCH|DELETE|PUT)$/.test(method)&&!u.includes('/storage/');
   const once=()=>{
     if(opts.signal||typeof AbortController==='undefined')return fetch(url,opts);
-    const c=new AbortController(),t=setTimeout(()=>c.abort(),u.includes('/storage/')?90000:u.includes('/functions/')?30000:15000);
-    return fetch(url,Object.assign({},opts,{signal:c.signal})).finally(()=>clearTimeout(t));
+    // V1023 · si la petición se corta por tiempo (cobertura que va lenta) se convierte en error de red normal para poder reintentarla.
+    let timedOut=false;const c=new AbortController(),t=setTimeout(()=>{timedOut=true;c.abort()},u.includes('/storage/')?90000:u.includes('/functions/')?30000:15000);
+    return fetch(url,Object.assign({},opts,{signal:c.signal})).catch(e=>{if(timedOut){const x=new TypeError('Load failed (timeout)');x._to=true;throw x}throw e}).finally(()=>clearTimeout(t));
   };
   const isNet=e=>e&&e.name!=='AbortError'&&/load failed|failed to fetch|network/i.test(String(e.message||e));
-  const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
+  const run=n=>once().then(r=>{if(r&&r.status===400&&u.includes('extra_team_codes'))window._v973NoExtra=true;return r},e=>{if(canRetry&&n<2&&isNet(e)&&!(opts.signal&&opts.signal.aborted))if(e&&e._to&&n>=1)throw e;return new Promise(res=>setTimeout(res,n?1800:700)).then(()=>run(n+1));throw e});
   return run(0);
 }
 // V999 · un error de red al pedir los entrenamientos se enseñaba como "no hay entrenamientos" (pantalla vacía). Ahora se dice
@@ -3943,6 +3944,13 @@ function v547Offline(on){
   let el=document.getElementById('v547Off');
   if(!el){if(!on)return;el=document.createElement('div');el.id='v547Off';el.className='v547Off';el.textContent='📶 Sin conexión · mostrando datos guardados';document.body.appendChild(el)}
   clearTimeout(v547OffT);
+  // V1023 · "Sin conexión" solo si el móvil de verdad no tiene red; si la tiene pero una petición falló, se dice "cobertura floja"
+  // y se reintenta solo (máx. una vez cada 30 s) para que los datos vuelvan sin tener que arrastrar.
+  if(on){
+    const weak=navigator.onLine!==false;
+    el.textContent=weak?'📶 Cobertura floja · mostrando datos guardados · reintentando':'📶 Sin conexión · mostrando datos guardados';
+    if(weak&&Date.now()-(window._v1023Auto||0)>30000){window._v1023Auto=Date.now();setTimeout(()=>{try{window.v1018SoftRefresh&&window.v1018SoftRefresh(0,true)}catch(_){}},6000)}
+  }
   if(on){el.classList.add('show');v547OffT=setTimeout(()=>el.classList.remove('show'),6000)}else el.classList.remove('show');
 }
 // V548 · el service worker (sw.js) se registra nada más cargar, para que la app quede guardada en
@@ -4157,7 +4165,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:t
     sb.from=function(table){return wrap(origFrom(table),String(table),[])};
     var origRpc=sb.rpc.bind(sb);
     sb.rpc=function(name,args,opts){var ro=/(_status|_sessions)_v\d+$|^get_|^list_/.test(String(name||''))&&!/_v59[78]$/.test(String(name||''));if(!ro){cache.clear();pwipe();window.v541Warm(2500);return origRpc.apply(null,arguments)}var b=origRpc(name,args,opts);return (b&&typeof b.then==='function')?wrap(b,'rpc:'+name,[['rpc',[args===undefined?null:args]]]):b}; // V557 · las rpc de solo lectura también se guardan en memoria // V554 · las rpc de solo lectura ya no vacían la memoria
-    var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(ev==='SIGNED_OUT'){pwipe();owipe();cache.clear();lastAuth='';recipesStarted=false;return}if(u&&u!==lastAuth){if(lastAuth){pwipe();owipe()}lastAuth=u;cache.clear();recipesStarted=false}})}catch(e){}
+    var lastAuth=null;try{sb.auth.onAuthStateChange(function(ev,session){var u=(session&&session.user&&session.user.id)||'';if(ev==='SIGNED_OUT'){pwipe();owipe();cache.clear();lastAuth='';recipesStarted=false;return}if(u&&u!==lastAuth){if(lastAuth){pwipe();owipe()}lastAuth=u;/* V1024 · al abrir con la sesión ya guardada (INITIAL_SESSION) NO se vacía la memoria: las lecturas del arranque ya iban con ese usuario y se pedían todas otra vez (perfil, roles, equipos) */if(ev!=='INITIAL_SESSION')cache.clear();recipesStarted=false}})}catch(e){}
   }catch(e){console.warn('v540 cache off',e)}
 })();
 async function loadTeamsV88(publicOnly=false){
@@ -4184,9 +4192,9 @@ async function loadTeamsV88(publicOnly=false){
       }catch(e){}
       // V499 · sustituto por defecto por equipo, consulta aparte igual que la de arriba (columna
       // nueva: no debe romper la carga de equipos si aún no se ha ejecutado 23_eventos_v499.sql).
+      // V1024 · ya no se espera a esta consulta para arrancar (solo se usa al abrir formularios de convocatoria); se pide por detrás.
       try{
-        const ds=await sb.from('rowing_teams').select('code,default_staff_substitute_id');
-        if(!ds.error)(ds.data||[]).forEach(x=>{if(x.default_staff_substitute_id)TEAM_DEFAULT_SUB_V499.set(x.code,x.default_staff_substitute_id)});
+        sb.from('rowing_teams').select('code,default_staff_substitute_id').then(ds=>{try{if(!ds.error)(ds.data||[]).forEach(x=>{if(x.default_staff_substitute_id)TEAM_DEFAULT_SUB_V499.set(x.code,x.default_staff_substitute_id)})}catch(_){}},()=>{});
       }catch(e){}
       try{if(typeof REG_TEAM_PARAM!=="undefined"&&REG_TEAM_PARAM)REG_TEAM_VALID=TEAM_OPTIONS.some(x=>x[0]===REG_TEAM_PARAM)?REG_TEAM_PARAM:null}catch(e){}
       return res.data||[];
